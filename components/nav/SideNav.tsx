@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 // ─── Navigation structure ─────────────────────────────────────────────────────
 //
-// Three groups mapping to the Driftverse information architecture:
+// Three groups mapping to the Gravity-Souls information architecture:
 //   Universe  — macro discovery layer
 //   My Space  — personal planet + social features
 //   Connect   — messaging and relationship layer

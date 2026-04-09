@@ -71,7 +71,7 @@ export default function Nav() {
           className="text-xs font-semibold tracking-[0.22em] uppercase transition-colors duration-200"
           style={{ color: pathname === '/' ? 'var(--foreground)' : 'var(--ink)' }}
         >
-          Driftverse
+          Gravity-Souls
         </span>
       </Link>
 

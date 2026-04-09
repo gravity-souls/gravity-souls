@@ -14,7 +14,7 @@ interface Props {
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
     // Log to an error reporting service in production
-    console.error('[Driftverse error]', error)
+    console.error('[Gravity-Souls error]', error)
   }, [error])
 
   return (

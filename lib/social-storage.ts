@@ -5,7 +5,7 @@ import { getOrCreateUserId } from '@/lib/user'
 
 function savedKey(): string {
   const id = getOrCreateUserId()
-  return `driftverse_saved_${id}`
+  return `gravitysoul_saved_${id}`
 }
 
 export function getSavedPlanetIds(): string[] {

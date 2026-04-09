@@ -3,18 +3,18 @@ import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceSty
 
 // ─── Storage keys ─────────────────────────────────────────────────────────────
 
-const USER_ID_KEY = 'driftverse_user_id'
+const USER_ID_KEY = 'gravitysoul_user_id'
 
 export function sbtiStorageKey(userId: string): string {
-  return `driftverse_sbti_${userId}`
+  return `gravitysoul_sbti_${userId}`
 }
 
 export function universeStorageKey(userId: string): string {
-  return `driftverse_universe_${userId}`
+  return `gravitysoul_universe_${userId}`
 }
 
 export function planetStorageKey(userId: string): string {
-  return `driftverse_planet_${userId}`
+  return `gravitysoul_planet_${userId}`
 }
 
 export interface StoredSbtiResult {

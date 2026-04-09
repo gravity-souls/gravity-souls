@@ -12,9 +12,9 @@ const geist = Geist({
 })
 
 export const metadata: Metadata = {
-  title: 'Driftverse — Your inner universe, mapped.',
+  title: 'Gravity-Souls — Where souls find their gravity',
   description:
-    'Driftverse turns your expressions into a personal universe. Discover who resonates, who complements, and who waits at the far edge.',
+    'Gravity-Souls connects you with those who share your inner pull. Discover resonance, compatibility, and genuine connection through the power of authentic expression.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

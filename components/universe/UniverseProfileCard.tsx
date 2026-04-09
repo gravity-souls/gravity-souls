@@ -177,7 +177,7 @@ export default function UniverseProfileCard({ universe: u }: Props) {
             className="text-xs tracking-widest uppercase"
             style={{ color: 'var(--star)', opacity: 0.5 }}
           >
-            Driftverse analysis
+            Gravity-Souls analysis
           </span>
           <span
             className="text-xs tracking-widest uppercase font-medium"

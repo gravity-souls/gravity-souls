@@ -41,7 +41,7 @@ type Translations = Record<Language, Record<TranslationKey, string>>
 
 const translations: Translations = {
   en: {
-    'app.name':                'Driftverse',
+    'app.name':                'Gravity-Souls',
     'nav.discover':            'Discover',
     'nav.create':              'Create',
     'hero.eyebrow':            'Personal universe engine',
@@ -51,7 +51,7 @@ const translations: Translations = {
     'hero.cta.primary':        'Begin your drift',
     'hero.cta.secondary':      'See a universe',
     'feature.growth':          'Map Your Inner Universe',
-    'feature.growth.desc':     'Express yourself in any form — text, mood, fragments. Driftverse reads the shape of what you share and renders it into a living universe profile.',
+    'feature.growth.desc':     'Express yourself in any form — text, mood, fragments. Gravity-Souls reads the shape of what you share and connects you with kindred spirits.'
     'feature.resonance':       'Find Your Kind',
     'feature.resonance.desc':  'Discover universes that feel like yours. Not based on what you like, but on how you think, what you sense, and where you drift when no one is watching.',
     'feature.explore':         'Explore the Distance',
@@ -79,7 +79,7 @@ const translations: Translations = {
   },
 
   'zh-CN': {
-    'app.name':                'Driftverse',
+    'app.name':                'Gravity-Souls',
     'nav.discover':            '探索',
     'nav.create':              '创建',
     'hero.eyebrow':            '个人宇宙引擎',
@@ -89,7 +89,7 @@ const translations: Translations = {
     'hero.cta.primary':        '开始漂流',
     'hero.cta.secondary':      '查看宇宙示例',
     'feature.growth':          '绘制你的内在宇宙',
-    'feature.growth.desc':     '以任何形式表达自我——文字、情绪、碎片。Driftverse 解读你所分享内容的形状，将其渲染为一个鲜活的宇宙档案。',
+    'feature.growth.desc':     '以任何形式表达自我——文字、情绪、碎片。Gravity-Souls 解读你所分享内容的形状，连接你与志同道合的灵魂。',
     'feature.resonance':       '寻找你的同类',
     'feature.resonance.desc':  '发现感觉像你的宇宙。不基于你喜欢什么，而是基于你如何思考、感知什么，以及当无人注视时你会漂向何处。',
     'feature.explore':         '探索远方',
