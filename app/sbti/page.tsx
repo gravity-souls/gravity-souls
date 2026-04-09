@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   QUESTIONS,
@@ -44,6 +44,17 @@ const COMPUTING_LABELS = [
   'Crystallising your type…',
 ]
 
+// ─── Utility: Shuffle array ────────────────────────────────────────────────────
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 function SbtiPage() {
@@ -59,6 +70,15 @@ function SbtiPage() {
   const [animating, setAnimating] = useState(false)
   const computingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const nextHref = searchParams.get('next') || '/create-planet'
+
+  // ── Randomized options cache ──────────────────────────────────────────────
+  const randomizedMainOptions = useMemo(() => {
+    return QUESTIONS.map((q) => shuffleArray(q.options))
+  }, [])
+
+  const randomizedSpecialOptions = useMemo(() => {
+    return SPECIAL_QUESTIONS.map((q) => shuffleArray(q.options))
+  }, [])
 
   // ── Computing animation ────────────────────────────────────────────────────
   useEffect(() => {
@@ -177,6 +197,7 @@ function SbtiPage() {
       {phase === 'question' && (
         <QuestionScreen
           question={QUESTIONS[qIndex]}
+          randomizedOptions={randomizedMainOptions[qIndex]}
           index={qIndex}
           total={QUESTIONS.length}
           onAnswer={answerMain}
@@ -187,6 +208,7 @@ function SbtiPage() {
       {phase === 'special' && (
         <SpecialScreen
           question={SPECIAL_QUESTIONS[specialStep]}
+          randomizedOptions={randomizedSpecialOptions[specialStep]}
           onAnswer={answerSpecial}
           onSkip={() => setPhase('computing')}
         />
@@ -285,12 +307,14 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 
 function QuestionScreen({
   question,
+  randomizedOptions,
   index,
   total,
   onAnswer,
   fading,
 }: {
   question: (typeof QUESTIONS)[0]
+  randomizedOptions: typeof QUESTIONS[0]['options']
   index: number
   total: number
   onAnswer: (v: number) => void
@@ -353,7 +377,7 @@ function QuestionScreen({
 
         {/* Options */}
         <div className="flex flex-col gap-2">
-          {question.options.map((opt) => (
+          {randomizedOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
@@ -394,10 +418,12 @@ function QuestionScreen({
 
 function SpecialScreen({
   question,
+  randomizedOptions,
   onAnswer,
   onSkip,
 }: {
   question: (typeof SPECIAL_QUESTIONS)[0]
+  randomizedOptions: typeof SPECIAL_QUESTIONS[0]['options']
   onAnswer: (v: number) => void
   onSkip: () => void
 }) {
@@ -428,7 +454,7 @@ function SpecialScreen({
         </p>
 
         <div className="flex flex-col gap-2">
-          {question.options.map((opt) => (
+          {randomizedOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
