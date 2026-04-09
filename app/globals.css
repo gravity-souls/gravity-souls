@@ -1,0 +1,616 @@
+@import "tailwindcss";
+
+:root {
+  /* ── Core palette ───────────────────────────────────────────────────────── */
+  --background: #03030f;
+  --foreground: #e8e0ff;
+  --void: #03030f;
+  --cosmos: #0a0a1f;
+  --nebula: #7c3aed;
+  --aurora: #6366f1;
+  --star: #a78bfa;
+  --dust: #1e1b4b;
+  --muted: #6b7280;
+
+  /* ── Extended text hierarchy ────────────────────────────────────────────── */
+  --ink: #c0b8e8;       /* secondary text — softer than foreground */
+  --ghost: #4a4670;     /* placeholders, dimmed labels */
+  --dim: #322e5a;       /* barely visible, disabled states */
+
+  /* ── Surface tiers ──────────────────────────────────────────────────────── */
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --surface-3: rgba(255, 255, 255, 0.11);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+
+  /* ── Border tiers ───────────────────────────────────────────────────────── */
+  --border: rgba(167, 139, 250, 0.15);       /* legacy compat */
+  --border-soft: rgba(167, 139, 250, 0.07);  /* hairline — dividers, backgrounds */
+  --border-mid: rgba(167, 139, 250, 0.15);   /* default card borders */
+  --border-accent: rgba(167, 139, 250, 0.28);/* selected, focused */
+  --border-bright: rgba(167, 139, 250, 0.48);/* active, hovered accent */
+
+  /* ── Glow levels ────────────────────────────────────────────────────────── */
+  --glow-sm:  0 0 12px rgba(124, 58, 237, 0.18);
+  --glow-md:  0 0 24px rgba(124, 58, 237, 0.28), 0 0 48px rgba(99, 102, 241, 0.12);
+  --glow-lg:  0 0 40px rgba(124, 58, 237, 0.35), 0 0 80px rgba(99, 102, 241, 0.18);
+
+  /* ── Shadow presets ─────────────────────────────────────────────────────── */
+  --shadow-panel: 0 8px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-float: 0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-card:  0 4px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.4);
+
+  /* ── Motion tokens ──────────────────────────────────────────────────────── */
+  --ease-cosmic: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft:   cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-snap:   cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:   120ms;
+  --duration-normal: 220ms;
+  --duration-slow:   380ms;
+  --duration-drift:  600ms;
+
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  --nav-h: 56px;
+  --sidebar-w-collapsed: 56px;
+  --sidebar-w-expanded:  224px;
+
+  /* ── Orbit / resonance match colours ────────────────────────────────────── */
+  /* Each colour maps to a match reason dimension (see types/match.ts)         */
+  --orbit-blue:   #60a5fa;   /* shared interests                              */
+  --orbit-purple: #a78bfa;   /* expression style resonance                    */
+  --orbit-red:    #f87171;   /* emotional / inner-theme resonance             */
+  --orbit-green:  #34d399;   /* culture & travel resonance                    */
+  --orbit-gold:   #fbbf24;   /* books / music / art resonance                 */
+  --orbit-orange: #fb923c;   /* complementary worldview / productive diff     */
+
+  /* Glow variants for orbit lines */
+  --orbit-glow-blue:   0 0 16px rgba(96,165,250,0.4),  0 0 40px rgba(96,165,250,0.15);
+  --orbit-glow-purple: 0 0 16px rgba(167,139,250,0.4), 0 0 40px rgba(167,139,250,0.15);
+  --orbit-glow-red:    0 0 16px rgba(248,113,113,0.4), 0 0 40px rgba(248,113,113,0.15);
+  --orbit-glow-green:  0 0 16px rgba(52,211,153,0.4),  0 0 40px rgba(52,211,153,0.15);
+  --orbit-glow-gold:   0 0 16px rgba(251,191,36,0.4),  0 0 40px rgba(251,191,36,0.15);
+  --orbit-glow-orange: 0 0 16px rgba(251,146,60,0.4),  0 0 40px rgba(251,146,60,0.15);
+
+  /* ── Radius scale ─────────────────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-pill: 9999px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-void: var(--void);
+  --color-cosmos: var(--cosmos);
+  --color-nebula: var(--nebula);
+  --color-aurora: var(--aurora);
+  --color-star: var(--star);
+  --color-dust: var(--dust);
+  --color-muted: var(--muted);
+  --color-ink: var(--ink);
+  --color-ghost: var(--ghost);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Star field layers */
+.stars-sm,
+.stars-md,
+.stars-lg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stars-sm {
+  background-image: radial-gradient(1px 1px at 10% 15%, rgba(167,139,250,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 40%, rgba(167,139,250,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 8%, rgba(224,213,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 62%, rgba(167,139,250,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 30%, rgba(224,213,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 75%, rgba(167,139,250,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 12%, rgba(167,139,250,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 80%, rgba(224,213,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 55%, rgba(167,139,250,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 90%, rgba(167,139,250,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 48%, rgba(224,213,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 35%, rgba(167,139,250,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 22%, rgba(167,139,250,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 58%, rgba(224,213,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 18% 95%, rgba(167,139,250,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 63% 5%, rgba(167,139,250,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 70%, rgba(224,213,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 88%, rgba(167,139,250,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 52% 44%, rgba(167,139,250,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 8% 60%, rgba(224,213,255,0.6) 0%, transparent 100%);
+  animation: drift-slow 80s linear infinite;
+}
+
+.stars-md {
+  background-image: radial-gradient(1.5px 1.5px at 20% 25%, rgba(167,139,250,0.8) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 45% 72%, rgba(224,213,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 65% 18%, rgba(167,139,250,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 88% 42%, rgba(224,213,255,0.8) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 12% 88%, rgba(167,139,250,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 38% 36%, rgba(167,139,250,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 65%, rgba(224,213,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 58% 82%, rgba(167,139,250,0.8) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 3% 50%, rgba(224,213,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 95% 15%, rgba(167,139,250,0.6) 0%, transparent 100%);
+  animation: drift-slow 120s linear infinite reverse;
+}
+
+.stars-lg {
+  background-image: radial-gradient(2px 2px at 32% 60%, rgba(224,213,255,0.9) 0%, transparent 100%),
+    radial-gradient(2px 2px at 78% 28%, rgba(167,139,250,0.8) 0%, transparent 100%),
+    radial-gradient(2px 2px at 15% 42%, rgba(224,213,255,0.7) 0%, transparent 100%),
+    radial-gradient(2px 2px at 60% 85%, rgba(167,139,250,0.9) 0%, transparent 100%),
+    radial-gradient(2px 2px at 90% 70%, rgba(224,213,255,0.8) 0%, transparent 100%);
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes drift-slow {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-20px); }
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.3), 0 0 60px rgba(124, 58, 237, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(124, 58, 237, 0.5), 0 0 80px rgba(124, 58, 237, 0.2); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── New cinematic keyframes ────────────────────────────────────────────── */
+
+@keyframes nebula-breathe {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.06); opacity: 0.82; }
+}
+
+/* Slow full rotation for decorative orbital rings */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Reverse spin */
+@keyframes spin-slow-rev {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* Shimmer sweep for gradient borders */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* Particles appear, drift up, and fade */
+@keyframes particle-rise {
+  0%   { opacity: 0;   transform: translateY(0) scale(0.8); }
+  20%  { opacity: 0.7; }
+  100% { opacity: 0;   transform: translateY(-28px) scale(1.2); }
+}
+
+/* Heartbeat scale pulse */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%       { transform: scale(1.07); }
+  28%       { transform: scale(1); }
+  42%       { transform: scale(1.04); }
+  70%       { transform: scale(1); }
+}
+
+/* Scan beam sweep (for light cone animation) */
+@keyframes beam-scan {
+  0%, 100% { opacity: 0.10; }
+  50%       { opacity: 0.16; }
+}
+
+/* Full circular orbit for satellite divs in PlanetVisual */
+@keyframes orbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s ease-out both;
+}
+
+.animate-nebula-breathe {
+  animation: nebula-breathe 18s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 28s linear infinite;
+}
+
+.animate-spin-slow-rev {
+  animation: spin-slow-rev 36s linear infinite;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 2.4s ease-in-out infinite;
+}
+
+.animate-beam-scan {
+  animation: beam-scan 8s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbit 20s linear infinite;
+}
+
+.animate-particle {
+  animation: particle-rise 3s ease-out infinite;
+}
+
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.glass-hover:hover {
+  background: var(--surface-hover);
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.nebula-gradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #0ea5e9 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #e0d7ff 0%, #a78bfa 50%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-ring {
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.3), 0 0 20px rgba(124, 58, 237, 0.15);
+}
+
+.cosmic-bg {
+  background: #02020c;
+}
+
+/* ── Upgraded text gradients ────────────────────────────────────────────── */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #bae6fd 0%, #38bdf8 50%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Shimmer border (animated gradient border via background-clip trick) ── */
+
+.shimmer-border {
+  background-image: linear-gradient(
+    90deg,
+    rgba(167,139,250,0.1) 0%,
+    rgba(167,139,250,0.45) 25%,
+    rgba(255,255,255,0.2) 50%,
+    rgba(167,139,250,0.45) 75%,
+    rgba(167,139,250,0.1) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ── Orbital ring decoration ────────────────────────────────────────────── */
+
+.orbit-ring {
+  border-radius: 50%;
+  border: 1px solid rgba(167,139,250,0.12);
+}
+
+/* ── Glass upgrade — deeper blur + richer tint ──────────────────────────── */
+
+.glass-deep {
+  background: linear-gradient(135deg, rgba(28,24,72,0.65) 0%, rgba(12,10,42,0.55) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(167,139,250,0.14);
+}
+
+/* ── Particle dot ───────────────────────────────────────────────────────── */
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--star);
+  pointer-events: none;
+}
+
+/* ── Section divider glow ───────────────────────────────────────────────── */
+
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167,139,250,0.35), transparent);
+  box-shadow: 0 0 8px rgba(167,139,250,0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM UTILITIES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Glass panel variants ───────────────────────────────────────────────── */
+
+.glass-panel {
+  background: linear-gradient(160deg, rgba(28,24,72,0.55) 0%, rgba(8,6,28,0.50) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-mid);
+  box-shadow: var(--shadow-panel);
+}
+
+.glass-panel-elevated {
+  background: linear-gradient(160deg, rgba(38,30,88,0.70) 0%, rgba(14,10,44,0.65) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-accent);
+  box-shadow: var(--shadow-panel), var(--glow-sm);
+}
+
+.glass-panel-sunken {
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-soft);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ── Border utilities ───────────────────────────────────────────────────── */
+
+.border-soft   { border: 1px solid var(--border-soft); }
+.border-mid    { border: 1px solid var(--border-mid); }
+.border-accent { border: 1px solid var(--border-accent); }
+.border-bright { border: 1px solid var(--border-bright); }
+
+/* ── Glow utilities ─────────────────────────────────────────────────────── */
+
+.glow-sm { box-shadow: var(--glow-sm); }
+.glow-md { box-shadow: var(--glow-md); }
+.glow-lg { box-shadow: var(--glow-lg); }
+
+/* ── Typography utilities ───────────────────────────────────────────────── */
+
+/* Eyebrow label — small caps, wide tracking */
+.text-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--star);
+  opacity: 0.6;
+  line-height: 1;
+}
+
+/* Data label — used inside cards for attribute names */
+.text-data-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.7;
+  line-height: 1;
+}
+
+/* Body secondary */
+.text-ink { color: var(--ink); }
+.text-ghost { color: var(--ghost); }
+
+/* ── Nav item active state ───────────────────────────────────────────────── */
+
+.nav-item {
+  position: relative;
+  transition: color var(--duration-normal) var(--ease-snap);
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: var(--star);
+  box-shadow: 0 0 6px var(--star);
+  transition: width var(--duration-normal) var(--ease-cosmic);
+}
+
+.nav-item.active::after {
+  width: 16px;
+}
+
+/* ── Sidebar layout variable ────────────────────────────────────────────── */
+
+.sidebar-collapsed { --sidebar-current-w: var(--sidebar-w-collapsed); }
+.sidebar-expanded  { --sidebar-current-w: var(--sidebar-w-expanded); }
+
+/* ── Locked layer ───────────────────────────────────────────────────────── */
+
+.locked-blur {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+}
+
+/* ── Orbit dot — tiny animated pulse for active/status indicators ─────── */
+
+.orbit-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--star);
+  box-shadow: 0 0 0 2px rgba(167,139,250,0.15), 0 0 8px var(--star);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ── Match pill variants ────────────────────────────────────────────────── */
+
+.pill-similar {
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.28);
+  color: #818cf8;
+}
+
+.pill-complementary {
+  background: rgba(52,211,153,0.10);
+  border: 1px solid rgba(52,211,153,0.25);
+  color: #34d399;
+}
+
+.pill-distant {
+  background: rgba(251,191,36,0.10);
+  border: 1px solid rgba(251,191,36,0.22);
+  color: #fbbf24;
+}
+
+/* ── Vertical nav divider ───────────────────────────────────────────────── */
+
+.nav-divider {
+  height: 1px;
+  margin: 8px 12px;
+  background: linear-gradient(90deg, transparent, var(--border-mid), transparent);
+}
+
+/* ── Empty state symbol ─────────────────────────────────────────────────── */
+
+@keyframes empty-breathe {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(1.05); }
+}
+
+.animate-empty-breathe {
+  animation: empty-breathe 5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORBIT COLOR SYSTEM
+   Colour-keyed resonance match utilities — keep in sync with types/match.ts
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Orbit line colours ─────────────────────────────────────────────────── */
+
+.orbit-line-blue   { border-color: rgba(96,165,250,0.45);   }
+.orbit-line-purple { border-color: rgba(167,139,250,0.45);  }
+.orbit-line-red    { border-color: rgba(248,113,113,0.45);  }
+.orbit-line-green  { border-color: rgba(52,211,153,0.45);   }
+.orbit-line-gold   { border-color: rgba(251,191,36,0.45);   }
+.orbit-line-orange { border-color: rgba(251,146,60,0.45);   }
+
+/* ── Orbit glow shadows ─────────────────────────────────────────────────── */
+
+.orbit-glow-blue   { box-shadow: var(--orbit-glow-blue);   }
+.orbit-glow-purple { box-shadow: var(--orbit-glow-purple); }
+.orbit-glow-red    { box-shadow: var(--orbit-glow-red);    }
+.orbit-glow-green  { box-shadow: var(--orbit-glow-green);  }
+.orbit-glow-gold   { box-shadow: var(--orbit-glow-gold);   }
+.orbit-glow-orange { box-shadow: var(--orbit-glow-orange); }
+
+/* ── Orbit text colours ─────────────────────────────────────────────────── */
+
+.text-orbit-blue   { color: var(--orbit-blue);   }
+.text-orbit-purple { color: var(--orbit-purple); }
+.text-orbit-red    { color: var(--orbit-red);    }
+.text-orbit-green  { color: var(--orbit-green);  }
+.text-orbit-gold   { color: var(--orbit-gold);   }
+.text-orbit-orange { color: var(--orbit-orange); }
+
+/* ── Orbit pill badges ──────────────────────────────────────────────────── */
+/* Used in match cards and resonance explanations                            */
+
+.pill-orbit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+
+.pill-orbit-blue   { background: rgba(96,165,250,0.10);  color: var(--orbit-blue);   border-color: rgba(96,165,250,0.28);  }
+.pill-orbit-purple { background: rgba(167,139,250,0.10); color: var(--orbit-purple); border-color: rgba(167,139,250,0.28); }
+.pill-orbit-red    { background: rgba(248,113,113,0.10); color: var(--orbit-red);    border-color: rgba(248,113,113,0.28); }
+.pill-orbit-green  { background: rgba(52,211,153,0.10);  color: var(--orbit-green);  border-color: rgba(52,211,153,0.28);  }
+.pill-orbit-gold   { background: rgba(251,191,36,0.10);  color: var(--orbit-gold);   border-color: rgba(251,191,36,0.28);  }
+.pill-orbit-orange { background: rgba(251,146,60,0.10);  color: var(--orbit-orange); border-color: rgba(251,146,60,0.28);  }
+
+/* ── Relationship status badges ─────────────────────────────────────────── */
+
+.status-signal    { background: rgba(167,139,250,0.10); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+.status-orbit     { background: rgba(96,165,250,0.10);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.status-resonant  { background: rgba(52,211,153,0.10);  color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
+.status-aligned   { background: rgba(251,191,36,0.10);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE OVERRIDES
+   Below 768px: sidebar becomes a hidden overlay (zero reserved width).
+   Content fills the full viewport. The sidebar is accessible via toggle.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /*
+   * On mobile the sidebar is always collapsed (0px) — content fills full width.
+   * When toggled open, the sidebar expands to 224px as a position:fixed overlay.
+   * No horizontal space is reserved at any point.
+   */
+  :root {
+    --sidebar-w-collapsed: 0px;
+  }
+
+  /* Add shadow when the sidebar overlays content */
+  aside[aria-label="Side navigation"] {
+    box-shadow: 4px 0 32px rgba(0,0,0,0.6);
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(done)",
+      "Bash(find /home/wiremind/dev_perso/projet-udemy/shopping-platform-from-scratch/new-proj/share-uni/components -name \"*.tsx\" -exec basename {})",
+      "WebFetch(domain:sbti.unun.dev)",
+      "Bash(sed -i 's|eyebrow=\"Signals\"\\\\n\\\\s*title=\"Messages\"|eyebrow=\"Signals\" level={1}\\\\n          title=\"Messages\"|' /home/wiremind/dev_perso/projet-udemy/shopping-platform-from-scratch/new-proj/share-uni/app/messages/page.tsx)",
+      "Bash(python3 -c ':*)",
+      "Bash(echo \"EXIT:$?\")"
+    ]
+  }
+}
