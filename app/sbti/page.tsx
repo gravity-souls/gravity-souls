@@ -275,7 +275,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       </GlowButton>
 
       <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-        Original by Bilibili @蛆肉儿串儿 · for entertainment purposes only
+        For entertainment purposes only
       </p>
     </div>
   )
