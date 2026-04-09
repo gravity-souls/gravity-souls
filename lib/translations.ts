@@ -51,7 +51,7 @@ const translations: Translations = {
     'hero.cta.primary':        'Begin your drift',
     'hero.cta.secondary':      'See a universe',
     'feature.growth':          'Map Your Inner Universe',
-    'feature.growth.desc':     'Express yourself in any form — text, mood, fragments. Gravity-Souls reads the shape of what you share and connects you with kindred spirits.'
+    'feature.growth.desc':     'Express yourself in any form — text, mood, fragments. Gravity-Souls reads the shape of what you share and connects you with kindred spirits.',
     'feature.resonance':       'Find Your Kind',
     'feature.resonance.desc':  'Discover universes that feel like yours. Not based on what you like, but on how you think, what you sense, and where you drift when no one is watching.',
     'feature.explore':         'Explore the Distance',

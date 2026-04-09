@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   QUESTIONS,
@@ -46,7 +46,7 @@ const COMPUTING_LABELS = [
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default function SbtiPage() {
+function SbtiPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [phase, setPhase] = useState<Phase>('intro')
@@ -690,5 +690,13 @@ function ResultScreen({
         </p>
       )}
     </div>
+  )
+}
+
+export default function SbtiPageWrapper() {
+  return (
+    <Suspense>
+      <SbtiPage />
+    </Suspense>
   )
 }
