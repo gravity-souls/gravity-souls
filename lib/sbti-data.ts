@@ -1,5 +1,5 @@
 // ─── SBTI — Silly Big Personality Test ────────────────────────────────────────
-// Original by Bilibili @蛆肉儿串儿 · adapted for Gravity-Souls (MIT)
+// Personality assessment system for Gravity-Souls (MIT)
 
 // ─── Dimension keys ────────────────────────────────────────────────────────────
 
