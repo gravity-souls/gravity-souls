@@ -1,12 +1,21 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 
 export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
+  );
+}
+
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,7 +41,10 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push("/create-universe");
+      const raw = searchParams.get('next') || '/create-universe';
+      // Only allow relative paths to prevent open-redirect
+      const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/create-universe';
+      router.push(next);
       router.refresh();
     } catch {
       setError("Something went wrong during sign up");

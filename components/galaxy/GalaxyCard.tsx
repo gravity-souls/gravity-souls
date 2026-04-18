@@ -8,6 +8,12 @@ interface Props {
    * full     -  directory card used on /galaxies
    */
   variant?: 'compact' | 'full'
+  /** Whether the current user has joined this galaxy/community */
+  joined?: boolean
+  /** Called when the user clicks Join. If absent, no button is shown. */
+  onJoin?: () => void
+  /** True while a join request is in flight */
+  joinLoading?: boolean
 }
 
 // --- Mood label display -----------------------------------------------------
@@ -28,50 +34,50 @@ const MATURITY_LABEL: Record<GalaxyPreview['maturity'], string> = {
 
 // --- GalaxyCard -------------------------------------------------------------
 
-export default function GalaxyCard({ galaxy, variant = 'full' }: Props) {
+export default function GalaxyCard({ galaxy, variant = 'full', joined, onJoin, joinLoading }: Props) {
   const { slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor } = galaxy
 
   if (variant === 'compact') {
-    return <CompactCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords.slice(0, 3)} memberCount={memberCount} accentColor={accentColor} />
+    return <CompactCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords.slice(0, 3)} memberCount={memberCount} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} />
   }
 
-  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} />
+  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} />
 }
 
 // --- Compact variant  -  strip card -------------------------------------------
 
 function CompactCard({
-  slug, name, symbol, tagline, keywords, memberCount, accentColor,
+  slug, name, symbol, tagline, keywords, memberCount, accentColor, joined, onJoin, joinLoading,
 }: {
   slug: string; name: string; symbol: string; tagline?: string; keywords: string[]
   memberCount: number; accentColor: string
+  joined?: boolean; onJoin?: () => void; joinLoading?: boolean
 }) {
-  return (
-    <Link
-      href={`/galaxy/${slug}`}
-      className="group relative flex-none flex flex-col gap-3 p-4 rounded-2xl overflow-hidden"
-      style={{
-        width:      220,
-        background: 'linear-gradient(160deg, rgba(18,14,52,0.82) 0%, rgba(6,4,20,0.90) 100%)',
-        backdropFilter: 'blur(18px)',
-        border:     `1px solid ${accentColor}22`,
-        boxShadow:  `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${accentColor}08`,
-        textDecoration: 'none',
-        transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(-3px)'
-        el.style.borderColor = `${accentColor}48`
-        el.style.boxShadow = `0 8px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}18`
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(0)'
-        el.style.borderColor = `${accentColor}22`
-        el.style.boxShadow = `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${accentColor}08`
-      }}
-    >
+  const cardStyle = {
+    width:      220,
+    background: 'linear-gradient(160deg, rgba(18,14,52,0.82) 0%, rgba(6,4,20,0.90) 100%)',
+    backdropFilter: 'blur(18px)',
+    border:     `1px solid ${accentColor}22`,
+    boxShadow:  `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${accentColor}08`,
+    textDecoration: 'none',
+    transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
+  } as const
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(-3px)'
+    el.style.borderColor = `${accentColor}48`
+    el.style.boxShadow = `0 8px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}18`
+  }
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(0)'
+    el.style.borderColor = `${accentColor}22`
+    el.style.boxShadow = `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${accentColor}08`
+  }
+
+  const cardBody = (
+    <>
       {/* Background symbol watermark */}
       <span
         className="absolute -right-2 -top-3 pointer-events-none select-none leading-none"
@@ -133,6 +139,60 @@ function CompactCard({
           {memberCount.toLocaleString()} ·
         </span>
       </div>
+    </>
+  )
+
+  // When onJoin is provided, use a div wrapper to avoid <button> inside <a> (invalid HTML)
+  if (onJoin) {
+    return (
+      <div
+        className="group relative flex-none flex flex-col gap-3 p-4 rounded-2xl overflow-hidden cursor-pointer"
+        style={cardStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+      >
+        {cardBody}
+
+        {/* Join button */}
+        <div className="relative z-20 mt-1">
+          {joined ? (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg tracking-wide"
+              style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}
+            >
+              Joined ✓
+            </span>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); onJoin() }}
+              disabled={joinLoading}
+              className="text-[10px] font-medium px-2.5 py-1 rounded-lg tracking-wide transition-all duration-200 disabled:opacity-50"
+              style={{
+                background: `${accentColor}25`,
+                color: accentColor,
+                border: `1px solid ${accentColor}40`,
+                cursor: 'pointer',
+              }}
+            >
+              {joinLoading ? '...' : 'Join'}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Default: plain Link card (no join button)
+  return (
+    <Link
+      href={`/galaxy/${slug}`}
+      className="group relative flex-none flex flex-col gap-3 p-4 rounded-2xl overflow-hidden"
+      style={cardStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {cardBody}
     </Link>
   )
 }
@@ -140,36 +200,36 @@ function CompactCard({
 // --- Full variant  -  directory card ------------------------------------------
 
 function FullCard({
-  slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor,
+  slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor, joined, onJoin, joinLoading,
 }: {
   slug: string; name: string; symbol: string; tagline?: string; keywords: string[]
   mood: GalaxyPreview['mood']; memberCount: number; maturity: GalaxyPreview['maturity']; accentColor: string
+  joined?: boolean; onJoin?: () => void; joinLoading?: boolean
 }) {
-  return (
-    <Link
-      href={`/galaxy/${slug}`}
-      className="group relative flex flex-col gap-4 p-6 rounded-2xl overflow-hidden"
-      style={{
-        background: 'linear-gradient(160deg, rgba(18,14,52,0.80) 0%, rgba(6,4,20,0.90) 100%)',
-        backdropFilter: 'blur(20px)',
-        border:     `1px solid ${accentColor}20`,
-        boxShadow:  `0 4px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}08`,
-        textDecoration: 'none',
-        transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(-4px)'
-        el.style.borderColor = `${accentColor}45`
-        el.style.boxShadow = `0 12px 48px rgba(0,0,0,0.6), 0 0 80px ${accentColor}18`
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(0)'
-        el.style.borderColor = `${accentColor}20`
-        el.style.boxShadow = `0 4px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}08`
-      }}
-    >
+  const cardStyle = {
+    background: 'linear-gradient(160deg, rgba(18,14,52,0.80) 0%, rgba(6,4,20,0.90) 100%)',
+    backdropFilter: 'blur(20px)',
+    border:     `1px solid ${accentColor}20`,
+    boxShadow:  `0 4px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}08`,
+    textDecoration: 'none',
+    transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
+  } as const
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(-4px)'
+    el.style.borderColor = `${accentColor}45`
+    el.style.boxShadow = `0 12px 48px rgba(0,0,0,0.6), 0 0 80px ${accentColor}18`
+  }
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(0)'
+    el.style.borderColor = `${accentColor}20`
+    el.style.boxShadow = `0 4px 32px rgba(0,0,0,0.5), 0 0 60px ${accentColor}08`
+  }
+
+  const cardBody = (
+    <>
       {/* Background symbol watermark */}
       <span
         className="absolute -right-4 -top-6 pointer-events-none select-none leading-none"
@@ -256,6 +316,60 @@ function FullCard({
           {MATURITY_LABEL[maturity]}
         </span>
       </div>
+    </>
+  )
+
+  // When onJoin is provided, use a div wrapper to avoid <button> inside <a>
+  if (onJoin) {
+    return (
+      <div
+        className="group relative flex flex-col gap-4 p-6 rounded-2xl overflow-hidden cursor-pointer"
+        style={cardStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+      >
+        {cardBody}
+
+        {/* Join button */}
+        <div className="relative z-20 mt-1">
+          {joined ? (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-lg tracking-wide"
+              style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}
+            >
+              Joined ✓
+            </span>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); onJoin() }}
+              disabled={joinLoading}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg tracking-wide transition-all duration-200 disabled:opacity-50"
+              style={{
+                background: `${accentColor}25`,
+                color: accentColor,
+                border: `1px solid ${accentColor}40`,
+                cursor: 'pointer',
+              }}
+            >
+              {joinLoading ? '...' : 'Join'}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Default: plain Link card
+  return (
+    <Link
+      href={`/galaxy/${slug}`}
+      className="group relative flex flex-col gap-4 p-6 rounded-2xl overflow-hidden"
+      style={cardStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {cardBody}
     </Link>
   )
 }

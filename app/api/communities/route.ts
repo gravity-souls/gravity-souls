@@ -1,32 +1,39 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { auth } from "@/lib/auth";
 
 // GET /api/communities - returns all communities with joined state for current user
 export async function GET() {
-  let session;
-  try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
-  }
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  const userId = session.user.id;
+  const userId = session?.user?.id;
 
   const [communities, memberships] = await Promise.all([
-    prisma.community.findMany({ orderBy: { name: "asc" } }),
-    prisma.communityMembership.findMany({
-      where: { userId },
-      select: { communityId: true },
+    prisma.community.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { memberships: true } } },
     }),
+    userId
+      ? prisma.communityMembership.findMany({
+          where: { userId },
+          select: { communityId: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const joinedIds = new Set(memberships.map((m: { communityId: string }) => m.communityId));
 
-  const result = communities.map((c: { id: string }) => ({
-    ...c,
-    joined: joinedIds.has(c.id),
-  }));
+  const result = communities.map((c) => {
+    const { _count, ...rest } = c;
+    return {
+      ...rest,
+      memberCount: _count.memberships,
+      joined: joinedIds.has(c.id),
+    };
+  });
 
   return NextResponse.json(result);
 }

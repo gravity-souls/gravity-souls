@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import LightCone from '@/components/fx/LightCone'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
@@ -9,10 +10,25 @@ import GalaxyCard from '@/components/galaxy/GalaxyCard'
 import UniverseSearch from '@/components/universe/UniverseSearch'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
-import { mockPlanets, getPlanetById } from '@/lib/mock-planets'
-import { getGalaxyPreviews } from '@/lib/mock-galaxies'
 import { getPlanetProfile, getSbtiResult, getUserRole } from '@/lib/user'
-import type { PlanetProfile } from '@/types/planet'
+import { authClient } from '@/lib/auth-client'
+import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
+import type { GalaxyPreview } from '@/types/galaxy'
+
+// Shape returned by GET /api/universe
+interface UniversePlanet {
+  id: string
+  name: string
+  avatarSymbol: string
+  tagline: string | null
+  mood: string
+  style: string
+  lifestyle: string
+  coreThemes: string[]
+  visual: PlanetVisualConfig | Record<string, unknown>
+  abstractAxis: number
+  introspectiveAxis: number
+}
 
 // --- Universe field: planet positions (% within the field container) ---------
 // Grouped near their thematic galaxy zones.
@@ -49,9 +65,12 @@ const NEBULA_ZONES = [
 // --- Page --------------------------------------------------------------------
 
 export default function UniversePage() {
+  const router = useRouter()
+  const { data: session, isPending: sessionPending } = authClient.useSession()
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [showLanding, setShowLanding] = useState(false)
+  const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
 
   useEffect(() => {
     setUserRole(getUserRole())
@@ -64,10 +83,128 @@ export default function UniversePage() {
     }
   }, [])
 
-  const galaxies = getGalaxyPreviews()
+  // Check if logged-in user has an active planet via API
+  useEffect(() => {
+    if (sessionPending || !session?.user) {
+      setHasActivePlanet(null)
+      return
+    }
+    let cancelled = false
+    fetch('/api/my-planet')
+      .then((res) => {
+        if (!cancelled) setHasActivePlanet(res.ok)
+      })
+      .catch(() => {
+        if (!cancelled) setHasActivePlanet(false)
+      })
+    return () => { cancelled = true }
+  }, [session, sessionPending])
 
-  // -- Landing gate: no local data  -  let user choose sign-in or new scan --
-  if (showLanding) {
+  // --- Community / galaxy state -----------------------------------------------
+  interface CommunityRow {
+    id: string; slug: string; name: string; symbol: string; tagline?: string | null
+    keywords: string[]; mood: string; accentColor: string; maturity: string
+    memberCount: number; joined: boolean
+  }
+  const [communities, setCommunities] = useState<CommunityRow[]>([])
+  const [joiningSlug, setJoiningSlug] = useState<string | null>(null)
+
+  // Fetch communities from DB (includes joined state + memberCount)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/communities')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: CommunityRow[]) => {
+        if (!cancelled) setCommunities(data)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [session])
+
+  // --- Nearby planets state ---------------------------------------------------
+  const [nearbyPlanets, setNearbyPlanets] = useState<PlanetProfile[]>([])
+  const [nearbyLoading, setNearbyLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setNearbyLoading(true)
+    fetch('/api/universe')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: UniversePlanet[]) => {
+        if (cancelled) return
+        const mapped: PlanetProfile[] = data.slice(0, 6).map((p) => {
+          const v = (p.visual && typeof p.visual === 'object') ? p.visual as PlanetVisualConfig : {
+            coreColor: '#a78bfa', accentColor: '#6366f1',
+            ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
+            satelliteCount: 1, size: 'md' as const,
+          }
+          return {
+            id: p.id,
+            name: p.name,
+            avatarSymbol: p.avatarSymbol,
+            tagline: p.tagline ?? undefined,
+            role: 'explorer' as const,
+            mood: (p.mood as PlanetProfile['mood']) || 'calm',
+            style: (p.style as PlanetProfile['style']) || 'minimal',
+            lifestyle: (p.lifestyle as PlanetProfile['lifestyle']) || 'solitary',
+            coreThemes: p.coreThemes,
+            contentFragments: [],
+            visual: v,
+            cognitiveAxes: { abstract: p.abstractAxis, introspective: p.introspectiveAxis },
+            emotionalBars: [],
+            createdAt: '',
+            userId: '',
+          }
+        })
+        setNearbyPlanets(mapped)
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setNearbyLoading(false) })
+    return () => { cancelled = true }
+  }, [session])
+
+  // Convert DB communities to GalaxyPreview shape for GalaxyCard
+  const galaxies: GalaxyPreview[] = communities.map((c) => ({
+    id:          c.id,
+    slug:        c.slug,
+    name:        c.name,
+    symbol:      c.symbol,
+    tagline:     c.tagline ?? undefined,
+    keywords:    c.keywords,
+    mood:        (c.mood as GalaxyPreview['mood']) || 'vibrant',
+    memberCount: c.memberCount,
+    maturity:    (c.maturity as GalaxyPreview['maturity']) || 'forming',
+    accentColor: c.accentColor,
+  }))
+
+  const handleJoin = useCallback((slug: string) => {
+    if (!session?.user) {
+      router.push('/sign-up')
+      return
+    }
+    const community = communities.find((c) => c.slug === slug)
+    if (!community) return
+    // Optimistic update
+    setCommunities((prev) => prev.map((c) => c.slug === slug ? { ...c, joined: true } : c))
+    setJoiningSlug(slug)
+    fetch('/api/communities/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ communityId: community.id }),
+    })
+      .then((r) => {
+        if (!r.ok) {
+          setCommunities((prev) => prev.map((c) => c.slug === slug ? { ...c, joined: false } : c))
+        }
+      })
+      .catch(() => {
+        setCommunities((prev) => prev.map((c) => c.slug === slug ? { ...c, joined: false } : c))
+      })
+      .finally(() => setJoiningSlug(null))
+  }, [session, communities, router])
+
+  // -- Landing gate: no local data AND not logged in  -  let user choose sign-in or new scan --
+  if (showLanding && !session?.user && !sessionPending) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--background)' }}>
         <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.10} double />
@@ -207,13 +344,12 @@ export default function UniversePage() {
               <line x1="19%" y1="76%" x2="14%" y2="35%" stroke="rgba(52,211,153,0.6)"  strokeWidth="0.5" strokeDasharray="4 8" />
             </svg>
 
-            {/* Planet dots */}
-            {UNIVERSE_PLANET_POSITIONS.map((pos) => {
-              const planet = getPlanetById(pos.id)
-              if (!planet) return null
+            {/* Planet dots — from DB */}
+            {nearbyPlanets.map((planet, i) => {
+              const pos = UNIVERSE_PLANET_POSITIONS[i % UNIVERSE_PLANET_POSITIONS.length]
               return (
                 <div
-                  key={pos.id}
+                  key={planet.id}
                   className="absolute"
                   style={{
                     left:      `${pos.x}%`,
@@ -232,26 +368,43 @@ export default function UniversePage() {
             })}
           </div>
 
-          {/* Mobile planet grid  -  replaces spatial scatter */}
+          {/* Nearby planets grid (mobile + fallback when few planets for scatter) */}
           <div className="block md:hidden px-4 py-6">
             <p className="text-data-label mb-4 px-2">Nearby planets</p>
-            <div className="grid grid-cols-3 gap-4">
-              {mockPlanets.slice(0, 9).map((planet) => (
-                <div key={planet.id} className="flex justify-center">
-                  <PlanetCard
-                    planet={planet}
-                    size={44}
-                    onClick={() => setSelectedPlanet(planet)}
-                  />
-                </div>
-              ))}
-            </div>
+            {nearbyLoading ? (
+              <div className="grid grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex justify-center">
+                    <div
+                      className="rounded-full animate-pulse"
+                      style={{ width: 44, height: 44, background: 'rgba(167,139,250,0.08)' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : nearbyPlanets.length === 0 ? (
+              <p className="text-xs text-center py-6" style={{ color: 'var(--ghost)' }}>
+                No planets nearby yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {nearbyPlanets.map((planet) => (
+                  <div key={planet.id} className="flex justify-center">
+                    <PlanetCard
+                      planet={planet}
+                      size={44}
+                      onClick={() => setSelectedPlanet(planet)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Explorer CTA  -  shown when user hasn't created a planet */}
-          {userRole === 'explorer' && (
+          {/* Explorer CTA  -  session-aware */}
+          {!sessionPending && (session?.user ? hasActivePlanet !== null : true) && (
             <div
-              className="relative z-20 mx-auto max-w-lg px-6 pb-10 text-center hidden md:block"
+              className="relative z-20 mx-auto max-w-lg px-6 pb-10 text-center"
               style={{ marginTop: '-24px' }}
             >
               <div
@@ -262,14 +415,47 @@ export default function UniversePage() {
                   border:     '1px solid var(--border-soft)',
                 }}
               >
-                <span style={{ color: 'var(--ghost)' }}>Your planet doesn't exist yet.</span>
-                <Link
-                  href="/sbti?next=/create-planet"
-                  className="font-medium transition-colors duration-200"
-                  style={{ color: 'var(--star)', textDecoration: 'none' }}
-                >
-                  Take the soul scan →
-                </Link>
+                {/* Case 3: logged in with active planet → link to my-planet */}
+                {session?.user && hasActivePlanet === true && (
+                  <>
+                    <span style={{ color: 'var(--ghost)' }}>Your planet is live.</span>
+                    <Link
+                      href="/my-planet"
+                      className="font-medium transition-colors duration-200"
+                      style={{ color: 'var(--star)', textDecoration: 'none' }}
+                    >
+                      View my planet →
+                    </Link>
+                  </>
+                )}
+
+                {/* Case 2: logged in, no planet → go to onboarding */}
+                {session?.user && hasActivePlanet === false && (
+                  <>
+                    <span style={{ color: 'var(--ghost)' }}>Your planet doesn't exist yet.</span>
+                    <button
+                      onClick={() => router.push('/create-planet')}
+                      className="font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer"
+                      style={{ color: 'var(--star)' }}
+                    >
+                      Take the soul scan →
+                    </button>
+                  </>
+                )}
+
+                {/* Case 1: not logged in → sign up, then onboarding */}
+                {!session?.user && (
+                  <>
+                    <span style={{ color: 'var(--ghost)' }}>Your planet doesn't exist yet.</span>
+                    <button
+                      onClick={() => router.push('/sign-up?next=/create-planet')}
+                      className="font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer"
+                      style={{ color: 'var(--star)' }}
+                    >
+                      Take the soul scan →
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -303,7 +489,14 @@ export default function UniversePage() {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
             >
               {galaxies.map((g) => (
-                <GalaxyCard key={g.id} galaxy={g} variant="compact" />
+                <GalaxyCard
+                  key={g.id}
+                  galaxy={g}
+                  variant="compact"
+                  joined={communities.find((c) => c.slug === g.slug)?.joined ?? false}
+                  onJoin={() => handleJoin(g.slug)}
+                  joinLoading={joiningSlug === g.slug}
+                />
               ))}
               {/* All galaxies link card */}
               <Link
@@ -334,7 +527,8 @@ export default function UniversePage() {
 
             <div className="divider-glow w-32 mx-auto" />
 
-            {userRole === 'explorer' ? (
+            {/* Not logged in → sign up flow */}
+            {!session?.user && !sessionPending ? (
               <>
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center text-2xl animate-pulse-glow"
@@ -354,7 +548,35 @@ export default function UniversePage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <GlowButton href="/create-planet" variant="primary" className="px-8 py-3">
+                  <GlowButton onClick={() => router.push('/sign-up?next=/create-planet')} variant="primary" className="px-8 py-3">
+                    Begin formation
+                  </GlowButton>
+                  <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
+                    Just drift for now
+                  </GlowButton>
+                </div>
+              </>
+            ) : session?.user && hasActivePlanet === false ? (
+              <>
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-2xl animate-pulse-glow"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(124,58,237,0.3), rgba(99,102,241,0.1))',
+                    boxShadow:  '0 0 0 1px rgba(167,139,250,0.3)',
+                  }}
+                >
+                  ◍
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+                    Your planet doesn't exist yet
+                  </h2>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
+                    Creating your planet is not registration. It's the moment you tell the universe who you are  -  and let the right people find you.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <GlowButton onClick={() => router.push('/create-planet')} variant="primary" className="px-8 py-3">
                     Begin formation
                   </GlowButton>
                   <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
