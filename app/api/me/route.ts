@@ -33,6 +33,6 @@ export async function GET() {
     profile,
     questionnaire,
     planet,
-    communities: communities.map((m) => m.community),
+    communities: communities.map((m: { community: unknown }) => m.community),
   });
 }
