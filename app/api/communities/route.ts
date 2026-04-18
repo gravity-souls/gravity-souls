@@ -21,9 +21,9 @@ export async function GET() {
     }),
   ]);
 
-  const joinedIds = new Set(memberships.map((m) => m.communityId));
+  const joinedIds = new Set(memberships.map((m: { communityId: string }) => m.communityId));
 
-  const result = communities.map((c) => ({
+  const result = communities.map((c: { id: string }) => ({
     ...c,
     joined: joinedIds.has(c.id),
   }));
