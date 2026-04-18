@@ -3,7 +3,6 @@ import type {
   OrbitMatch, OrbitReasonKey, OrbitColor, MatchDimensions,
   RelationshipType, ResonanceSession,
 } from '@/types/match'
-import { mockPlanets } from '@/lib/mock-planets'
 
 // --- Scoring weights ----------------------------------------------------------
 
@@ -90,7 +89,7 @@ function scorePair(source: PlanetProfile, candidate: PlanetProfile): ScoredPlane
  */
 export function getResonanceMatches(
   source: PlanetProfile,
-  candidates: PlanetProfile[] = mockPlanets,
+  candidates: PlanetProfile[],
   limit = 4,
 ): ResonancePlanet[] {
   return candidates
@@ -108,16 +107,6 @@ export function getResonanceMatches(
       strength:      score,
       tagline:       planet.tagline,
     }))
-}
-
-/**
- * Convenience helper: returns top resonances from the full mock pool
- * without needing a user-created planet (used on /stream for demo).
- */
-export function getTopResonances(sourceId: string, limit = 4): ResonancePlanet[] {
-  const source = mockPlanets.find((p) => p.id === sourceId)
-  if (!source) return []
-  return getResonanceMatches(source, mockPlanets, limit)
 }
 
 // --- Rich orbit match builder -------------------------------------------------
@@ -270,7 +259,7 @@ function deriveSuggestedTypes(
  */
 export function buildOrbitMatches(
   source: PlanetProfile,
-  candidates: PlanetProfile[] = mockPlanets,
+  candidates: PlanetProfile[],
   limit = 5,
 ): OrbitMatch[] {
   return candidates
@@ -316,7 +305,7 @@ export function buildOrbitMatches(
  */
 export function buildResonanceSession(
   source: PlanetProfile,
-  candidates: PlanetProfile[] = mockPlanets,
+  candidates: PlanetProfile[],
 ): ResonanceSession {
   return {
     sourcePlanetId: source.id,

@@ -9,8 +9,6 @@ import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
 import { buildResonanceSession } from '@/lib/match'
-import { mockResonanceSession } from '@/lib/mock-resonance'
-import { mockPlanets } from '@/lib/mock-planets'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
@@ -96,12 +94,32 @@ export default function ResonancePage() {
     setMyPlanet(p)
 
     if (p) {
-      // If viewer planet is p-aelion, use hand-crafted session for richer narrative
-      if (p.id === 'p-aelion') {
-        setSession(mockResonanceSession)
-      } else {
-        setSession(buildResonanceSession(p, mockPlanets))
-      }
+      // Fetch real planets for resonance session
+      fetch('/api/planets')
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data: Record<string, unknown>[]) => {
+          const planets = data.map((d) => ({
+            id: d.id as string,
+            name: (d.name as string) || 'Unknown',
+            avatarSymbol: (d.avatarSymbol as string) || '?',
+            tagline: (d.tagline as string) ?? undefined,
+            role: 'resonator' as const,
+            mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
+            style: (d.style as PlanetProfile['style']) ?? 'minimal',
+            lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+            coreThemes: (d.coreThemes as string[]) ?? [],
+            contentFragments: (d.contentFragments as string[]) ?? [],
+            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+            cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
+            emotionalBars: [],
+            createdAt: (d.createdAt as string) ?? new Date().toISOString(),
+            userId: (d.userId as string) ?? '',
+          } as PlanetProfile))
+          if (planets.length > 0) {
+            setSession(buildResonanceSession(p, planets))
+          }
+        })
+        .catch(() => { /* no session */ })
     }
   }, [])
 

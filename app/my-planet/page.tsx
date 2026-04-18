@@ -16,7 +16,6 @@ import ResonanceMap from '@/components/planet/ResonanceMap'
 import { TYPE_COLORS } from '@/lib/sbti-data'
 import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
-import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
 
 const emptySubscribe = () => () => {}
@@ -247,7 +246,33 @@ export default function MyPlanetPage() {
 
       if (p) {
         setPlanet(p)
-        setResonances(getResonanceMatches(p, mockPlanets, 4))
+
+        // Fetch real planets for resonance map
+        try {
+          const planetsRes = await fetch('/api/planets')
+          if (planetsRes.ok) {
+            const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map((data: Record<string, unknown>) => ({
+              id: data.id as string,
+              name: (data.name as string) || 'Unknown',
+              avatarSymbol: (data.avatarSymbol as string) || '?',
+              tagline: (data.tagline as string) ?? undefined,
+              role: 'resonator' as const,
+              mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+              style: (data.style as PlanetProfile['style']) ?? 'minimal',
+              lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+              coreThemes: (data.coreThemes as string[]) ?? [],
+              contentFragments: (data.contentFragments as string[]) ?? [],
+              visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+              cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
+              emotionalBars: [],
+              createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+              userId: (data.userId as string) ?? '',
+            } as PlanetProfile))
+            setResonances(getResonanceMatches(p, allPlanets, 4))
+          }
+        } catch {
+          // Fallback: empty resonances
+        }
       }
 
       setLoading(false)

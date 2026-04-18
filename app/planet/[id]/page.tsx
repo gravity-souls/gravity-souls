@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -18,7 +18,6 @@ import ExplorationTracePanel from '@/components/planet/ExplorationTracePanel'
 import ProfileLayerSection from '@/components/planet/ProfileLayerSection'
 import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeCloud } from '@/components/planet/PlanetModules'
 import ResonanceMap from '@/components/planet/ResonanceMap'
-import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
 import { getResonanceMatches } from '@/lib/match'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
@@ -147,40 +146,159 @@ function FogVeil({
   )
 }
 
+// --- Send signal button (starts a conversation) ----------------------------
+
+function SendSignalButton({ planet }: { planet: PlanetProfile }) {
+  const router = useRouter()
+  const [sending, setSending] = useState(false)
+
+  async function handleSend() {
+    setSending(true)
+    try {
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: planet.userId,
+          message: `First signal to ${planet.name}`,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        router.push(`/messages/${data.conversationId}`)
+      }
+    } catch { /* ignore */ }
+    setSending(false)
+  }
+
+  return (
+    <GlowButton
+      variant="primary"
+      className="py-3 text-sm"
+      onClick={handleSend}
+      disabled={sending}
+    >
+      {sending ? 'Sending signal...' : 'Send signal'}
+    </GlowButton>
+  )
+}
+
+// --- Helper: convert DB planet to PlanetProfile ------------------------------
+
+function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
+  return {
+    id: data.id as string,
+    name: (data.name as string) || 'Unknown',
+    avatarSymbol: (data.avatarSymbol as string) || '?',
+    tagline: (data.tagline as string) ?? undefined,
+    role: 'resonator',
+    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+    style: (data.style as PlanetProfile['style']) ?? 'minimal',
+    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+    coreThemes: (data.coreThemes as string[]) ?? [],
+    contentFragments: (data.contentFragments as string[]) ?? [],
+    visual: (data.visual as PlanetProfile['visual']) ?? {
+      coreColor: '#a78bfa', accentColor: '#c4b5fd',
+      ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
+      satelliteCount: 1, size: 'lg' as const,
+    },
+    cognitiveAxes: {
+      abstract: (data.abstractAxis as number) ?? 50,
+      introspective: (data.introspectiveAxis as number) ?? 50,
+    },
+    emotionalBars: [],
+    location: (data.location as string) ?? undefined,
+    languages: (data.languages as string[]) ?? [],
+    culturalTags: (data.culturalTags as string[]) ?? [],
+    travelCities: (data.travelCities as string[]) ?? [],
+    musicTaste: (data.musicTaste as string[]) ?? [],
+    bookTaste: (data.bookTaste as string[]) ?? [],
+    filmTaste: (data.filmTaste as string[]) ?? [],
+    communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
+    matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+    userId: (data.userId as string) ?? '',
+  }
+}
+
 // --- Page inner ---------------------------------------------------------------
 
 function PlanetPageInner() {
   const params = useParams()
   const id = params?.id as string
 
-  const [viewerRole, setViewerRole]   = useState<'self' | 'explorer' | 'resonator'>('explorer')
-  const [myMatch, setMyMatch]         = useState<ResonancePlanet | null>(null)
+  const [planet, setPlanet]             = useState<PlanetProfile | null>(null)
+  const [loading, setLoading]           = useState(true)
+  const [viewerRole, setViewerRole]     = useState<'self' | 'explorer' | 'resonator'>('explorer')
+  const [myMatch, setMyMatch]           = useState<ResonancePlanet | null>(null)
   const [viewerPlanet, setViewerPlanet] = useState<PlanetProfile | null>(null)
-
-  const planet = getPlanetById(id)
+  const [resonances, setResonances]     = useState<ResonancePlanet[]>([])
 
   useEffect(() => {
-    const role      = getUserRole()
-    const myPlanet  = getPlanetProfile()
-    setViewerPlanet(myPlanet)
+    async function load() {
+      // Fetch the planet from API
+      let p: PlanetProfile | null = null
+      try {
+        const res = await fetch(`/api/planets/${id}`)
+        if (res.ok) {
+          const data = await res.json()
+          p = dbPlanetToProfile(data)
+        }
+      } catch { /* ignore */ }
 
-    // Detect self-view
-    if (myPlanet && myPlanet.id === id) {
-      setViewerRole('self')
-      return
-    }
+      setPlanet(p)
+      setLoading(false)
 
-    if (role === 'resonator') {
-      setViewerRole('resonator')
-      // Compute match reason against viewed planet
-      if (myPlanet && planet) {
-        const matches = getResonanceMatches(myPlanet, [planet], 1)
-        if (matches.length > 0) setMyMatch(matches[0])
+      if (!p) return
+
+      const role     = getUserRole()
+      const myPlanet = getPlanetProfile()
+      setViewerPlanet(myPlanet)
+
+      // Also try fetching my planet from API for self-detection
+      let myPlanetId: string | null = myPlanet?.id ?? null
+      let myData: Record<string, unknown> | null = null
+      try {
+        const myRes = await fetch('/api/my-planet')
+        if (myRes.ok) {
+          myData = await myRes.json()
+          myPlanetId = myData!.id as string
+          if (!myPlanet) {
+            setViewerPlanet(dbPlanetToProfile(myData!))
+          }
+        }
+      } catch { /* ignore */ }
+
+      if (myPlanetId === id) {
+        setViewerRole('self')
+      } else if (role === 'resonator' || myPlanetId) {
+        setViewerRole('resonator')
+        const vp = myPlanet ?? (myPlanetId ? dbPlanetToProfile(myData!) : null)
+        if (vp) {
+          const matches = getResonanceMatches(vp, [p], 1)
+          if (matches.length > 0) setMyMatch(matches[0])
+        }
+      } else {
+        setViewerRole('explorer')
       }
-    } else {
-      setViewerRole('explorer')
+
+      // Fetch other planets for resonance map
+      try {
+        const planetsRes = await fetch('/api/planets')
+        if (planetsRes.ok) {
+          const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map(dbPlanetToProfile)
+          const reso = getResonanceMatches(p, allPlanets, 4)
+          setResonances(reso)
+        }
+      } catch { /* ignore */ }
     }
-  }, [id, planet])
+
+    load()
+  }, [id])
+
+  if (loading) {
+    return <PlanetLoading />
+  }
 
   if (!planet) {
     return (
@@ -197,7 +315,6 @@ function PlanetPageInner() {
   }
 
   const { visual } = planet
-  const resonances  = getResonanceMatches(planet, mockPlanets, 4)
   const isResonator = viewerRole === 'resonator'
   const isSelf      = viewerRole === 'self'
 
@@ -402,9 +519,12 @@ function PlanetPageInner() {
 
         {/* -- Footer navigation ------------------------------------------ */}
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 mt-4 border-t border-[rgba(167,139,250,0.07)]">
-          <GlowButton href="/stream" variant="secondary" className="py-3 text-sm">
-            Back to stream
+          <GlowButton href="/discover" variant="secondary" className="py-3 text-sm">
+            Back to discover
           </GlowButton>
+          {!isSelf && isResonator && (
+            <SendSignalButton planet={planet} />
+          )}
           {!isSelf && (
             <GlowButton href="/my-planet" variant="ghost" className="py-3 text-sm">
               View my planet

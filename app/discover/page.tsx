@@ -1,167 +1,184 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import AppShell from '@/components/layout/AppShell'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
-import ResonanceLine from '@/components/ui/ResonanceLine'
 import Tag from '@/components/ui/Tag'
 import LightCone from '@/components/fx/LightCone'
-import { matchedUniverses, toneColor, type MatchType } from '@/lib/mock-data'
-import type { Universe } from '@/types/universe'
-import { useLanguage } from '@/contexts/language-context'
-import { t } from '@/lib/translations'
+import EmptyState from '@/components/ui/EmptyState'
+import PlanetVisual from '@/components/planet/PlanetVisual'
+import type { PlanetProfile } from '@/types/planet'
+import { getResonanceMatches } from '@/lib/match'
+import { buildPlanetFromDraft } from '@/lib/planet-builder'
+import { getPlanetProfile, getOrCreateUserId } from '@/lib/user'
 
-// --- Section config -----------------------------------------------------------
+// --- Helper: convert DB planet to PlanetProfile for matching engine ----------
 
-const sectionConfig: Record<
-  MatchType,
-  { label: string; sublabel: string; accentColor: string; scoreGradient: string }
-> = {
-  similar: {
-    label:         'Similar',
-    sublabel:      'Universes that resonate with your core frequency',
-    accentColor:   '#818cf8',
-    scoreGradient: 'linear-gradient(90deg, #6366f1, #a78bfa)',
-  },
-  complementary: {
-    label:         'Complementary',
-    sublabel:      'Universes that carry what you hold in reserve',
-    accentColor:   '#34d399',
-    scoreGradient: 'linear-gradient(90deg, #059669, #34d399)',
-  },
-  distant: {
-    label:         'Distant',
-    sublabel:      'Far orbit  -  a different kind of mirror',
-    accentColor:   '#fbbf24',
-    scoreGradient: 'linear-gradient(90deg, #d97706, #fbbf24)',
-  },
+function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
+  return {
+    id: data.id as string,
+    name: (data.name as string) || 'Unknown',
+    avatarSymbol: (data.avatarSymbol as string) || '?',
+    tagline: (data.tagline as string) ?? undefined,
+    role: 'resonator',
+    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+    style: (data.style as PlanetProfile['style']) ?? 'minimal',
+    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+    coreThemes: (data.coreThemes as string[]) ?? [],
+    contentFragments: (data.contentFragments as string[]) ?? [],
+    visual: (data.visual as PlanetProfile['visual']) ?? {
+      coreColor: '#a78bfa',
+      accentColor: '#c4b5fd',
+      ringStyle: 'single' as const,
+      surfaceStyle: 'smooth' as const,
+      satelliteCount: 1,
+      size: 'lg' as const,
+    },
+    cognitiveAxes: {
+      abstract: (data.abstractAxis as number) ?? 50,
+      introspective: (data.introspectiveAxis as number) ?? 50,
+    },
+    emotionalBars: [],
+    location: (data.location as string) ?? undefined,
+    languages: (data.languages as string[]) ?? [],
+    culturalTags: (data.culturalTags as string[]) ?? [],
+    travelCities: (data.travelCities as string[]) ?? [],
+    musicTaste: (data.musicTaste as string[]) ?? [],
+    bookTaste: (data.bookTaste as string[]) ?? [],
+    filmTaste: (data.filmTaste as string[]) ?? [],
+    communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
+    matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+    userId: (data.userId as string) ?? '',
+  }
 }
 
-const ORDER: MatchType[] = ['similar', 'complementary', 'distant']
+// --- Resonance bar -----------------------------------------------------------
 
-const grouped = ORDER.reduce<Record<MatchType, Universe[]>>(
-  (acc, type) => ({ ...acc, [type]: matchedUniverses.filter((u) => u.matchType === type) }),
-  { similar: [], complementary: [], distant: [] },
-)
-
-// --- ResonanceBar -------------------------------------------------------------
-
-function ResonanceBar({ score, gradient }: { score: number; gradient: string }) {
-  const labelColor = gradient.includes('6366f1') ? '#818cf8'
-    : gradient.includes('059669') ? '#34d399'
-    : '#fbbf24'
+function ResonanceBar({ score, color }: { score: number; color: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-px rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
         <div
-          className="h-full rounded-full"
-          style={{ width: `${score}%`, background: gradient, transition: 'width 0.8s ease' }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.min(score, 100)}%`, background: color }}
         />
       </div>
-      <span className="shrink-0 text-xs font-semibold tabular-nums" style={{ color: labelColor }}>
+      <span className="shrink-0 text-xs font-semibold tabular-nums" style={{ color }}>
         {score}%
       </span>
     </div>
   )
 }
 
-// --- Universe match card ------------------------------------------------------
+// --- Planet card for discover ------------------------------------------------
 
-function UniverseCard({ universe, cfg }: { universe: Universe; cfg: typeof sectionConfig.similar }) {
-  const symbolColor = toneColor[universe.emotionTone]
+function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: number }) {
+  const color = planet.visual?.coreColor ?? '#a78bfa'
 
   return (
-    <OrbitCard
-      hoverable
-      lift
-      glowColor={cfg.accentColor}
-      className="flex flex-col gap-5 p-6"
-    >
-      {/* Top row: symbol orb + name */}
-      <div className="flex items-start gap-4">
-        <div
-          className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center"
-          style={{
-            background: `radial-gradient(circle at 38% 32%, ${symbolColor}38, ${symbolColor}10)`,
-            boxShadow: `0 0 0 1px ${symbolColor}28, 0 0 18px ${symbolColor}20`,
-          }}
-        >
-          <span
-            className="text-xl leading-none select-none"
-            style={{ color: symbolColor, textShadow: `0 0 12px ${symbolColor}aa` }}
-          >
-            {universe.avatarSymbol}
-          </span>
+    <Link href={`/planet/${planet.id}`}>
+      <OrbitCard hoverable lift glowColor={color} className="flex flex-col gap-4 p-5">
+        <div className="flex items-start gap-4">
+          <div className="shrink-0 w-12 h-12">
+            <PlanetVisual visual={planet.visual} symbol={planet.avatarSymbol} />
+          </div>
+          <div className="flex flex-col gap-1 min-w-0">
+            <h3 className="text-base font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
+              {planet.name}
+            </h3>
+            {planet.tagline && (
+              <p className="text-xs italic leading-snug truncate" style={{ color: 'var(--ink)', opacity: 0.65 }}>
+                &ldquo;{planet.tagline}&rdquo;
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="text-base font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
-            {universe.name}
-          </h3>
-          {universe.tagline && (
-            <p className="text-xs italic leading-snug truncate" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-              &ldquo;{universe.tagline}&rdquo;
-            </p>
-          )}
-        </div>
-      </div>
+        {planet.coreThemes.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {planet.coreThemes.slice(0, 5).map((theme) => (
+              <Tag key={theme} label={theme} variant="dim" />
+            ))}
+          </div>
+        )}
 
-      {/* Summary */}
-      {universe.summary && (
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
-          {universe.summary}
-        </p>
-      )}
-
-      {/* Core themes */}
-      <div className="flex flex-wrap gap-1.5">
-        {universe.coreThemes.map((theme) => (
-          <Tag key={theme} label={theme} variant="dim" />
-        ))}
-      </div>
-
-      {/* Resonance reason */}
-      <div
-        className="rounded-xl p-4 flex flex-col gap-2"
-        style={{
-          background: `${cfg.accentColor}0c`,
-          borderLeft: `2px solid ${cfg.accentColor}55`,
-          backdropFilter: 'blur(6px)',
-        }}
-      >
-        <span
-          className="text-xs tracking-widest uppercase"
-          style={{ color: cfg.accentColor, opacity: 0.6 }}
-        >
-          Why you resonate
-        </span>
-        <p className="text-sm leading-relaxed italic" style={{ color: 'var(--ink)', opacity: 0.75 }}>
-          {universe.resonanceReason}
-        </p>
-      </div>
-
-      {/* Score bar */}
-      {universe.resonanceScore !== undefined && (
-        <ResonanceBar score={universe.resonanceScore} gradient={cfg.scoreGradient} />
-      )}
-    </OrbitCard>
+        <ResonanceBar score={score} color={color} />
+      </OrbitCard>
+    </Link>
   )
 }
 
-// --- Page ---------------------------------------------------------------------
+// --- Page --------------------------------------------------------------------
 
 export default function DiscoverPage() {
-  const { lang } = useLanguage()
+  const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
+  const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function load() {
+      // Load my planet first (from API or localStorage)
+      let mine: PlanetProfile | null = null
+      try {
+        const res = await fetch('/api/my-planet')
+        if (res.ok) {
+          const data = await res.json()
+          mine = dbPlanetToProfile(data)
+        }
+      } catch { /* ignore */ }
+
+      if (!mine) {
+        mine = getPlanetProfile()
+      }
+      if (!mine) {
+        const uid = getOrCreateUserId()
+        const { INITIAL_DRAFT } = await import('@/types/creation')
+        mine = buildPlanetFromDraft(INITIAL_DRAFT, uid)
+      }
+      setMyPlanet(mine)
+
+      // Load other planets from DB
+      try {
+        const res = await fetch('/api/planets')
+        if (res.ok) {
+          const data = await res.json()
+          const planets = (data as Record<string, unknown>[]).map(dbPlanetToProfile)
+          setOtherPlanets(planets)
+        } else if (res.status === 401) {
+          setError('Sign in to discover other planets')
+        }
+      } catch {
+        setError('Failed to load planets')
+      }
+
+      setLoading(false)
+    }
+
+    load()
+  }, [])
+
+  // Score and sort planets by resonance
+  const scored = myPlanet
+    ? otherPlanets
+        .map((p) => {
+          const matches = getResonanceMatches(myPlanet, [p], 1)
+          return { planet: p, score: matches[0]?.strength ?? 0 }
+        })
+        .sort((a, b) => b.score - a.score)
+    : otherPlanets.map((p) => ({ planet: p, score: 0 }))
 
   return (
-    <div className="min-h-screen px-6 pt-8 pb-16 max-w-4xl mx-auto">
-
-      {/* Subtle left-edge light cone */}
+    <AppShell>
       <LightCone origin="top-left" color="rgba(129,140,248,1)" opacity={0.07} double={false} />
 
-      <div className="relative z-10 flex flex-col gap-14 animate-fade-up">
+      <div className="relative z-10 px-4 sm:px-6 pt-8 pb-16 max-w-4xl mx-auto">
 
-        {/* -- Page header ------------------------------------------------- */}
-        <div className="flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex flex-col gap-3 mb-10">
           <span
             className="text-xs font-medium tracking-[0.3em] uppercase"
             style={{ color: 'var(--star)', opacity: 0.6 }}
@@ -169,94 +186,49 @@ export default function DiscoverPage() {
             Resonance map
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
-            {t(lang, 'discover.title').split('Velaris-9').map((part, i) => (
-              <span key={i}>
-                {part}
-                {i === 0 && <span className="text-gradient">Velaris-9</span>}
-              </span>
-            ))}
+            Discover planets
           </h1>
           <p className="text-sm max-w-lg leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
-            {t(lang, 'discover.subtitle')}
+            Planets in your gravitational field, ranked by resonance strength.
           </p>
         </div>
 
-        {/* -- Grouped sections ------------------------------------------- */}
-        {ORDER.map((type, sectionIdx) => {
-          const universes = grouped[type]
-          if (universes.length === 0) return null
-          const cfg = sectionConfig[type]
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <div
+              className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'var(--star)', borderTopColor: 'transparent' }}
+            />
+          </div>
+        )}
 
-          return (
-            <section key={type} className="flex flex-col gap-5">
+        {error && (
+          <EmptyState
+            symbol="&#9676;"
+            title="Cannot discover"
+            subtitle={error}
+            action={<GlowButton href="/sign-in" variant="primary">Sign in</GlowButton>}
+            className="mt-8"
+          />
+        )}
 
-              {/* ResonanceLine above each section (skip the first) */}
-              {sectionIdx > 0 && (
-                <div className="-mt-6 mb-2">
-                  <ResonanceLine matchType={type} strength={65} />
-                </div>
-              )}
+        {!loading && !error && scored.length === 0 && (
+          <EmptyState
+            symbol="&#9676;"
+            title="Empty cosmos"
+            subtitle="No other planets have formed yet. You are the first explorer in this region."
+            className="mt-8"
+          />
+        )}
 
-              {/* Section header */}
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs font-bold tracking-[0.25em] uppercase"
-                      style={{ color: cfg.accentColor }}
-                    >
-                      {cfg.label}
-                    </span>
-                    {/* Pulsing dot */}
-                    <span
-                      className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
-                      style={{
-                        background: cfg.accentColor,
-                        boxShadow: `0 0 8px ${cfg.accentColor}`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-                    {cfg.sublabel}
-                  </p>
-                </div>
-
-                {/* Section divider beam */}
-                <div
-                  className="flex-1 h-px"
-                  style={{
-                    background: `linear-gradient(90deg, ${cfg.accentColor}38, transparent)`,
-                    boxShadow: `0 0 6px ${cfg.accentColor}18`,
-                  }}
-                />
-              </div>
-
-              {/* Cards  -  2-col for similar/complementary, 1-col for distant */}
-              <div
-                className={
-                  universes.length > 1
-                    ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
-                    : 'grid grid-cols-1 gap-4'
-                }
-              >
-                {universes.map((universe) => (
-                  <UniverseCard key={universe.id} universe={universe} cfg={cfg} />
-                ))}
-              </div>
-            </section>
-          )
-        })}
-
-        {/* -- Footer CTA -------------------------------------------------- */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-[rgba(167,139,250,0.08)]">
-          <GlowButton href="/create-universe" variant="primary" className="py-4 text-sm">
-            Create your own universe
-          </GlowButton>
-          <GlowButton href="/universe/demo" variant="secondary" className="py-4 text-sm">
-            View demo profile
-          </GlowButton>
-        </div>
+        {!loading && !error && scored.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {scored.map(({ planet, score }) => (
+              <DiscoverPlanetCard key={planet.id} planet={planet} score={score} />
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </AppShell>
   )
 }

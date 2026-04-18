@@ -25,6 +25,9 @@ model user {
   matchesA Match[] @relation("matchA")
   matchesB Match[] @relation("matchB")
   memberships CommunityMembership[]
+  conversationsA ConversationThread[] @relation("convUserA")
+  conversationsB ConversationThread[] @relation("convUserB")
+  sentMessages   DirectMessage[]
 }
 
 model Session {
@@ -214,4 +217,40 @@ model CommunityMembership {
 
   @@unique([userId, communityId])
   @@map("community_membership")
+}
+
+// --- Messaging ---------------------------------------------------------------
+
+model ConversationThread {
+  id             String   @id @default(cuid())
+  userAId        String
+  userBId        String
+  userA          user     @relation("convUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB          user     @relation("convUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  lastMessageAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages       DirectMessage[]
+
+  @@unique([userAId, userBId])
+  @@map("conversation_thread")
+}
+
+model DirectMessage {
+  id               String   @id @default(cuid())
+  conversationId   String
+  conversation     ConversationThread @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId         String
+  sender           user     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content          String
+  type             String   @default("text")
+  readAt           DateTime?
+
+  createdAt        DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("direct_message")
 }

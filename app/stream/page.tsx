@@ -1,12 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LightCone from '@/components/fx/LightCone'
 import PlanetVisual from '@/components/planet/PlanetVisual'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
-import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile } from '@/types/planet'
+
+// --- Helper: convert DB planet to PlanetProfile ------------------------------
+
+function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
+  return {
+    id: data.id as string,
+    name: (data.name as string) || 'Unknown',
+    avatarSymbol: (data.avatarSymbol as string) || '?',
+    tagline: (data.tagline as string) ?? undefined,
+    role: 'resonator',
+    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+    style: (data.style as PlanetProfile['style']) ?? 'minimal',
+    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+    coreThemes: (data.coreThemes as string[]) ?? [],
+    contentFragments: (data.contentFragments as string[]) ?? [],
+    visual: (data.visual as PlanetProfile['visual']) ?? {
+      coreColor: '#a78bfa', accentColor: '#c4b5fd',
+      ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
+      satelliteCount: 1, size: 'lg' as const,
+    },
+    cognitiveAxes: {
+      abstract: (data.abstractAxis as number) ?? 50,
+      introspective: (data.introspectiveAxis as number) ?? 50,
+    },
+    emotionalBars: [],
+    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+    userId: (data.userId as string) ?? '',
+  }
+}
 
 // --- Planet stream card -------------------------------------------------------
 
@@ -94,6 +123,19 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
 // --- Page ---------------------------------------------------------------------
 
 export default function StreamPage() {
+  const [planets, setPlanets] = useState<PlanetProfile[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/planets')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: Record<string, unknown>[]) => {
+        setPlanets(data.map(dbPlanetToProfile))
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
   return (
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-6xl mx-auto">
@@ -112,17 +154,36 @@ export default function StreamPage() {
           {/* -- Stream divider ------------------------------------------ */}
           <div className="divider-glow" />
 
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <div
+                className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: 'var(--star)', borderTopColor: 'transparent' }}
+              />
+            </div>
+          )}
+
+          {!loading && planets.length === 0 && (
+            <p className="text-center text-sm py-20" style={{ color: 'var(--ghost)' }}>
+              No planets have formed yet. Be the first to create one.
+            </p>
+          )}
+
           {/* -- Planet grid --------------------------------------------- */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {mockPlanets.map((planet, i) => (
-              <StreamCard key={planet.id} planet={planet} index={i} />
-            ))}
-          </div>
+          {!loading && planets.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {planets.map((planet, i) => (
+                <StreamCard key={planet.id} planet={planet} index={i} />
+              ))}
+            </div>
+          )}
 
           {/* -- Footer note --------------------------------------------- */}
-          <p className="text-center text-xs" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-            {mockPlanets.length} planets mapped · resonance updated in real-time
-          </p>
+          {!loading && planets.length > 0 && (
+            <p className="text-center text-xs" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
+              {planets.length} planet{planets.length !== 1 ? 's' : ''} mapped
+            </p>
+          )}
         </div>
       </div>
     </AppShell>
