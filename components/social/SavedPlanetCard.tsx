@@ -8,7 +8,7 @@ import { unsavePlanetId } from '@/lib/social-storage'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
 
-// ─── SavedPlanetCard ──────────────────────────────────────────────────────────
+// --- SavedPlanetCard ----------------------------------------------------------
 
 interface Props {
   saved:       SavedPlanet

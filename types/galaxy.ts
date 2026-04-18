@@ -1,4 +1,4 @@
-// ─── Galaxy — keyword-based community cluster ──────────────────────────────
+// --- Galaxy  -  keyword-based community cluster ------------------------------
 //
 // A Galaxy is a thematic social cluster built around keywords / interests.
 // Users can join, browse, and contribute to galaxies.
@@ -40,7 +40,7 @@ export interface Galaxy {
   updatedAt:   string
 }
 
-// ─── Galaxy preview (used in cards, lists) ─────────────────────────────────
+// --- Galaxy preview (used in cards, lists) ---------------------------------
 
 export interface GalaxyPreview {
   id:          string

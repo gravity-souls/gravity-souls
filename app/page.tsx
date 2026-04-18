@@ -14,30 +14,30 @@ import { getGalaxyPreviews } from '@/lib/mock-galaxies'
 import { getPlanetProfile, getSbtiResult, getUserRole } from '@/lib/user'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Universe field: planet positions (% within the field container) ─────────
+// --- Universe field: planet positions (% within the field container) ---------
 // Grouped near their thematic galaxy zones.
 
 const UNIVERSE_PLANET_POSITIONS = [
-  // Zone 1 — contemplative cluster (top-left: introspection, slow thought)
+  // Zone 1  -  contemplative cluster (top-left: introspection, slow thought)
   { id: 'p-aelion',   x: 11, y: 18 },
   { id: 'p-noctaris', x: 22, y: 42 },
   { id: 'p-vaelith',  x:  6, y: 60 },
-  // Zone 2 — technical cluster (top-right: systems, building)
+  // Zone 2  -  technical cluster (top-right: systems, building)
   { id: 'p-kindus',   x: 70, y: 12 },
   { id: 'p-novaxis',  x: 80, y: 34 },
   { id: 'p-spirax',   x: 63, y: 50 },
-  // Zone 3 — emotional/warm cluster (center-bottom)
+  // Zone 3  -  emotional/warm cluster (center-bottom)
   { id: 'p-elarith',  x: 44, y: 58 },
   { id: 'p-orbalin',  x: 55, y: 74 },
   { id: 'p-calenvix', x: 36, y: 80 },
-  // Zone 4 — nomadic/wandering cluster (bottom edges)
+  // Zone 4  -  nomadic/wandering cluster (bottom edges)
   { id: 'p-driftan',  x: 17, y: 78 },
   { id: 'p-lumira',   x: 72, y: 72 },
   // Free-drifting
   { id: 'p-sorvae',   x: 42, y: 22 },
 ]
 
-// ─── Nebula zones — thematic atmospheric clusters ────────────────────────────
+// --- Nebula zones  -  thematic atmospheric clusters ----------------------------
 
 const NEBULA_ZONES = [
   { id: 'contemplative', label: '孤独 / 内省', x: 14, y: 35, color: '#a78bfa', size: 340, galaxySlug: 'slow-thinkers' },
@@ -46,11 +46,12 @@ const NEBULA_ZONES = [
   { id: 'wandering',     label: '流浪 / 边界', x: 19, y: 76, color: '#34d399', size: 240, galaxySlug: 'threshold-states' },
 ]
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// --- Page --------------------------------------------------------------------
 
 export default function UniversePage() {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
+  const [showLanding, setShowLanding] = useState(false)
 
   useEffect(() => {
     setUserRole(getUserRole())
@@ -59,38 +60,88 @@ export default function UniversePage() {
     const hasSbti = !!getSbtiResult()
 
     if (!hasPlanet && !hasSbti) {
-      window.location.replace('/sbti?next=/create-planet')
+      setShowLanding(true)
     }
   }, [])
 
   const galaxies = getGalaxyPreviews()
 
+  // -- Landing gate: no local data  -  let user choose sign-in or new scan --
+  if (showLanding) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--background)' }}>
+        <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.10} double />
+
+        <div className="relative z-10 flex flex-col items-center gap-6 max-w-md">
+          {/* Decorative orb */}
+          <div
+            className="w-20 h-20 rounded-full animate-pulse-glow"
+            style={{
+              background: 'radial-gradient(circle, rgba(124,58,237,0.4) 0%, rgba(124,58,237,0.08) 70%, transparent 100%)',
+              boxShadow: '0 0 40px rgba(167,139,250,0.2)',
+            }}
+            aria-hidden="true"
+          />
+
+          <h1
+            className="text-3xl sm:text-4xl font-bold"
+            style={{
+              background: 'linear-gradient(135deg, #e8e0ff 0%, var(--star) 60%, var(--aurora) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            Gravity-Souls
+          </h1>
+
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
+            A universe shaped by personality. Take a soul scan to create your planet  -  or sign in if you already have one.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-2 w-full sm:w-auto">
+            <GlowButton href="/sbti?next=/create-planet" variant="primary" className="px-8 py-3.5 text-sm w-full sm:w-auto">
+              Begin Soul Scan
+            </GlowButton>
+            <GlowButton href="/sign-in" variant="secondary" className="px-8 py-3.5 text-sm w-full sm:w-auto">
+              Sign in
+            </GlowButton>
+          </div>
+
+          <p className="text-xs mt-4" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
+            Already have an account? Sign in to recover your planet.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <>
       <div className="flex flex-col">
 
-        {/* ── Atmospheric light cone ──────────────────────────────────────── */}
+        {/* -- Atmospheric light cone ---------------------------------------- */}
         <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.10} double />
         <LightCone origin="top-right"  color="rgba(99,102,241,1)"  opacity={0.05} double={false} />
 
-        {/* ═══════════════════════════════════════════════════════════════
-            SECTION 1 — Universe Entry (search + universe field)
-        ═══════════════════════════════════════════════════════════════ */}
+        {/* ===============================================================
+            SECTION 1  -  Universe Entry (search + universe field)
+        =============================================================== */}
         <section className="relative" style={{ minHeight: '100vh' }}>
 
-          {/* Search zone — sits above the field */}
+          {/* Search zone  -  sits above the field */}
           <div className="relative z-20 px-6 pt-10 pb-6 max-w-2xl mx-auto">
             <p className="text-eyebrow mb-5 text-center">Universe</p>
             <UniverseSearch onPlanetSelect={setSelectedPlanet} />
           </div>
 
-          {/* ── Universe field ─────────────────────────────────────────── */}
+          {/* -- Universe field ------------------------------------------- */}
           {/* Desktop: spatial scatter with absolute % positioning        */}
           {/* Mobile: hidden in favor of the stream section below         */}
           <div
             className="relative hidden md:block"
             style={{ height: '68vh', marginTop: 8 }}
-            aria-label="Universe field — explore planets and galaxy clusters"
+            aria-label="Universe field  -  explore planets and galaxy clusters"
           >
             {/* Nebula zone atmospheric blobs */}
             {NEBULA_ZONES.map((zone) => (
@@ -111,7 +162,7 @@ export default function UniversePage() {
               />
             ))}
 
-            {/* Galaxy zone labels — clickable links */}
+            {/* Galaxy zone labels  -  clickable links */}
             {NEBULA_ZONES.map((zone) => (
               <Link
                 key={zone.id + '-label'}
@@ -181,7 +232,7 @@ export default function UniversePage() {
             })}
           </div>
 
-          {/* Mobile planet grid — replaces spatial scatter */}
+          {/* Mobile planet grid  -  replaces spatial scatter */}
           <div className="block md:hidden px-4 py-6">
             <p className="text-data-label mb-4 px-2">Nearby planets</p>
             <div className="grid grid-cols-3 gap-4">
@@ -197,7 +248,7 @@ export default function UniversePage() {
             </div>
           </div>
 
-          {/* Explorer CTA — shown when user hasn't created a planet */}
+          {/* Explorer CTA  -  shown when user hasn't created a planet */}
           {userRole === 'explorer' && (
             <div
               className="relative z-20 mx-auto max-w-lg px-6 pb-10 text-center hidden md:block"
@@ -224,9 +275,9 @@ export default function UniversePage() {
           )}
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════
-            SECTION 2 — Galaxy strip
-        ═══════════════════════════════════════════════════════════════ */}
+        {/* ===============================================================
+            SECTION 2  -  Galaxy strip
+        =============================================================== */}
         <section className="px-6 py-14">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-6">
@@ -275,9 +326,9 @@ export default function UniversePage() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════
-            SECTION 3 — Bottom CTA (Explorer vs Resonator)
-        ═══════════════════════════════════════════════════════════════ */}
+        {/* ===============================================================
+            SECTION 3  -  Bottom CTA (Explorer vs Resonator)
+        =============================================================== */}
         <section className="px-6 py-20">
           <div className="max-w-xl mx-auto text-center flex flex-col items-center gap-6">
 
@@ -299,7 +350,7 @@ export default function UniversePage() {
                     Your planet doesn't exist yet
                   </h2>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-                    Creating your planet is not registration. It's the moment you tell the universe who you are — and let the right people find you.
+                    Creating your planet is not registration. It's the moment you tell the universe who you are  -  and let the right people find you.
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -340,7 +391,7 @@ export default function UniversePage() {
 
       </div>
 
-      {/* ── Planet preview drawer ─────────────────────────────────────────── */}
+      {/* -- Planet preview drawer ------------------------------------------- */}
       <PlanetPreviewDrawer
         planet={selectedPlanet}
         open={!!selectedPlanet}

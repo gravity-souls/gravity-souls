@@ -13,7 +13,7 @@ interface Props {
   placeholder?: string
 }
 
-// ─── Quick keyword chips ─────────────────────────────────────────────────────
+// --- Quick keyword chips -----------------------------------------------------
 
 const QUICK_CHIPS = [
   { label: '搭子',     q: 'community' },
@@ -24,7 +24,7 @@ const QUICK_CHIPS = [
   { label: '思考',     q: 'philosophy' },
 ]
 
-// ─── UniverseSearch ──────────────────────────────────────────────────────────
+// --- UniverseSearch ----------------------------------------------------------
 
 export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
   const [query, setQuery] = useState('')
@@ -77,7 +77,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
 
   return (
     <div ref={containerRef} className="flex flex-col gap-4">
-      {/* ── Search input ────────────────────────────────────────────────── */}
+      {/* -- Search input -------------------------------------------------- */}
       <div className="relative">
         <form onSubmit={handleSubmit}>
           <div
@@ -145,7 +145,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
           </div>
         </form>
 
-        {/* ── Dropdown results ────────────────────────────────────────────── */}
+        {/* -- Dropdown results ---------------------------------------------- */}
         {showDropdown && (
           <div
             className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden z-50"
@@ -247,7 +247,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
         )}
       </div>
 
-      {/* ── Quick keyword chips ──────────────────────────────────────────── */}
+      {/* -- Quick keyword chips -------------------------------------------- */}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Quick search keywords">
         {QUICK_CHIPS.map(({ label, q }) => (
           <Link

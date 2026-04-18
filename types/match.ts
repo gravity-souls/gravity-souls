@@ -1,4 +1,4 @@
-// ─── Orbit / Resonance match types ─────────────────────────────────────────
+// --- Orbit / Resonance match types -----------------------------------------
 //
 // The daily resonance system shows the user's planet at the centre with
 // up to 5 matched planets orbiting around it. Each orbit line is coloured
@@ -6,14 +6,14 @@
 //
 // Color → reason mapping (canonical, must stay consistent across UI):
 //
-//   Blue   (#60a5fa) — shared interests
-//   Purple (#a78bfa) — expression style resonance
-//   Red    (#f87171) — emotional / inner-theme resonance
-//   Green  (#34d399) — culture / travel resonance
-//   Gold   (#fbbf24) — books / music / art resonance
-//   Orange (#fb923c) — complementary worldview / productive difference
+//   Blue   (#60a5fa)  -  shared interests
+//   Purple (#a78bfa)  -  expression style resonance
+//   Red    (#f87171)  -  emotional / inner-theme resonance
+//   Green  (#34d399)  -  culture / travel resonance
+//   Gold   (#fbbf24)  -  books / music / art resonance
+//   Orange (#fb923c)  -  complementary worldview / productive difference
 
-// ─── Orbit color ───────────────────────────────────────────────────────────
+// --- Orbit color -----------------------------------------------------------
 
 export type OrbitColor =
   | 'blue'    // shared interests
@@ -23,7 +23,7 @@ export type OrbitColor =
   | 'gold'    // books, music, art
   | 'orange'  // worldview complement
 
-// ─── Match reason dimension keys ───────────────────────────────────────────
+// --- Match reason dimension keys -------------------------------------------
 
 export type OrbitReasonKey =
   | 'shared-interest'      // → blue
@@ -43,7 +43,7 @@ export const ORBIT_COLOR_MAP: Record<OrbitReasonKey, OrbitColor> = {
   'worldview-complement': 'orange',
 }
 
-// ─── Suggested relationship types per match ─────────────────────────────────
+// --- Suggested relationship types per match ---------------------------------
 
 export type RelationshipType =
   | 'chat'                  // casual signal
@@ -52,7 +52,7 @@ export type RelationshipType =
   | 'community-companion'   // galaxy co-member
   | 'deep-conversation'     // emotional / philosophical resonance
 
-// ─── Match dimension scores ─────────────────────────────────────────────────
+// --- Match dimension scores -------------------------------------------------
 
 export interface MatchDimensions {
   /** 0–100 per dimension; undefined means not scored */
@@ -64,7 +64,7 @@ export interface MatchDimensions {
   worldview?:   number
 }
 
-// ─── A single orbit match entry ─────────────────────────────────────────────
+// --- A single orbit match entry ---------------------------------------------
 
 export interface OrbitMatch {
   /** ID of the matched planet */
@@ -85,7 +85,7 @@ export interface OrbitMatch {
   /** Specific shared traits / examples */
   similarities:   string[]
 
-  /** Specific contrasting traits — presented as complementary, not negative */
+  /** Specific contrasting traits  -  presented as complementary, not negative */
   differences:    string[]
 
   /** Suggested ways to connect */
@@ -95,7 +95,7 @@ export interface OrbitMatch {
   resonanceNote:  string
 }
 
-// ─── Daily resonance session ─────────────────────────────────────────────────
+// --- Daily resonance session -------------------------------------------------
 
 export interface ResonanceSession {
   /** Source planet ID (the current user) */
@@ -104,6 +104,6 @@ export interface ResonanceSession {
   /** Up to 5 matched planets for today */
   matches:        OrbitMatch[]
 
-  /** ISO date string — each session is date-keyed */
+  /** ISO date string  -  each session is date-keyed */
   date:           string
 }

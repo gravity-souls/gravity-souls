@@ -16,8 +16,9 @@ import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder
 import { getPlanetProfile, savePlanetProfile, getOrCreateUserId } from '@/lib/user'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
+import type { PlanetProfile } from '@/types/planet'
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+// --- Section wrapper ----------------------------------------------------------
 
 function SectionCard({
   title,
@@ -47,7 +48,7 @@ function SectionCard({
   )
 }
 
-// ─── Save confirmation toast ──────────────────────────────────────────────────
+// --- Save confirmation toast --------------------------------------------------
 
 function SaveToast({ visible }: { visible: boolean }) {
   return (
@@ -74,13 +75,55 @@ function SaveToast({ visible }: { visible: boolean }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Convert DB planet data to PlanetProfile for the draft system ----------
+
+function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    avatarSymbol: (data.avatarSymbol as string) ?? '?',
+    tagline: (data.tagline as string) ?? undefined,
+    role: 'explorer',
+    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+    style: (data.style as PlanetProfile['style']) ?? 'minimal',
+    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+    coreThemes: (data.coreThemes as string[]) ?? [],
+    contentFragments: (data.contentFragments as string[]) ?? [],
+    visual: (data.visual as PlanetProfile['visual']) ?? {
+      coreColor: '#a78bfa',
+      accentColor: '#c4b5fd',
+      ringStyle: 'single',
+      surfaceStyle: 'smooth',
+      satelliteCount: 1,
+      size: 'lg',
+    },
+    cognitiveAxes: {
+      abstract: (data.abstractAxis as number) ?? 50,
+      introspective: (data.introspectiveAxis as number) ?? 50,
+    },
+    emotionalBars: [],
+    location: (data.location as string) ?? undefined,
+    languages: (data.languages as string[]) ?? [],
+    culturalTags: (data.culturalTags as string[]) ?? [],
+    travelCities: (data.travelCities as string[]) ?? [],
+    musicTaste: (data.musicTaste as string[]) ?? [],
+    bookTaste: (data.bookTaste as string[]) ?? [],
+    filmTaste: (data.filmTaste as string[]) ?? [],
+    communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
+    matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+    userId: data.userId as string,
+  }
+}
+
+// --- Page ---------------------------------------------------------------------
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
   const [mounted,   setMounted]   = useState(false)
   const [userId,    setUserId]    = useState('')
   const [draft,     setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
+  const [planetName, setPlanetName] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [saved,     setSaved]     = useState(false)
   const [accentColor, setAccentColor] = useState('#a78bfa')
@@ -89,14 +132,52 @@ export default function PlanetSettingsPage() {
     setMounted(true)
     const id = getOrCreateUserId()
     setUserId(id)
-    const planet = getPlanetProfile()
-    if (!planet) {
-      router.replace('/create-planet')
-      return
-    }
-    const converted = planetProfileToDraft(planet)
-    setDraft(converted)
-    setAccentColor(planet.visual.coreColor)
+
+    // Try loading from API first, fall back to localStorage
+    Promise.all([
+      fetch('/api/my-planet').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/me').then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([dbPlanet, meData]) => {
+        let planet: PlanetProfile | null = null
+        if (dbPlanet) {
+          // Merge profile fields from /api/me into the planet data
+          const merged = { ...dbPlanet }
+          if (meData?.profile) {
+            merged.location = meData.profile.location ?? undefined
+            merged.languages = meData.profile.languages ?? []
+            merged.culturalTags = meData.profile.culturalTags ?? []
+            merged.travelCities = meData.profile.travelCities ?? []
+            merged.musicTaste = meData.profile.musicTaste ?? []
+            merged.bookTaste = meData.profile.bookTaste ?? []
+            merged.filmTaste = meData.profile.filmTaste ?? []
+            merged.communicationStyle = meData.profile.communicationStyle ?? undefined
+            merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
+          }
+          planet = buildPlanetFromApiData(merged)
+        } else {
+          planet = getPlanetProfile()
+        }
+        if (!planet) {
+          router.replace('/create-planet')
+          return
+        }
+        setPlanetName(planet.name)
+        const converted = planetProfileToDraft(planet)
+        setDraft(converted)
+        setAccentColor(planet.visual.coreColor)
+      })
+      .catch(() => {
+        const planet = getPlanetProfile()
+        if (!planet) {
+          router.replace('/create-planet')
+          return
+        }
+        setPlanetName(planet.name)
+        const converted = planetProfileToDraft(planet)
+        setDraft(converted)
+        setAccentColor(planet.visual.coreColor)
+      })
   }, [router])
 
   const previewPlanet = useMemo(
@@ -113,15 +194,46 @@ export default function PlanetSettingsPage() {
     setDraft((d) => ({ ...d, [key]: value }))
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!userId || !previewPlanet) return
     setSaving(true)
-    savePlanetProfile(previewPlanet)
-    setTimeout(() => {
-      setSaving(false)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2800)
-    }, 400)
+
+    // Always keep localStorage in sync
+    const savedPlanet = { ...previewPlanet, name: planetName || previewPlanet.name }
+    savePlanetProfile(savedPlanet)
+
+    try {
+      const res = await fetch('/api/my-planet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: planetName || previewPlanet.name,
+          tagline: previewPlanet.tagline,
+          mood: previewPlanet.mood,
+          style: previewPlanet.style,
+          lifestyle: previewPlanet.lifestyle,
+          coreThemes: previewPlanet.coreThemes,
+          location: previewPlanet.location,
+          languages: previewPlanet.languages,
+          culturalTags: previewPlanet.culturalTags,
+          travelCities: previewPlanet.travelCities,
+          musicTaste: previewPlanet.musicTaste,
+          bookTaste: previewPlanet.bookTaste,
+          filmTaste: previewPlanet.filmTaste,
+          communicationStyle: previewPlanet.communicationStyle,
+          matchPreference: previewPlanet.matchPreference,
+        }),
+      })
+      if (!res.ok) {
+        console.error('Failed to save planet to API:', await res.text())
+      }
+    } catch (e) {
+      console.error('Failed to save planet to API:', e)
+    }
+
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2800)
   }
 
   if (!mounted || !previewPlanet) return null
@@ -141,15 +253,16 @@ export default function PlanetSettingsPage() {
             Settings
           </p>
           <h1
-            className="text-3xl sm:text-4xl font-bold"
+            className="text-3xl sm:text-4xl font-bold w-fit"
             style={{
               background: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
+              color: 'transparent',
             }}
           >
-            Tune your planet
+            {planetName || previewPlanet.name}
           </h1>
           <p className="text-sm max-w-lg" style={{ color: 'var(--ink)', opacity: 0.55 }}>
             Reshape any dimension of your world. Changes update the live preview instantly and are
@@ -160,8 +273,33 @@ export default function PlanetSettingsPage() {
         {/* Main grid: edit sections + sticky preview */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
-          {/* ── Left: edit sections ─────────────────────────────────────── */}
+          {/* -- Left: edit sections --------------------------------------- */}
           <div className="flex flex-col gap-6">
+
+            <SectionCard
+              title="Identity"
+              description="Your planet's name - how others will find you in the cosmos."
+              color={accentColor}
+            >
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                  Planet name
+                </label>
+                <input
+                  type="text"
+                  value={planetName}
+                  onChange={(e) => setPlanetName(e.target.value)}
+                  maxLength={40}
+                  className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'var(--foreground)',
+                  }}
+                  placeholder="Name your planet..."
+                />
+              </div>
+            </SectionCard>
 
             <SectionCard
               title="Emotional climate"
@@ -246,7 +384,7 @@ export default function PlanetSettingsPage() {
             </div>
           </div>
 
-          {/* ── Right: sticky live preview ───────────────────────────────── */}
+          {/* -- Right: sticky live preview --------------------------------- */}
           <div className="hidden lg:flex flex-col gap-6 sticky top-20">
 
             {/* Preview card */}

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import SideNav from '@/components/nav/SideNav'
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+// --- Context ------------------------------------------------------------------
 
 interface AppShellContextValue {
   sideNavCollapsed: boolean
@@ -19,7 +19,7 @@ export function useAppShell() {
   return useContext(AppShellContext)
 }
 
-// ─── AppShell ─────────────────────────────────────────────────────────────────
+// --- AppShell -----------------------------------------------------------------
 
 interface Props {
   children: ReactNode
@@ -30,7 +30,7 @@ interface Props {
 }
 
 /**
- * AppShell — layout wrapper for inner pages.
+ * AppShell  -  layout wrapper for inner pages.
  * Composes SideNav + main content area with correct offset.
  * Use on inner pages (/stream, /discover, /my-planet, etc.).
  *
@@ -68,7 +68,7 @@ export default function AppShell({ children, defaultExpanded = false, noSideNav 
         <SideNav collapsed={collapsed} onToggle={toggleSideNav} />
       )}
 
-      {/* Main content — offset by sidebar width */}
+      {/* Main content  -  offset by sidebar width */}
       <div
         style={{
           paddingLeft: noSideNav ? 0 : sideW,

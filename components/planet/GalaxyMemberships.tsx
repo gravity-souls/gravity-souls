@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getGalaxyBySlug } from '@/lib/mock-galaxies'
 
-// ─── GalaxyMemberships ───────────────────────────────────────────────────────
+// --- GalaxyMemberships -------------------------------------------------------
 // Renders the galaxy communities a planet belongs to.
 // Pass galaxyIds (slug array) from PlanetProfile.galaxyIds.
 

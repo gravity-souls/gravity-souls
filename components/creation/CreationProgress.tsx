@@ -1,4 +1,4 @@
-// ─── CreationProgress ─────────────────────────────────────────────────────────
+// --- CreationProgress ---------------------------------------------------------
 // Step dots + current step title shown at the top of the ritual.
 
 const STEP_LABELS = [

@@ -5,7 +5,7 @@ import type {
 } from '@/types/match'
 import { mockPlanets } from '@/lib/mock-planets'
 
-// ─── Scoring weights ──────────────────────────────────────────────────────────
+// --- Scoring weights ----------------------------------------------------------
 
 const MOOD_DISTANCE: Record<string, Record<string, number>> = {
   calm:        { calm: 0, melancholic: 1, mixed: 2, intense: 3, cold: 2 },
@@ -36,7 +36,7 @@ const BEAM_COLOR_FOR_TYPE: Record<ResonanceType, BeamColor> = {
   lifestyle: 'blue',
 }
 
-// ─── Scoring ──────────────────────────────────────────────────────────────────
+// --- Scoring ------------------------------------------------------------------
 
 function scoreThemeOverlap(a: string[], b: string[]): number {
   const setB = new Set(b)
@@ -82,7 +82,7 @@ function scorePair(source: PlanetProfile, candidate: PlanetProfile): ScoredPlane
   return { planet: candidate, score: Math.min(100, Math.round(score)), resType }
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+// --- Public API ---------------------------------------------------------------
 
 /**
  * Given a planet profile and a list of candidates, returns up to `limit`
@@ -120,7 +120,7 @@ export function getTopResonances(sourceId: string, limit = 4): ResonancePlanet[]
   return getResonanceMatches(source, mockPlanets, limit)
 }
 
-// ─── Rich orbit match builder ─────────────────────────────────────────────────
+// --- Rich orbit match builder -------------------------------------------------
 
 const ORBIT_COLOR_HEX: Record<OrbitColor, string> = {
   blue:   '#60a5fa',
@@ -213,7 +213,7 @@ function deriveSimilarities(source: PlanetProfile, target: PlanetProfile): strin
   if (themes.length > 0)
     results.push(`Shared themes: ${themes.slice(0, 2).join(' & ')}`)
   if (source.mood === target.mood)
-    results.push(`Same emotional register — both ${source.mood}`)
+    results.push(`Same emotional register  -  both ${source.mood}`)
   if (cities.length > 0)
     results.push(`Both orbit ${cities.slice(0, 2).join(' and ')}`)
   if (culture.length > 0)
@@ -235,7 +235,7 @@ function deriveDifferences(source: PlanetProfile, target: PlanetProfile): string
   }
   if (source.lifestyle !== target.lifestyle)
     results.push(
-      `You are ${LIFESTYLE_LABEL[source.lifestyle] ?? source.lifestyle}; they are ${LIFESTYLE_LABEL[target.lifestyle] ?? target.lifestyle} — complementary pull`,
+      `You are ${LIFESTYLE_LABEL[source.lifestyle] ?? source.lifestyle}; they are ${LIFESTYLE_LABEL[target.lifestyle] ?? target.lifestyle}  -  complementary pull`,
     )
   const cogDiff = Math.abs(source.cognitiveAxes.abstract - target.cognitiveAxes.abstract)
   if (cogDiff > 25)
@@ -243,7 +243,7 @@ function deriveDifferences(source: PlanetProfile, target: PlanetProfile): string
   if (source.communicationStyle && target.communicationStyle && source.communicationStyle !== target.communicationStyle)
     results.push(`Communication style contrast: ${source.communicationStyle} meets ${target.communicationStyle}`)
   if (source.mood !== target.mood)
-    results.push(`Mood offset — ${source.mood} encountering ${target.mood} creates productive friction`)
+    results.push(`Mood offset  -  ${source.mood} encountering ${target.mood} creates productive friction`)
   return results.slice(0, 3)
 }
 

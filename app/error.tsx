@@ -1,6 +1,6 @@
 'use client'
 
-// ─── Global error boundary ────────────────────────────────────────────────────
+// --- Global error boundary ----------------------------------------------------
 // Catches unhandled errors in the React tree and renders a branded fallback.
 
 import { useEffect } from 'react'

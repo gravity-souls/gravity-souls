@@ -22,7 +22,7 @@ const SIZE_MAP: Record<Size, { symbolSize: string; titleSize: string }> = {
 }
 
 /**
- * EmptyState — standardised empty content placeholder.
+ * EmptyState  -  standardised empty content placeholder.
  * Used on /my-planet, /my-universe, and locked sections.
  *
  *   <EmptyState

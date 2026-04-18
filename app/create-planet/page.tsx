@@ -17,7 +17,7 @@ import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import GlowButton from '@/components/ui/GlowButton'
 
-// ─── Validation: can user proceed from each step? ────────────────────────────
+// --- Validation: can user proceed from each step? ----------------------------
 
 function canProceed(step: number, draft: PlanetDraft): boolean {
   switch (step) {
@@ -30,17 +30,17 @@ function canProceed(step: number, draft: PlanetDraft): boolean {
   }
 }
 
-// ─── Step heading metadata ────────────────────────────────────────────────────
+// --- Step heading metadata ----------------------------------------------------
 
 const STEP_META = [
   { eyebrow: 'Step 1 of 5', hint: 'Choose a climate to continue' },
   { eyebrow: 'Step 2 of 5', hint: 'Select at least one theme and a habitat pattern' },
   { eyebrow: 'Step 3 of 5', hint: 'Choose a communication style to continue' },
-  { eyebrow: 'Step 4 of 5', hint: 'All optional — skip if you prefer' },
-  { eyebrow: 'Step 5 of 5', hint: 'Optional — your orbit forms from your planet regardless' },
+  { eyebrow: 'Step 4 of 5', hint: 'All optional  -  skip if you prefer' },
+  { eyebrow: 'Step 5 of 5', hint: 'Optional  -  your orbit forms from your planet regardless' },
 ]
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function CreatePlanetPage() {
   const [mounted,  setMounted]   = useState(false)
@@ -49,6 +49,8 @@ export default function CreatePlanetPage() {
   const [draft,    setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
   const [awakened, setAwakened]  = useState(false)
   const [finished, setFinished]  = useState<PlanetProfile | null>(null)
+  const [customName, setCustomName] = useState('')
+  const [saving,   setSaving]    = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -69,7 +71,7 @@ export default function CreatePlanetPage() {
     }
   }, [])
 
-  // Live preview planet — re-derived on every draft change
+  // Live preview planet  -  re-derived on every draft change
   const previewPlanet = useMemo(
     () => (userId ? buildPlanetFromDraft(draft, userId) : null),
     [draft, userId],
@@ -79,22 +81,44 @@ export default function CreatePlanetPage() {
     setDraft((d) => ({ ...d, [key]: value }))
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (step < 5) { setStep((s) => (s + 1) as 1 | 2 | 3 | 4 | 5); return }
-    // Step 5 → complete
+    // Step 5 -> complete
     if (!userId || !previewPlanet) return
+    setSaving(true)
 
     const sbti = getSbtiResult()
     const nextPlanet = {
       ...previewPlanet,
+      name: customName.trim() || previewPlanet.name,
       sbtiType: sbti?.typeCode,
       sbtiCn: sbti?.typeCn,
       sbtiPattern: sbti?.patternString,
     }
 
+    // Save to localStorage as fallback
     savePlanetProfile(nextPlanet)
+
+    // Save to database via API (primary persistence)
+    try {
+      await fetch('/api/my-planet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nextPlanet.name,
+          tagline: nextPlanet.tagline,
+          mood: nextPlanet.mood,
+          style: nextPlanet.style,
+          lifestyle: nextPlanet.lifestyle,
+        }),
+      })
+    } catch {
+      // localStorage fallback already saved above
+    }
+
     setFinished(nextPlanet)
     setAwakened(true)
+    setSaving(false)
   }
 
   function handleBack() {
@@ -103,7 +127,7 @@ export default function CreatePlanetPage() {
 
   if (!mounted || !previewPlanet) return null
 
-  // ── Awakening ceremony ────────────────────────────────────────────────────
+  // -- Awakening ceremony ----------------------------------------------------
   if (awakened && finished) {
     return <PlanetAwakeningState planet={finished} />
   }
@@ -168,7 +192,7 @@ export default function CreatePlanetPage() {
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_360px] min-h-0">
 
-        {/* ── Left: step content ──────────────────────────────────────────── */}
+        {/* -- Left: step content -------------------------------------------- */}
         <div className="flex flex-col gap-6 px-6 sm:px-10 pt-8 pb-6 overflow-y-auto">
 
           {/* Progress */}
@@ -218,16 +242,46 @@ export default function CreatePlanetPage() {
               />
             )}
             {step === 5 && (
-              <Step5RelationalGravity
-                matchPreference={draft.matchPreference}
-                connectionTypes={draft.connectionTypes}
-                onMatchPrefChange={(v) => update('matchPreference', v)}
-                onConnectionTypesChange={(v) => update('connectionTypes', v)}
-              />
+              <>
+                {/* Custom planet name input */}
+                <div className="flex flex-col gap-2 mb-6">
+                  <label
+                    htmlFor="planet-name"
+                    className="text-xs font-medium tracking-wide"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    Name your planet
+                  </label>
+                  <input
+                    id="planet-name"
+                    type="text"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder={previewPlanet?.name ?? 'Enter a name...'}
+                    maxLength={40}
+                    className="w-full rounded-xl px-4 py-3 text-sm outline-none"
+                    style={{
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border-mid)',
+                      color: 'var(--foreground)',
+                    }}
+                  />
+                  <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
+                    Leave blank to use the generated name
+                  </p>
+                </div>
+
+                <Step5RelationalGravity
+                  matchPreference={draft.matchPreference}
+                  connectionTypes={draft.connectionTypes}
+                  onMatchPrefChange={(v) => update('matchPreference', v)}
+                  onConnectionTypesChange={(v) => update('connectionTypes', v)}
+                />
+              </>
             )}
           </div>
 
-          {/* Navigation — shown on mobile below content */}
+          {/* Navigation  -  shown on mobile below content */}
           <div className="lg:hidden flex items-center gap-3 pt-2">
             {step > 1 && (
               <button
@@ -246,11 +300,11 @@ export default function CreatePlanetPage() {
             <GlowButton
               onClick={handleNext}
               variant="primary"
-              disabled={!ready}
+              disabled={!ready || saving}
               fullWidth={step === 1}
               className="flex-1 py-3 text-sm"
             >
-              {step === 5 ? 'Awaken my planet' : 'Continue →'}
+              {saving ? 'Saving...' : step === 5 ? 'Awaken my planet' : 'Continue \u2192'}
             </GlowButton>
           </div>
 
@@ -262,7 +316,7 @@ export default function CreatePlanetPage() {
           )}
         </div>
 
-        {/* ── Right: live preview (desktop) + navigation ───────────────────── */}
+        {/* -- Right: live preview (desktop) + navigation --------------------- */}
         <div
           className="hidden lg:flex flex-col items-center justify-between gap-6 px-8 py-8 sticky top-13.25 h-[calc(100vh-53px)]"
           style={{
@@ -281,11 +335,11 @@ export default function CreatePlanetPage() {
             <GlowButton
               onClick={handleNext}
               variant="primary"
-              disabled={!ready}
+              disabled={!ready || saving}
               fullWidth
               className="py-3.5 text-sm"
             >
-              {step === 5 ? 'Awaken my planet' : 'Continue →'}
+              {saving ? 'Saving...' : step === 5 ? 'Awaken my planet' : 'Continue \u2192'}
             </GlowButton>
 
             {step > 1 && (

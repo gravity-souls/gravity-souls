@@ -1,6 +1,6 @@
 import type { ResonanceSession } from '@/types/match'
 
-// ─── Hand-crafted daily resonance session for p-aelion ───────────────────────
+// --- Hand-crafted daily resonance session for p-aelion -----------------------
 // Used as the default session when the viewer is p-aelion (the demo planet).
 // Richly narrated: similarities, differences, notes, suggested types.
 
@@ -24,11 +24,11 @@ export const mockResonanceSession: ResonanceSession = {
       similarities: [
         'Both write with a poetic, fragmented voice',
         'Shared themes: night & silence and memory',
-        'Same emotional register — both melancholic',
+        'Same emotional register  -  both melancholic',
         'Touchstones: Murakami, border cinema, melancholy',
       ],
       differences: [
-        'You are solitary; they drift between cities — complementary pull',
+        'You are solitary; they drift between cities  -  complementary pull',
         'Driftan thinks in four languages simultaneously; you anchor in one',
         'Their nomadic rootlessness contrasts your practiced stillness',
       ],
@@ -55,7 +55,7 @@ export const mockResonanceSession: ResonanceSession = {
         'Both hold Murakami somewhere in their formation',
       ],
       differences: [
-        'You are solitary; they are nomadic — complementary pull',
+        'You are solitary; they are nomadic  -  complementary pull',
         'Lumira collects warmth; you distill from coolness',
         'Their communal warmth expands where your solitude condenses',
       ],
@@ -79,7 +79,7 @@ export const mockResonanceSession: ResonanceSession = {
         'Both share emotional texture as a core theme',
         'Shared orbit cities: Kyoto',
         'Both return to the same few things when the world is loud',
-        'Slow cinema — An Elephant Sitting Still, quiet attention',
+        'Slow cinema  -  An Elephant Sitting Still, quiet attention',
       ],
       differences: [
         'Vaelith makes with hands; you compose with fragments of language',
@@ -105,7 +105,7 @@ export const mockResonanceSession: ResonanceSession = {
       similarities: [
         'Shared themes: emotional texture and inner structure',
         'Both write with care for the single sentence',
-        'Sorvae: "Clarity is a form of care" — you understand this',
+        'Sorvae: "Clarity is a form of care"  -  you understand this',
         'Shared galaxy: slow-thinkers',
       ],
       differences: [
@@ -131,14 +131,14 @@ export const mockResonanceSession: ResonanceSession = {
       },
       similarities: [
         'Both drawn to night & silence and dream logic',
-        'High introspective axis — both turn inward before outward',
+        'High introspective axis  -  both turn inward before outward',
         'Both spend hours on a sentence',
         'Shared cold solitary attentiveness',
       ],
       differences: [
         'Spirax values precise axioms; you value productive dissolution',
-        'Cold precision vs melancholic ambiguity — generative friction',
-        'You are solitary; they are solitary differently — structured vs unstructured',
+        'Cold precision vs melancholic ambiguity  -  generative friction',
+        'You are solitary; they are solitary differently  -  structured vs unstructured',
       ],
       suggestedTypes:  ['deep-conversation', 'chat'],
       resonanceNote: 'Where Aelion-42 ends, Spirax-14 begins. A productive gravity.',

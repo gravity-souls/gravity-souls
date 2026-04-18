@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { PlanetProfile, CommunicationStyle, ExplorationTrace } from '@/types/planet'
 
-// ─── Theme → biome color ───────────────────────────────────────────────────
+// --- Theme → biome color ---------------------------------------------------
 
 const THEME_COLOR: Record<string, string> = {
   'night & silence':      '#4338ca',
@@ -19,7 +19,7 @@ function getThemeColor(theme: string): string {
   return THEME_COLOR[theme] ?? '#a78bfa'
 }
 
-// ─── Atmosphere halo character by communication style ──────────────────────
+// --- Atmosphere halo character by communication style ----------------------
 
 interface HaloConfig {
   rings: number
@@ -36,7 +36,7 @@ const HALO_CONFIG: Record<CommunicationStyle, HaloConfig> = {
   playful:    { rings: 3, spread: 22, opacity: 0.38, blur: 10 },
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────
+// --- Sub-components --------------------------------------------------------
 
 function AtmosphereHalos({
   size,
@@ -242,7 +242,7 @@ function Satellite({
   )
 }
 
-// ─── PlanetScene ───────────────────────────────────────────────────────────
+// --- PlanetScene -----------------------------------------------------------
 
 interface Props {
   planet: PlanetProfile
@@ -253,7 +253,7 @@ interface Props {
 }
 
 /**
- * PlanetScene — the large cinematic hero planet for /planet/[id] and /my-planet.
+ * PlanetScene  -  the large cinematic hero planet for /planet/[id] and /my-planet.
  *
  * Renders:
  *  - Outer nebula atmosphere (driven by communicationStyle)
@@ -277,17 +277,17 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
       className={`relative flex items-center justify-center ${className}`}
       style={{ width: canvasSize, height: canvasSize, ...style }}
     >
-      {/* ── Outer atmosphere ──────────────────────────────────────────────── */}
+      {/* -- Outer atmosphere ------------------------------------------------ */}
       {communicationStyle && (
         <AtmosphereHalos size={size} coreColor={coreColor} style={communicationStyle} />
       )}
 
-      {/* ── Exploration orbit traces ──────────────────────────────────────── */}
+      {/* -- Exploration orbit traces ---------------------------------------- */}
       {explorationTraces && explorationTraces.length > 0 && (
         <OrbitTraces traces={explorationTraces} size={size} coreColor={coreColor} />
       )}
 
-      {/* ── Rings (behind planet) ─────────────────────────────────────────── */}
+      {/* -- Rings (behind planet) ------------------------------------------- */}
       {Array.from({ length: ringCount }).map((_, i) => {
         const gap = 14 + i * 18
         const w = size + gap * 2
@@ -343,7 +343,7 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
         )
       })}
 
-      {/* ── Planet orb ────────────────────────────────────────────────────── */}
+      {/* -- Planet orb ------------------------------------------------------ */}
       <div
         className="relative flex items-center justify-center shrink-0 rounded-full animate-nebula-breathe"
         style={{
@@ -373,7 +373,7 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
           accentColor={accentColor}
         />
 
-        {/* Terminator shadow — adds depth to sphere */}
+        {/* Terminator shadow  -  adds depth to sphere */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
@@ -396,7 +396,7 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
         )}
       </div>
 
-      {/* ── Satellites ────────────────────────────────────────────────────── */}
+      {/* -- Satellites ------------------------------------------------------ */}
       {Array.from({ length: satelliteCount }).map((_, i) => (
         <Satellite
           key={i}

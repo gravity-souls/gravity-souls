@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { PlanetProfile, ActiveStatus } from '@/types/planet'
 
-// ─── Status badge ─────────────────────────────────────────────────────────
+// --- Status badge ---------------------------------------------------------
 
 const STATUS_CONFIG: Record<ActiveStatus, { label: string; color: string; bg: string }> = {
   active:   { label: 'Active',   color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
@@ -25,7 +25,7 @@ function StatusBadge({ status }: { status: ActiveStatus }) {
   )
 }
 
-// ─── Viewer-state action buttons ──────────────────────────────────────────
+// --- Viewer-state action buttons ------------------------------------------
 
 function ExplorerActions() {
   return (
@@ -71,18 +71,18 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
   )
 }
 
-// ─── PlanetHeader ─────────────────────────────────────────────────────────
+// --- PlanetHeader ---------------------------------------------------------
 
 interface Props {
   planet: PlanetProfile
   /** 'explorer' = viewer has no planet, 'resonator' = has a planet, 'self' = own planet */
   viewerRole: 'explorer' | 'resonator' | 'self'
-  /** Breadcrumb context — planet they came from, if any */
+  /** Breadcrumb context  -  planet they came from, if any */
   fromPlanet?: { id: string; name: string; coreColor: string }
 }
 
 /**
- * PlanetHeader — identity block at the top of the planet page.
+ * PlanetHeader  -  identity block at the top of the planet page.
  *
  * Shows: breadcrumb, name, tagline, location + language chips,
  * active status badge, and viewer-state-aware action buttons.
@@ -92,7 +92,7 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
 
   return (
     <header className="flex flex-col gap-4">
-      {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
+      {/* -- Breadcrumb ---------------------------------------------------- */}
       <nav className="flex items-center gap-1.5 text-xs flex-wrap" style={{ color: 'var(--ghost)' }}>
         {viewerRole === 'self' ? (
           <span style={{ color: 'var(--star)', opacity: 0.55 }}>My planet</span>
@@ -117,7 +117,7 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
         )}
       </nav>
 
-      {/* ── Main identity ────────────────────────────────────────────────── */}
+      {/* -- Main identity -------------------------------------------------- */}
       <div className="flex flex-col gap-2">
         {/* Eyebrow */}
         <span
@@ -151,7 +151,7 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
         )}
       </div>
 
-      {/* ── Meta row: location, languages, status, comm style ────────────── */}
+      {/* -- Meta row: location, languages, status, comm style -------------- */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Active status */}
         {activeStatus && <StatusBadge status={activeStatus} />}
@@ -201,10 +201,10 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
         )}
       </div>
 
-      {/* ── Action buttons ────────────────────────────────────────────────── */}
+      {/* -- Action buttons -------------------------------------------------- */}
       {viewerRole === 'explorer' && <ExplorerActions />}
       {viewerRole === 'resonator' && <ResonatorActions planet={planet} />}
-      {/* self: no actions here — SelfPlanetActions is a separate bar */}
+      {/* self: no actions here  -  SelfPlanetActions is a separate bar */}
     </header>
   )
 }

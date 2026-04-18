@@ -8,7 +8,7 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Planet stream card ───────────────────────────────────────────────────────
+// --- Planet stream card -------------------------------------------------------
 
 function StreamCard({ planet, index }: { planet: PlanetProfile; index: number }) {
   const { visual } = planet
@@ -35,7 +35,7 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
         ;(e.currentTarget as HTMLElement).style.borderColor = `${visual.coreColor}20`
       }}
     >
-      {/* Planet visual — medium size */}
+      {/* Planet visual  -  medium size */}
       <div className="transition-transform duration-300 group-hover:scale-105">
         <PlanetVisual visual={{ ...visual, size: 'md' }} symbol={planet.avatarSymbol} />
       </div>
@@ -91,7 +91,7 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function StreamPage() {
   return (
@@ -101,7 +101,7 @@ export default function StreamPage() {
 
         <div className="relative z-10 flex flex-col gap-10 animate-fade-up">
 
-          {/* ── Header ──────────────────────────────────────────────────── */}
+          {/* -- Header ---------------------------------------------------- */}
           <SectionHeader
             eyebrow="The stream"
             level={1}
@@ -109,17 +109,17 @@ export default function StreamPage() {
             subtitle="Each planet is a mind in motion. Click to enter a universe and discover your resonance with it."
           />
 
-          {/* ── Stream divider ────────────────────────────────────────── */}
+          {/* -- Stream divider ------------------------------------------ */}
           <div className="divider-glow" />
 
-          {/* ── Planet grid ───────────────────────────────────────────── */}
+          {/* -- Planet grid --------------------------------------------- */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {mockPlanets.map((planet, i) => (
               <StreamCard key={planet.id} planet={planet} index={i} />
             ))}
           </div>
 
-          {/* ── Footer note ───────────────────────────────────────────── */}
+          {/* -- Footer note --------------------------------------------- */}
           <p className="text-center text-xs" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
             {mockPlanets.length} planets mapped · resonance updated in real-time
           </p>

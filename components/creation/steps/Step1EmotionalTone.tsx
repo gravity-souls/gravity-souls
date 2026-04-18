@@ -1,6 +1,6 @@
 import { CLIMATE_OPTIONS } from '@/types/creation'
 
-// ─── Step1EmotionalTone ───────────────────────────────────────────────────────
+// --- Step1EmotionalTone -------------------------------------------------------
 // Mood / climate picker. Selecting a value immediately changes the planet's
 // core color and surface texture in the live preview.
 
@@ -17,7 +17,7 @@ export default function Step1EmotionalTone({ value, onChange }: Props) {
           Set the climate of your world
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This is not your personality. It is the current weather of your inner world — the tone
+          This is not your personality. It is the current weather of your inner world  -  the tone
           that shapes how your planet reads to others.
         </p>
       </div>
@@ -78,7 +78,7 @@ export default function Step1EmotionalTone({ value, onChange }: Props) {
 
       {value && (
         <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
-          Climate locked — you can change this any time from your planet settings.
+          Climate locked  -  you can change this any time from your planet settings.
         </p>
       )}
     </div>

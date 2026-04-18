@@ -1,7 +1,7 @@
 import type { PlanetProfile } from '@/types/planet'
 import type { ResonancePlanet } from '@/types/planet'
 
-// ─── Beam colour map (mirrors lib/match.ts) ──────────────────────────────────
+// --- Beam colour map (mirrors lib/match.ts) ----------------------------------
 
 const BEAM_META: Record<string, { label: string; color: string; description: string }> = {
   violet: { label: 'Emotion',   color: '#a78bfa', description: 'You share a similar emotional register' },
@@ -10,7 +10,7 @@ const BEAM_META: Record<string, { label: string; color: string; description: str
   blue:   { label: 'Lifestyle', color: '#60a5fa', description: 'Your rhythms and ways of living complement each other' },
 }
 
-// ─── Strength ring ───────────────────────────────────────────────────────────
+// --- Strength ring -----------------------------------------------------------
 
 function StrengthRing({
   value,
@@ -59,7 +59,7 @@ function StrengthRing({
   )
 }
 
-// ─── MatchReasonPanel ─────────────────────────────────────────────────────────
+// --- MatchReasonPanel ---------------------------------------------------------
 
 interface Props {
   match: ResonancePlanet
@@ -115,7 +115,7 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
           </p>
         </div>
 
-        {/* Strength ring — pushed to right */}
+        {/* Strength ring  -  pushed to right */}
         <div className="ml-auto shrink-0">
           <StrengthRing value={match.strength} color={meta.color} />
         </div>
@@ -125,10 +125,10 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
       <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.72 }}>
         {meta.description}.{' '}
         {match.strength >= 70
-          ? 'This is a strong signal — this orbit is likely to resonate deeply.'
+          ? 'This is a strong signal  -  this orbit is likely to resonate deeply.'
           : match.strength >= 45
           ? 'There is real common ground here, with room for difference.'
-          : 'A quieter connection — worth exploring slowly.'}
+          : 'A quieter connection  -  worth exploring slowly.'}
       </p>
 
       {/* Shared themes if any */}

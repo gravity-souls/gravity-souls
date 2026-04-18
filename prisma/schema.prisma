@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Better Auth models ─────────────────────────────────────────
+
+model user {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+  profile  Profile?
+  questionnaires QuestionnaireResult[]
+  planets  Planet[]
+  matchesA Match[] @relation("matchA")
+  matchesB Match[] @relation("matchB")
+  memberships CommunityMembership[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
+// ─── Business models ────────────────────────────────────────────
+
+model Profile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name               String   @default("")
+  avatarSymbol       String   @default("🪐")
+  tagline            String?
+  location           String?
+  languages          String[] @default([])
+  culturalTags       String[] @default([])
+  travelCities       String[] @default([])
+  musicTaste         String[] @default([])
+  bookTaste          String[] @default([])
+  filmTaste          String[] @default([])
+  communicationStyle String?
+  matchPreference    String?  @default("mixed")
+  activeStatus       String   @default("active")
+
+  // SBTI
+  sbtiType           String?
+  sbtiCn             String?
+  sbtiPattern        String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("profile")
+}
+
+model QuestionnaireResult {
+  id        String   @id @default(cuid())
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Answers stored as JSON
+  answers   Json
+  // Derived axes
+  mood      String?
+  style     String?
+  lifestyle String?
+  abstractAxis      Float @default(50)
+  introspectiveAxis Float @default(50)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("questionnaire_result")
+}
+
+model Planet {
+  id             String   @id @default(cuid())
+  userId         String
+  user           user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name           String   @default("")
+  avatarSymbol   String   @default("🪐")
+  tagline        String?
+  role           String   @default("explorer")
+  mood           String   @default("calm")
+  style          String   @default("minimal")
+  lifestyle      String   @default("solitary")
+  coreThemes     String[] @default([])
+  contentFragments String[] @default([])
+
+  // Visual config stored as JSON
+  visual         Json     @default("{}")
+
+  // Cognitive axes
+  abstractAxis       Float @default(50)
+  introspectiveAxis  Float @default(50)
+
+  // Active planet flag
+  active         Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  matchesA       Match[]  @relation("planetMatchA")
+  matchesB       Match[]  @relation("planetMatchB")
+
+  @@map("planet")
+}
+
+model Match {
+  id           String   @id @default(cuid())
+  userAId      String
+  userBId      String
+  planetAId    String
+  planetBId    String
+  userA        user     @relation("matchA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB        user     @relation("matchB", fields: [userBId], references: [id], onDelete: Cascade)
+  planetA      Planet   @relation("planetMatchA", fields: [planetAId], references: [id], onDelete: Cascade)
+  planetB      Planet   @relation("planetMatchB", fields: [planetBId], references: [id], onDelete: Cascade)
+
+  score        Float    @default(0)
+  orbitColor   String   @default("blue")
+  primaryReason String  @default("shared-interest")
+  dimensions   Json     @default("{}")
+  similarities String[] @default([])
+  differences  String[] @default([])
+  resonanceNote String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([planetAId, planetBId])
+  @@map("match")
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  symbol      String   @default("🌌")
+  tagline     String?
+  description String?
+  keywords    String[] @default([])
+  mood        String   @default("vibrant")
+  accentColor String   @default("#6366f1")
+  maturity    String   @default("forming")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships CommunityMembership[]
+
+  @@map("community")
+}
+
+model CommunityMembership {
+  id          String    @id @default(cuid())
+  userId      String
+  communityId String
+  user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  joinedAt    DateTime  @default(now())
+
+  @@unique([userId, communityId])
+  @@map("community_membership")
+}

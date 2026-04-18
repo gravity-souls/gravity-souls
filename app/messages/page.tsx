@@ -12,7 +12,7 @@ import { getUserRole } from '@/lib/user'
 import { mockConversations, getOtherPlanetId } from '@/lib/mock-conversations'
 import { getPlanetById } from '@/lib/mock-planets'
 
-// ─── MessagesPage ─────────────────────────────────────────────────────────────
+// --- MessagesPage -------------------------------------------------------------
 
 export default function MessagesPage() {
   const [role, setRole]                   = useState<'explorer' | 'resonator' | null>(null)

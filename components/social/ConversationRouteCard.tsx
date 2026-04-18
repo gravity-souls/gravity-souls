@@ -4,7 +4,7 @@ import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 import { formatConversationTime } from '@/lib/time'
 
-// ─── ConversationRouteCard ────────────────────────────────────────────────────
+// --- ConversationRouteCard ----------------------------------------------------
 
 interface Props {
   conversation: Conversation
@@ -112,7 +112,7 @@ export default function ConversationRouteCard({ conversation, otherPlanet, activ
         </div>
       </div>
 
-      {/* Strength bar — subtle */}
+      {/* Strength bar  -  subtle */}
       <div
         className="shrink-0 flex flex-col items-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
       >

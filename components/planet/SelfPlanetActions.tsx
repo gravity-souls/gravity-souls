@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Planet depth / completion ────────────────────────────────────────────
+// --- Planet depth / completion --------------------------------------------
 
 function computeDepthScore(planet: PlanetProfile): number {
   let score = 30 // base: planet exists
@@ -44,7 +44,7 @@ function DepthMeter({ score, coreColor }: { score: number; coreColor: string }) 
   )
 }
 
-// ─── Action item ─────────────────────────────────────────────────────────────
+// --- Action item -------------------------------------------------------------
 
 function ActionItem({
   href,
@@ -109,7 +109,7 @@ function ActionItem({
   )
 }
 
-// ─── SelfPlanetActions ────────────────────────────────────────────────────────
+// --- SelfPlanetActions --------------------------------------------------------
 // Ownership action panel shown on /my-planet.
 
 interface Props {

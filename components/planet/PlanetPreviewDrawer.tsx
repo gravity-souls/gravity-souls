@@ -14,7 +14,7 @@ interface Props {
 }
 
 /**
- * PlanetPreviewDrawer — slide-in panel showing a shallow planet preview.
+ * PlanetPreviewDrawer  -  slide-in panel showing a shallow planet preview.
  *
  * Explorer users see: name, themes, one quote fragment.
  * Resonator users see: all of the above + emotional bars + CTA to send a beam.
@@ -42,7 +42,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
 
   return (
     <>
-      {/* ── Backdrop ─────────────────────────────────────────────────────── */}
+      {/* -- Backdrop ------------------------------------------------------- */}
       <div
         className="fixed inset-0 z-50"
         style={{
@@ -56,7 +56,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
         aria-hidden="true"
       />
 
-      {/* ── Drawer panel ─────────────────────────────────────────────────── */}
+      {/* -- Drawer panel --------------------------------------------------- */}
       <div
         role="dialog"
         aria-modal="true"
@@ -83,7 +83,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
   )
 }
 
-// ─── Drawer content (separated to avoid conditional hooks) ──────────────────
+// --- Drawer content (separated to avoid conditional hooks) ------------------
 
 function DrawerContent({
   planet,
@@ -219,7 +219,7 @@ function DrawerContent({
           </div>
         )}
 
-        {/* Emotional bars — Resonator only */}
+        {/* Emotional bars  -  Resonator only */}
         {isResonator ? (
           <div>
             <p className="text-data-label mb-3">Resonance profile</p>
@@ -276,12 +276,12 @@ function DrawerContent({
         )}
       </div>
 
-      {/* ── Footer CTAs ──────────────────────────────────────────────────── */}
+      {/* -- Footer CTAs ---------------------------------------------------- */}
       <div
         className="px-6 py-4 flex flex-col gap-2 shrink-0"
         style={{ borderTop: '1px solid var(--border-soft)' }}
       >
-        {/* View full planet — always available */}
+        {/* View full planet  -  always available */}
         <Link
           href={`/planet/${planet.id}`}
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium tracking-wide transition-all duration-200"

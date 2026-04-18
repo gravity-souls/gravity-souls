@@ -1,6 +1,6 @@
 import type { PlanetVisualConfig, RingStyle } from '@/types/planet'
 
-// ─── Size map ─────────────────────────────────────────────────────────────────
+// --- Size map -----------------------------------------------------------------
 
 const SIZE_PX: Record<PlanetVisualConfig['size'], number> = {
   sm: 80,
@@ -9,7 +9,7 @@ const SIZE_PX: Record<PlanetVisualConfig['size'], number> = {
   xl: 200,
 }
 
-// ─── Ring component ───────────────────────────────────────────────────────────
+// --- Ring component -----------------------------------------------------------
 
 function Ring({
   style,
@@ -99,7 +99,7 @@ function Ring({
   )
 }
 
-// ─── Satellite ────────────────────────────────────────────────────────────────
+// --- Satellite ----------------------------------------------------------------
 
 function Satellite({
   index,
@@ -152,7 +152,7 @@ function Satellite({
   )
 }
 
-// ─── PlanetVisual ─────────────────────────────────────────────────────────────
+// --- PlanetVisual -------------------------------------------------------------
 
 interface Props {
   visual: PlanetVisualConfig
@@ -172,7 +172,7 @@ export default function PlanetVisual({ visual, symbol, className = '' }: Props) 
       className={`relative flex items-center justify-center ${className}`}
       style={{ width: size + 120, height: size + 120 }}
     >
-      {/* Rings — rendered behind the planet (z-index order) */}
+      {/* Rings  -  rendered behind the planet (z-index order) */}
       {Array.from({ length: ringCount }).map((_, i) => (
         <Ring
           key={i}

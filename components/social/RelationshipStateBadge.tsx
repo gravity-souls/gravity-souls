@@ -1,6 +1,6 @@
 import type { RelationshipStatus } from '@/types/social'
 
-// ─── Status configuration ─────────────────────────────────────────────────────
+// --- Status configuration -----------------------------------------------------
 
 const STATUS_CONFIG: Record<RelationshipStatus, {
   symbol:  string
@@ -14,7 +14,7 @@ const STATUS_CONFIG: Record<RelationshipStatus, {
   aligned:  { symbol: '⊙', label: 'Aligned',        color: '#fbbf24', pulse: true },
 }
 
-// ─── RelationshipStateBadge ───────────────────────────────────────────────────
+// --- RelationshipStateBadge ---------------------------------------------------
 
 interface Props {
   status:   RelationshipStatus

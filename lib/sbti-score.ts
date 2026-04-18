@@ -7,7 +7,7 @@ import {
   type SbtiType,
 } from './sbti-data'
 
-// ─── Per-dimension level threshold ────────────────────────────────────────────
+// --- Per-dimension level threshold --------------------------------------------
 // Each dimension has exactly 2 questions, each scored 1–3.
 // Total range: 2–6 → L (≤3) | M (=4) | H (≥5)
 
@@ -17,10 +17,10 @@ function toLevel(sum: number): DimScore {
   return 'H'
 }
 
-// ─── Compute 15 dimension scores from raw answers ─────────────────────────────
+// --- Compute 15 dimension scores from raw answers -----------------------------
 // computeDimScores is intentionally not exported here; use computeResult instead.
 
-// ─── Main scoring entry point ──────────────────────────────────────────────────
+// --- Main scoring entry point --------------------------------------------------
 
 export interface SbtiResult {
   /** Scores for all 15 dimensions */
@@ -38,16 +38,16 @@ export interface SbtiResult {
 }
 
 /**
- * computeResult — derive SBTI type from user answers.
+ * computeResult  -  derive SBTI type from user answers.
  *
- * @param dimAnswers  Record<DimKey, number[]>  — per-dimension raw values (2 per dim)
- * @param drinkAnswers  { gate?: number; trigger?: number }  — special hobbies/drink answers
+ * @param dimAnswers  Record<DimKey, number[]>   -  per-dimension raw values (2 per dim)
+ * @param drinkAnswers  { gate?: number; trigger?: number }   -  special hobbies/drink answers
  */
 export function computeResult(
   dimAnswers: Record<DimKey, [number, number]>,
   drinkAnswers: { gate?: number; trigger?: number } = {},
 ): SbtiResult {
-  // ── 1. Compute L/M/H for each dimension ────────────────────────────────────
+  // -- 1. Compute L/M/H for each dimension ------------------------------------
   const scores = {} as Record<DimKey, DimScore>
 
   for (const dim of DIMENSION_ORDER) {
@@ -55,7 +55,7 @@ export function computeResult(
     scores[dim] = toLevel(a + b)
   }
 
-  // ── 2. Check hidden DRUNK type ──────────────────────────────────────────────
+  // -- 2. Check hidden DRUNK type ----------------------------------------------
   const isDrunk = drinkAnswers.gate === 3 && drinkAnswers.trigger === 2
 
   if (isDrunk) {
@@ -69,11 +69,11 @@ export function computeResult(
     }
   }
 
-  // ── 3. Numeric pattern for matching (H=3, M=2, L=1) ───────────────────────
+  // -- 3. Numeric pattern for matching (H=3, M=2, L=1) -----------------------
   const levelNum: Record<DimScore, number> = { L: 1, M: 2, H: 3 }
   const userNums = DIMENSION_ORDER.map((d) => levelNum[scores[d]])
 
-  // ── 4. Match against NORMAL_TYPES using similarity scoring ─────────────────
+  // -- 4. Match against NORMAL_TYPES using similarity scoring -----------------
   let bestCode = 'HHHH'
   let bestSimilarity = -1
 
@@ -107,7 +107,7 @@ export function computeResult(
   }
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// --- Helpers -------------------------------------------------------------------
 
 function buildPatternString(scores: Record<DimKey, DimScore>): string {
   const groups: DimScore[][] = [

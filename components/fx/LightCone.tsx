@@ -1,4 +1,4 @@
-// Server component — pure CSS conic/radial gradient beams.
+// Server component  -  pure CSS conic/radial gradient beams.
 // Renders soft spotlight cones using screen blend mode for a cinematic look.
 
 interface LightConeProps {
@@ -6,7 +6,7 @@ interface LightConeProps {
   origin?: 'top-center' | 'top-left' | 'top-right'
   /** Colour at the bright centre of the cone */
   color?: string
-  /** Overall opacity — keep low (0.07–0.18) for subtlety */
+  /** Overall opacity  -  keep low (0.07–0.18) for subtlety */
   opacity?: number
   /** Whether to add a second, wider softer cone behind the main one */
   double?: boolean
@@ -51,7 +51,7 @@ export default function LightCone({
         />
       )}
 
-      {/* Sharp inner cone — offset so both overlap from same apex */}
+      {/* Sharp inner cone  -  offset so both overlap from same apex */}
       <div
         style={{
           position: double ? 'absolute' : 'relative',

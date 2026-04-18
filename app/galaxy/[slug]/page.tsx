@@ -13,50 +13,50 @@ import { getPlanetById } from '@/lib/mock-planets'
 import { getUserRole } from '@/lib/user'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Mock discussion topics per galaxy ───────────────────────────────────────
+// --- Mock discussion topics per galaxy ---------------------------------------
 
 const DISCUSSION_TOPICS: Partial<Record<string, { title: string; replies: number; heat: number }[]>> = {
   'slow-thinkers': [
     { title: 'What does "thinking slowly" actually mean to you?',    replies: 24, heat: 0.8 },
     { title: 'Books that reward a second read more than the first',   replies: 31, heat: 0.9 },
-    { title: '深夜写作 vs 清晨写作 — which surfaces different thoughts?', replies: 18, heat: 0.6 },
+    { title: '深夜写作 vs 清晨写作  -  which surfaces different thoughts?', replies: 18, heat: 0.6 },
     { title: 'The courage to sit with uncertainty instead of resolving it', replies: 12, heat: 0.4 },
   ],
   'signal-noise': [
     { title: 'What\'s your "boring" tech stack that actually works?', replies: 42, heat: 0.9 },
-    { title: 'Software craft vs software speed — a false dichotomy?', replies: 55, heat: 1.0 },
+    { title: 'Software craft vs software speed  -  a false dichotomy?', replies: 55, heat: 1.0 },
     { title: 'When does a side project become an obsession?',         replies: 29, heat: 0.7 },
     { title: 'The aesthetics of well-named variables',                replies: 16, heat: 0.5 },
   ],
   'dusk-archives': [
     { title: 'A book that felt like it was written specifically for you', replies: 48, heat: 1.0 },
     { title: 'Films that only make sense after you\'ve lived more',   replies: 33, heat: 0.8 },
-    { title: '被遗忘的音乐 — share something no one talks about',        replies: 22, heat: 0.6 },
+    { title: '被遗忘的音乐  -  share something no one talks about',        replies: 22, heat: 0.6 },
     { title: 'The sentence that stopped you and wouldn\'t let you continue', replies: 19, heat: 0.5 },
   ],
   'warm-frequency': [
     { title: 'Small acts of care that meant more than intended',      replies: 38, heat: 0.9 },
     { title: 'What makes a conversation feel genuinely safe?',        replies: 27, heat: 0.7 },
     { title: '如何在城市中建立真实的连接',                                 replies: 45, heat: 1.0 },
-    { title: 'Mutual aid stories — help you gave or received',        replies: 21, heat: 0.6 },
+    { title: 'Mutual aid stories  -  help you gave or received',        replies: 21, heat: 0.6 },
   ],
   'image-makers': [
     { title: 'The composition that made you rethink everything',      replies: 36, heat: 0.8 },
-    { title: 'Tools vs intent — does your equipment shape your vision?', replies: 44, heat: 0.9 },
+    { title: 'Tools vs intent  -  does your equipment shape your vision?', replies: 44, heat: 0.9 },
     { title: '摄影是记录还是创造？',                                       replies: 29, heat: 0.7 },
     { title: 'A photo that works for reasons you can\'t explain',     replies: 17, heat: 0.5 },
   ],
   'threshold-states': [
     { title: 'The city you left that still lives inside you',         replies: 52, heat: 1.0 },
     { title: 'What does "home" mean when you\'ve lived in 4 countries?', replies: 41, heat: 0.9 },
-    { title: 'Third culture identity — the parts you keep, the parts you lose', replies: 34, heat: 0.8 },
-    { title: '流浪者的孤独 — does movement become avoidance?',            replies: 23, heat: 0.6 },
+    { title: 'Third culture identity  -  the parts you keep, the parts you lose', replies: 34, heat: 0.8 },
+    { title: '流浪者的孤独  -  does movement become avoidance?',            replies: 23, heat: 0.6 },
   ],
   'body-clocks': [
     { title: 'Movement practices that changed your thinking',         replies: 31, heat: 0.7 },
-    { title: 'Sleep is a skill — what actually helped you',           replies: 47, heat: 1.0 },
+    { title: 'Sleep is a skill  -  what actually helped you',           replies: 47, heat: 1.0 },
     { title: 'The difference between training and performing',        replies: 22, heat: 0.6 },
-    { title: '身体的智慧 — moments your body knew before your mind did', replies: 28, heat: 0.7 },
+    { title: '身体的智慧  -  moments your body knew before your mind did', replies: 28, heat: 0.7 },
   ],
   'late-night-economics': [
     { title: 'The economic model no one taught you that explains everything', replies: 58, heat: 1.0 },
@@ -66,7 +66,7 @@ const DISCUSSION_TOPICS: Partial<Record<string, { title: string; replies: number
   ],
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// --- Page --------------------------------------------------------------------
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -81,7 +81,7 @@ export default function GalaxyPage({ params }: Props) {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
 
-  // getUserRole reads localStorage — must run client-side only
+  // getUserRole reads localStorage  -  must run client-side only
   useEffect(() => { setUserRole(getUserRole()) }, [])
 
   const memberPlanets = galaxy.activePlanetIds
@@ -101,7 +101,7 @@ export default function GalaxyPage({ params }: Props) {
       <AppShell>
         <div className="pb-20">
 
-          {/* ── Galaxy hero ──────────────────────────────────────────────── */}
+          {/* -- Galaxy hero ------------------------------------------------ */}
           <div
             className="relative overflow-hidden"
             style={{ minHeight: 260 }}
@@ -227,11 +227,11 @@ export default function GalaxyPage({ params }: Props) {
             </div>
           </div>
 
-          {/* ── Main content ─────────────────────────────────────────────── */}
+          {/* -- Main content ----------------------------------------------- */}
           <div className="px-6 max-w-5xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 mt-4">
 
-              {/* ── Left column ──────────────────────────────────────────── */}
+              {/* -- Left column -------------------------------------------- */}
               <div className="flex flex-col gap-8">
 
                 {/* About + keywords */}
@@ -372,7 +372,7 @@ export default function GalaxyPage({ params }: Props) {
                 )}
               </div>
 
-              {/* ── Right column ─────────────────────────────────────────── */}
+              {/* -- Right column ------------------------------------------- */}
               <div className="flex flex-col gap-6">
 
                 {/* Related galaxies */}

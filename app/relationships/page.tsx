@@ -13,11 +13,11 @@ import { getUserRole } from '@/lib/user'
 import { mockRelationships } from '@/lib/mock-relationships'
 import { getPlanetById } from '@/lib/mock-planets'
 
-// ─── Status display order ─────────────────────────────────────────────────────
+// --- Status display order -----------------------------------------------------
 
 const STATUS_ORDER: RelationshipStatus[] = ['aligned', 'resonant', 'orbit', 'signal']
 
-// ─── Group section ────────────────────────────────────────────────────────────
+// --- Group section ------------------------------------------------------------
 
 function RelationshipGroup({
   status,
@@ -47,7 +47,7 @@ function RelationshipGroup({
   )
 }
 
-// ─── RelationshipsPage ────────────────────────────────────────────────────────
+// --- RelationshipsPage --------------------------------------------------------
 
 export default function RelationshipsPage() {
   const [role, setRole] = useState<'explorer' | 'resonator' | null>(null)

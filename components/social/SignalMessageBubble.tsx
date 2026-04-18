@@ -2,7 +2,7 @@ import type { Message } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import { formatTimestamp } from '@/lib/time'
 
-// ─── Beam message — first signal, centered ceremonial ────────────────────────
+// --- Beam message  -  first signal, centered ceremonial ------------------------
 
 function BeamMessage({ message, sender }: { message: Message; sender: PlanetProfile }) {
   return (
@@ -48,7 +48,7 @@ function BeamMessage({ message, sender }: { message: Message; sender: PlanetProf
   )
 }
 
-// ─── SignalMessageBubble ──────────────────────────────────────────────────────
+// --- SignalMessageBubble ------------------------------------------------------
 
 interface Props {
   message:      Message

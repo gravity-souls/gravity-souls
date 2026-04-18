@@ -3,7 +3,7 @@ import type { Conversation } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 
-// ─── CommunicationHeader ──────────────────────────────────────────────────────
+// --- CommunicationHeader ------------------------------------------------------
 // Top bar of the conversation detail page.
 // Shows: back button, source planet, beam visualization, target planet, strength.
 

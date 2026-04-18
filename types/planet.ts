@@ -1,4 +1,4 @@
-// ─── Enum-like literal unions ──────────────────────────────────────────────
+// --- Enum-like literal unions ----------------------------------------------
 
 export type Mood        = 'calm' | 'melancholic' | 'intense' | 'cold' | 'mixed'
 export type PlanetStyle = 'minimal' | 'dense' | 'fractured' | 'fluid'
@@ -14,7 +14,7 @@ export type CommunicationStyle = 'direct' | 'poetic' | 'playful' | 'reflective' 
 /** Active presence signal */
 export type ActiveStatus = 'active' | 'drifting' | 'quiet'
 
-// ─── Exploration trace ─────────────────────────────────────────────────────
+// --- Exploration trace -----------------------------------------------------
 
 export interface ExplorationTrace {
   /** Human label, e.g. "Deep thinkers" or "Night writers" */
@@ -29,7 +29,7 @@ export interface ExplorationTrace {
   recentAt: string
 }
 
-// ─── Visual config ─────────────────────────────────────────────────────────
+// --- Visual config ---------------------------------------------------------
 
 export interface PlanetVisualConfig {
   /** Primary colour for the planet surface glow */
@@ -44,7 +44,7 @@ export interface PlanetVisualConfig {
   size: 'sm' | 'md' | 'lg' | 'xl'
 }
 
-// ─── Resonance planet (used inside ResonanceMap) ───────────────────────────
+// --- Resonance planet (used inside ResonanceMap) ---------------------------
 
 export interface ResonancePlanet {
   id:            string
@@ -58,7 +58,7 @@ export interface ResonancePlanet {
   tagline?:      string
 }
 
-// ─── Full planet profile ───────────────────────────────────────────────────
+// --- Full planet profile ---------------------------------------------------
 
 export interface PlanetProfile {
   id:          string
@@ -95,7 +95,7 @@ export interface PlanetProfile {
   // Resonance connections (populated after matching)
   resonances?: ResonancePlanet[]
 
-  // ── Extended profile fields (optional, added progressively) ──────────────
+  // -- Extended profile fields (optional, added progressively) --------------
 
   /** City / region string, e.g. "Beijing · 3rd ring" */
   location?: string
@@ -109,7 +109,7 @@ export interface PlanetProfile {
   travelCities?: string[]
   /** Whether this planet seeks similar or complementary companions */
   matchPreference?: 'similar' | 'complementary' | 'mixed'
-  /** How this planet communicates — shapes atmosphere halo in PlanetScene */
+  /** How this planet communicates  -  shapes atmosphere halo in PlanetScene */
   communicationStyle?: CommunicationStyle
   /** Active presence state */
   activeStatus?: ActiveStatus

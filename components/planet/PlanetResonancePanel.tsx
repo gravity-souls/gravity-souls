@@ -1,6 +1,6 @@
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Orbit color tokens ────────────────────────────────────────────────────
+// --- Orbit color tokens ----------------------------------------------------
 
 const ORBIT: Record<string, string> = {
   blue:   '#60a5fa',
@@ -11,7 +11,7 @@ const ORBIT: Record<string, string> = {
   orange: '#fb923c',
 }
 
-// ─── Derive match dimensions from two planets ─────────────────────────────
+// --- Derive match dimensions from two planets -----------------------------
 
 interface MatchDimension {
   label: string
@@ -50,7 +50,7 @@ function deriveMatchDimensions(
     })
   }
 
-  // 3. Emotional frequency (red) — closeness in introspective axis
+  // 3. Emotional frequency (red)  -  closeness in introspective axis
   const introDiff = Math.abs(viewer.cognitiveAxes.introspective - subject.cognitiveAxes.introspective)
   dims.push({
     label: 'Emotional frequency',
@@ -59,7 +59,7 @@ function deriveMatchDimensions(
     note: introDiff < 20 ? 'Close inner frequency' : 'Complementary depth',
   })
 
-  // 4. Cultural orbit — shared travel cities (green)
+  // 4. Cultural orbit  -  shared travel cities (green)
   if (viewer.travelCities && subject.travelCities) {
     const shared = viewer.travelCities.filter((c) =>
       subject.travelCities!.some((sc) => sc.toLowerCase() === c.toLowerCase())
@@ -74,7 +74,7 @@ function deriveMatchDimensions(
     }
   }
 
-  // 5. Arts resonance — shared music/books (gold)
+  // 5. Arts resonance  -  shared music/books (gold)
   const viewerArts = [...(viewer.musicTaste ?? []), ...(viewer.bookTaste ?? [])]
   const subjectArts = [...(subject.musicTaste ?? []), ...(subject.bookTaste ?? [])]
   const sharedArts = viewerArts.filter((a) =>
@@ -91,7 +91,7 @@ function deriveMatchDimensions(
     })
   }
 
-  // 6. Worldview orbit — lifestyle complement (orange)
+  // 6. Worldview orbit  -  lifestyle complement (orange)
   if (dims.length < 4 && viewer.lifestyle !== subject.lifestyle) {
     dims.push({
       label: 'Worldview orbit',
@@ -104,7 +104,7 @@ function deriveMatchDimensions(
   return dims.slice(0, 4)
 }
 
-// ─── PlanetResonancePanel ─────────────────────────────────────────────────
+// --- PlanetResonancePanel -------------------------------------------------
 
 interface Props {
   /** The planet being viewed */
@@ -114,7 +114,7 @@ interface Props {
 }
 
 /**
- * PlanetResonancePanel — orbit-colored dimension bars showing why a resonator
+ * PlanetResonancePanel  -  orbit-colored dimension bars showing why a resonator
  * and the subject planet have resonance potential.
  *
  * Only render when the viewer is a resonator (has viewerPlanet).
@@ -206,7 +206,7 @@ export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
           borderColor: 'rgba(167,139,250,0.08)',
         }}
       >
-        These dimensions emerge from your planet and theirs — not an algorithm, but a mirror.
+        These dimensions emerge from your planet and theirs  -  not an algorithm, but a mirror.
       </p>
     </div>
   )

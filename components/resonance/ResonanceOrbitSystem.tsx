@@ -7,7 +7,7 @@ import { getPlanetById } from '@/lib/mock-planets'
 import { orbitColorHex } from '@/lib/match'
 import ResonancePlanetNode from '@/components/resonance/ResonancePlanetNode'
 
-// ─── Geometry ─────────────────────────────────────────────────────────────────
+// --- Geometry -----------------------------------------------------------------
 
 /** Evenly space N nodes around a circle, starting from the top. */
 function distributeAngles(n: number): number[] {
@@ -19,7 +19,7 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
 }
 
-// ─── Beam line ────────────────────────────────────────────────────────────────
+// --- Beam line ----------------------------------------------------------------
 
 function BeamLine({
   x1, y1, x2, y2,
@@ -43,7 +43,7 @@ function BeamLine({
   )
 }
 
-// ─── ResonanceOrbitSystem ─────────────────────────────────────────────────────
+// --- ResonanceOrbitSystem -----------------------------------------------------
 
 interface Props {
   sourcePlanet:  PlanetProfile
@@ -83,7 +83,7 @@ export default function ResonanceOrbitSystem({
       className="relative select-none"
       style={{ width: size, height: size, maxWidth: '100%' }}
     >
-      {/* SVG layer — orbit ring + beam lines */}
+      {/* SVG layer  -  orbit ring + beam lines */}
       <svg
         width={size}
         height={size}
@@ -121,7 +121,7 @@ export default function ResonanceOrbitSystem({
         })}
       </svg>
 
-      {/* Center hub — source planet */}
+      {/* Center hub  -  source planet */}
       <button
         className="absolute flex items-center justify-center rounded-full"
         style={{
@@ -136,7 +136,7 @@ export default function ResonanceOrbitSystem({
           outline: 'none',
         }}
         onClick={() => onSelect(null)}
-        aria-label={`${sourcePlanet.name} — your planet`}
+        aria-label={`${sourcePlanet.name}  -  your planet`}
       >
         {sourcePlanet.avatarSymbol}
       </button>

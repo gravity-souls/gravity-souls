@@ -1,6 +1,6 @@
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Mock planet pool ─────────────────────────────────────────────────────────
+// --- Mock planet pool ---------------------------------------------------------
 // 12 diverse planets covering all mood / style / lifestyle combinations.
 // These serve the /stream page and resonance matching engine.
 
@@ -18,7 +18,7 @@ export const mockPlanets: PlanetProfile[] = [
     contentFragments: [
       'There are words I keep returning to without knowing why.',
       'The 3am version of me writes things I cannot claim in daylight.',
-      'Memory isn\'t stored — it\'s rebuilt each time, and each time it lies.',
+      'Memory isn\'t stored  -  it\'s rebuilt each time, and each time it lies.',
     ],
     visual: {
       coreColor: '#818cf8',
@@ -317,7 +317,7 @@ export const mockPlanets: PlanetProfile[] = [
     contentFragments: [
       'I process through movement. The writing comes after.',
       'Some truths only arrive when you\'re not looking for them.',
-      'My best ideas come in water — showers, rivers, rain.',
+      'My best ideas come in water  -  showers, rivers, rain.',
     ],
     visual: {
       coreColor: '#60a5fa',

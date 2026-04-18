@@ -9,7 +9,7 @@ import type { Message } from '@/types/social'
 import { getConversation, getMessages, getOtherPlanetId } from '@/lib/mock-conversations'
 import { getPlanetById } from '@/lib/mock-planets'
 
-// ─── ConversationPage ─────────────────────────────────────────────────────────
+// --- ConversationPage ---------------------------------------------------------
 
 interface Props {
   params: Promise<{ id: string }>

@@ -1,7 +1,7 @@
 import type { OrbitReasonKey } from '@/types/match'
 import { orbitColorHex } from '@/lib/match'
 
-// ─── Legend entries ───────────────────────────────────────────────────────────
+// --- Legend entries -----------------------------------------------------------
 
 const LEGEND: Array<{ reason: OrbitReasonKey; label: string }> = [
   { reason: 'shared-interest',      label: 'Shared interests'   },
@@ -21,7 +21,7 @@ const REASON_COLOR: Record<OrbitReasonKey, string> = {
   'worldview-complement': '#fb923c',
 }
 
-// ─── MatchReasonLegend ────────────────────────────────────────────────────────
+// --- MatchReasonLegend --------------------------------------------------------
 
 interface Props {
   /** Highlight one entry as active */

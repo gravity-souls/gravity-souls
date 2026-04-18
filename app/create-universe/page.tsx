@@ -8,6 +8,7 @@ import { moodOptions } from '@/lib/mock-data'
 import { useLanguage } from '@/contexts/language-context'
 import { t } from '@/lib/translations'
 import { getOrCreateUserId, buildUniverseFromInput, saveUserUniverse, buildPlanetFromInput, savePlanetProfile } from '@/lib/user'
+import { savePlanetToDb } from '@/lib/save-to-db'
 
 type Step = 'idle' | 'processing' | 'mapping'
 
@@ -37,6 +38,8 @@ export default function CreateUniversePage() {
     saveUserUniverse(universe)
     const planet = buildPlanetFromInput(expression, selectedMood, userId)
     savePlanetProfile(planet)
+    // Also persist to database if user is authenticated
+    savePlanetToDb(planet)
 
     setTimeout(() => setStep('mapping'), 900)
     setTimeout(() => router.push('/universe/demo'), 2200)
@@ -93,7 +96,7 @@ export default function CreateUniversePage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-          {/* ── Expression textarea ─────────────────────────────────── */}
+          {/* -- Expression textarea ----------------------------------- */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
               Your expression
@@ -124,7 +127,7 @@ export default function CreateUniversePage() {
             </GlassCard>
           </div>
 
-          {/* ── Mood chips ──────────────────────────────────────────── */}
+          {/* -- Mood chips -------------------------------------------- */}
           <div className="flex flex-col gap-3">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
               {t(lang, 'create.mood.label')}
@@ -159,11 +162,11 @@ export default function CreateUniversePage() {
             )}
           </div>
 
-          {/* ── Image upload dropzone ────────────────────────────────── */}
+          {/* -- Image upload dropzone ---------------------------------- */}
           <div className="flex flex-col gap-3">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
               Visual fragment{' '}
-              <span className="text-muted normal-case tracking-normal font-normal opacity-50">— optional, coming soon</span>
+              <span className="text-muted normal-case tracking-normal font-normal opacity-50"> -  optional, coming soon</span>
             </label>
             <div
               onDragEnter={() => setIsDragOver(true)}
@@ -207,7 +210,7 @@ export default function CreateUniversePage() {
             </div>
           </div>
 
-          {/* ── Submit ───────────────────────────────────────────────── */}
+          {/* -- Submit ------------------------------------------------- */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <GlowButton
               type="submit"
@@ -239,7 +242,7 @@ export default function CreateUniversePage() {
 
           {!filled.expression && (
             <p className="text-center text-xs text-muted opacity-40">
-              Begin with your expression — even a single line is enough.
+              Begin with your expression  -  even a single line is enough.
             </p>
           )}
         </form>

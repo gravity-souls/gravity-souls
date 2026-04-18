@@ -14,7 +14,7 @@ export default function UniverseProfileCard({ universe: u }: Props) {
   return (
     <div className="flex flex-col gap-5">
 
-      {/* ── Hero OrbitCard ────────────────────────────────────────────── */}
+      {/* -- Hero OrbitCard ---------------------------------------------- */}
       <OrbitCard glowColor={glowColor} hoverable lift ringed className="p-7 sm:p-9">
 
         {/* Ambient background nebula inside the card */}
@@ -137,7 +137,7 @@ export default function UniverseProfileCard({ universe: u }: Props) {
         </div>
       </OrbitCard>
 
-      {/* ── Attribute trio ────────────────────────────────────────────── */}
+      {/* -- Attribute trio ---------------------------------------------- */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { key: 'Emotion tone',     value: u.emotionTone,     desc: toneDescriptions[u.emotionTone],     accent: glowColor },
@@ -162,7 +162,7 @@ export default function UniverseProfileCard({ universe: u }: Props) {
         ))}
       </div>
 
-      {/* ── Generated summary ─────────────────────────────────────────── */}
+      {/* -- Generated summary ------------------------------------------- */}
       <div
         className="rounded-2xl p-6 sm:p-7 flex flex-col gap-4"
         style={{

@@ -14,7 +14,7 @@ import { computeResult, dimScoreToPercent, type SbtiResult } from '@/lib/sbti-sc
 import { getPlanetProfile, savePlanetProfile, saveSbtiResult } from '@/lib/user'
 import GlowButton from '@/components/ui/GlowButton'
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// --- Types ---------------------------------------------------------------------
 
 type Phase = 'intro' | 'question' | 'special' | 'computing' | 'result'
 
@@ -24,7 +24,7 @@ interface Answers {
   drinkTrigger?: number
 }
 
-// ─── Dimension groups for result display ───────────────────────────────────────
+// --- Dimension groups for result display ---------------------------------------
 
 const DIM_GROUPS: { label: string; dims: DimKey[] }[] = [
   { label: 'Self', dims: ['S1', 'S2', 'S3'] },
@@ -34,7 +34,7 @@ const DIM_GROUPS: { label: string; dims: DimKey[] }[] = [
   { label: 'Social', dims: ['So1', 'So2', 'So3'] },
 ]
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// --- Constants -----------------------------------------------------------------
 
 const COMPUTING_LABELS = [
   'Scanning soul matrix…',
@@ -44,7 +44,7 @@ const COMPUTING_LABELS = [
   'Crystallising your type…',
 ]
 
-// ─── Utility: Shuffle array ────────────────────────────────────────────────────
+// --- Utility: Shuffle array ----------------------------------------------------
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array]
@@ -55,7 +55,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// --- Page ----------------------------------------------------------------------
 
 function SbtiPage() {
   const router = useRouter()
@@ -71,7 +71,7 @@ function SbtiPage() {
   const computingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const nextHref = searchParams.get('next') || '/create-planet'
 
-  // ── Randomized options cache ──────────────────────────────────────────────
+  // -- Randomized options cache ----------------------------------------------
   const randomizedMainOptions = useMemo(() => {
     return QUESTIONS.map((q) => shuffleArray(q.options))
   }, [])
@@ -80,7 +80,7 @@ function SbtiPage() {
     return SPECIAL_QUESTIONS.map((q) => shuffleArray(q.options))
   }, [])
 
-  // ── Computing animation ────────────────────────────────────────────────────
+  // -- Computing animation ----------------------------------------------------
   useEffect(() => {
     if (phase !== 'computing') return
     computingRef.current = setInterval(() => {
@@ -97,7 +97,7 @@ function SbtiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  // ── Build dimAnswers and compute type ────────────────────────────────────────
+  // -- Build dimAnswers and compute type ----------------------------------------
   function finalize() {
     const dimAnswers = {} as Record<DimKey, [number, number]>
 
@@ -129,7 +129,7 @@ function SbtiPage() {
     setPhase('result')
   }
 
-  // ── Answer a main question ───────────────────────────────────────────────────
+  // -- Answer a main question ---------------------------------------------------
   function answerMain(value: number) {
     if (animating) return
     const q = QUESTIONS[qIndex]
@@ -140,14 +140,14 @@ function SbtiPage() {
       if (qIndex + 1 < QUESTIONS.length) {
         setQIndex(qIndex + 1)
       } else {
-        // Done with main questions — offer special questions
+        // Done with main questions  -  offer special questions
         setSpecialStep(0)
         setPhase('special')
       }
     }, 260)
   }
 
-  // ── Answer special question ──────────────────────────────────────────────────
+  // -- Answer special question --------------------------------------------------
   function answerSpecial(value: number) {
     if (specialStep === 0) {
       setAnswers((prev) => ({ ...prev, drinkGate: value }))
@@ -163,7 +163,7 @@ function SbtiPage() {
     }
   }
 
-  // ── Save to planet profile ────────────────────────────────────────────────────
+  // -- Save to planet profile ----------------------------------------------------
   function saveToProfile() {
     if (!result) return
     const profile = getPlanetProfile()
@@ -177,7 +177,7 @@ function SbtiPage() {
     setSaved(true)
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // -- Render --------------------------------------------------------------------
 
   return (
     <div
@@ -241,7 +241,7 @@ function SbtiPage() {
   )
 }
 
-// ─── Intro Screen ───────────────────────────────────────────────────────────────
+// --- Intro Screen ---------------------------------------------------------------
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
   return (
@@ -303,7 +303,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-// ─── Question Screen ─────────────────────────────────────────────────────────────
+// --- Question Screen -------------------------------------------------------------
 
 function QuestionScreen({
   question,
@@ -414,7 +414,7 @@ function QuestionScreen({
   )
 }
 
-// ─── Special Screen ───────────────────────────────────────────────────────────────
+// --- Special Screen ---------------------------------------------------------------
 
 function SpecialScreen({
   question,
@@ -434,7 +434,7 @@ function SpecialScreen({
           Hidden Dimension
         </p>
         <p className="text-sm" style={{ color: 'var(--ghost)' }}>
-          One bonus question. Answer honestly — or skip.
+          One bonus question. Answer honestly  -  or skip.
         </p>
       </div>
 
@@ -506,7 +506,7 @@ function SpecialScreen({
   )
 }
 
-// ─── Computing Screen ──────────────────────────────────────────────────────────────
+// --- Computing Screen --------------------------------------------------------------
 
 function ComputingScreen({ label }: { label: string }) {
   return (
@@ -536,7 +536,7 @@ function ComputingScreen({ label }: { label: string }) {
   )
 }
 
-// ─── Result Screen ───────────────────────────────────────────────────────────────
+// --- Result Screen ---------------------------------------------------------------
 
 function ResultScreen({
   result,

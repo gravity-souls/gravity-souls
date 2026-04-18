@@ -34,7 +34,7 @@ const SIZE_CLASS: Record<Size, string> = {
 }
 
 /**
- * MatchPill — compact resonance type indicator.
+ * MatchPill  -  compact resonance type indicator.
  *
  *   <MatchPill type="similar" score={88} />
  *   <MatchPill type="complementary" size="sm" />

@@ -1,7 +1,7 @@
-// ─── SBTI — Silly Big Personality Test ────────────────────────────────────────
+// --- SBTI  -  Silly Big Personality Test ----------------------------------------
 // Personality assessment system for Gravity-Souls (MIT)
 
-// ─── Dimension keys ────────────────────────────────────────────────────────────
+// --- Dimension keys ------------------------------------------------------------
 
 export type DimKey =
   | 'S1' | 'S2' | 'S3'
@@ -20,7 +20,7 @@ export const DIMENSION_ORDER: DimKey[] = [
   'So1','So2','So3',
 ]
 
-// ─── Dimension metadata ─────────────────────────────────────────────────────────
+// --- Dimension metadata ---------------------------------------------------------
 
 export interface DimMeta {
   name: string       // Chinese label, e.g. "S1 自尊自信"
@@ -65,7 +65,7 @@ export const DIM_EXPLANATIONS: Record<DimKey, Record<DimScore, string>> = {
   So3: { L: '表达更直接，心里有啥基本不爱绕。', M: '会看气氛说话，真实和体面通常各留一点。', H: '对不同场景的自我切换更熟练，真实感会分层发放。' },
 }
 
-// ─── Question types ─────────────────────────────────────────────────────────────
+// --- Question types -------------------------------------------------------------
 
 export interface SbtiOption {
   label: string
@@ -87,12 +87,12 @@ export interface SbtiSpecialQuestion {
   options: SbtiOption[]
 }
 
-// ─── Questions (30 main) ────────────────────────────────────────────────────────
+// --- Questions (30 main) --------------------------------------------------------
 
 export const QUESTIONS: SbtiQuestion[] = [
   {
     id: 'q1', dim: 'S1',
-    text: '我不够好，这辈子好像没什么特别出彩的地方，胆怯又自卑——每次看到别人光鲜亮丽，都像是对我的一次拷问。',
+    text: '我不够好，这辈子好像没什么特别出彩的地方，胆怯又自卑 -  - 每次看到别人光鲜亮丽，都像是对我的一次拷问。',
     options: [
       { label: '我哭了……', value: 1 },
       { label: '这是什么……', value: 2 },
@@ -362,7 +362,7 @@ export const QUESTIONS: SbtiQuestion[] = [
   },
 ]
 
-// ─── Special / hidden questions ─────────────────────────────────────────────────
+// --- Special / hidden questions -------------------------------------------------
 
 export const SPECIAL_QUESTIONS: SbtiSpecialQuestion[] = [
   {
@@ -389,7 +389,7 @@ export const SPECIAL_QUESTIONS: SbtiSpecialQuestion[] = [
   },
 ]
 
-// ─── Personality types ───────────────────────────────────────────────────────────
+// --- Personality types -----------------------------------------------------------
 
 export interface SbtiType {
   code: string
@@ -477,7 +477,7 @@ export const TYPE_LIBRARY: Record<string, SbtiType> = {
   'THIN-K': {
     code: 'THIN-K', cn: '思考者',
     intro: '已深度思考100s。',
-    desc: '您的大脑长时间处于思考状态。您十分会审判信息，注重论点、论据、逻辑推理。在这个信息爆炸的时代，您绝不会轻易盲从，会在关系中衡量利弊，也十分捍卫自己的自我空间。当别人看到您独处时在发呆？愚蠢——那是您的大脑正在对今天接收到的所有信息进行分类、归档和销毁。',
+    desc: '您的大脑长时间处于思考状态。您十分会审判信息，注重论点、论据、逻辑推理。在这个信息爆炸的时代，您绝不会轻易盲从，会在关系中衡量利弊，也十分捍卫自己的自我空间。当别人看到您独处时在发呆？愚蠢 -  - 那是您的大脑正在对今天接收到的所有信息进行分类、归档和销毁。',
   },
   SHIT: {
     code: 'SHIT', cn: '愤世者',
@@ -527,16 +527,16 @@ export const TYPE_LIBRARY: Record<string, SbtiType> = {
   HHHH: {
     code: 'HHHH', cn: '傻乐者',
     intro: '哈哈哈哈哈哈。',
-    desc: '由于您的思维回路过于清奇，标准人格库已全面崩溃。第一人格匹配率只有60%以下时，系统才会为您强制匹配这个人格——【HHHH - 傻乐者】。这个人格有什么特质？哈哈哈哈哈哈哈哈哈哈哈哈！对不起，这就是全部的特质了。也许您可以查看十五维度进行不专业的评估……哈哈哈哈哈哈。',
+    desc: '由于您的思维回路过于清奇，标准人格库已全面崩溃。第一人格匹配率只有60%以下时，系统才会为您强制匹配这个人格 -  - 【HHHH - 傻乐者】。这个人格有什么特质？哈哈哈哈哈哈哈哈哈哈哈哈！对不起，这就是全部的特质了。也许您可以查看十五维度进行不专业的评估……哈哈哈哈哈哈。',
   },
   DRUNK: {
     code: 'DRUNK', cn: '酒鬼',
     intro: '烈酒烧喉，不得不醉。',
-    desc: '您体内流淌的不是血液，是美味的白酒！是国窖1573！是江小白！它让您在饭桌上谈笑风生，在厕所里抱着马桶忏悔人生；它让您觉得自己是夜场诗人，是宇宙中心那团不灭的火，直到第二天上午十点，您的头像裂开的核桃，嘴角挂着食物残渣，灵魂缩在角落里。您终于明白——昨晚那个高谈阔论、拍桌怒吼的人，已经成为了一个酒鬼。',
+    desc: '您体内流淌的不是血液，是美味的白酒！是国窖1573！是江小白！它让您在饭桌上谈笑风生，在厕所里抱着马桶忏悔人生；它让您觉得自己是夜场诗人，是宇宙中心那团不灭的火，直到第二天上午十点，您的头像裂开的核桃，嘴角挂着食物残渣，灵魂缩在角落里。您终于明白 -  - 昨晚那个高谈阔论、拍桌怒吼的人，已经成为了一个酒鬼。',
   },
 }
 
-// ─── Normal type patterns (for matching) ─────────────────────────────────────────
+// --- Normal type patterns (for matching) -----------------------------------------
 // Each pattern = S1S2S3-E1E2E3-A1A2A3-Ac1Ac2Ac3-So1So2So3
 
 export const NORMAL_TYPES: { code: string; pattern: string }[] = [
@@ -567,7 +567,7 @@ export const NORMAL_TYPES: { code: string; pattern: string }[] = [
   { code: 'IMFW',   pattern: 'LLH-LHL-LML-LLL-MLL' },
 ]
 
-// ─── Colour accents per type (for UI) ─────────────────────────────────────────────
+// --- Colour accents per type (for UI) ---------------------------------------------
 
 export const TYPE_COLORS: Record<string, string> = {
   CTRL:    '#a78bfa',

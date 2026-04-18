@@ -2,7 +2,7 @@ import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceSty
 import type { PlanetDraft } from '@/types/creation'
 import { CLIMATE_OPTIONS } from '@/types/creation'
 
-// ─── Climate → planet property mapping ───────────────────────────────────────
+// --- Climate → planet property mapping ---------------------------------------
 
 const CLIMATE_TO_MOOD: Record<string, Mood> = {
   calm:          'calm',
@@ -40,7 +40,7 @@ const CLIMATE_TO_SURFACE: Record<string, SurfaceStyle> = {
   expansive:     'nebulous',
 }
 
-// ─── Lifestyle → satellite count ──────────────────────────────────────────────
+// --- Lifestyle → satellite count ----------------------------------------------
 
 const LIFESTYLE_TO_SATELLITES: Record<Lifestyle, number> = {
   solitary: 1,
@@ -49,7 +49,7 @@ const LIFESTYLE_TO_SATELLITES: Record<Lifestyle, number> = {
   communal: 4,
 }
 
-// ─── Name generation (seed-stable) ───────────────────────────────────────────
+// --- Name generation (seed-stable) -------------------------------------------
 
 const PLANET_NAME_BASES = [
   'Veloth', 'Kyndra', 'Sorvael', 'Elaris', 'Driftus',
@@ -75,7 +75,7 @@ function generateAvatarSymbol(userId: string): string {
   return AVATAR_SYMBOLS[seed % AVATAR_SYMBOLS.length]
 }
 
-// ─── Emotional bar derivation ─────────────────────────────────────────────────
+// --- Emotional bar derivation -------------------------------------------------
 
 function deriveEmotionalBars(draft: PlanetDraft) {
   const intro   = draft.introspectiveAxis
@@ -91,7 +91,7 @@ function deriveEmotionalBars(draft: PlanetDraft) {
   ]
 }
 
-// ─── Tagline derivation ───────────────────────────────────────────────────────
+// --- Tagline derivation -------------------------------------------------------
 
 function deriveTagline(draft: PlanetDraft): string {
   const climateLabel = CLIMATE_OPTIONS.find((c) => c.key === draft.climateKey)?.description
@@ -100,7 +100,7 @@ function deriveTagline(draft: PlanetDraft): string {
   return 'A world in formation.'
 }
 
-// ─── Reverse mapping: PlanetProfile → PlanetDraft ────────────────────────────
+// --- Reverse mapping: PlanetProfile → PlanetDraft ----------------------------
 
 const MOOD_TO_CLIMATE: Record<Mood, string> = {
   calm:        'calm',
@@ -131,7 +131,7 @@ export function planetProfileToDraft(planet: PlanetProfile): PlanetDraft {
   }
 }
 
-// ─── Main builder: PlanetDraft → PlanetProfile ────────────────────────────────
+// --- Main builder: PlanetDraft → PlanetProfile --------------------------------
 
 /**
  * Converts 5-step onboarding draft into a full PlanetProfile.

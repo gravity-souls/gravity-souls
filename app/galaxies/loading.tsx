@@ -1,4 +1,4 @@
-// ─── Galaxies loading skeleton ────────────────────────────────────────────────
+// --- Galaxies loading skeleton ------------------------------------------------
 
 function SkeletonCard() {
   return (

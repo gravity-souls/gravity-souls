@@ -1,6 +1,6 @@
 import type { Relationship, SavedPlanet } from '@/types/social'
 
-// ─── Mock relationships for p-aelion ─────────────────────────────────────────
+// --- Mock relationships for p-aelion -----------------------------------------
 // Ladder: signal → orbit → resonant → aligned
 
 export const mockRelationships: Relationship[] = [
@@ -36,7 +36,7 @@ export const mockRelationships: Relationship[] = [
   },
 ]
 
-// ─── Mock star chart entries for p-aelion ────────────────────────────────────
+// --- Mock star chart entries for p-aelion ------------------------------------
 
 export const mockSavedPlanets: SavedPlanet[] = [
   { planetId: 'p-noctaris', savedAt: '2026-03-14T20:00:00Z', label: 'Interesting cognitive axis' },

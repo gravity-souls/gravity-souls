@@ -1,7 +1,7 @@
 import type { MatchDimensions, OrbitColor } from '@/types/match'
 import { orbitColorHex } from '@/lib/match'
 
-// ─── Dimension display config ─────────────────────────────────────────────────
+// --- Dimension display config -------------------------------------------------
 
 const DIMENSION_META: Array<{
   key: keyof MatchDimensions
@@ -16,7 +16,7 @@ const DIMENSION_META: Array<{
   { key: 'worldview',  label: 'Worldview contrast', color: 'orange' },
 ]
 
-// ─── MatchDimensionBars ───────────────────────────────────────────────────────
+// --- MatchDimensionBars -------------------------------------------------------
 
 interface Props {
   dimensions: MatchDimensions

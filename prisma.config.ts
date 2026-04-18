@@ -1,0 +1,14 @@
+import "dotenv/config";
+import { defineConfig, env } from "prisma/config";
+
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+    seed: "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+  },
+  datasource: {
+    // Use direct (non-pooled) URL for CLI operations (migrations, seed)
+    url: env("DIRECT_URL"),
+  },
+});

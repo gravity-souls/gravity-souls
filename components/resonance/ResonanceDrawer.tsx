@@ -9,7 +9,7 @@ import { orbitColorHex } from '@/lib/match'
 import GlowButton from '@/components/ui/GlowButton'
 import MatchDimensionBars from '@/components/resonance/MatchDimensionBars'
 
-// ─── Relationship type labels ─────────────────────────────────────────────────
+// --- Relationship type labels -------------------------------------------------
 
 const REL_LABEL: Record<string, string> = {
   'chat':                 'Casual signal',
@@ -19,7 +19,7 @@ const REL_LABEL: Record<string, string> = {
   'deep-conversation':    'Deep conversation',
 }
 
-// ─── Score ring ───────────────────────────────────────────────────────────────
+// --- Score ring ---------------------------------------------------------------
 
 function ScoreRing({ score, color }: { score: number; color: string }) {
   const r   = 28
@@ -47,7 +47,7 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
   )
 }
 
-// ─── ResonanceDrawer ──────────────────────────────────────────────────────────
+// --- ResonanceDrawer ----------------------------------------------------------
 
 interface Props {
   match:    OrbitMatch | null
@@ -70,7 +70,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
 
   return (
     <>
-      {/* Backdrop — mobile only */}
+      {/* Backdrop  -  mobile only */}
       <div
         className="fixed inset-0 z-40 lg:hidden transition-opacity duration-300"
         style={{
@@ -83,7 +83,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
         aria-hidden="true"
       />
 
-      {/* Panel — right side on desktop, bottom sheet on mobile */}
+      {/* Panel  -  right side on desktop, bottom sheet on mobile */}
       <div
         className="fixed z-50 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out"
         style={{
@@ -110,7 +110,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
   )
 }
 
-// ─── Drawer content ───────────────────────────────────────────────────────────
+// --- Drawer content -----------------------------------------------------------
 
 function DrawerContent({
   planet,

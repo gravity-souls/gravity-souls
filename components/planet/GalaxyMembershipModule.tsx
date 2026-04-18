@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getGalaxyBySlug } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
-// ─── Galaxy chip ──────────────────────────────────────────────────────────
+// --- Galaxy chip ----------------------------------------------------------
 
 function GalaxyChip({ galaxy }: { galaxy: GalaxyPreview }) {
   return (
@@ -48,7 +48,7 @@ function GalaxyChip({ galaxy }: { galaxy: GalaxyPreview }) {
   )
 }
 
-// ─── GalaxyMembershipModule ───────────────────────────────────────────────
+// --- GalaxyMembershipModule -----------------------------------------------
 
 interface Props {
   /** Array of galaxy slugs this planet has joined */
@@ -58,7 +58,7 @@ interface Props {
 }
 
 /**
- * GalaxyMembershipModule — compact grid of galaxy chips for communities this
+ * GalaxyMembershipModule  -  compact grid of galaxy chips for communities this
  * planet has joined. Links to /galaxy/[slug].
  */
 export default function GalaxyMembershipModule({ galaxyIds, accentColor = '#a78bfa' }: Props) {

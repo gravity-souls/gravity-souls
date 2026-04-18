@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import GlowButton from '@/components/ui/GlowButton'
 
-// ─── Global 404 ───────────────────────────────────────────────────────────────
+// --- Global 404 ---------------------------------------------------------------
 
 export default function NotFound() {
   return (

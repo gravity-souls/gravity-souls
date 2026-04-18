@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 
-// ─── Star definition ──────────────────────────────────────────────────────────
+// --- Star definition ----------------------------------------------------------
 
 interface Star {
   x: number
@@ -18,7 +18,7 @@ interface Star {
   hasCross: boolean   // large stars get a diffraction cross
 }
 
-// Four colour families — white, lavender, violet, pale-cyan
+// Four colour families  -  white, lavender, violet, pale-cyan
 const COLOR_BASES = [
   '255,255,255',
   '224,213,255',
@@ -51,7 +51,7 @@ function makeStar(w: number, h: number): Star {
   }
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// --- Component ----------------------------------------------------------------
 
 export default function StarfieldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -106,7 +106,7 @@ export default function StarfieldCanvas() {
       ctx!.clearRect(0, 0, W, H)
 
       for (const s of stars) {
-        // Twinkling — smooth sin oscillation
+        // Twinkling  -  smooth sin oscillation
         s.opacity = Math.max(
           0.05,
           s.baseOpacity + Math.sin(t * s.twinkleSpeed + s.twinkleOffset) * 0.3,

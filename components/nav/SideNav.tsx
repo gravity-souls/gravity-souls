@@ -1,14 +1,21 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { authClient } from '@/lib/auth-client'
 
-// ─── Navigation structure ─────────────────────────────────────────────────────
+const emptySubscribe = () => () => {}
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
+
+// --- Navigation structure -----------------------------------------------------
 //
 // Three groups mapping to the Gravity-Souls information architecture:
-//   Universe  — macro discovery layer
-//   My Space  — personal planet + social features
-//   Connect   — messaging and relationship layer
+//   Universe   -  macro discovery layer
+//   My Space   -  personal planet + social features
+//   Connect    -  messaging and relationship layer
 
 interface NavItem {
   href:    string
@@ -50,7 +57,7 @@ const GROUPS: NavGroup[] = [
   },
 ]
 
-// ─── SideNav ──────────────────────────────────────────────────────────────────
+// --- SideNav ------------------------------------------------------------------
 
 interface Props {
   collapsed: boolean
@@ -59,6 +66,9 @@ interface Props {
 
 export default function SideNav({ collapsed, onToggle }: Props) {
   const pathname = usePathname()
+  const { data: session } = authClient.useSession()
+  const hydrated = useHydrated()
+  const isAuthenticated = hydrated && !!session?.user
   const w = collapsed ? 'var(--sidebar-w-collapsed)' : 'var(--sidebar-w-expanded)'
 
   return (
@@ -98,7 +108,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
         aria-hidden="true"
       />
 
-      {/* Nav content — fixed width prevents wrapping during collapse */}
+      {/* Nav content  -  fixed width prevents wrapping during collapse */}
       <nav
         className="relative flex flex-col h-full py-4"
         style={{ width: 'var(--sidebar-w-expanded)' }}
@@ -107,7 +117,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
           {GROUPS.map((group, gi) => (
             <div key={group.label} className="mb-1">
 
-              {/* Group label — only visible when expanded */}
+              {/* Group label  -  only visible when expanded */}
               <div
                 className="px-4 mb-1"
                 style={{
@@ -190,7 +200,34 @@ export default function SideNav({ collapsed, onToggle }: Props) {
           ))}
         </div>
 
-        {/* Create Planet — bottom action */}
+        {/* Sign In  -  visible only when not authenticated */}
+        {!isAuthenticated && (
+          <div
+            className="mx-2 mb-1"
+            style={{
+              opacity:    collapsed ? 0 : 1,
+              transition: `opacity var(--duration-fast) var(--ease-snap)`,
+              pointerEvents: collapsed ? 'none' : 'auto',
+            }}
+          >
+            <Link
+              href="/sign-in"
+              className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all"
+              style={{
+                color:          'var(--ink)',
+                background:     'rgba(255,255,255,0.03)',
+                border:         '1px solid var(--border-soft)',
+                textDecoration: 'none',
+                whiteSpace:     'nowrap',
+              }}
+            >
+              <span>◈</span>
+              Sign in
+            </Link>
+          </div>
+        )}
+
+        {/* Create Planet  -  bottom action */}
         <div
           className="mx-2 mb-2"
           style={{

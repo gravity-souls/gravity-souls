@@ -1,6 +1,6 @@
 import GlowButton from '@/components/ui/GlowButton'
 
-// ─── ResonanceEmptyState ──────────────────────────────────────────────────────
+// --- ResonanceEmptyState ------------------------------------------------------
 // Shown on /resonance when the viewer is an Explorer (no planet formed yet).
 // Teases the orbital system without full reveal.
 
@@ -85,7 +85,7 @@ export default function ResonanceEmptyState() {
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
           Five planets are drawn into resonance with yours each day.
-          Form your planet first — then the field aligns.
+          Form your planet first  -  then the field aligns.
         </p>
       </div>
 

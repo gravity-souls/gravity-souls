@@ -12,7 +12,7 @@ import { getSavedPlanetIds } from '@/lib/social-storage'
 import { mockSavedPlanets } from '@/lib/mock-relationships'
 import { getPlanetById } from '@/lib/mock-planets'
 
-// ─── Build combined saved list ────────────────────────────────────────────────
+// --- Build combined saved list ------------------------------------------------
 // Merges mock star chart entries with any planets saved via localStorage.
 // Real saved-at dates come from mock data; localStorage IDs get a generic entry.
 
@@ -28,7 +28,7 @@ function buildSavedList(): SavedPlanet[] {
   return [...mockSavedPlanets, ...extraFromLs]
 }
 
-// ─── SavedPage ────────────────────────────────────────────────────────────────
+// --- SavedPage ----------------------------------------------------------------
 
 export default function SavedPage() {
   const [role, setRole]   = useState<'explorer' | 'resonator' | null>(null)

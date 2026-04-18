@@ -1,4 +1,4 @@
-// ─── Shared time formatting utilities ────────────────────────────────────────
+// --- Shared time formatting utilities ----------------------------------------
 
 /**
  * Returns a human-readable relative time string.

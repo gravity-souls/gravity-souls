@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
-// ─── Fog veil overlay ─────────────────────────────────────────────────────
+// --- Fog veil overlay -----------------------------------------------------
 
 interface FogVeilProps {
   reason: string
@@ -15,7 +15,7 @@ function FogVeil({ reason, ctaLabel, ctaHref, accentColor = '#a78bfa' }: FogVeil
     <div
       className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center"
       style={{
-        // Atmospheric fog — not a hard black overlay
+        // Atmospheric fog  -  not a hard black overlay
         background: [
           'linear-gradient(to bottom,',
           '  rgba(3,3,15,0.0) 0%,',
@@ -65,10 +65,10 @@ function FogVeil({ reason, ctaLabel, ctaHref, accentColor = '#a78bfa' }: FogVeil
   )
 }
 
-// ─── ProfileLayerSection ──────────────────────────────────────────────────
+// --- ProfileLayerSection --------------------------------------------------
 
 interface Props {
-  /** Section title — rendered as eyebrow label above children */
+  /** Section title  -  rendered as eyebrow label above children */
   title: string
   children: ReactNode
   /**
@@ -88,7 +88,7 @@ interface Props {
 }
 
 /**
- * ProfileLayerSection — wraps a section of the planet profile with an
+ * ProfileLayerSection  -  wraps a section of the planet profile with an
  * eyebrow title. If `locked`, renders a subtle atmospheric fog-veil instead
  * of a hard disabled overlay, so the layer still feels beautiful and desirable.
  *
@@ -126,7 +126,7 @@ export default function ProfileLayerSection({
 
       {/* Content with optional fog veil */}
       <div className="relative rounded-xl overflow-hidden">
-        {/* Content — blurred if locked */}
+        {/* Content  -  blurred if locked */}
         <div
           style={
             locked

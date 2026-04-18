@@ -1,6 +1,6 @@
 import { MATCH_PREF_OPTIONS, CONNECTION_TYPE_OPTIONS } from '@/types/creation'
 
-// ─── Step5RelationalGravity ───────────────────────────────────────────────────
+// --- Step5RelationalGravity ---------------------------------------------------
 // Match preference (3 cards) + connection type multi-select.
 // Shapes how the resonance engine weighs similar vs complementary planets.
 
@@ -32,7 +32,7 @@ export default function Step5RelationalGravity({
           Set the gravity of the connections you want
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This shapes how the resonance field aligns planets for you. It is a tendency, not a rule —
+          This shapes how the resonance field aligns planets for you. It is a tendency, not a rule  - 
           you can always change it.
         </p>
       </div>

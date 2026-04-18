@@ -1,7 +1,7 @@
 import type { CommunicationStyle } from '@/types/planet'
 import { COMM_STYLE_OPTIONS } from '@/types/creation'
 
-// ─── Step3AtmosphereStyle ─────────────────────────────────────────────────────
+// --- Step3AtmosphereStyle -----------------------------------------------------
 // Communication style picker + two cognitive axis sliders.
 // CommunicationStyle → atmosphere halos in PlanetScene.
 // abstractAxis + introspectiveAxis → cognitiveAxes used by matching engine.
@@ -15,7 +15,7 @@ interface Props {
   onIntrospectiveChange: (v: number) => void
 }
 
-// ─── Axis slider ──────────────────────────────────────────────────────────────
+// --- Axis slider --------------------------------------------------------------
 
 function AxisSlider({
   value,
@@ -55,7 +55,7 @@ function AxisSlider({
   )
 }
 
-// ─── Step component ───────────────────────────────────────────────────────────
+// --- Step component -----------------------------------------------------------
 
 export default function Step3AtmosphereStyle({
   communicationStyle,
@@ -72,7 +72,7 @@ export default function Step3AtmosphereStyle({
           Define how others feel your atmosphere
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This shapes the halo and texture of your planet — how it projects outward into the field
+          This shapes the halo and texture of your planet  -  how it projects outward into the field
           before anyone reaches the surface.
         </p>
       </div>
@@ -143,7 +143,7 @@ export default function Step3AtmosphereStyle({
         </div>
 
         <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
-          These are not types or boxes. They describe your current centre of gravity — and they
+          These are not types or boxes. They describe your current centre of gravity  -  and they
           shape how the resonance engine reads your planet against others.
         </p>
       </div>

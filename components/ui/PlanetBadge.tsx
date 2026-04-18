@@ -24,7 +24,7 @@ const SIZE_MAP: Record<Size, { outer: number; inner: number; fontSize: number }>
 const DEFAULT_COLOR = '#a78bfa'
 
 /**
- * PlanetBadge — glowing avatar orb for a planet or universe symbol.
+ * PlanetBadge  -  glowing avatar orb for a planet or universe symbol.
  * Used in nav items, stream cards, resonance maps, breadcrumbs.
  *
  *   <PlanetBadge symbol="⊙" color="#60a5fa" size="md" ring pulse />

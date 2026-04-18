@@ -1,7 +1,7 @@
 import type { Universe, EmotionTone, ExpressionStyle } from '@/types/universe'
 import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceStyle } from '@/types/planet'
 
-// ─── Storage keys ─────────────────────────────────────────────────────────────
+// --- Storage keys -------------------------------------------------------------
 
 const USER_ID_KEY = 'gravitysoul_user_id'
 
@@ -26,19 +26,19 @@ export interface StoredSbtiResult {
   completedAt: string
 }
 
-// ─── Pseudo-auth ──────────────────────────────────────────────────────────────
+// --- Pseudo-auth --------------------------------------------------------------
 
 export function getOrCreateUserId(): string {
   let id = localStorage.getItem(USER_ID_KEY)
   if (!id) {
-    // usr_ + 9 random alphanumeric chars — no external dependency needed
+    // usr_ + 9 random alphanumeric chars  -  no external dependency needed
     id = 'usr_' + Math.random().toString(36).slice(2, 11)
     localStorage.setItem(USER_ID_KEY, id)
   }
   return id
 }
 
-// ─── StoredUniverse ───────────────────────────────────────────────────────────
+// --- StoredUniverse -----------------------------------------------------------
 
 export interface StoredUniverse extends Universe {
   expression: string
@@ -46,7 +46,7 @@ export interface StoredUniverse extends Universe {
   createdAt: string
 }
 
-// ─── Universe builder ─────────────────────────────────────────────────────────
+// --- Universe builder ---------------------------------------------------------
 
 const COSMIC_NAMES = [
   'Velara', 'Kyndris', 'Sorvan', 'Elarethos', 'Driftmere',
@@ -118,7 +118,7 @@ export function buildUniverseFromInput(
   }
 }
 
-// ─── Persistence ──────────────────────────────────────────────────────────────
+// --- Persistence --------------------------------------------------------------
 
 export function saveUserUniverse(universe: StoredUniverse): void {
   const userId = getOrCreateUserId()
@@ -136,7 +136,7 @@ export function getUserUniverse(): StoredUniverse | null {
   }
 }
 
-// ─── Planet persistence ───────────────────────────────────────────────────────
+// --- Planet persistence -------------------------------------------------------
 
 export function savePlanetProfile(planet: PlanetProfile): void {
   const userId = getOrCreateUserId()
@@ -170,7 +170,7 @@ export function getSbtiResult(): StoredSbtiResult | null {
   }
 }
 
-// ─── Role detection ───────────────────────────────────────────────────────────
+// --- Role detection -----------------------------------------------------------
 
 /** Returns 'resonator' if the user has saved a planet, 'explorer' otherwise */
 export function getUserRole(): 'explorer' | 'resonator' {
@@ -183,7 +183,7 @@ export function getUserRole(): 'explorer' | 'resonator' {
   }
 }
 
-// ─── Planet builder ───────────────────────────────────────────────────────────
+// --- Planet builder -----------------------------------------------------------
 
 const MOOD_TO_PLANET_MOOD: Record<string, Mood> = {
   calm:          'calm',
@@ -304,7 +304,7 @@ export function buildPlanetFromInput(
   }
 }
 
-// ─── helpers (re-used from universe builder — kept local) ─────────────────────
+// --- helpers (re-used from universe builder  -  kept local) ---------------------
 
 function detectThemes(text: string): string[] {
   const t = text.toLowerCase()

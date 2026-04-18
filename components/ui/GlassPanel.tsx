@@ -19,7 +19,7 @@ const variantClass: Record<Variant, string> = {
 }
 
 /**
- * GlassPanel — semantic glass surface, 3 variants.
+ * GlassPanel  -  semantic glass surface, 3 variants.
  * Use instead of raw div + inline styles when you need a contained section.
  *
  *   <GlassPanel variant="elevated" className="p-6 rounded-2xl">

@@ -15,7 +15,7 @@ import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Session stats strip ─────────────────────────────────────────────────────
+// --- Session stats strip -----------------------------------------------------
 
 function SessionStats({ session }: { session: ResonanceSession }) {
   const avg = Math.round(
@@ -66,7 +66,7 @@ function SessionStats({ session }: { session: ResonanceSession }) {
   )
 }
 
-// ─── Hint strip ──────────────────────────────────────────────────────────────
+// --- Hint strip --------------------------------------------------------------
 
 function HintStrip({ hasActive }: { hasActive: boolean }) {
   return (
@@ -79,7 +79,7 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
   const [mounted, setMounted]     = useState(false)
@@ -114,7 +114,7 @@ export default function ResonancePage() {
 
   const accentColor = myPlanet?.visual.coreColor ?? '#a78bfa'
 
-  // ── Explorer: no planet → empty state ────────────────────────────────────
+  // -- Explorer: no planet → empty state ------------------------------------
   if (role === 'explorer' || !myPlanet || !session) {
     return (
       <AppShell>
@@ -151,7 +151,7 @@ export default function ResonancePage() {
     )
   }
 
-  // ── Resonator: full orbital view ──────────────────────────────────────────
+  // -- Resonator: full orbital view ------------------------------------------
   return (
     <AppShell>
       <LightCone origin="top-left" color={accentColor} opacity={0.06} double={false} />
@@ -230,7 +230,7 @@ export default function ResonancePage() {
             <HintStrip hasActive={activeId !== null} />
           </div>
 
-          {/* Inline drawer panel for desktop — shown as bottom panel on mobile */}
+          {/* Inline drawer panel for desktop  -  shown as bottom panel on mobile */}
           <ResonanceDrawer
             match={activeMatch}
             onClose={() => setActiveId(null)}

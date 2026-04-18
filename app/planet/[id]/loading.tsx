@@ -1,4 +1,4 @@
-// ─── Planet loading skeleton ──────────────────────────────────────────────────
+// --- Planet loading skeleton --------------------------------------------------
 
 export default function PlanetLoading() {
   return (

@@ -3,7 +3,7 @@ type Direction = 'horizontal' | 'vertical'
 interface Props {
   direction?: Direction
   color?: string
-  /** Total length in px — defaults to 100% via CSS */
+  /** Total length in px  -  defaults to 100% via CSS */
   length?: number | string
   /** Centre orb visible at midpoint */
   orb?: boolean
@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * OrbitLine — a decorative gradient SVG divider with an optional centre orb.
+ * OrbitLine  -  a decorative gradient SVG divider with an optional centre orb.
  * Used as a section separator with the cosmic orbital metaphor.
  *
  *   <OrbitLine direction="horizontal" orb />

@@ -3,14 +3,14 @@ import PlanetScene from '@/components/planet/PlanetScene'
 import GlowButton from '@/components/ui/GlowButton'
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── Language display ─────────────────────────────────────────────────────────
+// --- Language display ---------------------------------------------------------
 
 const LANG_LABEL: Record<string, string> = {
   zh: '中文', en: 'English', fr: 'Français', de: 'Deutsch',
   ja: '日本語', ko: '한국어', es: 'Español', th: 'ไทย',
 }
 
-// ─── Viewer-aware action rows ─────────────────────────────────────────────────
+// --- Viewer-aware action rows -------------------------------------------------
 
 function ExplorerActions() {
   return (
@@ -68,11 +68,11 @@ function SelfActions() {
   )
 }
 
-// ─── PlanetHero ───────────────────────────────────────────────────────────────
+// --- PlanetHero ---------------------------------------------------------------
 
 interface Props {
   planet: PlanetProfile
-  /** Viewer perspective — determines which actions render */
+  /** Viewer perspective  -  determines which actions render */
   viewerRole: 'self' | 'explorer' | 'resonator'
 }
 
@@ -88,7 +88,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
         boxShadow: `0 0 80px ${visual.coreColor}12, 0 32px 80px rgba(0,0,0,0.6)`,
       }}
     >
-      {/* ── Atmospheric background layers ─────────────────────────────── */}
+      {/* -- Atmospheric background layers ------------------------------- */}
 
       {/* Primary radial wash from coreColor */}
       <div
@@ -115,15 +115,15 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
         }}
       />
 
-      {/* ── Content grid ──────────────────────────────────────────────── */}
+      {/* -- Content grid ------------------------------------------------ */}
       <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
 
-        {/* Planet scene — left column on desktop, top on mobile */}
+        {/* Planet scene  -  left column on desktop, top on mobile */}
         <div className="shrink-0 flex items-center justify-center">
           <PlanetScene planet={planet} size={220} />
         </div>
 
-        {/* Identity column — right on desktop, below on mobile */}
+        {/* Identity column  -  right on desktop, below on mobile */}
         <div className="flex-1 flex flex-col gap-5 min-w-0 text-center md:text-left pt-2 md:pt-6">
 
           {/* Eyebrow */}

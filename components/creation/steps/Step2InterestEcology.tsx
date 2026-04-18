@@ -1,7 +1,7 @@
 import type { Lifestyle } from '@/types/planet'
 import { THEME_OPTIONS, LIFESTYLE_OPTIONS } from '@/types/creation'
 
-// ─── Step2InterestEcology ─────────────────────────────────────────────────────
+// --- Step2InterestEcology -----------------------------------------------------
 // Theme multi-select (up to 5) + lifestyle choice.
 // Themes map to biome bands in PlanetScene; lifestyle sets satellite count.
 
@@ -36,7 +36,7 @@ export default function Step2InterestEcology({
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
           Select up to {MAX_THEMES} themes that feel like yours. These become the terrain bands of
-          your planet — the ecology others sense when they enter your orbit.
+          your planet  -  the ecology others sense when they enter your orbit.
         </p>
       </div>
 

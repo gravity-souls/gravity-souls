@@ -1,4 +1,4 @@
-// ─── Resonance loading skeleton ───────────────────────────────────────────────
+// --- Resonance loading skeleton -----------------------------------------------
 
 export default function ResonanceLoading() {
   return (

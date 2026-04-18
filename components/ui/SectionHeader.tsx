@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * SectionHeader — standardised section title pattern.
+ * SectionHeader  -  standardised section title pattern.
  * Eyebrow (small caps label) + title + optional subtitle + optional action.
  *
  *   <SectionHeader

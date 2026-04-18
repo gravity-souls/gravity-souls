@@ -1,4 +1,4 @@
-// ─── Messages loading skeleton ────────────────────────────────────────────────
+// --- Messages loading skeleton ------------------------------------------------
 
 function SkeletonRow() {
   return (

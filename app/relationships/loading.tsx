@@ -1,4 +1,4 @@
-// ─── Relationships loading skeleton ──────────────────────────────────────────
+// --- Relationships loading skeleton ------------------------------------------
 
 function SkeletonCard() {
   return (

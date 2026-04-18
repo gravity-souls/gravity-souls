@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -19,7 +19,12 @@ import { getResonanceMatches } from '@/lib/match'
 import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
 
-// ─── Cultural profile panel ──────────────────────────────────────────────────
+const emptySubscribe = () => () => {}
+function useHydrated() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
+
+// --- Cultural profile panel --------------------------------------------------
 
 function CulturalProfile({ planet }: { planet: PlanetProfile }) {
   const hasCulture  = planet.culturalTags   && planet.culturalTags.length > 0
@@ -161,44 +166,99 @@ function SoulScanCard({ planet }: { planet: PlanetProfile }) {
   )
 }
 
-// ─── Match preference badge ──────────────────────────────────────────────────
+// --- Match preference badge --------------------------------------------------
 
 const PREFERENCE_META = {
-  similar:       { label: 'Seeks resonance',    description: 'You gravitate toward kindred spirits — planets that share your frequency.',   color: '#a78bfa' },
-  complementary: { label: 'Seeks contrast',     description: 'You are drawn to planets that fill in what you lack — difference as gravity.', color: '#34d399' },
+  similar:       { label: 'Seeks resonance',    description: 'You gravitate toward kindred spirits  -  planets that share your frequency.',   color: '#a78bfa' },
+  complementary: { label: 'Seeks contrast',     description: 'You are drawn to planets that fill in what you lack  -  difference as gravity.', color: '#34d399' },
   mixed:         { label: 'Open orbit',         description: 'You hold space for both resonance and contrast. Your orbit is wide.',          color: '#fbbf24' },
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// --- Page --------------------------------------------------------------------
 
 export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [resonances, setResonances] = useState<ResonancePlanet[]>([])
-  const [mounted, setMounted]     = useState(false)
+  const hydrated = useHydrated()
+  const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
-    setMounted(true)
-    const p = getPlanetProfile()
-    const sbti = getSbtiResult()
+    async function load() {
+      let p: PlanetProfile | null = null
 
-    if (p) {
-      const nextPlanet = !p.sbtiType && sbti
-        ? {
-            ...p,
-            sbtiType: sbti.typeCode,
-            sbtiCn: sbti.typeCn,
-            sbtiPattern: sbti.patternString,
-          }
-        : p
+      // 1. Try loading from DB via API (single source of truth)
+      try {
+        const [planetRes, meRes] = await Promise.all([
+          fetch('/api/my-planet'),
+          fetch('/api/me'),
+        ])
 
-      setPlanet(nextPlanet)
-      setResonances(getResonanceMatches(nextPlanet, mockPlanets, 4))
+        if (planetRes.ok) {
+          const data = await planetRes.json()
+          const meData = meRes.ok ? await meRes.json() : null
+
+          p = {
+            id: data.id,
+            name: data.name,
+            avatarSymbol: data.avatarSymbol,
+            tagline: data.tagline ?? undefined,
+            role: data.role ?? 'explorer',
+            mood: data.mood ?? 'calm',
+            style: data.style ?? 'minimal',
+            lifestyle: data.lifestyle ?? 'solitary',
+            coreThemes: data.coreThemes ?? [],
+            contentFragments: data.contentFragments ?? [],
+            visual: data.visual ?? {},
+            cognitiveAxes: {
+              abstract: data.abstractAxis ?? 50,
+              introspective: data.introspectiveAxis ?? 50,
+            },
+            emotionalBars: [],
+            createdAt: data.createdAt,
+            userId: data.userId,
+            ...(meData?.profile ? {
+              location: meData.profile.location ?? undefined,
+              languages: meData.profile.languages ?? [],
+              culturalTags: meData.profile.culturalTags ?? [],
+              travelCities: meData.profile.travelCities ?? [],
+              musicTaste: meData.profile.musicTaste ?? [],
+              bookTaste: meData.profile.bookTaste ?? [],
+              filmTaste: meData.profile.filmTaste ?? [],
+              communicationStyle: meData.profile.communicationStyle ?? undefined,
+              matchPreference: meData.profile.matchPreference ?? 'mixed',
+              sbtiType: meData.profile.sbtiType ?? undefined,
+              sbtiCn: meData.profile.sbtiCn ?? undefined,
+              sbtiPattern: meData.profile.sbtiPattern ?? undefined,
+            } : {}),
+          } as PlanetProfile
+        }
+      } catch {
+        // API failed - fall back to localStorage
+      }
+
+      // 2. Fallback to localStorage if API didn't return a planet
+      if (!p) {
+        p = getPlanetProfile()
+        const sbti = getSbtiResult()
+        if (p && !p.sbtiType && sbti) {
+          p = { ...p, sbtiType: sbti.typeCode, sbtiCn: sbti.typeCn, sbtiPattern: sbti.patternString }
+        }
+      }
+
+      if (p) {
+        setPlanet(p)
+        setResonances(getResonanceMatches(p, mockPlanets, 4))
+      }
+
+      setLoading(false)
     }
+
+    load()
   }, [])
 
-  if (!mounted) return null
+  if (!hydrated || loading) return null
 
-  // ── Explorer state — no planet formed yet ──────────────────────────────────
+  // -- Explorer state  -  no planet formed yet ----------------------------------
   if (!planet) {
     return (
       <AppShell noSideNav>
@@ -208,7 +268,7 @@ export default function MyPlanetPage() {
             <EmptyState
               symbol="◌"
               title="Your planet has not formed yet"
-              subtitle="Create your universe first — your planet emerges from the same expression. It maps your cognitive style, emotional frequency, and resonance field."
+              subtitle="Create your universe first  -  your planet emerges from the same expression. It maps your cognitive style, emotional frequency, and resonance field."
               action={
                 <GlowButton href="/create-planet" variant="primary" className="px-8 py-4 text-sm">
                   Begin the formation
@@ -231,10 +291,10 @@ export default function MyPlanetPage() {
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-6xl mx-auto">
 
-        {/* ── Hero ──────────────────────────────────────────────────────── */}
+        {/* -- Hero -------------------------------------------------------- */}
         <PlanetHero planet={planet} viewerRole="self" />
 
-        {/* ── Ownership status strip ────────────────────────────────────── */}
+        {/* -- Ownership status strip -------------------------------------- */}
         <div
           className="mt-4 flex flex-wrap items-center gap-4 px-5 py-3 rounded-2xl"
           style={{
@@ -272,10 +332,17 @@ export default function MyPlanetPage() {
           )}
         </div>
 
-        {/* ── Main grid ─────────────────────────────────────────────────── */}
+        {/* -- Edit planet link --------------------------------------------- */}
+        <div className="mt-3">
+          <GlowButton href="/settings/planet" variant="secondary" className="text-xs px-5 py-2">
+            Edit planet
+          </GlowButton>
+        </div>
+
+        {/* -- Main grid --------------------------------------------------- */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Left / main column ──────────────────────────────────────── */}
+          {/* -- Left / main column ---------------------------------------- */}
           <div className="lg:col-span-2 flex flex-col gap-6">
 
             {/* Cognitive axes */}
@@ -332,7 +399,7 @@ export default function MyPlanetPage() {
 
           </div>
 
-          {/* ── Right sidebar ────────────────────────────────────────────── */}
+          {/* -- Right sidebar ---------------------------------------------- */}
           <div className="flex flex-col gap-6">
 
             {/* Self actions */}
@@ -370,7 +437,7 @@ export default function MyPlanetPage() {
           </div>
         </div>
 
-        {/* ── Footer ───────────────────────────────────────────────────── */}
+        {/* -- Footer ----------------------------------------------------- */}
         <div
           className="flex flex-col sm:flex-row items-center gap-4 pt-8 mt-4 border-t"
           style={{ borderColor: 'rgba(167,139,250,0.07)' }}

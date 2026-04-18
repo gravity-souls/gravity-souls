@@ -6,7 +6,7 @@ import type { PlanetProfile } from '@/types/planet'
 interface Props {
   planet: PlanetProfile
   onClick?: () => void
-  /** Size of the orb in px — defaults to 48 */
+  /** Size of the orb in px  -  defaults to 48 */
   size?: number
   /** Show the planet name label below the orb */
   showLabel?: boolean
@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * PlanetCard — compact interactive planet dot.
+ * PlanetCard  -  compact interactive planet dot.
  *
  * Used in:
  *   - Universe homepage field (scattered, absolute positioned)
@@ -38,9 +38,9 @@ export default function PlanetCard({
       onClick={onClick}
       className={`group relative flex flex-col items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 ${className}`}
       style={style}
-      aria-label={`${planet.name}${planet.tagline ? ` — ${planet.tagline}` : ''}`}
+      aria-label={`${planet.name}${planet.tagline ? `  -  ${planet.tagline}` : ''}`}
     >
-      {/* Hover halo — expands behind the orb on hover */}
+      {/* Hover halo  -  expands behind the orb on hover */}
       <div
         className="absolute rounded-full pointer-events-none opacity-0 group-hover:opacity-100"
         style={{
@@ -71,7 +71,7 @@ export default function PlanetCard({
         }}
         // Inline hover handled by CSS group utilities
       >
-        {/* Surface shimmer — visible on hover via group */}
+        {/* Surface shimmer  -  visible on hover via group */}
         <div
           className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100"
           style={{
@@ -95,7 +95,7 @@ export default function PlanetCard({
         </span>
       </div>
 
-      {/* Scale ring — grows on hover */}
+      {/* Scale ring  -  grows on hover */}
       <div
         className="absolute rounded-full pointer-events-none border opacity-0 group-hover:opacity-100"
         style={{

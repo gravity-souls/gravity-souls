@@ -1,7 +1,7 @@
 import type { PlanetProfile } from '@/types/planet'
 import PlanetScene from '@/components/planet/PlanetScene'
 
-// ─── LivePlanetPreview ────────────────────────────────────────────────────────
+// --- LivePlanetPreview --------------------------------------------------------
 // Compact planet preview shown alongside creation steps.
 // Re-renders on every draft change via parent memoization.
 

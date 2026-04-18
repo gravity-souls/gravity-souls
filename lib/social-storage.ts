@@ -1,6 +1,6 @@
 import { getOrCreateUserId } from '@/lib/user'
 
-// ─── Saved planets storage ────────────────────────────────────────────────────
+// --- Saved planets storage ----------------------------------------------------
 // Stored as a JSON array of planet IDs in localStorage.
 
 function savedKey(): string {

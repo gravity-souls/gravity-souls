@@ -1,7 +1,7 @@
 import type { ExplorationTrace } from '@/types/planet'
 import { relativeTime } from '@/lib/time'
 
-// ─── Single trace row ──────────────────────────────────────────────────────
+// --- Single trace row ------------------------------------------------------
 
 function TraceRow({ trace, maxCount }: { trace: ExplorationTrace; maxCount: number }) {
   const fillWidth = Math.round((trace.count / maxCount) * 100)
@@ -62,7 +62,7 @@ function TraceRow({ trace, maxCount }: { trace: ExplorationTrace; maxCount: numb
   )
 }
 
-// ─── ExplorationTracePanel ────────────────────────────────────────────────
+// --- ExplorationTracePanel ------------------------------------------------
 
 interface Props {
   traces: ExplorationTrace[]
@@ -71,7 +71,7 @@ interface Props {
 }
 
 /**
- * ExplorationTracePanel — shows the planet archetypes this user has recently
+ * ExplorationTracePanel  -  shows the planet archetypes this user has recently
  * explored, as glowing trail dots with labels and relative counts.
  *
  * Wrap in ProfileLayerSection with locked=true for Explorer viewers.

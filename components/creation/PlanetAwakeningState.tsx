@@ -5,8 +5,9 @@ import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetScene from '@/components/planet/PlanetScene'
 import GlowButton from '@/components/ui/GlowButton'
+import { authClient } from '@/lib/auth-client'
 
-// ─── PlanetAwakeningState ─────────────────────────────────────────────────────
+// --- PlanetAwakeningState -----------------------------------------------------
 // Full-page awakening ceremony shown after the 5-step ritual is complete.
 // Sequence:
 //   0–400ms  : planet scales in
@@ -19,6 +20,10 @@ interface Props {
 
 export default function PlanetAwakeningState({ planet }: Props) {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
+  const { data: session } = authClient.useSession()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const isAuthenticated = mounted && !!session?.user
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 200)
@@ -74,7 +79,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
         </div>
       )}
 
-      {/* Planet — scales in */}
+      {/* Planet  -  scales in */}
       <div
         className="relative z-10 flex flex-col items-center gap-8 transition-all duration-700"
         style={{
@@ -85,7 +90,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
         <PlanetScene planet={planet} size={180} />
       </div>
 
-      {/* Text — fades in after planet */}
+      {/* Text  -  fades in after planet */}
       <div
         className="relative z-10 flex flex-col items-center gap-4 text-center mt-8 transition-all duration-700"
         style={{
@@ -137,19 +142,34 @@ export default function PlanetAwakeningState({ planet }: Props) {
             style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }}
           />
           <span className="text-xs" style={{ color: '#34d399' }}>
-            You are now a Resonator — the deeper layers are open
+            You are now a Resonator  -  the deeper layers are open
           </span>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
-          <GlowButton href="/my-planet" variant="primary" className="px-8 py-3.5 text-sm">
+          {!isAuthenticated && (
+            <GlowButton href="/sign-up" variant="primary" className="px-8 py-3.5 text-sm">
+              Save my planet  -  create account
+            </GlowButton>
+          )}
+          <GlowButton href="/my-planet" variant={isAuthenticated ? 'primary' : 'secondary'} className="px-8 py-3.5 text-sm">
             Open my planet
           </GlowButton>
           <GlowButton href="/resonance" variant="secondary" className="px-8 py-3.5 text-sm">
             See my resonances
           </GlowButton>
         </div>
+
+        {/* Warning for unauthenticated users */}
+        {!isAuthenticated && (
+          <p
+            className="text-xs text-center max-w-xs leading-relaxed mt-1"
+            style={{ color: '#f59e0b', opacity: 0.85 }}
+          >
+            Your planet is stored locally. Create an account to keep it across devices and browsers.
+          </p>
+        )}
 
         {/* Stream link */}
         <Link

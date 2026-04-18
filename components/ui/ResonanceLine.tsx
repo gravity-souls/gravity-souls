@@ -1,4 +1,4 @@
-// Server component — pure SVG with gradient stroke + glow filter.
+// Server component  -  pure SVG with gradient stroke + glow filter.
 // Renders a glowing beam that visually separates resonance sections.
 
 import type { MatchType } from '@/types/universe'

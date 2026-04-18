@@ -1,6 +1,6 @@
 import type { Conversation, Message } from '@/types/social'
 
-// ─── Mock conversation pool ───────────────────────────────────────────────────
+// --- Mock conversation pool ---------------------------------------------------
 // Source planet: p-aelion (the demo user).
 // Conversation ID = other planet's ID (used as route param in /messages/[id]).
 
@@ -58,18 +58,18 @@ export const mockConversations: Conversation[] = [
   },
 ]
 
-// ─── Per-conversation message sets ────────────────────────────────────────────
+// --- Per-conversation message sets --------------------------------------------
 
 export const mockMessageSets: Record<string, Message[]> = {
   'p-driftan': [
     {
       id: 'msg-d1', fromId: 'p-aelion', toId: 'p-driftan', type: 'text',
-      content: "I've been thinking about the W.G. Sebald thing you mentioned — the way he folds photographs into prose without ever explaining them.",
+      content: "I've been thinking about the W.G. Sebald thing you mentioned  -  the way he folds photographs into prose without ever explaining them.",
       sentAt: '2026-03-26T22:00:00Z', readAt: '2026-03-27T01:10:00Z',
     },
     {
       id: 'msg-d2', fromId: 'p-driftan', toId: 'p-aelion', type: 'text',
-      content: "Yes — the photographs that are almost the wrong size. Never quite filling the page. Like memory itself: almost right, but not quite.",
+      content: "Yes  -  the photographs that are almost the wrong size. Never quite filling the page. Like memory itself: almost right, but not quite.",
       sentAt: '2026-03-27T02:15:00Z', readAt: '2026-03-27T08:00:00Z',
     },
     {
@@ -92,7 +92,7 @@ export const mockMessageSets: Record<string, Message[]> = {
     },
     {
       id: 'msg-l2', fromId: 'p-aelion', toId: 'p-lumira', type: 'text',
-      content: "Received. I've been reading your exploration traces — the warm nomads cluster is something.",
+      content: "Received. I've been reading your exploration traces  -  the warm nomads cluster is something.",
       sentAt: '2026-03-23T09:30:00Z', readAt: '2026-03-23T14:00:00Z',
     },
     {
@@ -111,7 +111,7 @@ export const mockMessageSets: Record<string, Message[]> = {
   ],
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 export function getConversation(id: string): Conversation | undefined {
   return mockConversations.find((c) => c.id === id)

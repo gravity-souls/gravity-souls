@@ -18,7 +18,7 @@ interface Props {
 }
 
 /**
- * LockedLayer — wraps content behind an overlay for premium/gated features.
+ * LockedLayer  -  wraps content behind an overlay for premium/gated features.
  *
  *   <LockedLayer
  *     reason="Create your planet to unlock resonance matching"

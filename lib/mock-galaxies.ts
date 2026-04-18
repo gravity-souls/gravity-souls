@@ -1,6 +1,6 @@
-// ─── Mock Galaxy data ──────────────────────────────────────────────────────
+// --- Mock Galaxy data ------------------------------------------------------
 // 8 diverse galaxies covering different thematic clusters.
-// Planet IDs reference lib/mock-planets.ts — prefix 'p-' + slug.
+// Planet IDs reference lib/mock-planets.ts  -  prefix 'p-' + slug.
 
 import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
 
@@ -135,7 +135,7 @@ export const MOCK_GALAXIES: Galaxy[] = [
   },
 ]
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// --- Helpers ----------------------------------------------------------------
 
 export function getGalaxyBySlug(slug: string): Galaxy | undefined {
   return MOCK_GALAXIES.find((g) => g.slug === slug)

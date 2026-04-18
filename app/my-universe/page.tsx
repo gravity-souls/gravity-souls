@@ -66,7 +66,7 @@ export default function MyUniversePage() {
             </div>
           </>
         ) : (
-          /* ── Empty state ── */
+          /* -- Empty state -- */
           <div className="flex flex-col items-center gap-6 py-24 text-center">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center"

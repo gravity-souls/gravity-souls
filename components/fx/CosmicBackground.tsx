@@ -1,4 +1,4 @@
-// Server component — pure CSS layers, no hooks needed.
+// Server component  -  pure CSS layers, no hooks needed.
 // Renders the full layered cosmic atmosphere that sits beneath everything.
 
 // Tiled SVG fractal noise rendered as a CSS background, creating a subtle
@@ -13,10 +13,10 @@ export default function CosmicBackground() {
       style={{ zIndex: 0 }}
       aria-hidden="true"
     >
-      {/* ── Layer 1: Absolute void ─────────────────────────────────────── */}
+      {/* -- Layer 1: Absolute void --------------------------------------- */}
       <div className="absolute inset-0" style={{ background: '#02020c' }} />
 
-      {/* ── Layer 2: Deep violet crown — breathes slowly ──────────────── */}
+      {/* -- Layer 2: Deep violet crown  -  breathes slowly ---------------- */}
       <div
         className="absolute inset-0 animate-nebula-breathe"
         style={{
@@ -25,7 +25,7 @@ export default function CosmicBackground() {
         }}
       />
 
-      {/* ── Layer 3: Secondary violet ring, offset left ───────────────── */}
+      {/* -- Layer 3: Secondary violet ring, offset left ----------------- */}
       <div
         className="absolute inset-0"
         style={{
@@ -35,7 +35,7 @@ export default function CosmicBackground() {
         }}
       />
 
-      {/* ── Layer 4: Deep indigo pool — bottom-right ──────────────────── */}
+      {/* -- Layer 4: Deep indigo pool  -  bottom-right -------------------- */}
       <div
         className="absolute inset-0"
         style={{
@@ -44,7 +44,7 @@ export default function CosmicBackground() {
         }}
       />
 
-      {/* ── Layer 5: Cold cyan edge — far left ───────────────────────── */}
+      {/* -- Layer 5: Cold cyan edge  -  far left ------------------------- */}
       <div
         className="absolute inset-0"
         style={{
@@ -53,7 +53,7 @@ export default function CosmicBackground() {
         }}
       />
 
-      {/* ── Layer 6: Warm gold accent — far bottom ───────────────────── */}
+      {/* -- Layer 6: Warm gold accent  -  far bottom --------------------- */}
       <div
         className="absolute inset-0"
         style={{
@@ -62,7 +62,7 @@ export default function CosmicBackground() {
         }}
       />
 
-      {/* ── Layer 7: Film-grain noise overlay ────────────────────────── */}
+      {/* -- Layer 7: Film-grain noise overlay -------------------------- */}
       <div
         className="absolute inset-0"
         style={{

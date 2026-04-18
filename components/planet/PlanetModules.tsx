@@ -1,6 +1,6 @@
 import type { PlanetProfile } from '@/types/planet'
 
-// ─── CognitiveStyleModule ─────────────────────────────────────────────────────
+// --- CognitiveStyleModule -----------------------------------------------------
 // 2-axis plot: abstract vs concrete (X), introspective vs outward (Y)
 
 export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
@@ -82,7 +82,7 @@ export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
   )
 }
 
-// ─── EmotionalFrequencyModule ─────────────────────────────────────────────────
+// --- EmotionalFrequencyModule -------------------------------------------------
 // Vertical spectrum bars for each emotional dimension
 
 export function EmotionalFrequencyModule({ planet }: { planet: PlanetProfile }) {
@@ -127,7 +127,7 @@ export function EmotionalFrequencyModule({ planet }: { planet: PlanetProfile }) 
   )
 }
 
-// ─── ContentOrbit ─────────────────────────────────────────────────────────────
+// --- ContentOrbit -------------------------------------------------------------
 // Short text fragments arranged in a list with a subtle left-beam accent
 
 export function ContentOrbit({ planet }: { planet: PlanetProfile }) {
@@ -163,7 +163,7 @@ export function ContentOrbit({ planet }: { planet: PlanetProfile }) {
   )
 }
 
-// ─── ThemeCloud ────────────────────────────────────────────────────────────────
+// --- ThemeCloud ----------------------------------------------------------------
 
 export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
   return (

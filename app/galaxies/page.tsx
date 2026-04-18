@@ -12,7 +12,7 @@ import type { GalaxyPreview } from '@/types/galaxy'
 
 const ALL_GALAXIES = getGalaxyPreviews()
 
-// ─── Filter controls ─────────────────────────────────────────────────────────
+// --- Filter controls ---------------------------------------------------------
 
 type MoodFilter = GalaxyPreview['mood'] | 'all'
 
@@ -25,7 +25,7 @@ const MOOD_OPTIONS: { value: MoodFilter; label: string }[] = [
   { value: 'vibrant',       label: 'Vibrant' },
 ]
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// --- Page --------------------------------------------------------------------
 
 // useSearchParams requires a Suspense boundary in Next.js App Router
 export default function GalaxiesPage() {
@@ -65,10 +65,10 @@ function GalaxiesInner() {
           eyebrow="Communities"
           level={1}
           title="Galaxies"
-          subtitle="Keyword-based clusters where planets find their orbit. Each galaxy is a thematic world — join, explore, or drift through."
+          subtitle="Keyword-based clusters where planets find their orbit. Each galaxy is a thematic world  -  join, explore, or drift through."
         />
 
-        {/* ── Search + filters ──────────────────────────────────────────── */}
+        {/* -- Search + filters -------------------------------------------- */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
 
           {/* Search input */}
@@ -124,7 +124,7 @@ function GalaxiesInner() {
           {query ? ` for "${query}"` : ''}
         </p>
 
-        {/* ── Galaxy grid ───────────────────────────────────────────────── */}
+        {/* -- Galaxy grid ------------------------------------------------- */}
         <div className="mt-6">
           {filtered.length === 0 ? (
             <EmptyState

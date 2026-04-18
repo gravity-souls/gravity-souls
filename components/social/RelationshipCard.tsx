@@ -5,7 +5,7 @@ import RelationshipStateBadge from '@/components/social/RelationshipStateBadge'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
 
-// ─── RelationshipCard ─────────────────────────────────────────────────────────
+// --- RelationshipCard ---------------------------------------------------------
 
 interface Props {
   relationship: Relationship

@@ -1,4 +1,4 @@
-// ─── Saved loading skeleton ───────────────────────────────────────────────────
+// --- Saved loading skeleton ---------------------------------------------------
 
 function SkeletonCard() {
   return (

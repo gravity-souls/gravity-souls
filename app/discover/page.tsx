@@ -10,7 +10,7 @@ import type { Universe } from '@/types/universe'
 import { useLanguage } from '@/contexts/language-context'
 import { t } from '@/lib/translations'
 
-// ─── Section config ───────────────────────────────────────────────────────────
+// --- Section config -----------------------------------------------------------
 
 const sectionConfig: Record<
   MatchType,
@@ -30,7 +30,7 @@ const sectionConfig: Record<
   },
   distant: {
     label:         'Distant',
-    sublabel:      'Far orbit — a different kind of mirror',
+    sublabel:      'Far orbit  -  a different kind of mirror',
     accentColor:   '#fbbf24',
     scoreGradient: 'linear-gradient(90deg, #d97706, #fbbf24)',
   },
@@ -43,7 +43,7 @@ const grouped = ORDER.reduce<Record<MatchType, Universe[]>>(
   { similar: [], complementary: [], distant: [] },
 )
 
-// ─── ResonanceBar ─────────────────────────────────────────────────────────────
+// --- ResonanceBar -------------------------------------------------------------
 
 function ResonanceBar({ score, gradient }: { score: number; gradient: string }) {
   const labelColor = gradient.includes('6366f1') ? '#818cf8'
@@ -64,7 +64,7 @@ function ResonanceBar({ score, gradient }: { score: number; gradient: string }) 
   )
 }
 
-// ─── Universe match card ──────────────────────────────────────────────────────
+// --- Universe match card ------------------------------------------------------
 
 function UniverseCard({ universe, cfg }: { universe: Universe; cfg: typeof sectionConfig.similar }) {
   const symbolColor = toneColor[universe.emotionTone]
@@ -147,7 +147,7 @@ function UniverseCard({ universe, cfg }: { universe: Universe; cfg: typeof secti
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---------------------------------------------------------------------
 
 export default function DiscoverPage() {
   const { lang } = useLanguage()
@@ -160,7 +160,7 @@ export default function DiscoverPage() {
 
       <div className="relative z-10 flex flex-col gap-14 animate-fade-up">
 
-        {/* ── Page header ───────────────────────────────────────────────── */}
+        {/* -- Page header ------------------------------------------------- */}
         <div className="flex flex-col gap-3">
           <span
             className="text-xs font-medium tracking-[0.3em] uppercase"
@@ -181,7 +181,7 @@ export default function DiscoverPage() {
           </p>
         </div>
 
-        {/* ── Grouped sections ─────────────────────────────────────────── */}
+        {/* -- Grouped sections ------------------------------------------- */}
         {ORDER.map((type, sectionIdx) => {
           const universes = grouped[type]
           if (universes.length === 0) return null
@@ -231,7 +231,7 @@ export default function DiscoverPage() {
                 />
               </div>
 
-              {/* Cards — 2-col for similar/complementary, 1-col for distant */}
+              {/* Cards  -  2-col for similar/complementary, 1-col for distant */}
               <div
                 className={
                   universes.length > 1
@@ -247,7 +247,7 @@ export default function DiscoverPage() {
           )
         })}
 
-        {/* ── Footer CTA ────────────────────────────────────────────────── */}
+        {/* -- Footer CTA -------------------------------------------------- */}
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-[rgba(167,139,250,0.08)]">
           <GlowButton href="/create-universe" variant="primary" className="py-4 text-sm">
             Create your own universe

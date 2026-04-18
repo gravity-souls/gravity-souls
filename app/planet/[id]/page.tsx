@@ -23,7 +23,7 @@ import { getResonanceMatches } from '@/lib/match'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
 
-// ─── Cultural coordinates panel ──────────────────────────────────────────────
+// --- Cultural coordinates panel ----------------------------------------------
 // Shows culturalTags and travelCities as visual clusters.
 
 function CulturalCoordinates({ culturalTags, travelCities, accentColor }: {
@@ -93,7 +93,7 @@ function CulturalCoordinates({ culturalTags, travelCities, accentColor }: {
   )
 }
 
-// ─── Atmospheric fog veil — aspirational locked state ─────────────────────────
+// --- Atmospheric fog veil  -  aspirational locked state -------------------------
 // A more poetic alternative to LockedLayer for full sections.
 
 function FogVeil({
@@ -147,7 +147,7 @@ function FogVeil({
   )
 }
 
-// ─── Page inner ───────────────────────────────────────────────────────────────
+// --- Page inner ---------------------------------------------------------------
 
 function PlanetPageInner() {
   const params = useParams()
@@ -207,7 +207,7 @@ function PlanetPageInner() {
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-6xl mx-auto">
 
-        {/* ── Breadcrumb ──────────────────────────────────────────────── */}
+        {/* -- Breadcrumb ------------------------------------------------ */}
         <nav className="flex items-center gap-2 text-xs mb-6" style={{ color: 'var(--ghost)' }}>
           <Link href="/stream" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--ghost)' }}>
             Stream
@@ -228,13 +228,13 @@ function PlanetPageInner() {
           )}
         </nav>
 
-        {/* ── Hero ────────────────────────────────────────────────────── */}
+        {/* -- Hero ------------------------------------------------------ */}
         <PlanetHero planet={planet} viewerRole={viewerRole} />
 
-        {/* ── Match reason (Resonator only) ────────────────────────────── */}
+        {/* -- Match reason (Resonator only) ------------------------------ */}
         {isResonator && (
           <div className="mt-6 flex flex-col gap-4">
-            {/* Orbit dimension bars — derived from both planets */}
+            {/* Orbit dimension bars  -  derived from both planets */}
             {viewerPlanet && (
               <PlanetResonancePanel subject={planet} viewerPlanet={viewerPlanet} />
             )}
@@ -245,10 +245,10 @@ function PlanetPageInner() {
           </div>
         )}
 
-        {/* ── Main content grid ───────────────────────────────────────── */}
+        {/* -- Main content grid ----------------------------------------- */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Left / main column (2 wide) ─────────────────────────── */}
+          {/* -- Left / main column (2 wide) --------------------------- */}
           <div className="lg:col-span-2 flex flex-col gap-6">
 
             {/* Cognitive axes */}
@@ -311,7 +311,7 @@ function PlanetPageInner() {
                   {planet.contentFragments.length > 1 && (
                     <FogVeil
                       title="This orbit layer is sealed"
-                      message={`${planet.contentFragments.length - 1} more fragments from ${planet.name} — only resonators can read them.`}
+                      message={`${planet.contentFragments.length - 1} more fragments from ${planet.name}  -  only resonators can read them.`}
                     />
                   )}
                 </div>
@@ -325,7 +325,7 @@ function PlanetPageInner() {
 
           </div>
 
-          {/* ── Right column ────────────────────────────────────────── */}
+          {/* -- Right column ------------------------------------------ */}
           <div className="flex flex-col gap-6">
 
             {/* Cultural coordinates */}
@@ -353,14 +353,14 @@ function PlanetPageInner() {
               </OrbitCard>
             )}
 
-            {/* Galaxy memberships — public, always visible */}
+            {/* Galaxy memberships  -  public, always visible */}
             {planet.galaxyIds && planet.galaxyIds.length > 0 && (
               <OrbitCard glowColor={visual.coreColor} className="p-5">
                 <GalaxyMemberships galaxyIds={planet.galaxyIds} />
               </OrbitCard>
             )}
 
-            {/* Exploration traces — locked for Explorer */}
+            {/* Exploration traces  -  locked for Explorer */}
             {planet.explorationTraces && planet.explorationTraces.length > 0 && (
               <OrbitCard glowColor={visual.accentColor} className="p-5">
                 <ProfileLayerSection
@@ -400,7 +400,7 @@ function PlanetPageInner() {
           </div>
         </div>
 
-        {/* ── Footer navigation ────────────────────────────────────────── */}
+        {/* -- Footer navigation ------------------------------------------ */}
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 mt-4 border-t border-[rgba(167,139,250,0.07)]">
           <GlowButton href="/stream" variant="secondary" className="py-3 text-sm">
             Back to stream
@@ -417,7 +417,7 @@ function PlanetPageInner() {
   )
 }
 
-// ─── Page — Suspense wrapper ─────────────────────────────────────────────────
+// --- Page  -  Suspense wrapper -------------------------------------------------
 
 export default function PlanetPage() {
   return (

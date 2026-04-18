@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { ResonancePlanet, BeamColor } from '@/types/planet'
 
-// ─── Beam colour map ──────────────────────────────────────────────────────────
+// --- Beam colour map ----------------------------------------------------------
 
 const BEAM_COLORS: Record<BeamColor, { primary: string; glow: string; label: string }> = {
   violet: { primary: '#a78bfa', glow: '#6366f155', label: 'Emotion' },
@@ -10,7 +10,7 @@ const BEAM_COLORS: Record<BeamColor, { primary: string; glow: string; label: str
   blue:   { primary: '#60a5fa', glow: '#2563eb88', label: 'Lifestyle' },
 }
 
-// ─── SVG hub diagram ──────────────────────────────────────────────────────────
+// --- SVG hub diagram ----------------------------------------------------------
 // Central hub orb with radiating beam lines toward resonance planet symbols.
 
 function ResonanceHub({
@@ -127,7 +127,7 @@ function ResonanceHub({
   )
 }
 
-// ─── Resonance planet card ────────────────────────────────────────────────────
+// --- Resonance planet card ----------------------------------------------------
 
 function ResonancePlanetCard({ planet }: { planet: ResonancePlanet }) {
   const col = BEAM_COLORS[planet.beamColor]
@@ -187,7 +187,7 @@ function ResonancePlanetCard({ planet }: { planet: ResonancePlanet }) {
   )
 }
 
-// ─── ResonanceMap ─────────────────────────────────────────────────────────────
+// --- ResonanceMap -------------------------------------------------------------
 
 interface Props {
   planets: ResonancePlanet[]

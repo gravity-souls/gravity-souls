@@ -4,13 +4,13 @@ import type { GalaxyPreview } from '@/types/galaxy'
 interface Props {
   galaxy:   GalaxyPreview
   /**
-   * compact — horizontal strip card used on the homepage
-   * full    — directory card used on /galaxies
+   * compact  -  horizontal strip card used on the homepage
+   * full     -  directory card used on /galaxies
    */
   variant?: 'compact' | 'full'
 }
 
-// ─── Mood label display ─────────────────────────────────────────────────────
+// --- Mood label display -----------------------------------------------------
 
 const MOOD_LABEL: Record<GalaxyPreview['mood'], string> = {
   vibrant:       'Vibrant',
@@ -26,7 +26,7 @@ const MATURITY_LABEL: Record<GalaxyPreview['maturity'], string> = {
   established: 'Landmark',
 }
 
-// ─── GalaxyCard ─────────────────────────────────────────────────────────────
+// --- GalaxyCard -------------------------------------------------------------
 
 export default function GalaxyCard({ galaxy, variant = 'full' }: Props) {
   const { slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor } = galaxy
@@ -38,7 +38,7 @@ export default function GalaxyCard({ galaxy, variant = 'full' }: Props) {
   return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} />
 }
 
-// ─── Compact variant — strip card ───────────────────────────────────────────
+// --- Compact variant  -  strip card -------------------------------------------
 
 function CompactCard({
   slug, name, symbol, tagline, keywords, memberCount, accentColor,
@@ -137,7 +137,7 @@ function CompactCard({
   )
 }
 
-// ─── Full variant — directory card ──────────────────────────────────────────
+// --- Full variant  -  directory card ------------------------------------------
 
 function FullCard({
   slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor,

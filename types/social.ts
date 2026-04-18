@@ -1,11 +1,11 @@
-// ─── Social layer types ─────────────────────────────────────────────────────
+// --- Social layer types -----------------------------------------------------
 //
 // Covers: direct messaging, relationship states, and saved planets.
 // These types model the "Communication Beam" and "Star Chart" metaphors.
 
 import type { OrbitColor, OrbitMatch } from './match'
 
-// ─── Messaging ──────────────────────────────────────────────────────────────
+// --- Messaging --------------------------------------------------------------
 
 export type MessageType =
   | 'text'    // standard message
@@ -35,14 +35,14 @@ export interface Conversation {
   /** Visual accent for the conversation beam line */
   orbitColor:      OrbitColor
 
-  /** Connection strength 0–100 — grows as messages are exchanged */
+  /** Connection strength 0–100  -  grows as messages are exchanged */
   connectionStrength: number
 
   startedAt:       string
   updatedAt:       string
 }
 
-// ─── Relationship state ──────────────────────────────────────────────────────
+// --- Relationship state ------------------------------------------------------
 //
 // Relationship status describes how far two planets have drifted toward each other.
 //
@@ -77,7 +77,7 @@ export interface Relationship {
   lastInteractionAt?: string
 }
 
-// ─── Saved planets (Star Chart) ─────────────────────────────────────────────
+// --- Saved planets (Star Chart) ---------------------------------------------
 //
 // Explorers and Resonators can bookmark planets they want to revisit.
 // This constitutes the user's personal "star chart".

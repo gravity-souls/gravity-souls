@@ -2,7 +2,7 @@ import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 
-// ─── ResonancePlanetNode ──────────────────────────────────────────────────────
+// --- ResonancePlanetNode ------------------------------------------------------
 // A single orbiting planet node in the ResonanceOrbitSystem.
 // Positioned absolutely by the parent via `style` prop.
 
@@ -33,7 +33,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
         cursor: 'pointer',
         padding: 0,
       }}
-      aria-label={`${planet.name} — resonance score ${match.score}`}
+      aria-label={`${planet.name}  -  resonance score ${match.score}`}
     >
       {/* Planet orb */}
       <div

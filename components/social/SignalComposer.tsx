@@ -2,7 +2,7 @@
 
 import { useState, type KeyboardEvent } from 'react'
 
-// ─── SignalComposer ───────────────────────────────────────────────────────────
+// --- SignalComposer -----------------------------------------------------------
 // Sticky bottom composer for the conversation detail page.
 
 interface Props {

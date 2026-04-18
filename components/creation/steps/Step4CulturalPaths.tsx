@@ -3,7 +3,7 @@
 import { useState, type KeyboardEvent } from 'react'
 import { LANGUAGE_OPTIONS } from '@/types/creation'
 
-// ─── Tag input ────────────────────────────────────────────────────────────────
+// --- Tag input ----------------------------------------------------------------
 
 function TagInput({
   tags,
@@ -71,7 +71,7 @@ function TagInput({
   )
 }
 
-// ─── Step4CulturalPaths ───────────────────────────────────────────────────────
+// --- Step4CulturalPaths -------------------------------------------------------
 
 interface Props {
   location?:          string
@@ -109,7 +109,7 @@ export default function Step4CulturalPaths({
           Map the paths that brought you here
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          Every field here is optional. Share what feels right — nothing is required to form your
+          Every field here is optional. Share what feels right  -  nothing is required to form your
           planet.
         </p>
       </div>
