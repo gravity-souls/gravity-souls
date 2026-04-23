@@ -8,11 +8,12 @@ import OrbitCard from '@/components/ui/OrbitCard'
 import Tag from '@/components/ui/Tag'
 import LightCone from '@/components/fx/LightCone'
 import EmptyState from '@/components/ui/EmptyState'
-import PlanetVisual from '@/components/planet/PlanetVisual'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetProfile } from '@/types/planet'
 import { getResonanceMatches } from '@/lib/match'
 import { buildPlanetFromDraft } from '@/lib/planet-builder'
 import { getPlanetProfile, getOrCreateUserId } from '@/lib/user'
+import { getTextureFile } from '@/lib/planet-textures'
 
 // --- Helper: convert DB planet to PlanetProfile for matching engine ----------
 
@@ -82,9 +83,11 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
     <Link href={`/planet/${planet.id}`}>
       <OrbitCard hoverable lift glowColor={color} className="flex flex-col gap-4 p-5">
         <div className="flex items-start gap-4">
-          <div className="shrink-0 w-12 h-12">
-            <PlanetVisual visual={planet.visual} symbol={planet.avatarSymbol} />
-          </div>
+          <PlanetAvatar
+            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+            size={48}
+            glowColor={color}
+          />
           <div className="flex flex-col gap-1 min-w-0">
             <h3 className="text-base font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
               {planet.name}

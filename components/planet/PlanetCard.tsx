@@ -2,6 +2,8 @@
 
 import type { CSSProperties } from 'react'
 import type { PlanetProfile } from '@/types/planet'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { getTextureFile } from '@/lib/planet-textures'
 
 interface Props {
   planet: PlanetProfile
@@ -55,45 +57,12 @@ export default function PlanetCard({
         aria-hidden="true"
       />
 
-      {/* Planet orb */}
-      <div
-        className="relative flex items-center justify-center rounded-full shrink-0"
-        style={{
-          width:      size,
-          height:     size,
-          background: `radial-gradient(circle at 35% 30%, ${accentColor}cc 0%, ${coreColor}88 50%, ${coreColor}28 100%)`,
-          boxShadow: [
-            `0 0 0 1px ${coreColor}40`,
-            `0 0 ${Math.round(size * 0.45)}px ${coreColor}55`,
-            `0 0 ${size}px ${coreColor}20`,
-          ].join(', '),
-          transition: 'transform 500ms cubic-bezier(0.16,1,0.3,1), box-shadow 500ms ease',
-        }}
-        // Inline hover handled by CSS group utilities
-      >
-        {/* Surface shimmer  -  visible on hover via group */}
-        <div
-          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100"
-          style={{
-            background: `radial-gradient(circle at 38% 28%, rgba(255,255,255,0.18), transparent 60%)`,
-            transition: 'opacity 400ms ease',
-          }}
-          aria-hidden="true"
-        />
-
-        {/* Avatar symbol */}
-        <span
-          className="relative select-none leading-none z-10"
-          style={{
-            fontSize:   Math.round(size * 0.4),
-            color:      'rgba(255,255,255,0.9)',
-            textShadow: `0 0 ${Math.round(size * 0.35)}px ${coreColor}`,
-          }}
-          aria-hidden="true"
-        >
-          {planet.avatarSymbol}
-        </span>
-      </div>
+      {/* Planet orb — texture-based avatar */}
+      <PlanetAvatar
+        textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+        size={size}
+        glowColor={coreColor}
+      />
 
       {/* Scale ring  -  grows on hover */}
       <div

@@ -7,162 +7,73 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import EmptyState from '@/components/ui/EmptyState'
-import PlanetHero from '@/components/planet/PlanetHero'
-import GalaxyMemberships from '@/components/planet/GalaxyMemberships'
-import ExplorationTracePanel from '@/components/planet/ExplorationTracePanel'
-import SelfPlanetActions from '@/components/planet/SelfPlanetActions'
-import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeCloud } from '@/components/planet/PlanetModules'
-import ResonanceMap from '@/components/planet/ResonanceMap'
+import Tag from '@/components/ui/Tag'
+import PlanetGlobe from '@/components/planet/PlanetGlobe'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import ResonanceRadar from '@/components/planet/ResonanceRadar'
+import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
+import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
+import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
+import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
+import { getTextureFile } from '@/lib/planet-textures'
 import { TYPE_COLORS } from '@/lib/sbti-data'
 import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
+import { MOCK_GALAXIES } from '@/lib/mock-galaxies'
+import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
+import type { GalaxyPreview } from '@/types/galaxy'
+import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
+import type { SharedMoment } from '@/components/planet/SharedMomentsFeed'
 
 const emptySubscribe = () => () => {}
 function useHydrated() {
   return useSyncExternalStore(emptySubscribe, () => true, () => false)
 }
 
-// --- Cultural profile panel --------------------------------------------------
+// --- Mock data for dashboard sections ----------------------------------------
 
-function CulturalProfile({ planet }: { planet: PlanetProfile }) {
-  const hasCulture  = planet.culturalTags   && planet.culturalTags.length > 0
-  const hasCities   = planet.travelCities   && planet.travelCities.length > 0
-  const hasMusic    = planet.musicTaste     && planet.musicTaste.length > 0
-  const hasBooks    = planet.bookTaste      && planet.bookTaste.length > 0
-  const hasFilm     = planet.filmTaste      && planet.filmTaste.length > 0
-
-  if (!hasCulture && !hasCities && !hasMusic && !hasBooks && !hasFilm) return null
-
-  const accent = planet.visual.accentColor
-
-  return (
-    <div className="flex flex-col gap-5">
-      <span
-        className="text-xs tracking-widest uppercase"
-        style={{ color: 'var(--star)', opacity: 0.55 }}
-      >
-        Cultural orbit
-      </span>
-
-      {/* Taste rows */}
-      {[
-        { label: 'Sounds',       items: planet.musicTaste },
-        { label: 'Reading',      items: planet.bookTaste },
-        { label: 'Watching',     items: planet.filmTaste },
-        { label: 'Touchstones',  items: planet.culturalTags },
-      ].filter(({ items }) => items && items.length > 0).map(({ label, items }) => (
-        <div key={label} className="flex flex-col gap-1.5">
-          <p
-            className="text-[10px] uppercase tracking-widest"
-            style={{ color: 'var(--ghost)' }}
-          >
-            {label}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {items!.map((item) => (
-              <span
-                key={item}
-                className="text-[10px] px-2 py-0.5 rounded-md tracking-wide"
-                style={{
-                  background: `${accent}10`,
-                  border: `1px solid ${accent}22`,
-                  color: accent,
-                }}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Cities */}
-      {hasCities && (
-        <div className="flex flex-col gap-1.5">
-          <p
-            className="text-[10px] uppercase tracking-widest"
-            style={{ color: 'var(--ghost)' }}
-          >
-            Orbit cities
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {planet.travelCities!.map((city) => (
-              <span
-                key={city}
-                className="text-xs px-3 py-1 rounded-full"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'var(--ink)',
-                }}
-              >
-                {city}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+const MOCK_ACTIVITY: ActivityEvent = {
+  id: 'evt-001',
+  title: 'Stargazers Gathering',
+  subtitle: 'Night Sky Watch Party',
+  date: '2026-05-30',
+  time: '8:30 PM',
+  location: 'Echo Ridge, Blue Mountains',
+  tags: ['Night Walk', 'Outdoors'],
+  accentColor: '#a78bfa',
 }
 
-function SoulScanCard({ planet }: { planet: PlanetProfile }) {
-  if (!planet.sbtiType) {
-    return (
-      <div className="flex flex-col gap-3">
-        <span className="text-xs tracking-widest uppercase" style={{ color: 'var(--star)', opacity: 0.55 }}>
-          Soul scan
-        </span>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--ghost)' }}>
-          Your planet exists, but its archetype has not been mapped yet.
-        </p>
-        <GlowButton href="/sbti?next=/my-planet" variant="secondary" className="text-sm">
-          Run SBTI →
-        </GlowButton>
-      </div>
-    )
-  }
+function getMockMoments(planets: PlanetProfile[]): SharedMoment[] {
+  const samples: Omit<SharedMoment, 'avatarTexture' | 'avatarGlow'>[] = [
+    { id: 'sm-1', authorName: '', timeAgo: '2h ago', content: 'Hiking through the forest today. Felt so peaceful. 🌲 ✨', hashtags: ['NatureVibes'], likes: 24, replies: 6 },
+    { id: 'sm-2', authorName: '', timeAgo: '5h ago', content: 'The stars tonight were unreal. Anyone else out there?', hashtags: ['NightVibes'], likes: 18, replies: 4 },
+    { id: 'sm-3', authorName: '', timeAgo: '1d ago', content: 'Sometimes the quiet says more than words.', hashtags: ['Reflect'], likes: 31, replies: 7 },
+  ]
+  return samples.slice(0, Math.min(3, planets.length)).map((s, i) => {
+    const p = planets[i % planets.length]
+    return {
+      ...s,
+      authorName: p.name,
+      avatarTexture: getTextureFile([p.mood, p.lifestyle, ...p.coreThemes]),
+      avatarGlow: p.visual.coreColor,
+    }
+  })
+}
 
-  const accent = TYPE_COLORS[planet.sbtiType] ?? planet.visual.accentColor
-
-  return (
-    <div className="flex flex-col gap-4">
-      <span className="text-xs tracking-widest uppercase" style={{ color: 'var(--star)', opacity: 0.55 }}>
-        Soul scan
-      </span>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-2xl font-bold" style={{ color: accent }}>
-            {planet.sbtiType}
-          </span>
-          {planet.sbtiCn && (
-            <span className="text-sm" style={{ color: 'var(--foreground)' }}>
-              {planet.sbtiCn}
-            </span>
-          )}
-        </div>
-        <span
-          className="text-[10px] px-2 py-1 rounded-lg font-mono"
-          style={{
-            background: `${accent}12`,
-            border: `1px solid ${accent}22`,
-            color: accent,
-          }}
-        >
-          mapped
-        </span>
-      </div>
-      {planet.sbtiPattern && (
-        <p className="text-xs font-mono" style={{ color: 'var(--ghost)' }}>
-          {planet.sbtiPattern}
-        </p>
-      )}
-      <GlowButton href="/sbti?next=/my-planet" variant="ghost" className="text-sm">
-        Retake soul scan
-      </GlowButton>
-    </div>
-  )
+function getRecommendedGalaxies(): GalaxyPreview[] {
+  return MOCK_GALAXIES.slice(0, 3).map((g) => ({
+    id: g.id,
+    slug: g.slug,
+    name: g.name,
+    symbol: g.symbol,
+    tagline: g.tagline,
+    keywords: g.keywords,
+    mood: g.mood,
+    memberCount: g.memberCount,
+    maturity: g.maturity,
+    accentColor: g.accentColor,
+  }))
 }
 
 // --- Match preference badge --------------------------------------------------
@@ -178,6 +89,7 @@ const PREFERENCE_META = {
 export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [resonances, setResonances] = useState<ResonancePlanet[]>([])
+  const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const hydrated = useHydrated()
   const [loading, setLoading]     = useState(true)
 
@@ -269,6 +181,7 @@ export default function MyPlanetPage() {
               userId: (data.userId as string) ?? '',
             } as PlanetProfile))
             setResonances(getResonanceMatches(p, allPlanets, 4))
+            setOtherPlanets(allPlanets)
           }
         } catch {
           // Fallback: empty resonances
@@ -308,180 +221,247 @@ export default function MyPlanetPage() {
   }
 
   const { visual } = planet
-  const matchPref = planet.matchPreference ? PREFERENCE_META[planet.matchPreference] : null
+
+  // --- Derived data for dashboard sections ---
+  // Resonant match cards (from DB planets or mock fallback)
+  const matchPool = otherPlanets.length > 0 ? otherPlanets : mockPlanets
+  const matchEntries = matchPool.slice(0, 6).map((p) => {
+    const matches = getResonanceMatches(planet, [p], 1)
+    const score = matches[0]?.strength ?? Math.round(40 + Math.random() * 50)
+    // Derive personality traits from mood + coreThemes
+    const traits: string[] = []
+    if (p.mood) traits.push(p.mood.charAt(0).toUpperCase() + p.mood.slice(1))
+    if (p.coreThemes[0]) traits.push(p.coreThemes[0])
+    return { planet: p, score, traits }
+  })
+
+  // Resonance radar dimensions
+  const radarDimensions = [
+    { label: 'Introvert', value: planet.cognitiveAxes.introspective },
+    { label: 'Empathy', value: planet.emotionalBars.find((b) => b.label === 'Warmth')?.value ?? 55 },
+    { label: 'Curious', value: planet.cognitiveAxes.abstract },
+    { label: 'Emotional', value: planet.emotionalBars.find((b) => b.label === 'Depth')?.value ?? 60 },
+    { label: 'Open-minded', value: planet.emotionalBars.find((b) => b.label === 'Resonance')?.value ?? 65 },
+    { label: 'Adventurous', value: Math.min(100, 100 - planet.cognitiveAxes.introspective + 15) },
+  ]
+  const balance = Math.round(radarDimensions.reduce((sum, d) => sum + d.value, 0) / radarDimensions.length)
+
+  const recommendedGalaxies = getRecommendedGalaxies()
+  const sharedMoments = getMockMoments(matchPool)
 
   return (
     <AppShell>
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
 
-      <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-6xl mx-auto">
+      <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-7xl mx-auto">
 
-        {/* -- Hero -------------------------------------------------------- */}
-        <PlanetHero planet={planet} viewerRole="self" />
-
-        {/* -- Ownership status strip -------------------------------------- */}
-        <div
-          className="mt-4 flex flex-wrap items-center gap-4 px-5 py-3 rounded-2xl"
+        {/* ================================================================
+            HERO SECTION — 3D planet + identity info
+            ================================================================ */}
+        <section
+          className="relative overflow-hidden rounded-3xl"
           style={{
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(167,139,250,0.10)',
+            background: 'linear-gradient(160deg, rgba(12,8,36,0.90) 0%, rgba(4,3,18,0.95) 100%)',
+            border: `1px solid ${visual.coreColor}22`,
+            boxShadow: `0 0 80px ${visual.coreColor}12, 0 32px 80px rgba(0,0,0,0.6)`,
           }}
         >
-          <div className="flex items-center gap-2">
-            <div
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ background: '#34d399', boxShadow: '0 0 6px #34d39988' }}
-            />
-            <span className="text-xs" style={{ color: 'var(--ghost)' }}>
-              Planet active · {planet.role}
-            </span>
-          </div>
+          {/* Atmospheric washes */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+            style={{ background: `radial-gradient(ellipse at 15% 50%, ${visual.coreColor}18 0%, transparent 55%)` }} />
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+            style={{ background: `radial-gradient(ellipse at 85% 20%, ${visual.accentColor}0e 0%, transparent 50%)` }} />
+          <div className="absolute top-0 left-8 right-8 h-px pointer-events-none" aria-hidden="true"
+            style={{ background: `linear-gradient(90deg, transparent, ${visual.coreColor}55, rgba(255,255,255,0.12), ${visual.coreColor}55, transparent)` }} />
 
-          {planet.location && (
-            <span className="text-xs" style={{ color: 'var(--ghost)' }}>
-              ◎ {planet.location}
-            </span>
-          )}
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
+            {/* 3D Planet Globe */}
+            <div className="shrink-0 flex items-center justify-center">
+              <PlanetGlobe
+                textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+                ringEnabled={visual.ringStyle !== 'none'}
+                glowColor={visual.coreColor}
+                size={260}
+              />
+            </div>
 
-          {matchPref && (
-            <span
-              className="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full ml-auto"
-              style={{
-                background: `${matchPref.color}12`,
-                border: `1px solid ${matchPref.color}28`,
-                color: matchPref.color,
-              }}
-            >
-              {matchPref.label}
-            </span>
-          )}
-        </div>
+            {/* Identity column */}
+            <div className="flex-1 flex flex-col gap-5 min-w-0 text-center md:text-left pt-2 md:pt-6">
+              <p className="text-xs tracking-[0.25em] uppercase font-medium" style={{ color: visual.coreColor, opacity: 0.75 }}>
+                Your Planet
+              </p>
 
-        {/* -- Edit planet link --------------------------------------------- */}
-        <div className="mt-3">
-          <GlowButton href="/settings/planet" variant="secondary" className="text-xs px-5 py-2">
-            Edit planet
-          </GlowButton>
-        </div>
-
-        {/* -- Main grid --------------------------------------------------- */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* -- Left / main column ---------------------------------------- */}
-          <div className="lg:col-span-2 flex flex-col gap-6">
-
-            {/* Cognitive axes */}
-            <OrbitCard glowColor={visual.coreColor} className="p-5">
-              <CognitiveStyleModule planet={planet} />
-            </OrbitCard>
-
-            {/* Emotional frequency */}
-            <OrbitCard glowColor={visual.accentColor} className="p-5">
-              <EmotionalFrequencyModule planet={planet} />
-            </OrbitCard>
-
-            {/* Content orbit */}
-            <OrbitCard glowColor={visual.coreColor} className="p-5">
-              <ContentOrbit planet={planet} />
-            </OrbitCard>
-
-            {/* Core themes */}
-            <OrbitCard glowColor={visual.accentColor} className="p-5">
-              <ThemeCloud planet={planet} />
-            </OrbitCard>
-
-            {/* Match preference description */}
-            {matchPref && (
-              <div
-                className="px-5 py-4 rounded-2xl"
+              <h1
+                className="text-4xl sm:text-5xl font-bold leading-tight"
                 style={{
-                  background: `${matchPref.color}08`,
-                  border: `1px solid ${matchPref.color}20`,
+                  background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}
               >
-                <p
-                  className="text-xs uppercase tracking-widest mb-1.5"
-                  style={{ color: matchPref.color, opacity: 0.75 }}
+                {planet.name}
+              </h1>
+
+              {planet.tagline && (
+                <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
+                  {planet.tagline}
+                </p>
+              )}
+
+              {/* Core themes */}
+              {planet.coreThemes.length > 0 && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest mr-3" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
+                    Core Themes
+                  </span>
+                  <div className="inline-flex flex-wrap gap-1.5 mt-1">
+                    {planet.coreThemes.map((theme) => (
+                      <Tag key={theme} label={theme} variant="dim" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mood drift tags */}
+              <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
+                <span
+                  className="text-[10px] uppercase tracking-widest mr-2"
+                  style={{ color: 'var(--ghost)', opacity: 0.5, lineHeight: '24px' }}
                 >
-                  Orbit preference
-                </p>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.72 }}>
-                  {matchPref.description}
-                </p>
+                  Mood Drift
+                </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
+                  style={{ background: `${visual.coreColor}14`, border: `1px solid ${visual.coreColor}28`, color: visual.coreColor }}>
+                  {planet.mood}
+                </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
+                  style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', color: 'var(--star)' }}>
+                  {planet.lifestyle}
+                </span>
+                {planet.communicationStyle && (
+                  <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--ink)' }}>
+                    {planet.communicationStyle}
+                  </span>
+                )}
               </div>
-            )}
 
-            {/* Resonance field */}
-            {resonances.length > 0 && (
-              <OrbitCard glowColor={visual.coreColor} className="p-5">
-                <ResonanceMap
-                  planets={resonances}
-                  hubColor={visual.coreColor}
-                  title="Your resonance field"
-                />
-              </OrbitCard>
-            )}
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                <GlowButton href="/settings/planet" variant="primary" className="px-5 py-2.5 text-sm">
+                  Tune atmosphere ⚙
+                </GlowButton>
+                <GlowButton href="/sbti?next=/my-planet" variant="ghost" className="px-5 py-2.5 text-sm">
+                  ◇ Soul scan
+                </GlowButton>
+              </div>
+            </div>
+          </div>
+        </section>
 
+        {/* ================================================================
+            THREE-COLUMN DASHBOARD ROW
+            ================================================================ */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+          {/* -- Resonance Overview (radar chart) -- */}
+          <OrbitCard glowColor={visual.coreColor} className="lg:col-span-3 p-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--foreground)' }}>
+              Resonance Overview
+            </h3>
+            <ResonanceRadar
+              dimensions={radarDimensions}
+              accentColor={visual.coreColor}
+              balance={balance}
+            />
+          </OrbitCard>
+
+          {/* -- Resonant Matches (carousel) -- */}
+          <OrbitCard glowColor={visual.accentColor} className="lg:col-span-6 p-5">
+            <ResonantMatchesCarousel matches={matchEntries} />
+          </OrbitCard>
+
+          {/* -- Upcoming Activity -- */}
+          <OrbitCard glowColor="#a78bfa" className="lg:col-span-3 p-0 overflow-hidden">
+            <div className="p-4 pb-0">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--foreground)' }}>
+                Upcoming Activity
+              </h3>
+            </div>
+            <UpcomingActivityCard event={MOCK_ACTIVITY} />
+          </OrbitCard>
+        </div>
+
+        {/* ================================================================
+            RECOMMENDED COMMUNITIES
+            ================================================================ */}
+        <OrbitCard glowColor={visual.coreColor} className="mt-4 p-5">
+          <RecommendedCommunities galaxies={recommendedGalaxies} />
+        </OrbitCard>
+
+        {/* ================================================================
+            SHARED MOMENTS + FOOTER IDENTITY
+            ================================================================ */}
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+          {/* Inspirational quote */}
+          <div
+            className="lg:col-span-2 flex flex-col items-center justify-center p-5 rounded-2xl"
+            style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center mb-3"
+              style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)' }}>
+              <span style={{ color: 'var(--star)', fontSize: 14 }}>◎</span>
+            </div>
+            <p className="text-[11px] text-center italic leading-relaxed" style={{ color: 'var(--ghost)' }}>
+              You are not lost.<br />
+              You are becoming.
+            </p>
           </div>
 
-          {/* -- Right sidebar ---------------------------------------------- */}
-          <div className="flex flex-col gap-6">
-
-            {/* Self actions */}
-            <SelfPlanetActions planet={planet} />
-
-            {/* Soul scan */}
-            <OrbitCard glowColor={planet.visual.accentColor} className="p-5">
-              <SoulScanCard planet={planet} />
+          {/* Shared Moments feed */}
+          <div className="lg:col-span-10">
+            <OrbitCard glowColor={visual.accentColor} className="p-5">
+              <SharedMomentsFeed moments={sharedMoments} />
             </OrbitCard>
-
-            {/* Galaxy memberships */}
-            {planet.galaxyIds && planet.galaxyIds.length > 0 && (
-              <OrbitCard glowColor={visual.coreColor} className="p-5">
-                <GalaxyMemberships galaxyIds={planet.galaxyIds} />
-              </OrbitCard>
-            )}
-
-            {/* Cultural orbit */}
-            {(planet.culturalTags || planet.travelCities || planet.musicTaste || planet.bookTaste || planet.filmTaste) && (
-              <OrbitCard glowColor={visual.accentColor} className="p-5">
-                <CulturalProfile planet={planet} />
-              </OrbitCard>
-            )}
-
-            {/* Exploration traces */}
-            {planet.explorationTraces && planet.explorationTraces.length > 0 && (
-              <OrbitCard glowColor={visual.coreColor} className="p-5">
-                <ExplorationTracePanel
-                  traces={planet.explorationTraces}
-                  accentColor={visual.accentColor}
-                />
-              </OrbitCard>
-            )}
-
           </div>
         </div>
 
-        {/* -- Footer ----------------------------------------------------- */}
+        {/* ================================================================
+            BOTTOM IDENTITY BAR
+            ================================================================ */}
         <div
-          className="flex flex-col sm:flex-row items-center gap-4 pt-8 mt-4 border-t"
-          style={{ borderColor: 'rgba(167,139,250,0.07)' }}
+          className="mt-6 flex items-center gap-4 px-5 py-3.5 rounded-2xl"
+          style={{
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
         >
-          <GlowButton href="/stream" variant="primary" className="py-3 text-sm">
-            Explore the stream
-          </GlowButton>
-          <GlowButton href="/resonance" variant="secondary" className="py-3 text-sm">
-            Open resonance
-          </GlowButton>
-          <Link
-            href="/create-universe"
-            className="text-xs transition-colors duration-200 ml-auto"
-            style={{ color: 'var(--ghost)', textDecoration: 'none' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--star)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ghost)' }}
-          >
-            Rebuild your universe →
-          </Link>
+          <PlanetAvatar
+            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+            size={36}
+            glowColor={visual.coreColor}
+          />
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+              {planet.name}
+            </span>
+            <span className="text-[10px] capitalize" style={{ color: 'var(--ghost)' }}>
+              {planet.role}
+            </span>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <GlowButton href="/stream" variant="secondary" className="py-2 px-4 text-xs">
+              Explore the stream
+            </GlowButton>
+            <GlowButton href="/resonance" variant="ghost" className="py-2 px-4 text-xs">
+              Open resonance
+            </GlowButton>
+          </div>
         </div>
 
       </div>

@@ -1,6 +1,8 @@
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { getTextureFile } from '@/lib/planet-textures'
 
 // --- ResonancePlanetNode ------------------------------------------------------
 // A single orbiting planet node in the ResonanceOrbitSystem.
@@ -35,27 +37,26 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
       }}
       aria-label={`${planet.name}  -  resonance score ${match.score}`}
     >
-      {/* Planet orb */}
+      {/* Planet orb — texture-based avatar */}
       <div
         style={{
           width:  size,
           height: size,
           borderRadius: '50%',
-          background: `radial-gradient(circle at 35% 35%, ${planet.visual.coreColor}dd 0%, ${planet.visual.coreColor}66 60%, ${planet.visual.coreColor}22 100%)`,
           border: `2px solid ${color}`,
           boxShadow: isActive
-            ? `0 0 0 4px ${color}22, 0 0 20px ${color}44, inset 0 0 12px ${planet.visual.coreColor}44`
+            ? `0 0 0 4px ${color}22, 0 0 20px ${color}44`
             : `0 0 10px ${planet.visual.coreColor}44`,
           transition: 'all 0.25s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: size * 0.38,
-          color: planet.visual.coreColor,
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {planet.avatarSymbol}
+        <PlanetAvatar
+          textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+          size={size}
+          glowColor={planet.visual.coreColor}
+        />
 
         {/* Score badge */}
         <div

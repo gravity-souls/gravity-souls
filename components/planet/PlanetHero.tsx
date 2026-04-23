@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import PlanetScene from '@/components/planet/PlanetScene'
+import PlanetGlobe from '@/components/planet/PlanetGlobe'
 import GlowButton from '@/components/ui/GlowButton'
 import type { PlanetProfile } from '@/types/planet'
+import { getTextureFile } from '@/lib/planet-textures'
 
 // --- Language display ---------------------------------------------------------
 
@@ -120,7 +122,12 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
 
         {/* Planet scene  -  left column on desktop, top on mobile */}
         <div className="shrink-0 flex items-center justify-center">
-          <PlanetScene planet={planet} size={220} />
+          <PlanetGlobe
+            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+            ringEnabled={visual.ringStyle !== 'none'}
+            glowColor={visual.coreColor}
+            size={220}
+          />
         </div>
 
         {/* Identity column  -  right on desktop, below on mobile */}
