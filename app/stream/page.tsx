@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LightCone from '@/components/fx/LightCone'
-import PlanetVisual from '@/components/planet/PlanetVisual'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
+import { getTextureFile, getDefaultGlowColor } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
 
 // --- Helper: convert DB planet to PlanetProfile ------------------------------
@@ -64,9 +65,13 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
         ;(e.currentTarget as HTMLElement).style.borderColor = `${visual.coreColor}20`
       }}
     >
-      {/* Planet visual  -  medium size */}
+      {/* Planet avatar with NASA texture */}
       <div className="transition-transform duration-300 group-hover:scale-105">
-        <PlanetVisual visual={{ ...visual, size: 'md' }} symbol={planet.avatarSymbol} />
+        <PlanetAvatar
+          textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+          size={100}
+          glowColor={visual.coreColor}
+        />
       </div>
 
       {/* Name + tagline */}
