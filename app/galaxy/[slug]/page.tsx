@@ -738,8 +738,8 @@ export default function GalaxyPage({ params }: Props) {
 
             {/* Symbol watermark */}
             <div
-              className="absolute -right-8 -top-8 pointer-events-none select-none leading-none"
-              style={{ fontSize: 200, color: accentColor, opacity: 0.05 }}
+              className="absolute -right-10 -top-5 pointer-events-none select-none leading-none sm:-right-8 sm:-top-8"
+              style={{ fontSize: 'clamp(120px, 28vw, 200px)', color: accentColor, opacity: 0.05 }}
               aria-hidden="true"
             >
               {galaxy.symbol}
@@ -753,10 +753,10 @@ export default function GalaxyPage({ params }: Props) {
             />
 
             {/* Hero content */}
-            <div className="relative z-10 px-6 pt-8 pb-10 max-w-5xl mx-auto flex items-start gap-5">
+            <div className="relative z-10 px-4 sm:px-6 pt-7 sm:pt-8 pb-8 sm:pb-10 max-w-5xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-5">
               {/* Symbol orb */}
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-2xl shrink-0 mt-1"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl shrink-0 sm:mt-1"
                 style={{
                   background: `${accentColor}20`,
                   border:     `1px solid ${accentColor}45`,
@@ -770,14 +770,14 @@ export default function GalaxyPage({ params }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="text-eyebrow mb-2">Galaxy</p>
                 <h1
-                  className="text-2xl font-semibold leading-tight mb-2"
+                  className="text-xl sm:text-2xl font-semibold leading-tight mb-2"
                   style={{ color: 'var(--foreground)' }}
                 >
                   {galaxy.name}
                 </h1>
                 {galaxy.tagline && (
                   <p
-                    className="text-base italic mb-4 leading-relaxed"
+                    className="text-sm sm:text-base italic mb-4 leading-relaxed"
                     style={{ color: 'var(--ink)', opacity: 0.7 }}
                   >
                     &ldquo;{galaxy.tagline}&rdquo;
@@ -808,10 +808,10 @@ export default function GalaxyPage({ params }: Props) {
               </div>
 
               {/* Join CTA */}
-              <div className="shrink-0 mt-1">
+              <div className="shrink-0 sm:mt-1 w-full sm:w-auto">
                 {communityJoined ? (
                   <span
-                    className="px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide inline-flex"
+                    className="px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide inline-flex w-full sm:w-auto justify-center"
                     style={{
                       color:      accentColor,
                       background: `${accentColor}16`,
@@ -823,7 +823,7 @@ export default function GalaxyPage({ params }: Props) {
                 ) : userRole === 'resonator' ? (
                   <button
                     type="button"
-                    className="px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide transition-all duration-200"
+                    className="px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide transition-all duration-200 w-full sm:w-auto"
                     style={{
                       color:      'var(--foreground)',
                       background: `linear-gradient(135deg, ${accentColor}35, ${accentColor}20)`,
@@ -840,7 +840,7 @@ export default function GalaxyPage({ params }: Props) {
                 ) : (
                   <Link
                     href="/create-planet"
-                    className="block px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide"
+                    className="block px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide text-center w-full sm:w-auto"
                     style={{
                       color:      'var(--ghost)',
                       background: 'var(--surface)',
@@ -856,11 +856,11 @@ export default function GalaxyPage({ params }: Props) {
           </div>
 
           {/* -- Main content ----------------------------------------------- */}
-          <div className="px-6 max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 mt-4">
+          <div className="px-4 sm:px-6 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 mt-4">
 
               {/* -- Left column -------------------------------------------- */}
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-6 sm:gap-8 min-w-0">
 
                 {/* About + keywords */}
                 <section>
@@ -891,7 +891,7 @@ export default function GalaxyPage({ params }: Props) {
 
                 {/* Active members */}
                 <section>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
                     <p className="text-data-label">Active planets</p>
                     <span className="text-xs" style={{ color: 'var(--ghost)' }}>
                       {memberPlanets.length} shown of {galaxy.memberCount.toLocaleString()}
@@ -900,18 +900,18 @@ export default function GalaxyPage({ params }: Props) {
 
                   {memberPlanets.length > 0 ? (
                     <div
-                      className="rounded-2xl p-6"
+                      className="rounded-2xl p-4 sm:p-6"
                       style={{
                         background: 'var(--surface)',
                         border:     '1px solid var(--border-soft)',
                       }}
                     >
-                      <div className="flex flex-wrap gap-8 justify-around">
+                      <div className="grid grid-cols-3 gap-4 sm:flex sm:flex-wrap sm:gap-8 sm:justify-around">
                         {memberPlanets.map((planet) => (
                           <PlanetCard
                             key={planet.id}
                             planet={planet}
-                            size={52}
+                            size={48}
                             onClick={() => setSelectedPlanet(planet)}
                           />
                         ))}
@@ -938,7 +938,7 @@ export default function GalaxyPage({ params }: Props) {
                           <button
                             key={i}
                             type="button"
-                            className="w-full flex items-start gap-4 p-4 rounded-xl text-left transition-all duration-200"
+                            className="w-full flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl text-left transition-all duration-200"
                             style={{
                               background: 'var(--surface)',
                               border:     '1px solid var(--border-soft)',
@@ -965,7 +965,7 @@ export default function GalaxyPage({ params }: Props) {
                               aria-hidden="true"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm leading-snug mb-1" style={{ color: 'var(--foreground)' }}>
+                              <p className="text-sm leading-snug mb-1 wrap-break-word" style={{ color: 'var(--foreground)' }}>
                                 {topic.title}
                               </p>
                               <p className="text-xs" style={{ color: 'var(--ghost)' }}>
@@ -1012,7 +1012,7 @@ export default function GalaxyPage({ params }: Props) {
                   <div className="flex flex-col gap-3">
                     {communityJoined ? (
                       <div
-                        className="rounded-2xl p-4 flex flex-col gap-3"
+                        className="rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3"
                         style={{ background: 'var(--surface)', border: `1px solid ${accentColor}22` }}
                       >
                         <textarea
@@ -1027,7 +1027,7 @@ export default function GalaxyPage({ params }: Props) {
                             color: 'var(--foreground)',
                           }}
                         />
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <span className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.65 }}>
                             Visible in this community on this browser.
                           </span>
@@ -1035,7 +1035,7 @@ export default function GalaxyPage({ params }: Props) {
                             type="button"
                             onClick={handleCreatePost}
                             disabled={!postDraft.trim() || posting}
-                            className="px-4 py-2 rounded-xl text-xs font-medium"
+                            className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                             style={{
                               color: 'var(--foreground)',
                               background: `${accentColor}26`,
@@ -1055,7 +1055,7 @@ export default function GalaxyPage({ params }: Props) {
                       </div>
                     ) : (
                       <div
-                        className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between"
+                        className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between"
                         style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                       >
                         <div>
@@ -1070,7 +1070,7 @@ export default function GalaxyPage({ params }: Props) {
                           type="button"
                           onClick={handleJoinCommunity}
                           disabled={joiningCommunity}
-                          className="px-4 py-2 rounded-xl text-xs font-medium shrink-0"
+                          className="px-4 py-2 rounded-xl text-xs font-medium shrink-0 w-full sm:w-auto"
                           style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                         >
                           {joiningCommunity ? 'Joining...' : 'Join to post'}
@@ -1095,10 +1095,10 @@ export default function GalaxyPage({ params }: Props) {
                         return (
                           <article
                             key={post.id}
-                            className="rounded-2xl p-4 flex flex-col gap-3"
+                            className="rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3"
                             style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                           >
-                            <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-start justify-between gap-3">
                               {post.authorPlanetId ? (
                                 <Link href={`/planet/${post.authorPlanetId}`} className="text-sm font-semibold" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
                                   {post.authorName}
@@ -1115,12 +1115,12 @@ export default function GalaxyPage({ params }: Props) {
                             <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
                               {post.content}
                             </p>
-                            <div className="flex items-center gap-2 text-[10px]">
+                            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 text-[10px]">
                               <button
                                 type="button"
                                 onClick={() => handleToggleLike(post)}
                                 disabled={likingPostId === post.id}
-                                className="px-2 py-1 rounded-lg transition-all duration-200"
+                                className="px-2 py-2 sm:py-1 rounded-lg transition-all duration-200"
                                 style={{
                                   color: post.likedByMe ? accentColor : 'var(--ghost)',
                                   background: post.likedByMe ? `${accentColor}14` : 'rgba(255,255,255,0.03)',
@@ -1135,7 +1135,7 @@ export default function GalaxyPage({ params }: Props) {
                                 type="button"
                                 onClick={() => handleToggleReplies(post)}
                                 disabled={loadingReplies}
-                                className="px-2 py-1 rounded-lg transition-all duration-200"
+                                className="px-2 py-2 sm:py-1 rounded-lg transition-all duration-200"
                                 style={{
                                   color: repliesOpen ? accentColor : 'var(--ghost)',
                                   background: repliesOpen ? `${accentColor}10` : 'rgba(255,255,255,0.03)',
@@ -1164,7 +1164,7 @@ export default function GalaxyPage({ params }: Props) {
                                         className="rounded-xl px-3 py-2"
                                         style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
                                       >
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-start justify-between gap-3">
                                           {reply.authorPlanetId ? (
                                             <Link href={`/planet/${reply.authorPlanetId}`} className="text-xs font-medium" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
                                               {reply.authorName}
@@ -1209,7 +1209,7 @@ export default function GalaxyPage({ params }: Props) {
                                       onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [post.id]: event.target.value }))}
                                       rows={2}
                                       placeholder={`Reply to ${post.authorName}...`}
-                                      className="w-full resize-none rounded-xl px-3 py-2 text-xs outline-none"
+                                      className="w-full resize-none rounded-xl px-3 py-2 text-base sm:text-xs outline-none"
                                       style={{
                                         background: 'rgba(255,255,255,0.03)',
                                         border: '1px solid rgba(255,255,255,0.08)',
@@ -1221,7 +1221,7 @@ export default function GalaxyPage({ params }: Props) {
                                         type="button"
                                         onClick={() => handleCreateReply(post)}
                                         disabled={!replyDraft.trim() || replyingPostId === post.id}
-                                        className="px-3 py-1.5 rounded-lg text-[10px] font-medium"
+                                        className="px-3 py-2 sm:py-1.5 rounded-lg text-[10px] font-medium w-full sm:w-auto"
                                         style={{
                                           color: 'var(--foreground)',
                                           background: `${accentColor}22`,
@@ -1250,7 +1250,7 @@ export default function GalaxyPage({ params }: Props) {
               </div>
 
               {/* -- Right column ------------------------------------------- */}
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 min-w-0">
 
                 {/* Related galaxies */}
                 {relatedPreviews.length > 0 && (
@@ -1349,14 +1349,14 @@ export default function GalaxyPage({ params }: Props) {
             role="dialog"
             aria-modal="true"
             aria-label={selectedTopic.title}
-            className="fixed z-50 left-1/2 top-1/2 w-[min(92vw,620px)] max-h-[86vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden flex flex-col"
+            className="fixed z-50 left-1/2 top-1/2 w-[calc(100vw-24px)] sm:w-[min(92vw,620px)] max-h-[88vh] sm:max-h-[86vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden flex flex-col"
             style={{
               background: 'linear-gradient(160deg, rgba(18,14,52,0.98) 0%, rgba(6,4,20,0.99) 100%)',
               border: `1px solid ${accentColor}35`,
               boxShadow: `0 24px 80px rgba(0,0,0,0.55), 0 0 48px ${accentColor}16`,
             }}
           >
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em]" style={{ color: accentColor, opacity: 0.75 }}>
                   Galaxy discussion
@@ -1376,7 +1376,7 @@ export default function GalaxyPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="p-5 flex flex-col gap-4 overflow-y-auto">
+            <div className="p-4 sm:p-5 flex flex-col gap-4 overflow-y-auto">
               <div className="flex items-start gap-4">
                 <div
                   className="w-1 rounded-full shrink-0 mt-1"
@@ -1384,17 +1384,17 @@ export default function GalaxyPage({ params }: Props) {
                   aria-hidden="true"
                 />
                 <div>
-                  <h2 className="text-lg font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
+                  <h2 className="text-base sm:text-lg font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
                     {selectedTopic.title}
                   </h2>
-                  <p className="text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
+                  <p className="text-xs sm:text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
                     All visible replies from {galaxy.name}. You can read the thread here and add your own signal below.
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: accentColor, opacity: 0.8 }}>
                     Recent replies
                   </p>
@@ -1406,10 +1406,10 @@ export default function GalaxyPage({ params }: Props) {
                 {selectedDiscussionReplies.map((reply) => (
                   <div
                     key={reply.id}
-                    className="rounded-xl px-4 py-3"
+                    className="rounded-xl px-3 sm:px-4 py-3"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <p className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>
                         {reply.authorName}
                       </p>
@@ -1441,7 +1441,7 @@ export default function GalaxyPage({ params }: Props) {
                     onChange={(event) => setDiscussionReplyDraft(event.target.value)}
                     rows={3}
                     placeholder="Add your reply to this discussion..."
-                    className="w-full resize-none rounded-xl px-4 py-3 text-sm outline-none"
+                    className="w-full resize-none rounded-xl px-4 py-3 text-base sm:text-sm outline-none"
                     style={{
                       background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.08)',
@@ -1453,7 +1453,7 @@ export default function GalaxyPage({ params }: Props) {
                       type="button"
                       onClick={handleAddDiscussionReply}
                       disabled={!discussionReplyDraft.trim() || postingDiscussionReply}
-                      className="px-4 py-2 rounded-xl text-xs font-medium"
+                      className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                       style={{
                         color: 'var(--foreground)',
                         background: `${accentColor}24`,
@@ -1478,7 +1478,7 @@ export default function GalaxyPage({ params }: Props) {
                     type="button"
                     onClick={handleJoinCommunity}
                     disabled={joiningCommunity}
-                    className="px-4 py-2 rounded-xl text-xs font-medium"
+                    className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                     style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                   >
                     {joiningCommunity ? 'Joining...' : 'Join to reply'}
@@ -1490,7 +1490,7 @@ export default function GalaxyPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => setSelectedTopic(null)}
-                  className="rounded-xl px-4 py-2 text-xs font-medium"
+                  className="rounded-xl px-4 py-2 text-xs font-medium w-full sm:w-auto"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ink)', cursor: 'pointer' }}
                 >
                   Close thread
