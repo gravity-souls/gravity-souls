@@ -36,6 +36,8 @@ export interface PlanetVisualConfig {
   coreColor:    string
   /** Secondary accent colour */
   accentColor:  string
+  /** Chosen texture file from /public/textures */
+  textureFile?: string
   ringStyle:    RingStyle
   surfaceStyle: SurfaceStyle
   /** Number of orbiting satellite dots (0–4) */

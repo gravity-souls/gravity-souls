@@ -6,7 +6,7 @@ import LightCone from '@/components/fx/LightCone'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
-import { getTextureFile, getDefaultGlowColor } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
 
 // --- Helper: convert DB planet to PlanetProfile ------------------------------
@@ -68,7 +68,7 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
       {/* Planet avatar with NASA texture */}
       <div className="transition-transform duration-300 group-hover:scale-105">
         <PlanetAvatar
-          textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+          textureFile={resolvePlanetTexture(planet)}
           size={100}
           glowColor={visual.coreColor}
         />

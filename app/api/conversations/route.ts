@@ -77,7 +77,8 @@ export async function GET() {
   // Resolve unread counts in parallel
   const unreadCounts = await Promise.all(result.map((r) => r._unreadCountP));
   const final = result.map((r, i) => {
-    const { _unreadCountP: _, ...rest } = r;
+    const { _unreadCountP, ...rest } = r;
+    void _unreadCountP;
     return { ...rest, unreadCount: unreadCounts[i] };
   });
 

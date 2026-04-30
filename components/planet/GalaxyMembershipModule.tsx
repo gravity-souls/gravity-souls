@@ -61,7 +61,7 @@ interface Props {
  * GalaxyMembershipModule  -  compact grid of galaxy chips for communities this
  * planet has joined. Links to /galaxy/[slug].
  */
-export default function GalaxyMembershipModule({ galaxyIds, accentColor = '#a78bfa' }: Props) {
+export default function GalaxyMembershipModule({ galaxyIds }: Props) {
   if (!galaxyIds || galaxyIds.length === 0) {
     return (
       <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.6 }}>

@@ -7,16 +7,27 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import LivePlanetPreview from '@/components/creation/LivePlanetPreview'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
 import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereStyle'
 import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
+import { PLANET_TEXTURE_OPTIONS, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetProfile, savePlanetProfile, getOrCreateUserId } from '@/lib/user'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetProfile } from '@/types/planet'
+
+const DEFAULT_VISUAL: PlanetProfile['visual'] = {
+  coreColor: '#a78bfa',
+  accentColor: '#c4b5fd',
+  ringStyle: 'single',
+  surfaceStyle: 'smooth',
+  satelliteCount: 1,
+  size: 'lg',
+}
 
 // --- Section wrapper ----------------------------------------------------------
 
@@ -78,6 +89,8 @@ function SaveToast({ visible }: { visible: boolean }) {
 // --- Convert DB planet data to PlanetProfile for the draft system ----------
 
 function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
+  const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
+
   return {
     id: data.id as string,
     name: data.name as string,
@@ -89,14 +102,7 @@ function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
     lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
     coreThemes: (data.coreThemes as string[]) ?? [],
     contentFragments: (data.contentFragments as string[]) ?? [],
-    visual: (data.visual as PlanetProfile['visual']) ?? {
-      coreColor: '#a78bfa',
-      accentColor: '#c4b5fd',
-      ringStyle: 'single',
-      surfaceStyle: 'smooth',
-      satelliteCount: 1,
-      size: 'lg',
-    },
+    visual,
     cognitiveAxes: {
       abstract: (data.abstractAxis as number) ?? 50,
       introspective: (data.introspectiveAxis as number) ?? 50,
@@ -129,55 +135,65 @@ export default function PlanetSettingsPage() {
   const [accentColor, setAccentColor] = useState('#a78bfa')
 
   useEffect(() => {
-    setMounted(true)
-    const id = getOrCreateUserId()
-    setUserId(id)
+    let cancelled = false
 
-    // Try loading from API first, fall back to localStorage
-    Promise.all([
-      fetch('/api/my-planet').then((r) => (r.ok ? r.json() : null)),
-      fetch('/api/me').then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([dbPlanet, meData]) => {
-        let planet: PlanetProfile | null = null
-        if (dbPlanet) {
-          // Merge profile fields from /api/me into the planet data
-          const merged = { ...dbPlanet }
-          if (meData?.profile) {
-            merged.location = meData.profile.location ?? undefined
-            merged.languages = meData.profile.languages ?? []
-            merged.culturalTags = meData.profile.culturalTags ?? []
-            merged.travelCities = meData.profile.travelCities ?? []
-            merged.musicTaste = meData.profile.musicTaste ?? []
-            merged.bookTaste = meData.profile.bookTaste ?? []
-            merged.filmTaste = meData.profile.filmTaste ?? []
-            merged.communicationStyle = meData.profile.communicationStyle ?? undefined
-            merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
+    Promise.resolve().then(() => {
+      if (cancelled) return
+
+      setMounted(true)
+      const id = getOrCreateUserId()
+      setUserId(id)
+
+      // Try loading from API first, fall back to localStorage
+      Promise.all([
+        fetch('/api/my-planet').then((r) => (r.ok ? r.json() : null)),
+        fetch('/api/me').then((r) => (r.ok ? r.json() : null)),
+      ])
+        .then(([dbPlanet, meData]) => {
+          if (cancelled) return
+          let planet: PlanetProfile | null = null
+          if (dbPlanet) {
+            // Merge profile fields from /api/me into the planet data
+            const merged = { ...dbPlanet }
+            if (meData?.profile) {
+              merged.location = meData.profile.location ?? undefined
+              merged.languages = meData.profile.languages ?? []
+              merged.culturalTags = meData.profile.culturalTags ?? []
+              merged.travelCities = meData.profile.travelCities ?? []
+              merged.musicTaste = meData.profile.musicTaste ?? []
+              merged.bookTaste = meData.profile.bookTaste ?? []
+              merged.filmTaste = meData.profile.filmTaste ?? []
+              merged.communicationStyle = meData.profile.communicationStyle ?? undefined
+              merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
+            }
+            planet = buildPlanetFromApiData(merged)
+          } else {
+            planet = getPlanetProfile()
           }
-          planet = buildPlanetFromApiData(merged)
-        } else {
-          planet = getPlanetProfile()
-        }
-        if (!planet) {
-          router.replace('/create-planet')
-          return
-        }
-        setPlanetName(planet.name)
-        const converted = planetProfileToDraft(planet)
-        setDraft(converted)
-        setAccentColor(planet.visual.coreColor)
-      })
-      .catch(() => {
-        const planet = getPlanetProfile()
-        if (!planet) {
-          router.replace('/create-planet')
-          return
-        }
-        setPlanetName(planet.name)
-        const converted = planetProfileToDraft(planet)
-        setDraft(converted)
-        setAccentColor(planet.visual.coreColor)
-      })
+          if (!planet) {
+            router.replace('/create-planet')
+            return
+          }
+          setPlanetName(planet.name)
+          const converted = planetProfileToDraft(planet)
+          setDraft(converted)
+          setAccentColor(planet.visual.coreColor)
+        })
+        .catch(() => {
+          if (cancelled) return
+          const planet = getPlanetProfile()
+          if (!planet) {
+            router.replace('/create-planet')
+            return
+          }
+          setPlanetName(planet.name)
+          const converted = planetProfileToDraft(planet)
+          setDraft(converted)
+          setAccentColor(planet.visual.coreColor)
+        })
+    })
+
+    return () => { cancelled = true }
   }, [router])
 
   const previewPlanet = useMemo(
@@ -187,7 +203,11 @@ export default function PlanetSettingsPage() {
 
   // Keep accent color in sync with climate choice
   useEffect(() => {
-    if (previewPlanet) setAccentColor(previewPlanet.visual.coreColor)
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (!cancelled && previewPlanet) setAccentColor(previewPlanet.visual.coreColor)
+    })
+    return () => { cancelled = true }
   }, [previewPlanet])
 
   function update<K extends keyof PlanetDraft>(key: K, value: PlanetDraft[K]) {
@@ -213,6 +233,10 @@ export default function PlanetSettingsPage() {
           style: previewPlanet.style,
           lifestyle: previewPlanet.lifestyle,
           coreThemes: previewPlanet.coreThemes,
+          contentFragments: previewPlanet.contentFragments,
+          visual: previewPlanet.visual,
+          abstractAxis: previewPlanet.cognitiveAxes.abstract,
+          introspectiveAxis: previewPlanet.cognitiveAxes.introspective,
           location: previewPlanet.location,
           languages: previewPlanet.languages,
           culturalTags: previewPlanet.culturalTags,
@@ -298,6 +322,40 @@ export default function PlanetSettingsPage() {
                   }}
                   placeholder="Name your planet..."
                 />
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Planet photo"
+              description="Choose the texture other users see on your profile, cards, and messages."
+              color={accentColor}
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {PLANET_TEXTURE_OPTIONS.map((option) => {
+                  const selected = resolvePlanetTexture(previewPlanet) === option.file
+                  return (
+                    <button
+                      key={option.file}
+                      type="button"
+                      onClick={() => update('textureFile', option.file)}
+                      className="rounded-2xl p-3 flex flex-col items-center gap-2 transition-all duration-200"
+                      style={{
+                        background: selected ? `${accentColor}18` : 'rgba(255,255,255,0.03)',
+                        border: selected ? `1px solid ${accentColor}55` : '1px solid rgba(255,255,255,0.08)',
+                        cursor: 'pointer',
+                      }}
+                      aria-pressed={selected}
+                    >
+                      <PlanetAvatar textureFile={option.file} size={52} glowColor={accentColor} />
+                      <span className="text-xs font-medium" style={{ color: selected ? 'var(--foreground)' : 'var(--ink)' }}>
+                        {option.label}
+                      </span>
+                      <span className="text-[10px] text-center leading-snug" style={{ color: 'var(--ghost)' }}>
+                        {option.tone}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </SectionCard>
 

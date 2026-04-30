@@ -75,12 +75,10 @@ function AtmosphereHalos({
 }
 
 function BiomeBands({
-  size,
   coreColor,
   accentColor,
   themes,
 }: {
-  size: number
   coreColor: string
   accentColor: string
   themes: string[]
@@ -114,11 +112,9 @@ function BiomeBands({
 function OrbitTraces({
   traces,
   size,
-  coreColor,
 }: {
   traces: ExplorationTrace[]
   size: number
-  coreColor: string
 }) {
   if (!traces.length) return null
   const canvasSize = size + 200
@@ -173,12 +169,10 @@ function OrbitTraces({
 }
 
 function SurfaceTexture({
-  size,
   surfaceStyle,
   coreColor,
   accentColor,
 }: {
-  size: number
   surfaceStyle: string
   coreColor: string
   accentColor: string
@@ -284,7 +278,7 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
 
       {/* -- Exploration orbit traces ---------------------------------------- */}
       {explorationTraces && explorationTraces.length > 0 && (
-        <OrbitTraces traces={explorationTraces} size={size} coreColor={coreColor} />
+        <OrbitTraces traces={explorationTraces} size={size} />
       )}
 
       {/* -- Rings (behind planet) ------------------------------------------- */}
@@ -359,7 +353,6 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
       >
         {/* Biome bands + base gradient */}
         <BiomeBands
-          size={size}
           coreColor={coreColor}
           accentColor={accentColor}
           themes={coreThemes}
@@ -367,7 +360,6 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
 
         {/* Surface texture */}
         <SurfaceTexture
-          size={size}
           surfaceStyle={surfaceStyle}
           coreColor={coreColor}
           accentColor={accentColor}

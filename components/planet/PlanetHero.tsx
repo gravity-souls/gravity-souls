@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import PlanetScene from '@/components/planet/PlanetScene'
-import PlanetGlobe from '@/components/planet/PlanetGlobe'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import GlowButton from '@/components/ui/GlowButton'
 import type { PlanetProfile } from '@/types/planet'
-import { getTextureFile } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 // --- Language display ---------------------------------------------------------
 
@@ -40,7 +39,7 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
   return (
     <div className="flex flex-wrap gap-2">
       <GlowButton
-        href={`/messages?to=${planet.id}`}
+        href={`/messages?to=${encodeURIComponent(planet.id)}`}
         variant="primary"
         className="px-5 py-2.5 text-sm"
       >
@@ -80,6 +79,7 @@ interface Props {
 
 export default function PlanetHero({ planet, viewerRole }: Props) {
   const { visual } = planet
+  const textureFile = resolvePlanetTexture(planet)
 
   return (
     <section
@@ -120,14 +120,33 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
       {/* -- Content grid ------------------------------------------------ */}
       <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
 
-        {/* Planet scene  -  left column on desktop, top on mobile */}
+        {/* Planet photo  -  left column on desktop, top on mobile */}
         <div className="shrink-0 flex items-center justify-center">
-          <PlanetGlobe
-            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
-            ringEnabled={visual.ringStyle !== 'none'}
-            glowColor={visual.coreColor}
-            size={220}
-          />
+          <div className="relative flex items-center justify-center" style={{ width: 240, height: 240 }}>
+            <div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 224,
+                height: 224,
+                background: `radial-gradient(circle, ${visual.coreColor}22 0%, transparent 70%)`,
+                filter: 'blur(6px)',
+              }}
+              aria-hidden="true"
+            />
+            {visual.ringStyle !== 'none' && (
+              <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 224,
+                  height: 224,
+                  border: `1px solid ${visual.coreColor}26`,
+                  transform: 'rotate(-14deg) scaleX(1.22)',
+                }}
+                aria-hidden="true"
+              />
+            )}
+            <PlanetAvatar textureFile={textureFile} size={172} glowColor={visual.coreColor} />
+          </div>
         </div>
 
         {/* Identity column  -  right on desktop, below on mobile */}

@@ -19,8 +19,18 @@ import ProfileLayerSection from '@/components/planet/ProfileLayerSection'
 import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeCloud } from '@/components/planet/PlanetModules'
 import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
+import { getPlanetById } from '@/lib/mock-planets'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
+
+const DEFAULT_VISUAL: PlanetProfile['visual'] = {
+  coreColor: '#a78bfa',
+  accentColor: '#c4b5fd',
+  ringStyle: 'single',
+  surfaceStyle: 'smooth',
+  satelliteCount: 1,
+  size: 'lg',
+}
 
 // --- Cultural coordinates panel ----------------------------------------------
 // Shows culturalTags and travelCities as visual clusters.
@@ -151,8 +161,10 @@ function FogVeil({
 function SendSignalButton({ planet }: { planet: PlanetProfile }) {
   const router = useRouter()
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSend() {
+    setError('')
     setSending(true)
     try {
       const res = await fetch('/api/conversations', {
@@ -166,26 +178,45 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
       if (res.ok) {
         const data = await res.json()
         router.push(`/messages/${data.conversationId}`)
+        return
       }
-    } catch { /* ignore */ }
+
+      if (res.status === 401) {
+        router.push('/sign-in')
+        return
+      }
+
+      setError('This demo planet is not connected to a real inbox yet.')
+    } catch {
+      setError('Could not open this signal right now.')
+    }
     setSending(false)
   }
 
   return (
-    <GlowButton
-      variant="primary"
-      className="py-3 text-sm"
-      onClick={handleSend}
-      disabled={sending}
-    >
-      {sending ? 'Sending signal...' : 'Send signal'}
-    </GlowButton>
+    <div className="flex flex-col gap-2">
+      <GlowButton
+        variant="primary"
+        className="py-3 text-sm"
+        onClick={handleSend}
+        disabled={sending}
+      >
+        {sending ? 'Sending signal...' : 'Send signal'}
+      </GlowButton>
+      {error && (
+        <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+          {error}
+        </p>
+      )}
+    </div>
   )
 }
 
 // --- Helper: convert DB planet to PlanetProfile ------------------------------
 
 function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
+  const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
+
   return {
     id: data.id as string,
     name: (data.name as string) || 'Unknown',
@@ -197,11 +228,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
     coreThemes: (data.coreThemes as string[]) ?? [],
     contentFragments: (data.contentFragments as string[]) ?? [],
-    visual: (data.visual as PlanetProfile['visual']) ?? {
-      coreColor: '#a78bfa', accentColor: '#c4b5fd',
-      ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
-      satelliteCount: 1, size: 'lg' as const,
-    },
+    visual,
     cognitiveAxes: {
       abstract: (data.abstractAxis as number) ?? 50,
       introspective: (data.introspectiveAxis as number) ?? 50,
@@ -245,6 +272,10 @@ function PlanetPageInner() {
           p = dbPlanetToProfile(data)
         }
       } catch { /* ignore */ }
+
+      if (!p) {
+        p = getPlanetById(id) ?? null
+      }
 
       setPlanet(p)
       setLoading(false)

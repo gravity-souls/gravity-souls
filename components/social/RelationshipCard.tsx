@@ -70,7 +70,7 @@ export default function RelationshipCard({ relationship, planet }: Props) {
       <div className="shrink-0 flex flex-col gap-1.5">
         {(relationship.status === 'resonant' || relationship.status === 'orbit') && (
           <GlowButton
-            href={`/messages/${planet.id}`}
+            href={`/messages?to=${encodeURIComponent(planet.id)}`}
             variant="secondary"
             className="text-[11px] px-3 py-1.5"
           >

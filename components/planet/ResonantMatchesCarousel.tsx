@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
-import { getTextureFile } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
 
 interface MatchEntry {
@@ -106,7 +106,7 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
             >
               {/* Avatar */}
               <PlanetAvatar
-                textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+                textureFile={resolvePlanetTexture(planet)}
                 size={56}
                 glowColor={color}
               />

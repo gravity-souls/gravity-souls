@@ -22,7 +22,13 @@ export default function PlanetAwakeningState({ planet }: Props) {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
   const { data: session } = authClient.useSession()
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (!cancelled) setMounted(true)
+    })
+    return () => { cancelled = true }
+  }, [])
   const isAuthenticated = mounted && !!session?.user
 
   useEffect(() => {
@@ -41,7 +47,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
     >
       {/* Background light expansion */}
       <div
-        className="absolute pointer-events-none transition-all duration-[1800ms]"
+        className="absolute pointer-events-none transition-all duration-1800"
         aria-hidden="true"
         style={{
           width:  phase >= 1 ? '140vw' : '0px',

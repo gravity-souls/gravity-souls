@@ -35,10 +35,6 @@ export default function Nav() {
   const hydrated = useHydrated()
   const isAuthenticated = hydrated && !!session?.user
 
-  // Show expanded nav links only on the homepage / top-level pages.
-  // Inner pages rely on the SideNav.
-  const isHomepage = pathname === '/'
-
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between"

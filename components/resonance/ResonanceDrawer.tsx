@@ -262,7 +262,7 @@ function DrawerContent({
         style={{ borderTop: `1px solid rgba(255,255,255,0.05)` }}
       >
         <GlowButton
-          href={`/messages/${planet.id}`}
+          href={`/messages?to=${encodeURIComponent(planet.id)}`}
           variant="primary"
           className="w-full py-3 text-sm text-center"
         >

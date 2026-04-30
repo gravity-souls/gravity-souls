@@ -3,8 +3,9 @@
 import { use, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import GlowButton from '@/components/ui/GlowButton'
 import SignalComposer from '@/components/social/SignalComposer'
+import { getConversation, getMessages } from '@/lib/mock-conversations'
+import { getPlanetById } from '@/lib/mock-planets'
 
 // --- Types ---
 
@@ -105,38 +106,79 @@ export default function ConversationPage({ params }: Props) {
   const bottomRef  = useRef<HTMLDivElement>(null)
 
   const [messages, setMessages]       = useState<MsgData[]>([])
-  const [myPlanet, setMyPlanet]       = useState<PlanetData | null>(null)
   const [otherPlanet, setOtherPlanet] = useState<PlanetData | null>(null)
   const [myUserId, setMyUserId]       = useState('')
   const [loading, setLoading]         = useState(true)
   const [sending, setSending]         = useState(false)
+  const [demoConversation, setDemoConversation] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function load() {
       try {
         const res = await fetch(`/api/conversations/${id}`)
         if (!res.ok) {
+          const mockConv = getConversation(id)
+          const mockPlanet = getPlanetById(id)
+          if (mockConv && mockPlanet) {
+            if (cancelled) return
+            setMessages(getMessages(id))
+            setOtherPlanet({
+              id: mockPlanet.id,
+              name: mockPlanet.name,
+              avatarSymbol: mockPlanet.avatarSymbol,
+              visual: mockPlanet.visual,
+            })
+            setMyUserId('p-aelion')
+            setDemoConversation(true)
+            setLoading(false)
+            return
+          }
+
           router.replace('/messages')
           return
         }
         const data = await res.json()
+        if (cancelled) return
         setMessages(data.messages)
-        setMyPlanet(data.myPlanet)
         setOtherPlanet(data.otherPlanet)
+        setDemoConversation(false)
 
         // Get my user ID from /api/me
         const meRes = await fetch('/api/me')
+        if (cancelled) return
         if (meRes.ok) {
           const meData = await meRes.json()
           setMyUserId(meData.user.id)
         }
       } catch {
+        const mockConv = getConversation(id)
+        const mockPlanet = getPlanetById(id)
+        if (mockConv && mockPlanet) {
+          if (cancelled) return
+          setMessages(getMessages(id))
+          setOtherPlanet({
+            id: mockPlanet.id,
+            name: mockPlanet.name,
+            avatarSymbol: mockPlanet.avatarSymbol,
+            visual: mockPlanet.visual,
+          })
+          setMyUserId('p-aelion')
+          setDemoConversation(true)
+          setLoading(false)
+          return
+        }
+
         router.replace('/messages')
         return
       }
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     }
-    load()
+
+    void load()
+
+    return () => { cancelled = true }
   }, [id, router])
 
   useEffect(() => {
@@ -156,6 +198,11 @@ export default function ConversationPage({ params }: Props) {
       sentAt: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, tempMsg])
+
+    if (demoConversation) {
+      setSending(false)
+      return
+    }
 
     try {
       const res = await fetch(`/api/conversations/${id}`, {

@@ -112,7 +112,7 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
           View planet
         </GlowButton>
         {isResonator && (
-          <GlowButton href={`/messages/${planet.id}`} variant="ghost" className="flex-1 text-xs py-2 text-center">
+          <GlowButton href={`/messages?to=${encodeURIComponent(planet.id)}`} variant="ghost" className="flex-1 text-xs py-2 text-center">
             Send beam
           </GlowButton>
         )}

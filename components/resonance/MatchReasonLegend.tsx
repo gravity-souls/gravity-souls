@@ -1,5 +1,4 @@
 import type { OrbitReasonKey } from '@/types/match'
-import { orbitColorHex } from '@/lib/match'
 
 // --- Legend entries -----------------------------------------------------------
 

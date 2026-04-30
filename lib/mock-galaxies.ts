@@ -135,10 +135,23 @@ export const MOCK_GALAXIES: Galaxy[] = [
   },
 ]
 
+export const COMMUNITY_GALAXY_SLUG_ALIASES: Record<string, string> = {
+  'deep-thinkers': 'slow-thinkers',
+  'creative-nebula': 'image-makers',
+  'nomadic-stars': 'threshold-states',
+  'tech-forge': 'signal-noise',
+  'quiet-orbits': 'warm-frequency',
+}
+
 // --- Helpers ----------------------------------------------------------------
 
+export function resolveGalaxySlug(slug: string): string {
+  return COMMUNITY_GALAXY_SLUG_ALIASES[slug] ?? slug
+}
+
 export function getGalaxyBySlug(slug: string): Galaxy | undefined {
-  return MOCK_GALAXIES.find((g) => g.slug === slug)
+  const resolvedSlug = resolveGalaxySlug(slug)
+  return MOCK_GALAXIES.find((g) => g.slug === resolvedSlug)
 }
 
 export function getGalaxyPreviews(): GalaxyPreview[] {

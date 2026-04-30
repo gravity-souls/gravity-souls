@@ -1,5 +1,6 @@
 import type { PlanetProfile } from '@/types/planet'
-import PlanetScene from '@/components/planet/PlanetScene'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 // --- LivePlanetPreview --------------------------------------------------------
 // Compact planet preview shown alongside creation steps.
@@ -15,6 +16,7 @@ interface Props {
 
 export default function LivePlanetPreview({ planet, size = 140, showMeta = true }: Props) {
   const { visual } = planet
+  const textureFile = resolvePlanetTexture(planet)
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -29,7 +31,18 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
           minHeight: size + 80,
         }}
       >
-        <PlanetScene planet={planet} size={size} />
+        <div className="relative flex items-center justify-center">
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: size + 28,
+              height: size + 28,
+              border: `1px solid ${visual.accentColor ?? visual.coreColor}2c`,
+              boxShadow: `0 0 ${Math.round(size * 0.35)}px ${visual.coreColor}22`,
+            }}
+          />
+          <PlanetAvatar textureFile={textureFile} size={size} glowColor={visual.coreColor} />
+        </div>
       </div>
 
       {/* Planet name */}

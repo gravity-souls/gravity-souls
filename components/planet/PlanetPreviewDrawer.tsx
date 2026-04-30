@@ -1,9 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import PlanetVisual from './PlanetVisual'
+import { useRouter } from 'next/navigation'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import LockedLayer from '@/components/ui/LockedLayer'
+import { isSaved, savePlanetId } from '@/lib/social-storage'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
 
 interface Props {
@@ -94,8 +97,57 @@ function DrawerContent({
   isResonator:  boolean
   onClose:      () => void
 }) {
+  const router = useRouter()
   const { coreColor } = planet.visual
   const fragment = planet.contentFragments[0]
+  const textureFile = resolvePlanetTexture(planet)
+  const [saved, setSaved] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    setSaved(isSaved(planet.id))
+  }, [planet.id])
+
+  function handleSave() {
+    savePlanetId(planet.id)
+    setSaved(true)
+  }
+
+  async function handleSendBeam() {
+    if (!planet.userId) {
+      router.push(`/planet/${planet.id}`)
+      return
+    }
+
+    setSending(true)
+    try {
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientId: planet.userId,
+          message: `First signal to ${planet.name}`,
+        }),
+      })
+
+      if (res.status === 401) {
+        router.push('/sign-in')
+        return
+      }
+
+      if (res.ok) {
+        const data = await res.json()
+        router.push(`/messages/${data.conversationId}`)
+        return
+      }
+
+      router.push(`/planet/${planet.id}`)
+    } catch {
+      router.push(`/planet/${planet.id}`)
+    } finally {
+      setSending(false)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -128,7 +180,19 @@ function DrawerContent({
 
       {/* Planet visual */}
       <div className="flex justify-center py-6 shrink-0">
-        <PlanetVisual visual={planet.visual} symbol={planet.avatarSymbol} />
+        <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: 190,
+              height: 190,
+              background: `radial-gradient(circle, ${coreColor}24 0%, transparent 72%)`,
+              filter: 'blur(4px)',
+            }}
+            aria-hidden="true"
+          />
+          <PlanetAvatar textureFile={textureFile} size={128} glowColor={coreColor} />
+        </div>
       </div>
 
       {/* Accent line under visual */}
@@ -214,7 +278,7 @@ function DrawerContent({
               className="text-sm leading-relaxed italic"
               style={{ color: 'var(--ink)', opacity: 0.8 }}
             >
-              "{fragment}"
+              &ldquo;{fragment}&rdquo;
             </p>
           </div>
         )}
@@ -305,28 +369,33 @@ function DrawerContent({
         {isResonator ? (
           <div className="flex gap-2">
             <button
+              type="button"
               className="flex-1 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
               style={{
-                color:      'var(--ink)',
-                background: 'var(--surface)',
-                border:     '1px solid var(--border-soft)',
-                cursor:     'pointer',
+                color:      saved ? coreColor : 'var(--ink)',
+                background: saved ? `${coreColor}14` : 'var(--surface)',
+                border:     saved ? `1px solid ${coreColor}32` : '1px solid var(--border-soft)',
+                cursor:     saved ? 'default' : 'pointer',
               }}
-              onClick={() => {/* Phase 6 */}}
+              onClick={handleSave}
+              disabled={saved}
             >
-              Save planet
+              {saved ? 'Saved' : 'Save planet'}
             </button>
             <button
+              type="button"
               className="flex-1 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
               style={{
                 color:      'var(--star)',
                 background: 'rgba(167,139,250,0.08)',
                 border:     '1px solid var(--border-accent)',
-                cursor:     'pointer',
+                cursor:     sending ? 'default' : 'pointer',
+                opacity:    sending ? 0.65 : 1,
               }}
-              onClick={() => {/* Phase 6 */}}
+              onClick={handleSendBeam}
+              disabled={sending}
             >
-              Send beam
+              {sending ? 'Sending...' : 'Send beam'}
             </button>
           </div>
         ) : (

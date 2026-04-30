@@ -1,30 +1,36 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import EmptyState from '@/components/ui/EmptyState'
 import Tag from '@/components/ui/Tag'
-import PlanetGlobe from '@/components/planet/PlanetGlobe'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
-import { getTextureFile } from '@/lib/planet-textures'
-import { TYPE_COLORS } from '@/lib/sbti-data'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
 import { MOCK_GALAXIES } from '@/lib/mock-galaxies'
 import { mockPlanets } from '@/lib/mock-planets'
-import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
+import { getSharedPostsForPlanets } from '@/lib/mock-posts'
+import type { PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
-import type { SharedMoment } from '@/components/planet/SharedMomentsFeed'
+
+const DEFAULT_VISUAL: PlanetProfile['visual'] = {
+  coreColor: '#a78bfa',
+  accentColor: '#c4b5fd',
+  ringStyle: 'single',
+  surfaceStyle: 'smooth',
+  satelliteCount: 1,
+  size: 'lg',
+}
 
 const emptySubscribe = () => () => {}
 function useHydrated() {
@@ -42,23 +48,7 @@ const MOCK_ACTIVITY: ActivityEvent = {
   location: 'Echo Ridge, Blue Mountains',
   tags: ['Night Walk', 'Outdoors'],
   accentColor: '#a78bfa',
-}
-
-function getMockMoments(planets: PlanetProfile[]): SharedMoment[] {
-  const samples: Omit<SharedMoment, 'avatarTexture' | 'avatarGlow'>[] = [
-    { id: 'sm-1', authorName: '', timeAgo: '2h ago', content: 'Hiking through the forest today. Felt so peaceful. 🌲 ✨', hashtags: ['NatureVibes'], likes: 24, replies: 6 },
-    { id: 'sm-2', authorName: '', timeAgo: '5h ago', content: 'The stars tonight were unreal. Anyone else out there?', hashtags: ['NightVibes'], likes: 18, replies: 4 },
-    { id: 'sm-3', authorName: '', timeAgo: '1d ago', content: 'Sometimes the quiet says more than words.', hashtags: ['Reflect'], likes: 31, replies: 7 },
-  ]
-  return samples.slice(0, Math.min(3, planets.length)).map((s, i) => {
-    const p = planets[i % planets.length]
-    return {
-      ...s,
-      authorName: p.name,
-      avatarTexture: getTextureFile([p.mood, p.lifestyle, ...p.coreThemes]),
-      avatarGlow: p.visual.coreColor,
-    }
-  })
+  href: '/galaxy/slow-thinkers',
 }
 
 function getRecommendedGalaxies(): GalaxyPreview[] {
@@ -76,19 +66,15 @@ function getRecommendedGalaxies(): GalaxyPreview[] {
   }))
 }
 
-// --- Match preference badge --------------------------------------------------
-
-const PREFERENCE_META = {
-  similar:       { label: 'Seeks resonance',    description: 'You gravitate toward kindred spirits  -  planets that share your frequency.',   color: '#a78bfa' },
-  complementary: { label: 'Seeks contrast',     description: 'You are drawn to planets that fill in what you lack  -  difference as gravity.', color: '#34d399' },
-  mixed:         { label: 'Open orbit',         description: 'You hold space for both resonance and contrast. Your orbit is wide.',          color: '#fbbf24' },
+function fallbackResonanceScore(id: string): number {
+  const seed = id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return 40 + (seed % 51)
 }
 
 // --- Page --------------------------------------------------------------------
 
 export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
-  const [resonances, setResonances] = useState<ResonancePlanet[]>([])
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const hydrated = useHydrated()
   const [loading, setLoading]     = useState(true)
@@ -107,6 +93,7 @@ export default function MyPlanetPage() {
         if (planetRes.ok) {
           const data = await planetRes.json()
           const meData = meRes.ok ? await meRes.json() : null
+          const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
 
           p = {
             id: data.id,
@@ -119,7 +106,7 @@ export default function MyPlanetPage() {
             lifestyle: data.lifestyle ?? 'solitary',
             coreThemes: data.coreThemes ?? [],
             contentFragments: data.contentFragments ?? [],
-            visual: data.visual ?? {},
+            visual,
             cognitiveAxes: {
               abstract: data.abstractAxis ?? 50,
               introspective: data.introspectiveAxis ?? 50,
@@ -163,24 +150,26 @@ export default function MyPlanetPage() {
         try {
           const planetsRes = await fetch('/api/planets')
           if (planetsRes.ok) {
-            const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map((data: Record<string, unknown>) => ({
-              id: data.id as string,
-              name: (data.name as string) || 'Unknown',
-              avatarSymbol: (data.avatarSymbol as string) || '?',
-              tagline: (data.tagline as string) ?? undefined,
-              role: 'resonator' as const,
-              mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
-              style: (data.style as PlanetProfile['style']) ?? 'minimal',
-              lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-              coreThemes: (data.coreThemes as string[]) ?? [],
-              contentFragments: (data.contentFragments as string[]) ?? [],
-              visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
-              cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
-              emotionalBars: [],
-              createdAt: (data.createdAt as string) ?? new Date().toISOString(),
-              userId: (data.userId as string) ?? '',
-            } as PlanetProfile))
-            setResonances(getResonanceMatches(p, allPlanets, 4))
+            const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map((data: Record<string, unknown>) => {
+              const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
+              return {
+                id: data.id as string,
+                name: (data.name as string) || 'Unknown',
+                avatarSymbol: (data.avatarSymbol as string) || '?',
+                tagline: (data.tagline as string) ?? undefined,
+                role: 'resonator' as const,
+                mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+                style: (data.style as PlanetProfile['style']) ?? 'minimal',
+                lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+                coreThemes: (data.coreThemes as string[]) ?? [],
+                contentFragments: (data.contentFragments as string[]) ?? [],
+                visual,
+                cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
+                emotionalBars: [],
+                createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+                userId: (data.userId as string) ?? '',
+              } as PlanetProfile
+            })
             setOtherPlanets(allPlanets)
           }
         } catch {
@@ -221,13 +210,14 @@ export default function MyPlanetPage() {
   }
 
   const { visual } = planet
+  const textureFile = resolvePlanetTexture(planet)
 
   // --- Derived data for dashboard sections ---
   // Resonant match cards (from DB planets or mock fallback)
   const matchPool = otherPlanets.length > 0 ? otherPlanets : mockPlanets
   const matchEntries = matchPool.slice(0, 6).map((p) => {
     const matches = getResonanceMatches(planet, [p], 1)
-    const score = matches[0]?.strength ?? Math.round(40 + Math.random() * 50)
+    const score = matches[0]?.strength ?? fallbackResonanceScore(p.id)
     // Derive personality traits from mood + coreThemes
     const traits: string[] = []
     if (p.mood) traits.push(p.mood.charAt(0).toUpperCase() + p.mood.slice(1))
@@ -247,7 +237,7 @@ export default function MyPlanetPage() {
   const balance = Math.round(radarDimensions.reduce((sum, d) => sum + d.value, 0) / radarDimensions.length)
 
   const recommendedGalaxies = getRecommendedGalaxies()
-  const sharedMoments = getMockMoments(matchPool)
+  const sharedMoments = getSharedPostsForPlanets(matchPool, 3)
 
   return (
     <AppShell>
@@ -275,14 +265,33 @@ export default function MyPlanetPage() {
             style={{ background: `linear-gradient(90deg, transparent, ${visual.coreColor}55, rgba(255,255,255,0.12), ${visual.coreColor}55, transparent)` }} />
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
-            {/* 3D Planet Globe */}
+            {/* Planet photo */}
             <div className="shrink-0 flex items-center justify-center">
-              <PlanetGlobe
-                textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
-                ringEnabled={visual.ringStyle !== 'none'}
-                glowColor={visual.coreColor}
-                size={260}
-              />
+              <div className="relative flex items-center justify-center" style={{ width: 280, height: 280 }}>
+                <div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: 248,
+                    height: 248,
+                    background: `radial-gradient(circle, ${visual.coreColor}22 0%, transparent 70%)`,
+                    filter: 'blur(6px)',
+                  }}
+                  aria-hidden="true"
+                />
+                {visual.ringStyle !== 'none' && (
+                  <div
+                    className="absolute rounded-full pointer-events-none"
+                    style={{
+                      width: 250,
+                      height: 250,
+                      border: `1px solid ${visual.coreColor}26`,
+                      transform: 'rotate(-14deg) scaleX(1.22)',
+                    }}
+                    aria-hidden="true"
+                  />
+                )}
+                <PlanetAvatar textureFile={textureFile} size={192} glowColor={visual.coreColor} />
+              </div>
             </div>
 
             {/* Identity column */}
@@ -442,7 +451,7 @@ export default function MyPlanetPage() {
           }}
         >
           <PlanetAvatar
-            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+            textureFile={textureFile}
             size={36}
             glowColor={visual.coreColor}
           />

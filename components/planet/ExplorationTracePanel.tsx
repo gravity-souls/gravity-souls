@@ -76,7 +76,7 @@ interface Props {
  *
  * Wrap in ProfileLayerSection with locked=true for Explorer viewers.
  */
-export default function ExplorationTracePanel({ traces, accentColor = '#a78bfa' }: Props) {
+export default function ExplorationTracePanel({ traces }: Props) {
   if (!traces || traces.length === 0) return null
 
   const maxCount = Math.max(...traces.map((t) => t.count))

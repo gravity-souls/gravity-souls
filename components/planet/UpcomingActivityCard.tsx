@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 export interface ActivityEvent {
@@ -31,8 +32,15 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
   const accent = event.accentColor ?? '#a78bfa'
   const date = new Date(event.date)
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const ctaStyle = {
+    background: `linear-gradient(135deg, ${accent}44 0%, ${accent}22 100%)`,
+    border: `1px solid ${accent}44`,
+    color: 'var(--foreground)',
+    cursor: event.href ? 'pointer' : 'default',
+    textDecoration: 'none',
+  }
 
-  const content = (
+  return (
     <div
       className={`flex flex-col overflow-hidden rounded-xl ${className}`}
       style={{
@@ -43,9 +51,11 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
       {/* Cover image */}
       {event.imageUrl && (
         <div className="relative w-full h-32 overflow-hidden">
-          <img
+          <Image
             src={event.imageUrl}
             alt=""
+            width={360}
+            height={128}
             className="w-full h-full object-cover"
           />
           <div
@@ -112,24 +122,25 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
         )}
 
         {/* CTA */}
-        <button
-          className="w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all"
-          style={{
-            background: `linear-gradient(135deg, ${accent}44 0%, ${accent}22 100%)`,
-            border: `1px solid ${accent}44`,
-            color: 'var(--foreground)',
-            cursor: 'pointer',
-          }}
-        >
-          View details &amp; RSVP
-        </button>
+        {event.href ? (
+          <Link
+            href={event.href}
+            className="w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all text-center"
+            style={ctaStyle}
+          >
+            View details &amp; RSVP
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all opacity-60"
+            style={ctaStyle}
+          >
+            Details coming soon
+          </button>
+        )}
       </div>
     </div>
   )
-
-  if (event.href) {
-    return <Link href={event.href} style={{ textDecoration: 'none' }}>{content}</Link>
-  }
-
-  return content
 }

@@ -2,7 +2,7 @@ import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
-import { getTextureFile } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 // --- ResonancePlanetNode ------------------------------------------------------
 // A single orbiting planet node in the ResonanceOrbitSystem.
@@ -53,7 +53,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
         }}
       >
         <PlanetAvatar
-          textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+          textureFile={resolvePlanetTexture(planet)}
           size={size}
           glowColor={planet.visual.coreColor}
         />

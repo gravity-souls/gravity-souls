@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import type { GalaxyPreview } from '@/types/galaxy'
 
 // Cover images mapped by galaxy slug (fallback to gradient)
@@ -27,6 +28,7 @@ interface Props {
  */
 export default function RecommendedCommunities({ galaxies, className = '' }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
 
   function scroll(dir: -1 | 1) {
@@ -80,7 +82,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
           return (
             <div
               key={g.id}
-              className="group shrink-0 relative flex flex-col rounded-2xl overflow-hidden transition-all duration-300"
+              className="group shrink-0 relative flex flex-col rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
               style={{
                 width: 240,
                 scrollSnapAlign: 'start',
@@ -95,13 +97,24 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
                 (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(0,0,0,0.4)'
                 ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
               }}
+              onClick={() => router.push(`/galaxy/${g.slug}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  router.push(`/galaxy/${g.slug}`)
+                }
+              }}
+              role="link"
+              tabIndex={0}
             >
               {/* Image banner */}
               <div className="relative h-28 w-full overflow-hidden">
                 {coverUrl ? (
-                  <img
+                  <Image
                     src={coverUrl}
                     alt=""
+                    width={240}
+                    height={112}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
@@ -141,7 +154,10 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
                   {g.memberCount >= 1000 ? `${(g.memberCount / 1000).toFixed(1)}K` : g.memberCount} members
                 </span>
                 <button
-                  onClick={() => setJoinedIds((prev) => { const next = new Set(prev); next.add(g.id); return next })}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setJoinedIds((prev) => { const next = new Set(prev); next.add(g.id); return next })
+                  }}
                   disabled={joined}
                   className="text-[10px] font-semibold px-4 py-1.5 rounded-lg transition-all duration-200"
                   style={{

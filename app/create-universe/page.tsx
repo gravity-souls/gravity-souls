@@ -12,8 +12,6 @@ import { savePlanetToDb } from '@/lib/save-to-db'
 
 type Step = 'idle' | 'processing' | 'mapping'
 
-const processingLabels: Step[] = ['processing', 'mapping']
-
 export default function CreateUniversePage() {
   const router = useRouter()
   const { lang } = useLanguage()

@@ -28,6 +28,9 @@ model user {
   conversationsA ConversationThread[] @relation("convUserA")
   conversationsB ConversationThread[] @relation("convUserB")
   sentMessages   DirectMessage[]
+  communityPosts CommunityPost[]
+  communityPostReplies CommunityPostReply[]
+  communityPostLikes CommunityPostLike[]
 }
 
 model Session {
@@ -202,6 +205,7 @@ model Community {
   updatedAt   DateTime @updatedAt
 
   memberships CommunityMembership[]
+  posts       CommunityPost[]
 
   @@map("community")
 }
@@ -217,6 +221,58 @@ model CommunityMembership {
 
   @@unique([userId, communityId])
   @@map("community_membership")
+}
+
+model CommunityPost {
+  id          String    @id @default(cuid())
+  communityId String
+  authorId    String
+  content     String
+
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author      user      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  replies     CommunityPostReply[]
+  likes       CommunityPostLike[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([communityId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_post")
+}
+
+model CommunityPostReply {
+  id        String        @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    user          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_post_reply")
+}
+
+model CommunityPostLike {
+  id        String        @id @default(cuid())
+  postId    String
+  userId    String
+
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      user          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+  @@map("community_post_like")
 }
 
 // --- Messaging ---------------------------------------------------------------

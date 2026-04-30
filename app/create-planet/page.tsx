@@ -53,22 +53,30 @@ export default function CreatePlanetPage() {
   const [saving,   setSaving]    = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    const id = getOrCreateUserId()
-    setUserId(id)
+    let cancelled = false
 
-    const sbti = getSbtiResult()
+    Promise.resolve().then(() => {
+      if (cancelled) return
 
-    if (!sbti) {
-      window.location.replace('/sbti?next=/create-planet')
-      return
-    }
+      setMounted(true)
+      const id = getOrCreateUserId()
+      setUserId(id)
 
-    // If user already has a planet, go to settings instead
-    const existing = getPlanetProfile()
-    if (existing) {
-      window.location.replace('/settings/planet')
-    }
+      const sbti = getSbtiResult()
+
+      if (!sbti) {
+        window.location.replace('/sbti?next=/create-planet')
+        return
+      }
+
+      // If user already has a planet, go to settings instead
+      const existing = getPlanetProfile()
+      if (existing) {
+        window.location.replace('/settings/planet')
+      }
+    })
+
+    return () => { cancelled = true }
   }, [])
 
   // Live preview planet  -  re-derived on every draft change
@@ -106,10 +114,17 @@ export default function CreatePlanetPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: nextPlanet.name,
+          avatarSymbol: nextPlanet.avatarSymbol,
           tagline: nextPlanet.tagline,
+          role: nextPlanet.role,
           mood: nextPlanet.mood,
           style: nextPlanet.style,
           lifestyle: nextPlanet.lifestyle,
+          coreThemes: nextPlanet.coreThemes,
+          contentFragments: nextPlanet.contentFragments,
+          visual: nextPlanet.visual,
+          abstractAxis: nextPlanet.cognitiveAxes.abstract,
+          introspectiveAxis: nextPlanet.cognitiveAxes.introspective,
         }),
       })
     } catch {

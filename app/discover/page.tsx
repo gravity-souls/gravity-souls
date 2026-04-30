@@ -13,7 +13,7 @@ import type { PlanetProfile } from '@/types/planet'
 import { getResonanceMatches } from '@/lib/match'
 import { buildPlanetFromDraft } from '@/lib/planet-builder'
 import { getPlanetProfile, getOrCreateUserId } from '@/lib/user'
-import { getTextureFile } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 // --- Helper: convert DB planet to PlanetProfile for matching engine ----------
 
@@ -84,7 +84,7 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
       <OrbitCard hoverable lift glowColor={color} className="flex flex-col gap-4 p-5">
         <div className="flex items-start gap-4">
           <PlanetAvatar
-            textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+            textureFile={resolvePlanetTexture(planet)}
             size={48}
             glowColor={color}
           />

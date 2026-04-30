@@ -53,7 +53,11 @@ export default function RelationshipsPage() {
   const [role, setRole] = useState<'explorer' | 'resonator' | null>(null)
 
   useEffect(() => {
-    setRole(getUserRole())
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (!cancelled) setRole(getUserRole())
+    })
+    return () => { cancelled = true }
   }, [])
 
   if (role === null) return null

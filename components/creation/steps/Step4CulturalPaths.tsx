@@ -178,7 +178,7 @@ export default function Step4CulturalPaths({
           accent="#34d399"
         />
         <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-          Places you've lived, love, or keep returning to.
+          Places you&apos;ve lived, love, or keep returning to.
         </p>
       </div>
 

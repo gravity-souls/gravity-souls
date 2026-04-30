@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
 // GET /api/planets - returns all active planets (excluding current user's)
-export async function GET(_request: NextRequest) {
+export async function GET() {
   let session;
   try {
     session = await requireUser();

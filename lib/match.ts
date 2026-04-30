@@ -21,13 +21,6 @@ const LIFESTYLE_COMPLEMENT: Record<string, string> = {
   rooted:    'nomadic',
 }
 
-const RESONANCE_TYPE_FOR_BEAM: Record<string, ResonanceType> = {
-  emotion:   'emotion',
-  interest:  'interest',
-  thought:   'thought',
-  lifestyle: 'lifestyle',
-}
-
 const BEAM_COLOR_FOR_TYPE: Record<ResonanceType, BeamColor> = {
   emotion:   'violet',
   interest:  'teal',
@@ -181,14 +174,14 @@ function deriveDimensions(
   }
 }
 
-const RESONANCE_NOTES: Record<OrbitReasonKey, (a: PlanetProfile, b: PlanetProfile) => string> = {
+const RESONANCE_NOTES = {
   'shared-interest':      (a, b) => `${a.name} and ${b.name} orbit the same interior territory.`,
-  'emotional-theme':      (a, b) => `Their emotional frequencies hum at the same register.`,
-  'expression-style':     (a, b) => `How they speak is almost the same. What they say diverges beautifully.`,
-  'culture-travel':       (a, b) => `They have stood in the same cities and wondered the same things.`,
-  'art-books-music':      (a, b) => `The art that moves them is the same art. That is rarely coincidence.`,
+  'emotional-theme':      () => `Their emotional frequencies hum at the same register.`,
+  'expression-style':     () => `How they speak is almost the same. What they say diverges beautifully.`,
+  'culture-travel':       () => `They have stood in the same cities and wondered the same things.`,
+  'art-books-music':      () => `The art that moves them is the same art. That is rarely coincidence.`,
   'worldview-complement': (a, b) => `Where ${a.name} ends, ${b.name} begins. A productive gravity.`,
-}
+} satisfies Record<OrbitReasonKey, (...planets: PlanetProfile[]) => string>
 
 function deriveSimilarities(source: PlanetProfile, target: PlanetProfile): string[] {
   const results: string[] = []
@@ -239,7 +232,6 @@ function deriveDifferences(source: PlanetProfile, target: PlanetProfile): string
 function deriveSuggestedTypes(
   score: number,
   primaryReason: OrbitReasonKey,
-  dimensions: MatchDimensions,
 ): RelationshipType[] {
   const types: RelationshipType[] = []
   if (score >= 60) types.push('friendship')
@@ -292,7 +284,7 @@ export function buildOrbitMatches(
         dimensions,
         similarities:    deriveSimilarities(source, target),
         differences:     deriveDifferences(source, target),
-        suggestedTypes:  deriveSuggestedTypes(score, primaryReason, dimensions),
+        suggestedTypes:  deriveSuggestedTypes(score, primaryReason),
         resonanceNote:   RESONANCE_NOTES[primaryReason](source, target),
       } satisfies OrbitMatch
     })

@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
+import { getConversation } from '@/lib/mock-conversations'
+import { getPlanetById } from '@/lib/mock-planets'
 
 // --- Types for API response ---
 
@@ -16,6 +19,19 @@ interface ConvPlanet {
   avatarSymbol: string
   visual: { coreColor: string; accentColor: string }
   mood: string
+}
+
+interface PlanetTarget {
+  id: string
+  name?: string
+  userId?: string
+  user?: { id?: string; name?: string }
+}
+
+interface OpenErrorState {
+  message: string
+  actionHref: string
+  actionLabel: string
 }
 
 interface ConvLastMessage {
@@ -92,25 +108,149 @@ function ConversationCard({ conv }: { conv: ConversationItem }) {
 // --- MessagesPage -------------------------------------------------------------
 
 export default function MessagesPage() {
+  return (
+    <Suspense fallback={<MessagesLoading />}> 
+      <MessagesInner />
+    </Suspense>
+  )
+}
+
+function MessagesLoading() {
+  return (
+    <AppShell>
+      <div className="px-6 pt-8 pb-16 max-w-2xl mx-auto">
+        <SectionHeader
+          eyebrow="Signals"
+          level={1}
+          title="Messages"
+          subtitle="Communication beams between planets. Signals sent, signals received."
+        />
+        <div className="flex items-center justify-center py-20">
+          <div
+            className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: 'var(--star)', borderTopColor: 'transparent' }}
+          />
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+
+function MessagesInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const targetPlanetId = searchParams.get('to')
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [authed, setAuthed] = useState(true)
+  const [openError, setOpenError] = useState<OpenErrorState | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     async function load() {
       try {
+        setLoading(true)
+        setOpenError(null)
+
+        if (targetPlanetId) {
+          const planetRes = await fetch(`/api/planets/${encodeURIComponent(targetPlanetId)}`)
+          if (cancelled) return
+
+          if (!planetRes.ok) {
+            const demoPlanet = getPlanetById(targetPlanetId)
+            if (demoPlanet && getConversation(demoPlanet.id)) {
+              router.replace(`/messages/${demoPlanet.id}`)
+              return
+            }
+
+            setOpenError(demoPlanet
+              ? {
+                  message: `${demoPlanet.name} is demo data, so it has a profile but no real inbox yet. Use a planet from Discover to start a real conversation.`,
+                  actionHref: `/planet/${demoPlanet.id}`,
+                  actionLabel: 'View demo planet',
+                }
+              : {
+                  message: 'This planet could not be found anymore.',
+                  actionHref: '/discover',
+                  actionLabel: 'Explore planets',
+                })
+            setLoading(false)
+            return
+          }
+
+          const planet = await planetRes.json() as PlanetTarget
+          const recipientId = planet.user?.id ?? planet.userId
+
+          if (!recipientId) {
+            setOpenError({
+              message: 'This planet is missing a message recipient.',
+              actionHref: '/discover',
+              actionLabel: 'Explore planets',
+            })
+            setLoading(false)
+            return
+          }
+
+          const res = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientId,
+              message: `First signal to ${planet.name ?? 'this planet'}`,
+            }),
+          })
+          if (cancelled) return
+
+          if (res.status === 401) {
+            setAuthed(false)
+            setLoading(false)
+            return
+          }
+
+          if (res.ok) {
+            const data = await res.json()
+            router.replace(`/messages/${data.conversationId}`)
+            return
+          }
+
+          setOpenError({
+            message: 'This signal could not be opened yet.',
+            actionHref: '/discover',
+            actionLabel: 'Explore planets',
+          })
+          setLoading(false)
+          return
+        }
+
         const res = await fetch('/api/conversations')
+        if (cancelled) return
+
         if (res.ok) {
           const data = await res.json()
           setConversations(data)
         } else if (res.status === 401) {
           setAuthed(false)
         }
-      } catch { /* ignore */ }
-      setLoading(false)
+      } catch {
+        if (!cancelled) {
+          setOpenError({
+            message: 'Messages could not be loaded right now.',
+            actionHref: '/discover',
+            actionLabel: 'Explore planets',
+          })
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-    load()
-  }, [])
+
+    Promise.resolve().then(() => {
+      if (!cancelled) void load()
+    })
+
+    return () => { cancelled = true }
+  }, [router, targetPlanetId])
 
   return (
     <AppShell>
@@ -141,7 +281,17 @@ export default function MessagesPage() {
           />
         )}
 
-        {!loading && authed && conversations.length === 0 && (
+        {!loading && authed && openError && (
+          <EmptyState
+            symbol="&#9676;"
+            title="Signal unavailable"
+            subtitle={openError.message}
+            action={<GlowButton href={openError.actionHref} variant="secondary">{openError.actionLabel}</GlowButton>}
+            className="mt-8"
+          />
+        )}
+
+        {!loading && authed && !openError && conversations.length === 0 && (
           <EmptyState
             symbol="&#8599;"
             title="No beams yet"
@@ -151,7 +301,7 @@ export default function MessagesPage() {
           />
         )}
 
-        {!loading && authed && conversations.length > 0 && (
+        {!loading && authed && !openError && conversations.length > 0 && (
           <div className="mt-8 flex flex-col gap-2">
             {conversations.map((conv) => (
               <ConversationCard key={conv.id} conv={conv} />

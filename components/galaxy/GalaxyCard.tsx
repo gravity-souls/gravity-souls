@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { resolveGalaxySlug } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
 interface Props {
@@ -53,6 +54,7 @@ function CompactCard({
   memberCount: number; accentColor: string
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
 }) {
+  const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
     width:      220,
     background: 'linear-gradient(160deg, rgba(18,14,52,0.82) 0%, rgba(6,4,20,0.90) 100%)',
@@ -150,7 +152,7 @@ function CompactCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+        onClick={() => { window.location.href = `/galaxy/${resolvedSlug}` }}
       >
         {cardBody}
 
@@ -186,7 +188,7 @@ function CompactCard({
   // Default: plain Link card (no join button)
   return (
     <Link
-      href={`/galaxy/${slug}`}
+      href={`/galaxy/${resolvedSlug}`}
       className="group relative flex-none flex flex-col gap-3 p-4 rounded-2xl overflow-hidden"
       style={cardStyle}
       onMouseEnter={handleMouseEnter}
@@ -206,6 +208,7 @@ function FullCard({
   mood: GalaxyPreview['mood']; memberCount: number; maturity: GalaxyPreview['maturity']; accentColor: string
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
 }) {
+  const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
     background: 'linear-gradient(160deg, rgba(18,14,52,0.80) 0%, rgba(6,4,20,0.90) 100%)',
     backdropFilter: 'blur(20px)',
@@ -282,7 +285,7 @@ function FullCard({
           className="text-sm leading-relaxed italic relative z-10"
           style={{ color: 'var(--ink)', opacity: 0.75 }}
         >
-          "{tagline}"
+          &ldquo;{tagline}&rdquo;
         </p>
       )}
 
@@ -327,7 +330,7 @@ function FullCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+        onClick={() => { window.location.href = `/galaxy/${resolvedSlug}` }}
       >
         {cardBody}
 
@@ -363,7 +366,7 @@ function FullCard({
   // Default: plain Link card
   return (
     <Link
-      href={`/galaxy/${slug}`}
+      href={`/galaxy/${resolvedSlug}`}
       className="group relative flex flex-col gap-4 p-6 rounded-2xl overflow-hidden"
       style={cardStyle}
       onMouseEnter={handleMouseEnter}

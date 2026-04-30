@@ -35,18 +35,26 @@ export default function SavedPage() {
   const [items, setItems] = useState<{ saved: SavedPlanet; planet: PlanetProfile }[]>([])
 
   useEffect(() => {
-    const userRole = getUserRole()
-    setRole(userRole)
+    let cancelled = false
 
-    const savedList = buildSavedList()
-    const resolved = savedList
-      .map((saved) => {
-        const planet = getPlanetById(saved.planetId)
-        return planet ? { saved, planet } : null
-      })
-      .filter((x): x is { saved: SavedPlanet; planet: PlanetProfile } => x !== null)
+    Promise.resolve().then(() => {
+      if (cancelled) return
 
-    setItems(resolved)
+      const userRole = getUserRole()
+      setRole(userRole)
+
+      const savedList = buildSavedList()
+      const resolved = savedList
+        .map((saved) => {
+          const planet = getPlanetById(saved.planetId)
+          return planet ? { saved, planet } : null
+        })
+        .filter((x): x is { saved: SavedPlanet; planet: PlanetProfile } => x !== null)
+
+      setItems(resolved)
+    })
+
+    return () => { cancelled = true }
   }, [])
 
   function handleUnsave(planetId: string) {

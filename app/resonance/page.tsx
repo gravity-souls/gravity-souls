@@ -87,40 +87,49 @@ export default function ResonancePage() {
   const [activeId, setActiveId]   = useState<string | null>(null)
 
   useEffect(() => {
-    setMounted(true)
-    const r = getUserRole()
-    const p = getPlanetProfile()
-    setRole(r)
-    setMyPlanet(p)
+    let cancelled = false
 
-    if (p) {
-      // Fetch real planets for resonance session
-      fetch('/api/planets')
-        .then((res) => (res.ok ? res.json() : []))
-        .then((data: Record<string, unknown>[]) => {
-          const planets = data.map((d) => ({
-            id: d.id as string,
-            name: (d.name as string) || 'Unknown',
-            avatarSymbol: (d.avatarSymbol as string) || '?',
-            tagline: (d.tagline as string) ?? undefined,
-            role: 'resonator' as const,
-            mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
-            style: (d.style as PlanetProfile['style']) ?? 'minimal',
-            lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-            coreThemes: (d.coreThemes as string[]) ?? [],
-            contentFragments: (d.contentFragments as string[]) ?? [],
-            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
-            cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
-            emotionalBars: [],
-            createdAt: (d.createdAt as string) ?? new Date().toISOString(),
-            userId: (d.userId as string) ?? '',
-          } as PlanetProfile))
-          if (planets.length > 0) {
-            setSession(buildResonanceSession(p, planets))
-          }
-        })
-        .catch(() => { /* no session */ })
-    }
+    Promise.resolve().then(() => {
+      if (cancelled) return
+
+      setMounted(true)
+      const r = getUserRole()
+      const p = getPlanetProfile()
+      setRole(r)
+      setMyPlanet(p)
+
+      if (p) {
+        // Fetch real planets for resonance session
+        fetch('/api/planets')
+          .then((res) => (res.ok ? res.json() : []))
+          .then((data: Record<string, unknown>[]) => {
+            if (cancelled) return
+            const planets = data.map((d) => ({
+              id: d.id as string,
+              name: (d.name as string) || 'Unknown',
+              avatarSymbol: (d.avatarSymbol as string) || '?',
+              tagline: (d.tagline as string) ?? undefined,
+              role: 'resonator' as const,
+              mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
+              style: (d.style as PlanetProfile['style']) ?? 'minimal',
+              lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+              coreThemes: (d.coreThemes as string[]) ?? [],
+              contentFragments: (d.contentFragments as string[]) ?? [],
+              visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+              cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
+              emotionalBars: [],
+              createdAt: (d.createdAt as string) ?? new Date().toISOString(),
+              userId: (d.userId as string) ?? '',
+            } as PlanetProfile))
+            if (planets.length > 0) {
+              setSession(buildResonanceSession(p, planets))
+            }
+          })
+          .catch(() => { /* no session */ })
+      }
+    })
+
+    return () => { cancelled = true }
   }, [])
 
   if (!mounted) return null

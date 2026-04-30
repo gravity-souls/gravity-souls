@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 
 /**
  * PlanetAvatar — lightweight planet image for lists, cards, and match tiles.
- * Uses a plain <img> with CSS border-radius + box-shadow glow. No WebGL.
+ * Uses Next Image with CSS border-radius + box-shadow glow. No WebGL.
  */
 export default function PlanetAvatar({
   textureFile,
@@ -42,7 +43,7 @@ export default function PlanetAvatar({
           }}
         />
       ) : (
-        <img
+        <Image
           src={`/textures/${textureFile}`}
           alt=""
           width={size}

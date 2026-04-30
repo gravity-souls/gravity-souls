@@ -117,8 +117,6 @@ function Satellite({
   const orbitRadius = planetSize * 0.75 + index * 18
   const dotSize = 5 - index * 0.8
   const duration = 18 + index * 7
-  // Stagger starting angle so satellites are spread apart
-  const initialAngle = (360 / total) * index
 
   return (
     <div

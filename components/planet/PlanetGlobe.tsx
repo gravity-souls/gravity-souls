@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, Suspense } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 // Suppress THREE.Clock deprecation warning from R3F v9 internals (fixed in R3F v10)
@@ -29,18 +29,29 @@ function RotatingSphere({
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const ringRef = useRef<THREE.Mesh>(null)
+  const [texture, setTexture] = useState<THREE.Texture | null>(null)
 
-  // Load texture — on failure, call onError to trigger CSS fallback
-  let texture: THREE.Texture | null = null
-  try {
-    texture = useLoader(THREE.TextureLoader, `/textures/${textureFile}`)
-  } catch {
-    // Loader will throw during SSR or on failure — handled below
-  }
-
+  // Load texture outside render so hook order stays stable even if it fails.
   useEffect(() => {
-    if (!texture) onError()
-  }, [texture, onError])
+    let active = true
+    const loader = new THREE.TextureLoader()
+    const loadedTexture = loader.load(
+      `/textures/${textureFile}`,
+      (readyTexture) => {
+        if (active) setTexture(readyTexture)
+        else readyTexture.dispose()
+      },
+      undefined,
+      () => {
+        if (active) onError()
+      },
+    )
+
+    return () => {
+      active = false
+      loadedTexture.dispose()
+    }
+  }, [textureFile, onError])
 
   // Slow rotation
   useFrame((_, delta) => {
@@ -151,13 +162,23 @@ export default function PlanetGlobe({
 
   // Check WebGL availability once
   useEffect(() => {
+    let cancelled = false
+
     try {
       const canvas = document.createElement('canvas')
       const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
-      if (!gl) setUseFallback(true)
+      if (!gl) {
+        Promise.resolve().then(() => {
+          if (!cancelled) setUseFallback(true)
+        })
+      }
     } catch {
-      setUseFallback(true)
+      Promise.resolve().then(() => {
+        if (!cancelled) setUseFallback(true)
+      })
     }
+
+    return () => { cancelled = true }
   }, [])
 
   if (useFallback) {

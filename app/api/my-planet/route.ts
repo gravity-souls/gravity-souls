@@ -54,6 +54,13 @@ export async function POST(request: Request) {
       mood: mood ?? "calm",
       style: style ?? "minimal",
       lifestyle: lifestyle ?? "solitary",
+      avatarSymbol: body.avatarSymbol ?? "🪐",
+      role: body.role ?? "resonator",
+      coreThemes: body.coreThemes ?? [],
+      contentFragments: body.contentFragments ?? [],
+      visual: body.visual ?? {},
+      abstractAxis: body.abstractAxis ?? 50,
+      introspectiveAxis: body.introspectiveAxis ?? 50,
       active: true,
     },
   });
@@ -96,6 +103,10 @@ export async function PATCH(request: Request) {
   if (body.style !== undefined) planetData.style = body.style;
   if (body.lifestyle !== undefined) planetData.lifestyle = body.lifestyle;
   if (body.coreThemes !== undefined) planetData.coreThemes = body.coreThemes;
+  if (body.contentFragments !== undefined) planetData.contentFragments = body.contentFragments;
+  if (body.visual !== undefined) planetData.visual = body.visual;
+  if (body.abstractAxis !== undefined) planetData.abstractAxis = body.abstractAxis;
+  if (body.introspectiveAxis !== undefined) planetData.introspectiveAxis = body.introspectiveAxis;
 
   // Profile fields
   if (body.location !== undefined) profileData.location = body.location?.trim() || null;

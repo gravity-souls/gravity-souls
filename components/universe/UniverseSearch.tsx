@@ -158,7 +158,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
           >
             {!hasResults && (
               <div className="px-5 py-4 text-sm" style={{ color: 'var(--ghost)' }}>
-                No results for "{trimmed}"
+                No results for &ldquo;{trimmed}&rdquo;
               </div>
             )}
 
@@ -239,7 +239,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                   }}
                   onClick={() => setFocused(false)}
                 >
-                  Search all galaxies for "{trimmed}" →
+                  Search all galaxies for &ldquo;{trimmed}&rdquo; →
                 </Link>
               </div>
             )}

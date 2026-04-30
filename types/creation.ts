@@ -1,4 +1,4 @@
-import type { CommunicationStyle, Lifestyle, Mood } from '@/types/planet'
+import type { CommunicationStyle, Lifestyle } from '@/types/planet'
 
 // --- Planet draft -------------------------------------------------------------
 // Structured state collected across the 5 onboarding steps.
@@ -13,6 +13,8 @@ export interface PlanetDraft {
   /** Up to 5 theme labels (maps to biome bands in PlanetScene) */
   selectedThemes: string[]
   lifestyle?: Lifestyle
+  /** Optional explicit texture choice saved into visual.textureFile */
+  textureFile?: string
 
   // -- Step 3: Atmosphere and expression -----------------------------------
   communicationStyle?: CommunicationStyle
@@ -40,6 +42,7 @@ export const INITIAL_DRAFT: PlanetDraft = {
   climateKey:         undefined,
   selectedThemes:     [],
   lifestyle:          undefined,
+  textureFile:        undefined,
   communicationStyle: undefined,
   abstractAxis:       50,
   introspectiveAxis:  50,

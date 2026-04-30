@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import {
-  Globe, Users, Compass, Sparkles, Zap,
+  Globe, Users, Compass, Sparkles, Zap, MessageCircle, Newspaper,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -25,6 +25,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/my-planet',   label: 'My Planet',    Icon: Globe },
   { href: '/resonance',   label: 'Matches',      Icon: Sparkles },
+  { href: '/messages',    label: 'Messages',     Icon: MessageCircle },
+  { href: '/posts',       label: 'Posts',        Icon: Newspaper },
   { href: '/communities', label: 'Communities',   Icon: Users },
   { href: '/stream',      label: 'Activities',    Icon: Zap },
   { href: '/discover',    label: 'Stream',        Icon: Compass },

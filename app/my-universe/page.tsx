@@ -13,8 +13,13 @@ export default function MyUniversePage() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setUniverse(getUserUniverse())
-    setLoaded(true)
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (cancelled) return
+      setUniverse(getUserUniverse())
+      setLoaded(true)
+    })
+    return () => { cancelled = true }
   }, [])
 
   // Avoid flash of empty-state on first render (SSR → client hydration)

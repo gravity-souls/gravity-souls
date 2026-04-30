@@ -1,6 +1,7 @@
 import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceStyle } from '@/types/planet'
 import type { PlanetDraft } from '@/types/creation'
 import { CLIMATE_OPTIONS } from '@/types/creation'
+import { getTextureFile } from '@/lib/planet-textures'
 
 // --- Climate → planet property mapping ---------------------------------------
 
@@ -119,6 +120,7 @@ export function planetProfileToDraft(planet: PlanetProfile): PlanetDraft {
     climateKey:         MOOD_TO_CLIMATE[planet.mood] ?? 'calm',
     selectedThemes:     planet.coreThemes,
     lifestyle:          planet.lifestyle,
+    textureFile:        planet.visual.textureFile,
     communicationStyle: planet.communicationStyle,
     abstractAxis:       planet.cognitiveAxes.abstract,
     introspectiveAxis:  planet.cognitiveAxes.introspective,
@@ -149,6 +151,11 @@ export function buildPlanetFromDraft(draft: PlanetDraft, userId: string): Planet
   const themes        = draft.selectedThemes.length > 0
     ? draft.selectedThemes
     : ['inner drift']
+  const textureFile = draft.textureFile ?? getTextureFile([
+    CLIMATE_TO_MOOD[climateKey] ?? 'mixed',
+    lifestyle,
+    ...themes,
+  ])
 
   // Content fragments: derive from themes for the preview
   const contentFragments = themes.slice(0, 3).map((t) => `Drawn to ${t}.`)
@@ -168,6 +175,7 @@ export function buildPlanetFromDraft(draft: PlanetDraft, userId: string): Planet
     visual: {
       coreColor,
       accentColor,
+      textureFile,
       ringStyle:      CLIMATE_TO_RING[climateKey]    as RingStyle    ?? 'single',
       surfaceStyle:   CLIMATE_TO_SURFACE[climateKey] as SurfaceStyle ?? 'smooth',
       satelliteCount: satellites,

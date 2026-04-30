@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
-import { getTextureFile } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 interface Props {
   planet: PlanetProfile
@@ -33,7 +33,7 @@ export default function PlanetCard({
   style,
   className = '',
 }: Props) {
-  const { coreColor, accentColor } = planet.visual
+  const { coreColor } = planet.visual
 
   return (
     <button
@@ -59,7 +59,7 @@ export default function PlanetCard({
 
       {/* Planet orb — texture-based avatar */}
       <PlanetAvatar
-        textureFile={getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])}
+        textureFile={resolvePlanetTexture(planet)}
         size={size}
         glowColor={coreColor}
       />

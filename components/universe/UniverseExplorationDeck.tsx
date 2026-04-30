@@ -432,7 +432,7 @@ export default function UniverseExplorationDeck() {
                   A cinematic navigation deck for exploring planets and galaxies.
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 sm:text-base" style={{ color: 'var(--ink)' }}>
-                  This is a productized "mission control" layer inspired by scientific exploration interfaces, adapted to Gravity-Souls data instead of copying NASA's UI. The center canvas is the spatial story. The panels are operational context.
+                  This is a productized &ldquo;mission control&rdquo; layer inspired by scientific exploration interfaces, adapted to Gravity-Souls data instead of copying NASA&apos;s UI. The center canvas is the spatial story. The panels are operational context.
                 </p>
               </div>
 

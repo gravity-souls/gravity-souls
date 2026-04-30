@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import GlowButton from '@/components/ui/GlowButton'
+import { resolveGalaxySlug } from '@/lib/mock-galaxies'
 
 interface CommunityWithJoined {
   id: string
@@ -20,6 +22,7 @@ interface CommunityWithJoined {
 }
 
 export default function CommunitiesPage() {
+  const router = useRouter()
   const [communities, setCommunities] = useState<CommunityWithJoined[]>([])
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState<string | null>(null)
@@ -63,6 +66,10 @@ export default function CommunitiesPage() {
     }
   }
 
+  function openCommunity(slug: string) {
+    router.push(`/galaxy/${resolveGalaxySlug(slug)}`)
+  }
+
   return (
     <AppShell>
       <LightCone origin="top-center" color="rgba(99,102,241,1)" opacity={0.08} double={false} />
@@ -100,11 +107,20 @@ export default function CommunitiesPage() {
           {communities.map((c) => (
             <div
               key={c.id}
-              className="flex flex-col gap-3 p-5 rounded-2xl transition-all"
+              className="flex flex-col gap-3 p-5 rounded-2xl transition-all cursor-pointer"
               style={{
                 background: 'rgba(255,255,255,0.02)',
                 border: `1px solid ${c.joined ? c.accentColor + '44' : 'var(--border-soft)'}`,
               }}
+              onClick={() => openCommunity(c.slug)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  openCommunity(c.slug)
+                }
+              }}
+              role="link"
+              tabIndex={0}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{c.symbol}</span>
@@ -162,14 +178,16 @@ export default function CommunitiesPage() {
                     Joined
                   </span>
                 ) : (
-                  <GlowButton
-                    onClick={() => handleJoin(c.id)}
-                    variant="secondary"
-                    disabled={joining === c.id}
-                    className="text-xs px-4 py-1.5"
-                  >
-                    {joining === c.id ? 'Joining...' : 'Join'}
-                  </GlowButton>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <GlowButton
+                      onClick={() => handleJoin(c.id)}
+                      variant="secondary"
+                      disabled={joining === c.id}
+                      className="text-xs px-4 py-1.5"
+                    >
+                      {joining === c.id ? 'Joining...' : 'Join'}
+                    </GlowButton>
+                  </div>
                 )}
               </div>
             </div>
