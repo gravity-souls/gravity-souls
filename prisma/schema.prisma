@@ -31,6 +31,8 @@ model user {
   communityPosts CommunityPost[]
   communityPostReplies CommunityPostReply[]
   communityPostLikes CommunityPostLike[]
+  communityDiscussions CommunityDiscussion[]
+  communityDiscussionReplies CommunityDiscussionReply[]
 }
 
 model Session {
@@ -206,6 +208,7 @@ model Community {
 
   memberships CommunityMembership[]
   posts       CommunityPost[]
+  discussions CommunityDiscussion[]
 
   @@map("community")
 }
@@ -273,6 +276,45 @@ model CommunityPostLike {
   @@unique([postId, userId])
   @@index([userId, createdAt])
   @@map("community_post_like")
+}
+
+model CommunityDiscussion {
+  id          String    @id @default(cuid())
+  communityId String
+  authorId    String?
+  title       String
+  heat        Float     @default(0.5)
+
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author      user?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  replies     CommunityDiscussionReply[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([communityId, title])
+  @@index([communityId, updatedAt])
+  @@index([authorId, createdAt])
+  @@map("community_discussion")
+}
+
+model CommunityDiscussionReply {
+  id           String              @id @default(cuid())
+  discussionId String
+  authorId     String?
+  authorName   String              @default("Unknown")
+  content      String
+  seedKey      String?             @unique
+
+  discussion   CommunityDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  author       user?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([discussionId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_discussion_reply")
 }
 
 // --- Messaging ---------------------------------------------------------------

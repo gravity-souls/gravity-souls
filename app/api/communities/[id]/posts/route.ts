@@ -4,12 +4,47 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 
+function serializeReply(reply: {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  author: { id: string; name: string; planets: { id: string; name: string }[] };
+}) {
+  const authorPlanet = reply.author.planets[0] ?? null;
+
+  return {
+    id: reply.id,
+    content: reply.content,
+    createdAt: reply.createdAt.toISOString(),
+    updatedAt: reply.updatedAt.toISOString(),
+    author: {
+      id: reply.author.id,
+      name: reply.author.name,
+      planet: authorPlanet
+        ? {
+            id: authorPlanet.id,
+            name: authorPlanet.name,
+          }
+        : null,
+    },
+  };
+}
+
 function serializePost(post: {
   id: string;
   content: string;
   createdAt: Date;
   updatedAt: Date;
   author: { id: string; name: string; planets: { id: string; name: string; avatarSymbol: string; visual: unknown }[] };
+  likes: { userId: string }[];
+  replies: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    updatedAt: Date;
+    author: { id: string; name: string; planets: { id: string; name: string }[] };
+  }[];
   _count: { likes: number; replies: number };
 }) {
   const authorPlanet = post.author.planets[0] ?? null;
@@ -33,6 +68,8 @@ function serializePost(post: {
     },
     likes: post._count.likes,
     replies: post._count.replies,
+    likedByMe: post.likes.length > 0,
+    replyItems: post.replies.map(serializeReply),
   };
 }
 
@@ -65,6 +102,27 @@ export async function GET(
               where: { active: true },
               take: 1,
               select: { id: true, name: true, avatarSymbol: true, visual: true },
+            },
+          },
+        },
+        likes: {
+          where: { userId: userId ?? "" },
+          select: { userId: true },
+        },
+        replies: {
+          orderBy: { createdAt: "asc" },
+          take: 5,
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                planets: {
+                  where: { active: true },
+                  take: 1,
+                  select: { id: true, name: true },
+                },
+              },
             },
           },
         },
@@ -138,6 +196,27 @@ export async function POST(
             where: { active: true },
             take: 1,
             select: { id: true, name: true, avatarSymbol: true, visual: true },
+          },
+        },
+      },
+      likes: {
+        where: { userId },
+        select: { userId: true },
+      },
+      replies: {
+        orderBy: { createdAt: "asc" },
+        take: 5,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              planets: {
+                where: { active: true },
+                take: 1,
+                select: { id: true, name: true },
+              },
+            },
           },
         },
       },

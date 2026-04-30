@@ -27,6 +27,27 @@ interface CommunityPost {
   createdAt: string
   likes: number
   replies: number
+  likedByMe?: boolean
+  replyItems: CommunityReply[]
+}
+
+interface CommunityReply {
+  id: string
+  authorName: string
+  authorPlanetId?: string
+  content: string
+  createdAt: string
+}
+
+interface ApiCommunityReply {
+  id: string
+  content: string
+  createdAt: string
+  author: {
+    id: string
+    name: string
+    planet: { id: string; name: string } | null
+  }
 }
 
 interface ApiCommunityPost {
@@ -40,23 +61,77 @@ interface ApiCommunityPost {
   }
   likes: number
   replies: number
+  likedByMe?: boolean
+  replyItems?: ApiCommunityReply[]
+}
+
+interface DiscussionTopic {
+  id?: string
+  title: string
+  replies: number
+  heat: number
+  replyItems?: DiscussionReply[]
+}
+
+interface DiscussionReply {
+  id: string
+  authorName: string
+  content: string
+  createdAt: string
+}
+
+interface ApiCommunityDiscussion {
+  id: string
+  title: string
+  heat: number
+  replies: number
+  replyItems?: ApiCommunityReply[]
 }
 
 const DEFAULT_COMMUNITY_POSTS: Partial<Record<string, CommunityPost[]>> = {
   'slow-thinkers': [
-    { id: 'slow-post-1', authorName: 'Aelion-42', content: 'What book changed how slowly you allow yourself to think?', createdAt: '2026-04-30T07:20:00Z', likes: 18, replies: 6 },
-    { id: 'slow-post-2', authorName: 'Sorvae-88', content: 'Stillness is a practice. Today I am trying not to interrupt my own thoughts.', createdAt: '2026-04-29T19:10:00Z', likes: 24, replies: 9 },
+    { id: 'slow-post-1', authorName: 'Aelion-42', content: 'What book changed how slowly you allow yourself to think?', createdAt: '2026-04-30T07:20:00Z', likes: 18, replies: 2, replyItems: [
+      { id: 'slow-reply-1', authorName: 'Sorvae-88', content: 'A book that made me pause between paragraphs instead of racing to the end.', createdAt: '2026-04-30T08:10:00Z' },
+      { id: 'slow-reply-2', authorName: 'Noctaris', content: 'Second reads are where the hidden architecture appears.', createdAt: '2026-04-30T08:42:00Z' },
+    ] },
+    { id: 'slow-post-2', authorName: 'Sorvae-88', content: 'Stillness is a practice. Today I am trying not to interrupt my own thoughts.', createdAt: '2026-04-29T19:10:00Z', likes: 24, replies: 2, replyItems: [
+      { id: 'slow-reply-3', authorName: 'Aelion-42', content: 'This is exactly the discipline I keep forgetting is a discipline.', createdAt: '2026-04-29T20:08:00Z' },
+      { id: 'slow-reply-4', authorName: 'Lumira-33', content: 'Sometimes the first quiet minute is the hardest one.', createdAt: '2026-04-29T21:16:00Z' },
+    ] },
   ],
   'signal-noise': [
-    { id: 'signal-post-1', authorName: 'Kindus-17', content: 'Tiny build log: the simplest version was the one that survived contact with reality.', createdAt: '2026-04-30T09:40:00Z', likes: 31, replies: 4 },
-    { id: 'signal-post-2', authorName: 'Novaxis', content: 'What is your boring stack that keeps paying rent?', createdAt: '2026-04-28T16:00:00Z', likes: 27, replies: 12 },
+    { id: 'signal-post-1', authorName: 'Kindus-17', content: 'Tiny build log: the simplest version was the one that survived contact with reality.', createdAt: '2026-04-30T09:40:00Z', likes: 31, replies: 3, replyItems: [
+      { id: 'signal-reply-1', authorName: 'Novaxis', content: 'The version with fewer moving parts is usually the one future-you can still debug.', createdAt: '2026-04-30T10:02:00Z' },
+      { id: 'signal-reply-2', authorName: 'Spirax', content: 'Tiny build logs are underrated. They show the actual shape of decisions.', createdAt: '2026-04-30T10:44:00Z' },
+      { id: 'signal-reply-3', authorName: 'Kindus-17', content: '@Spirax yes, the log became more useful than the feature list.', createdAt: '2026-04-30T11:12:00Z' },
+    ] },
+    { id: 'signal-post-2', authorName: 'Novaxis', content: 'What is your boring stack that keeps paying rent?', createdAt: '2026-04-28T16:00:00Z', likes: 27, replies: 2, replyItems: [
+      { id: 'signal-reply-4', authorName: 'Kindus-17', content: 'Postgres, queues, server-rendered pages, and tests that cover the flows people actually use.', createdAt: '2026-04-28T17:20:00Z' },
+      { id: 'signal-reply-5', authorName: 'Aelion-42', content: 'Anything boring enough that the team can explain it under pressure.', createdAt: '2026-04-28T18:05:00Z' },
+    ] },
   ],
   'warm-frequency': [
-    { id: 'warm-post-1', authorName: 'Orbalin', content: 'A small kindness I received today changed the texture of the whole afternoon.', createdAt: '2026-04-30T10:05:00Z', likes: 44, replies: 15 },
+    { id: 'warm-post-1', authorName: 'Orbalin', content: 'A small kindness I received today changed the texture of the whole afternoon.', createdAt: '2026-04-30T10:05:00Z', likes: 44, replies: 2, replyItems: [
+      { id: 'warm-reply-1', authorName: 'Elarith', content: 'Those tiny gestures stay in the room long after the moment ends.', createdAt: '2026-04-30T10:32:00Z' },
+      { id: 'warm-reply-2', authorName: 'Calenvix', content: 'I love when a day changes because someone noticed something small.', createdAt: '2026-04-30T11:00:00Z' },
+    ] },
   ],
   'threshold-states': [
-    { id: 'threshold-post-1', authorName: 'Lumira-33', content: 'Home felt less like a place today and more like a rhythm I briefly remembered.', createdAt: '2026-04-29T11:35:00Z', likes: 38, replies: 8 },
+    { id: 'threshold-post-1', authorName: 'Lumira-33', content: 'Home felt less like a place today and more like a rhythm I briefly remembered.', createdAt: '2026-04-29T11:35:00Z', likes: 38, replies: 2, replyItems: [
+      { id: 'threshold-reply-1', authorName: 'Driftan', content: 'That rhythm thing is real. Some cities have it, some people carry it.', createdAt: '2026-04-29T12:20:00Z' },
+      { id: 'threshold-reply-2', authorName: 'Sorvae-88', content: 'Home as tempo, not coordinates. That lands.', createdAt: '2026-04-29T13:05:00Z' },
+    ] },
   ],
+}
+
+function apiReplyToCommunityReply(reply: ApiCommunityReply): CommunityReply {
+  return {
+    id: reply.id,
+    authorName: reply.author.planet?.name ?? reply.author.name,
+    authorPlanetId: reply.author.planet?.id,
+    content: reply.content,
+    createdAt: reply.createdAt,
+  }
 }
 
 function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
@@ -68,12 +143,24 @@ function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
     createdAt: post.createdAt,
     likes: post.likes,
     replies: post.replies,
+    likedByMe: post.likedByMe ?? false,
+    replyItems: (post.replyItems ?? []).map(apiReplyToCommunityReply),
+  }
+}
+
+function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTopic {
+  return {
+    id: discussion.id,
+    title: discussion.title,
+    heat: discussion.heat,
+    replies: discussion.replies,
+    replyItems: (discussion.replyItems ?? []).map(apiReplyToCommunityReply),
   }
 }
 
 // --- Mock discussion topics per galaxy ---------------------------------------
 
-const DISCUSSION_TOPICS: Partial<Record<string, { title: string; replies: number; heat: number }[]>> = {
+const DISCUSSION_TOPICS: Partial<Record<string, DiscussionTopic[]>> = {
   'slow-thinkers': [
     { title: 'What does "thinking slowly" actually mean to you?',    replies: 24, heat: 0.8 },
     { title: 'Books that reward a second read more than the first',   replies: 31, heat: 0.9 },
@@ -124,6 +211,80 @@ const DISCUSSION_TOPICS: Partial<Record<string, { title: string; replies: number
   ],
 }
 
+const DISCUSSION_REPLY_SAMPLES: Partial<Record<string, DiscussionReply[]>> = {
+  'signal-noise:What\'s your "boring" tech stack that actually works?': [
+    { id: 'disc-signal-1', authorName: 'Kindus-17', content: 'Postgres, a small queue, server-rendered pages, and boring logs. It sounds dull until something breaks and the fix is obvious.', createdAt: '2026-04-30T08:45:00Z' },
+    { id: 'disc-signal-2', authorName: 'Novaxis-3', content: 'I keep returning to relational data and plain HTTP. The less magical the stack, the easier it is to keep a product alive.', createdAt: '2026-04-30T09:08:00Z' },
+    { id: 'disc-signal-3', authorName: 'Spirax-14', content: 'My boring stack is whatever lets me delete code without fear. Usually that means fewer services than I first wanted.', createdAt: '2026-04-30T09:37:00Z' },
+  ],
+  'signal-noise:Software craft vs software speed  -  a false dichotomy?': [
+    { id: 'disc-signal-4', authorName: 'Novaxis-3', content: 'Speed without craft becomes rework. Craft without delivery becomes private art. The interesting part is the rhythm.', createdAt: '2026-04-30T07:20:00Z' },
+    { id: 'disc-signal-5', authorName: 'Kindus-17', content: 'The fastest teams I have seen had boring foundations and very sharp taste about what not to build.', createdAt: '2026-04-30T07:58:00Z' },
+  ],
+  'signal-noise:When does a side project become an obsession?': [
+    { id: 'disc-signal-6', authorName: 'Spirax-14', content: 'When the project starts asking questions about your life instead of just your code.', createdAt: '2026-04-29T22:12:00Z' },
+    { id: 'disc-signal-7', authorName: 'Aelion-42', content: 'For me, it is the moment I make a roadmap no one asked for.', createdAt: '2026-04-29T22:50:00Z' },
+  ],
+  'signal-noise:The aesthetics of well-named variables': [
+    { id: 'disc-signal-8', authorName: 'Kindus-17', content: 'A good variable name lowers the temperature of the whole function.', createdAt: '2026-04-29T18:05:00Z' },
+    { id: 'disc-signal-9', authorName: 'Novaxis-3', content: 'Names are architecture in miniature. They decide what future readers are allowed to notice.', createdAt: '2026-04-29T18:44:00Z' },
+  ],
+}
+
+const DISCUSSION_REPLY_FILLERS = [
+  'I keep coming back to this because the answer changes depending on the project and the people around it.',
+  'The strongest version of this idea is probably quieter than the one we usually argue about.',
+  'There is something useful in separating taste from habit here. They look similar from the outside.',
+  'I agree with the direction, but I think the constraint matters more than the tool choice.',
+  'This feels like one of those topics where the boring answer is the most honest one.',
+  'The pattern I notice is that good systems make the next decision less dramatic.',
+  'I would add that maintenance changes the meaning of almost every early design choice.',
+  'Sometimes the real question is what you can explain clearly after being away from it for a month.',
+  'This is why I like small examples. They reveal the philosophy faster than abstract rules.',
+  'The tension here is productive. Too much certainty would make the thread less useful.',
+] as const
+
+const DISCUSSION_REPLY_AUTHORS = [
+  'Aelion-42',
+  'Novaxis-3',
+  'Kindus-17',
+  'Spirax-14',
+  'Sorvae-88',
+  'Lumira-33',
+  'Orbalin',
+  'Calenvix',
+] as const
+
+function getDiscussionKey(slug: string, title: string) {
+  return `${slug}:${title}`
+}
+
+function getDiscussionReplies(slug: string, topic: DiscussionTopic): DiscussionReply[] {
+  const baseReplies = DISCUSSION_REPLY_SAMPLES[getDiscussionKey(slug, topic.title)] ?? [
+    { id: `${slug}-${topic.title}-reply-1`, authorName: 'Aelion-42', content: 'This thread is still unfolding. I like that the question leaves room for different answers.', createdAt: '2026-04-30T08:00:00Z' },
+    { id: `${slug}-${topic.title}-reply-2`, authorName: 'Sorvae-88', content: 'The strongest replies here are usually the ones that make the original question more precise.', createdAt: '2026-04-30T08:30:00Z' },
+  ]
+
+  if (baseReplies.length >= topic.replies) return baseReplies.slice(0, topic.replies)
+
+  const generatedReplies = Array.from({ length: topic.replies - baseReplies.length }, (_, index) => {
+    const number = baseReplies.length + index + 1
+    const filler = DISCUSSION_REPLY_FILLERS[index % DISCUSSION_REPLY_FILLERS.length]
+    const authorName = DISCUSSION_REPLY_AUTHORS[(index + topic.title.length) % DISCUSSION_REPLY_AUTHORS.length]
+    const hour = 9 + Math.floor(index / 3)
+    const minute = (index * 11) % 60
+
+    return {
+      id: `${slug}-${topic.title}-generated-${number}`,
+      authorName,
+      content: filler,
+      createdAt: `2026-04-30T${String(hour % 24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00Z`,
+    }
+  })
+
+  return [...baseReplies, ...generatedReplies]
+}
+
 // --- Page --------------------------------------------------------------------
 
 interface Props {
@@ -139,16 +300,25 @@ export default function GalaxyPage({ params }: Props) {
   if (!galaxy) notFound()
 
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
-  const [selectedTopic, setSelectedTopic] = useState<{ title: string; replies: number; heat: number } | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState<DiscussionTopic | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [community, setCommunity] = useState<CommunityRow | null>(null)
   const [communityJoined, setCommunityJoined] = useState(false)
   const [joiningCommunity, setJoiningCommunity] = useState(false)
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([])
+  const [discussionTopics, setDiscussionTopics] = useState<DiscussionTopic[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
   const [posting, setPosting] = useState(false)
+  const [postingDiscussionReply, setPostingDiscussionReply] = useState(false)
   const [postError, setPostError] = useState('')
   const [postDraft, setPostDraft] = useState('')
+  const [likingPostId, setLikingPostId] = useState<string | null>(null)
+  const [replyingPostId, setReplyingPostId] = useState<string | null>(null)
+  const [loadingRepliesPostId, setLoadingRepliesPostId] = useState<string | null>(null)
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
+  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({})
+  const [discussionReplyDraft, setDiscussionReplyDraft] = useState('')
+  const [discussionReplyOverrides, setDiscussionReplyOverrides] = useState<Record<string, DiscussionReply[]>>({})
 
   // getUserRole reads localStorage  -  must run client-side only
   useEffect(() => {
@@ -204,6 +374,31 @@ export default function GalaxyPage({ params }: Props) {
       })
       .finally(() => {
         if (!cancelled) setPostsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [community, resolvedSlug])
+
+  useEffect(() => {
+    let cancelled = false
+    const defaults = DISCUSSION_TOPICS[resolvedSlug] ?? []
+
+    if (!community) {
+      Promise.resolve().then(() => {
+        if (!cancelled) setDiscussionTopics(defaults)
+      })
+      return () => { cancelled = true }
+    }
+
+    fetch(`/api/communities/${community.id}/discussions`)
+      .then((res) => res.ok ? res.json() : { discussions: [] })
+      .then((data: { discussions?: ApiCommunityDiscussion[] }) => {
+        if (cancelled) return
+        const apiDiscussions = (data.discussions ?? []).map(apiDiscussionToTopic)
+        setDiscussionTopics(apiDiscussions.length > 0 ? apiDiscussions : defaults)
+      })
+      .catch(() => {
+        if (!cancelled) setDiscussionTopics(defaults)
       })
 
     return () => { cancelled = true }
@@ -278,6 +473,228 @@ export default function GalaxyPage({ params }: Props) {
     }
   }
 
+  function isFallbackCommunityPost(postId: string) {
+    return (DEFAULT_COMMUNITY_POSTS[resolvedSlug] ?? []).some((post) => post.id === postId)
+  }
+
+  function updateCommunityPost(postId: string, updater: (post: CommunityPost) => CommunityPost) {
+    setCommunityPosts((prev) => prev.map((post) => post.id === postId ? updater(post) : post))
+  }
+
+  async function handleToggleLike(post: CommunityPost) {
+    if (!communityJoined) {
+      setPostError('Join this community before liking posts.')
+      return
+    }
+
+    setPostError('')
+
+    if (!community || isFallbackCommunityPost(post.id)) {
+      updateCommunityPost(post.id, (current) => {
+        const likedByMe = !current.likedByMe
+        return {
+          ...current,
+          likedByMe,
+          likes: Math.max(0, current.likes + (likedByMe ? 1 : -1)),
+        }
+      })
+      return
+    }
+
+    setLikingPostId(post.id)
+    try {
+      const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/like`, { method: 'POST' })
+
+      if (res.status === 401) {
+        router.push('/sign-in')
+        return
+      }
+
+      if (res.status === 403) {
+        setPostError('Join this community before liking posts.')
+        setCommunityJoined(false)
+        return
+      }
+
+      if (!res.ok) {
+        setPostError('The like could not be saved yet.')
+        return
+      }
+
+      const data = await res.json() as { liked: boolean; likes: number }
+      updateCommunityPost(post.id, (current) => ({ ...current, likedByMe: data.liked, likes: data.likes }))
+    } catch {
+      setPostError('The like could not be saved yet.')
+    } finally {
+      setLikingPostId(null)
+    }
+  }
+
+  async function handleCreateReply(post: CommunityPost) {
+    const content = (replyDrafts[post.id] ?? '').trim()
+    if (!content) return
+
+    if (!communityJoined) {
+      setPostError('Join this community before replying.')
+      return
+    }
+
+    setPostError('')
+
+    if (!community || isFallbackCommunityPost(post.id)) {
+      const reply: CommunityReply = {
+        id: `local-reply-${post.id}-${Date.now()}`,
+        authorName: 'You',
+        content,
+        createdAt: new Date().toISOString(),
+      }
+      updateCommunityPost(post.id, (current) => ({
+        ...current,
+        replies: current.replies + 1,
+        replyItems: [...current.replyItems, reply],
+      }))
+      setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }))
+      setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
+      return
+    }
+
+    setReplyingPostId(post.id)
+    try {
+      const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/replies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      })
+
+      if (res.status === 401) {
+        router.push('/sign-in')
+        return
+      }
+
+      if (res.status === 403) {
+        setPostError('Join this community before replying.')
+        setCommunityJoined(false)
+        return
+      }
+
+      if (!res.ok) {
+        setPostError('Your reply could not be published yet.')
+        return
+      }
+
+      const data = await res.json() as { reply: ApiCommunityReply; replies: number }
+      const reply = apiReplyToCommunityReply(data.reply)
+      updateCommunityPost(post.id, (current) => ({
+        ...current,
+        replies: data.replies,
+        replyItems: [...current.replyItems, reply],
+      }))
+      setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }))
+      setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
+    } catch {
+      setPostError('Your reply could not be published yet.')
+    } finally {
+      setReplyingPostId(null)
+    }
+  }
+
+  async function handleToggleReplies(post: CommunityPost) {
+    const isOpen = expandedReplies[post.id] ?? post.replyItems.length > 0
+    if (isOpen) {
+      setExpandedReplies((prev) => ({ ...prev, [post.id]: false }))
+      return
+    }
+
+    setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
+
+    if (!community || isFallbackCommunityPost(post.id) || post.replyItems.length >= post.replies) return
+
+    setLoadingRepliesPostId(post.id)
+    setPostError('')
+    try {
+      const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/replies`)
+      if (!res.ok) {
+        setPostError('Replies could not be loaded yet.')
+        return
+      }
+
+      const data = await res.json() as { replies: ApiCommunityReply[] }
+      const replyItems = data.replies.map(apiReplyToCommunityReply)
+      updateCommunityPost(post.id, (current) => ({ ...current, replies: replyItems.length, replyItems }))
+    } catch {
+      setPostError('Replies could not be loaded yet.')
+    } finally {
+      setLoadingRepliesPostId(null)
+    }
+  }
+
+  function handleReplyToReply(postId: string, authorName: string) {
+    setExpandedReplies((prev) => ({ ...prev, [postId]: true }))
+    setReplyDrafts((prev) => {
+      const current = prev[postId] ?? ''
+      return { ...prev, [postId]: current.trim() ? current : `@${authorName} ` }
+    })
+  }
+
+  async function handleAddDiscussionReply() {
+    const content = discussionReplyDraft.trim()
+    if (!selectedTopic || !content) return
+
+    const key = getDiscussionKey(resolvedSlug, selectedTopic.title)
+    const currentReplies = discussionReplyOverrides[key] ?? selectedTopic.replyItems ?? getDiscussionReplies(resolvedSlug, selectedTopic)
+
+    if (community && selectedTopic.id) {
+      setPostingDiscussionReply(true)
+      try {
+        const res = await fetch(`/api/communities/${community.id}/discussions/${selectedTopic.id}/replies`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        })
+
+        if (res.status === 401) {
+          router.push('/sign-in')
+          return
+        }
+
+        if (res.status === 403) {
+          setPostError('Join this community before replying.')
+          setCommunityJoined(false)
+          return
+        }
+
+        if (!res.ok) {
+          setPostError('Your discussion reply could not be saved yet.')
+          return
+        }
+
+        const data = await res.json() as { reply: ApiCommunityReply; replies: number }
+        const reply = apiReplyToCommunityReply(data.reply)
+        const nextReplies = [...currentReplies, reply]
+
+        setDiscussionReplyOverrides((prev) => ({ ...prev, [key]: nextReplies }))
+        setDiscussionTopics((prev) => prev.map((topic) => topic.id === selectedTopic.id ? { ...topic, replies: data.replies, replyItems: nextReplies } : topic))
+        setSelectedTopic((current) => current ? { ...current, replies: data.replies, replyItems: nextReplies } : current)
+        setDiscussionReplyDraft('')
+      } catch {
+        setPostError('Your discussion reply could not be saved yet.')
+      } finally {
+        setPostingDiscussionReply(false)
+      }
+      return
+    }
+
+    const reply: DiscussionReply = {
+      id: `discussion-reply-${Date.now()}`,
+      authorName: 'You',
+      content,
+      createdAt: new Date().toISOString(),
+    }
+    setDiscussionReplyOverrides((prev) => ({ ...prev, [key]: [...currentReplies, reply] }))
+    setSelectedTopic((current) => current ? { ...current, replies: current.replies + 1 } : current)
+    setDiscussionReplyDraft('')
+  }
+
   const memberPlanets = galaxy.activePlanetIds
     .map((id) => getPlanetById(id))
     .filter((p): p is PlanetProfile => !!p)
@@ -287,8 +704,11 @@ export default function GalaxyPage({ params }: Props) {
     relatedGalaxies.some((r) => r.id === g.id)
   )
 
-  const discussions = DISCUSSION_TOPICS[resolvedSlug] ?? []
+  const discussions = discussionTopics.length > 0 ? discussionTopics : (DISCUSSION_TOPICS[resolvedSlug] ?? [])
   const { accentColor } = galaxy
+  const selectedDiscussionReplies = selectedTopic
+    ? discussionReplyOverrides[getDiscussionKey(resolvedSlug, selectedTopic.title)] ?? selectedTopic.replyItems ?? getDiscussionReplies(resolvedSlug, selectedTopic)
+    : []
 
   return (
     <>
@@ -667,35 +1087,163 @@ export default function GalaxyPage({ params }: Props) {
                         No posts yet. Join and start the first signal.
                       </p>
                     ) : (
-                      communityPosts.map((post) => (
-                        <article
-                          key={post.id}
-                          className="rounded-2xl p-4 flex flex-col gap-2"
-                          style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            {post.authorPlanetId ? (
-                              <Link href={`/planet/${post.authorPlanetId}`} className="text-sm font-semibold" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
-                                {post.authorName}
-                              </Link>
-                            ) : (
-                              <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                                {post.authorName}
-                              </p>
+                      communityPosts.map((post) => {
+                        const repliesOpen = expandedReplies[post.id] ?? post.replyItems.length > 0
+                        const loadingReplies = loadingRepliesPostId === post.id
+                        const replyDraft = replyDrafts[post.id] ?? ''
+
+                        return (
+                          <article
+                            key={post.id}
+                            className="rounded-2xl p-4 flex flex-col gap-3"
+                            style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              {post.authorPlanetId ? (
+                                <Link href={`/planet/${post.authorPlanetId}`} className="text-sm font-semibold" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
+                                  {post.authorName}
+                                </Link>
+                              ) : (
+                                <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                                  {post.authorName}
+                                </p>
+                              )}
+                              <time className="text-[10px]" style={{ color: 'var(--ghost)' }} dateTime={post.createdAt}>
+                                {new Date(post.createdAt).toLocaleDateString()}
+                              </time>
+                            </div>
+                            <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
+                              {post.content}
+                            </p>
+                            <div className="flex items-center gap-2 text-[10px]">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleLike(post)}
+                                disabled={likingPostId === post.id}
+                                className="px-2 py-1 rounded-lg transition-all duration-200"
+                                style={{
+                                  color: post.likedByMe ? accentColor : 'var(--ghost)',
+                                  background: post.likedByMe ? `${accentColor}14` : 'rgba(255,255,255,0.03)',
+                                  border: post.likedByMe ? `1px solid ${accentColor}30` : '1px solid rgba(255,255,255,0.06)',
+                                  cursor: likingPostId === post.id ? 'default' : 'pointer',
+                                  opacity: likingPostId === post.id ? 0.65 : 1,
+                                }}
+                              >
+                                {post.likedByMe ? 'Liked' : 'Like'} · {post.likes}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleReplies(post)}
+                                disabled={loadingReplies}
+                                className="px-2 py-1 rounded-lg transition-all duration-200"
+                                style={{
+                                  color: repliesOpen ? accentColor : 'var(--ghost)',
+                                  background: repliesOpen ? `${accentColor}10` : 'rgba(255,255,255,0.03)',
+                                  border: repliesOpen ? `1px solid ${accentColor}26` : '1px solid rgba(255,255,255,0.06)',
+                                  cursor: loadingReplies ? 'default' : 'pointer',
+                                  opacity: loadingReplies ? 0.65 : 1,
+                                }}
+                              >
+                                {loadingReplies ? 'Loading...' : 'Reply'} · {post.replies}
+                              </button>
+                            </div>
+
+                            {repliesOpen && (
+                              <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                {loadingReplies && (
+                                  <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+                                    Loading replies...
+                                  </p>
+                                )}
+
+                                {post.replyItems.length > 0 && (
+                                  <div className="flex flex-col gap-2">
+                                    {post.replyItems.map((reply) => (
+                                      <div
+                                        key={reply.id}
+                                        className="rounded-xl px-3 py-2"
+                                        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          {reply.authorPlanetId ? (
+                                            <Link href={`/planet/${reply.authorPlanetId}`} className="text-xs font-medium" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
+                                              {reply.authorName}
+                                            </Link>
+                                          ) : (
+                                            <p className="text-xs font-medium" style={{ color: 'var(--foreground)' }}>
+                                              {reply.authorName}
+                                            </p>
+                                          )}
+                                          <time className="text-[9px]" style={{ color: 'var(--ghost)' }} dateTime={reply.createdAt}>
+                                            {new Date(reply.createdAt).toLocaleDateString()}
+                                          </time>
+                                        </div>
+                                        <p className="text-xs leading-relaxed mt-1" style={{ color: 'var(--ink)', opacity: 0.74 }}>
+                                          {reply.content}
+                                        </p>
+                                        {communityJoined && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleReplyToReply(post.id, reply.authorName)}
+                                            className="mt-1 text-[10px] bg-transparent border-none p-0"
+                                            style={{ color: accentColor, cursor: 'pointer' }}
+                                          >
+                                            Reply
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {!loadingReplies && post.replyItems.length === 0 && (
+                                  <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+                                    No replies yet. Start the first one.
+                                  </p>
+                                )}
+
+                                {communityJoined ? (
+                                  <div className="flex flex-col gap-2">
+                                    <textarea
+                                      value={replyDraft}
+                                      onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [post.id]: event.target.value }))}
+                                      rows={2}
+                                      placeholder={`Reply to ${post.authorName}...`}
+                                      className="w-full resize-none rounded-xl px-3 py-2 text-xs outline-none"
+                                      style={{
+                                        background: 'rgba(255,255,255,0.03)',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        color: 'var(--foreground)',
+                                      }}
+                                    />
+                                    <div className="flex justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCreateReply(post)}
+                                        disabled={!replyDraft.trim() || replyingPostId === post.id}
+                                        className="px-3 py-1.5 rounded-lg text-[10px] font-medium"
+                                        style={{
+                                          color: 'var(--foreground)',
+                                          background: `${accentColor}22`,
+                                          border: `1px solid ${accentColor}38`,
+                                          cursor: replyDraft.trim() && replyingPostId !== post.id ? 'pointer' : 'default',
+                                          opacity: replyDraft.trim() && replyingPostId !== post.id ? 1 : 0.55,
+                                        }}
+                                      >
+                                        {replyingPostId === post.id ? 'Replying...' : 'Send reply'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+                                    Join this community to like and reply.
+                                  </p>
+                                )}
+                              </div>
                             )}
-                            <time className="text-[10px]" style={{ color: 'var(--ghost)' }} dateTime={post.createdAt}>
-                              {new Date(post.createdAt).toLocaleDateString()}
-                            </time>
-                          </div>
-                          <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
-                            {post.content}
-                          </p>
-                          <div className="flex items-center gap-4 text-[10px]" style={{ color: 'var(--ghost)' }}>
-                            <span>{post.likes} likes</span>
-                            <span>{post.replies} replies</span>
-                          </div>
-                        </article>
-                      ))
+                          </article>
+                        )
+                      })
                     )}
                   </div>
                 </section>
@@ -801,7 +1349,7 @@ export default function GalaxyPage({ params }: Props) {
             role="dialog"
             aria-modal="true"
             aria-label={selectedTopic.title}
-            className="fixed z-50 left-1/2 top-1/2 w-[min(92vw,520px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden"
+            className="fixed z-50 left-1/2 top-1/2 w-[min(92vw,620px)] max-h-[86vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl overflow-hidden flex flex-col"
             style={{
               background: 'linear-gradient(160deg, rgba(18,14,52,0.98) 0%, rgba(6,4,20,0.99) 100%)',
               border: `1px solid ${accentColor}35`,
@@ -828,7 +1376,7 @@ export default function GalaxyPage({ params }: Props) {
               </button>
             </div>
 
-            <div className="p-5 flex flex-col gap-4">
+            <div className="p-5 flex flex-col gap-4 overflow-y-auto">
               <div className="flex items-start gap-4">
                 <div
                   className="w-1 rounded-full shrink-0 mt-1"
@@ -840,26 +1388,112 @@ export default function GalaxyPage({ params }: Props) {
                     {selectedTopic.title}
                   </h2>
                   <p className="text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
-                    This topic is active in {galaxy.name}. Full thread writing is not available yet, but the preview now gives the click a clear destination and keeps the community flow alive.
+                    All visible replies from {galaxy.name}. You can read the thread here and add your own signal below.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <Link
-                  href="/communities"
-                  className="flex-1 text-center rounded-xl px-4 py-2.5 text-sm font-medium"
-                  style={{ background: `${accentColor}24`, border: `1px solid ${accentColor}40`, color: 'var(--foreground)', textDecoration: 'none' }}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: accentColor, opacity: 0.8 }}>
+                    Recent replies
+                  </p>
+                  <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+                    Showing all {selectedDiscussionReplies.length}
+                  </span>
+                </div>
+
+                {selectedDiscussionReplies.map((reply) => (
+                  <div
+                    key={reply.id}
+                    className="rounded-xl px-4 py-3"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {reply.authorName}
+                      </p>
+                      <time className="text-[9px]" style={{ color: 'var(--ghost)' }} dateTime={reply.createdAt}>
+                        {new Date(reply.createdAt).toLocaleDateString()}
+                      </time>
+                    </div>
+                    <p className="text-xs leading-relaxed mt-2" style={{ color: 'var(--ink)', opacity: 0.76 }}>
+                      {reply.content}
+                    </p>
+                    {communityJoined && (
+                      <button
+                        type="button"
+                        onClick={() => setDiscussionReplyDraft((current) => current.trim() ? current : `@${reply.authorName} `)}
+                        className="mt-2 text-[10px] bg-transparent border-none p-0"
+                        style={{ color: accentColor, cursor: 'pointer' }}
+                      >
+                        Reply
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {communityJoined ? (
+                <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <textarea
+                    value={discussionReplyDraft}
+                    onChange={(event) => setDiscussionReplyDraft(event.target.value)}
+                    rows={3}
+                    placeholder="Add your reply to this discussion..."
+                    className="w-full resize-none rounded-xl px-4 py-3 text-sm outline-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'var(--foreground)',
+                    }}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleAddDiscussionReply}
+                      disabled={!discussionReplyDraft.trim() || postingDiscussionReply}
+                      className="px-4 py-2 rounded-xl text-xs font-medium"
+                      style={{
+                        color: 'var(--foreground)',
+                        background: `${accentColor}24`,
+                        border: `1px solid ${accentColor}40`,
+                        cursor: discussionReplyDraft.trim() && !postingDiscussionReply ? 'pointer' : 'default',
+                        opacity: discussionReplyDraft.trim() && !postingDiscussionReply ? 1 : 0.55,
+                      }}
+                    >
+                      {postingDiscussionReply ? 'Saving...' : 'Send reply'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  Browse communities
-                </Link>
+                  <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+                    Join this galaxy to reply to discussions.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleJoinCommunity}
+                    disabled={joiningCommunity}
+                    className="px-4 py-2 rounded-xl text-xs font-medium"
+                    style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
+                  >
+                    {joiningCommunity ? 'Joining...' : 'Join to reply'}
+                  </button>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
                 <button
                   type="button"
                   onClick={() => setSelectedTopic(null)}
-                  className="flex-1 rounded-xl px-4 py-2.5 text-sm font-medium"
+                  className="rounded-xl px-4 py-2 text-xs font-medium"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ink)', cursor: 'pointer' }}
                 >
-                  Keep reading
+                  Close thread
                 </button>
               </div>
             </div>
