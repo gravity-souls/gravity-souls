@@ -5,6 +5,7 @@ import Nav from '@/components/nav/Nav'
 import CosmicBackground from '@/components/fx/CosmicBackground'
 import StarfieldCanvas from '@/components/fx/StarfieldCanvas'
 import AuthSyncProvider from '@/components/layout/AuthSyncProvider'
+import LevelUpToast from '@/components/ui/LevelUpToast'
 import { LanguageProvider } from '@/contexts/language-context'
 
 const geist = Geist({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <CosmicBackground />
             <StarfieldCanvas />
             <Nav />
+            <LevelUpToast />
             {/* pt = nav height so content clears the fixed header */}
             <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
             <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>

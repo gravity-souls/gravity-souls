@@ -23,6 +23,7 @@ model user {
   planetRotationSpeed Float @default(0.018)
   planetCloudOpacity Float @default(0.0)
   planetCustomTexture String?
+  xp            Int       @default(0)
   userLevel     Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -43,6 +44,18 @@ model user {
   communityPostLikes CommunityPostLike[]
   communityDiscussions CommunityDiscussion[]
   communityDiscussionReplies CommunityDiscussionReply[]
+  xpEvents XPEvent[]
+}
+
+model XPEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  xpGranted Int
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
 }
 
 model Session {

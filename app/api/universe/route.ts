@@ -28,10 +28,19 @@ export async function GET() {
       visual: true,
       abstractAxis: true,
       introspectiveAxis: true,
+      user: {
+        select: {
+          userLevel: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 12,
   });
 
-  return NextResponse.json(planets);
+  return NextResponse.json(planets.map((planet) => ({
+    ...planet,
+    userLevel: planet.user.userLevel,
+    user: undefined,
+  })));
 }

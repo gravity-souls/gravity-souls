@@ -6,6 +6,9 @@ import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from '
 import { Check, Lock, RotateCcw, Save, Upload, X } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetGlobe from '@/components/planet/PlanetGlobe'
+import XPProgressBar from '@/components/planet/XPProgressBar'
+import { EARLY_ACCESS } from '@/lib/featureFlags'
+import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
 import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
 
 const COLOR_SWATCHES = [
@@ -55,13 +58,13 @@ function findPreset(config: PlanetConfig) {
 }
 
 async function readResponseError(response: Response, fallback: string) {
+  const data = await response.clone().json().catch(() => null)
+  if (typeof data?.error === 'string') return data.error
+
   if (response.status === 401) return 'Sign in before uploading a custom texture'
   if (response.status === 403) return 'Custom textures are locked for this planet'
   if (response.status === 413) return 'The texture file is too large'
   if (response.status >= 500) return 'The server could not store this texture'
-
-  const data = await response.json().catch(() => null)
-  if (typeof data?.error === 'string') return data.error
 
   return fallback
 }
@@ -193,14 +196,17 @@ function ControlSection({
   title,
   level,
   userLevel,
+  earlyAccess,
   children,
 }: {
   title: string
   level: number
   userLevel: number
+  earlyAccess: boolean
   children: ReactNode
 }) {
-  const locked = userLevel < level
+  const locked = !earlyAccess && userLevel < level
+  const unlockLevel = clampLevel(level)
 
   return (
     <section className="rounded-lg border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -208,7 +214,7 @@ function ControlSection({
         <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{title}</h3>
         {locked && (
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[11px]" style={{ color: 'var(--ghost)' }}>
-            <Lock size={12} /> Unlock at Lv.{level}
+            <Lock size={12} /> Unlock at Lv.{level} - {LEVEL_NAMES[unlockLevel]}
           </span>
         )}
       </div>
@@ -217,9 +223,15 @@ function ControlSection({
   )
 }
 
+interface XPSummary {
+  xp: number
+  userLevel: number
+}
+
 export default function PlanetCustomizer({ initialConfig, planetName, userLevel, onSaved, onClose }: Props) {
   const [savedConfig, setSavedConfig] = useState(() => normalizeConfig(initialConfig))
   const [localConfig, setLocalConfig] = useState(() => normalizeConfig(initialConfig))
+  const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -232,6 +244,34 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
 
   const isDirty = useMemo(() => !sameConfig(localConfig, savedConfig), [localConfig, savedConfig])
   const selectedPreset = findPreset(localConfig)
+  const effectiveUserLevel = EARLY_ACCESS ? 5 : xpSummary?.userLevel ?? userLevel
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch('/api/user/xp')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!cancelled && typeof data?.xp === 'number' && typeof data?.userLevel === 'number') {
+          setXpSummary({ xp: data.xp, userLevel: data.userLevel })
+        }
+      })
+      .catch(() => {})
+
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    function handleXPUpdated(event: Event) {
+      const data = (event as CustomEvent).detail
+      if (typeof data?.xp === 'number' && typeof data?.userLevel === 'number') {
+        setXpSummary({ xp: data.xp, userLevel: data.userLevel })
+      }
+    }
+
+    window.addEventListener('xp:updated', handleXPUpdated)
+    return () => window.removeEventListener('xp:updated', handleXPUpdated)
+  }, [])
 
   function updateConfig(partial: Partial<PlanetConfig>) {
     setLocalConfig((current) => normalizeConfig({ ...current, ...partial }))
@@ -322,7 +362,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
             <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>{planetName}</h2>
           </div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs" style={{ color: 'var(--star)' }}>Lv.{userLevel}</span>
+            <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs" style={{ color: 'var(--star)' }}>Lv.{effectiveUserLevel}</span>
             {onClose && (
               <button
                 type="button"
@@ -342,7 +382,13 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       </aside>
 
       <div className="flex flex-col gap-4">
-        <ControlSection title="Base" level={1} userLevel={userLevel}>
+        {EARLY_ACCESS && (
+          <div className="rounded-lg border border-amber-300/20 px-4 py-3 text-sm" style={{ background: 'rgba(245,158,11,0.08)', color: '#fbbf24' }}>
+            ✦ Early Access - all customizations unlocked
+          </div>
+        )}
+
+        <ControlSection title="Base" level={1} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 md:grid-cols-4 xl:grid-cols-8">
             {PRESET_PLANETS.map((planet) => {
               const selected = planet.baseTexture === localConfig.baseTexture && !localConfig.customTextureUrl
@@ -368,11 +414,11 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           </div>
         </ControlSection>
 
-        <ControlSection title="Color" level={2} userLevel={userLevel}>
+        <ControlSection title="Color" level={2} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <ColorControl label="Planet tint" value={localConfig.tintColor} onChange={(tintColor) => updateConfig({ tintColor })} />
         </ControlSection>
 
-        <ControlSection title="Atmosphere & Ring" level={3} userLevel={userLevel}>
+        <ControlSection title="Atmosphere & Ring" level={3} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
             <ColorControl label="Atmosphere" value={localConfig.atmosphereColor} onChange={(atmosphereColor) => updateConfig({ atmosphereColor })} />
             <CosmicToggle label="Ring" checked={localConfig.hasRing} accentColor={localConfig.ringColor || localConfig.tintColor} onChange={(hasRing) => updateConfig({ hasRing })} />
@@ -388,7 +434,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           </div>
         </ControlSection>
 
-        <ControlSection title="Motion & Surface" level={4} userLevel={userLevel}>
+        <ControlSection title="Motion & Surface" level={4} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm" style={{ color: 'var(--ink)' }}>
               <span className="mb-2 flex justify-between"><span>Rotation speed</span><span>{localConfig.rotationSpeed.toFixed(3)}</span></span>
@@ -403,7 +449,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           </div>
         </ControlSection>
 
-        <ControlSection title="Custom Texture" level={5} userLevel={userLevel}>
+        <ControlSection title="Custom Texture" level={5} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {localConfig.customTextureUrl && (
@@ -422,6 +468,8 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
             )}
           </div>
         </ControlSection>
+
+        {!EARLY_ACCESS && xpSummary && <XPProgressBar xp={xpSummary.xp} userLevel={xpSummary.userLevel} />}
 
         <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-white/10 bg-[rgba(5,4,18,0.92)] py-4 backdrop-blur md:static md:border-0 md:bg-transparent md:py-0">
           <button

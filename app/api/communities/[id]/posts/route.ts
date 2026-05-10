@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
+import { grantXP } from "@/lib/grantXP";
 
 function serializeReply(reply: {
   id: string;
@@ -224,5 +225,7 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ post: serializePost(post) }, { status: 201 });
+  const xpEvent = await grantXP(userId, "POST_CREATED");
+
+  return NextResponse.json({ post: serializePost(post), xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });
 }

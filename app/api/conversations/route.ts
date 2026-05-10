@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { grantXP } from "@/lib/grantXP";
 
 // GET /api/conversations - list all conversations for the current user
 export async function GET() {
@@ -140,5 +141,7 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json({ conversationId: conversation.id, message: msg }, { status: 201 });
+  const xpEvent = await grantXP(userId, "RESONANCE_SENT");
+
+  return NextResponse.json({ conversationId: conversation.id, message: msg, xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });
 }

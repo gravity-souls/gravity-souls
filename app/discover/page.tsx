@@ -51,6 +51,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     filmTaste: (data.filmTaste as string[]) ?? [],
     communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
     matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    userLevel: typeof data.userLevel === 'number' ? data.userLevel : 1,
     createdAt: (data.createdAt as string) ?? new Date().toISOString(),
     userId: (data.userId as string) ?? '',
   }
@@ -87,6 +88,8 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
             textureFile={resolvePlanetTexture(planet)}
             size={48}
             glowColor={color}
+            showBadge
+            level={planet.userLevel}
           />
           <div className="flex flex-col gap-1 min-w-0">
             <h3 className="text-base font-bold leading-tight" style={{ color: 'var(--foreground)' }}>

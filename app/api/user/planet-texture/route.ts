@@ -2,8 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
+import { requireLevel } from '@/lib/requireLevel'
 
 export const runtime = 'nodejs'
 
@@ -54,14 +54,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Sign in before uploading a custom texture' }, { status: 401 })
   }
 
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { userLevel: true },
-  })
-
-  const effectiveUserLevel = Math.max(currentUser?.userLevel ?? 0, 5)
-
-  if (effectiveUserLevel < 5) {
+  const levelCheck = await requireLevel(request, 5)
+  if (!levelCheck.authorized) {
     return NextResponse.json({ error: 'Custom textures unlock at Lv.5' }, { status: 403 })
   }
 
@@ -99,6 +93,13 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message === 'missing_blob_storage') {
       return NextResponse.json(
         { error: 'Production uploads need Vercel Blob storage. Add BLOB_READ_WRITE_TOKEN in your deployment.' },
+        { status: 500 },
+      )
+    }
+
+    if (shouldUseBlobStorage()) {
+      return NextResponse.json(
+        { error: 'Vercel Blob upload failed. Check that BLOB_READ_WRITE_TOKEN belongs to a Blob store connected to this project.' },
         { status: 500 },
       )
     }

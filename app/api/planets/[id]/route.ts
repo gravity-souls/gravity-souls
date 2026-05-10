@@ -36,6 +36,7 @@ export async function GET(
     filmTaste: p.user.profile?.filmTaste ?? [],
     communicationStyle: p.user.profile?.communicationStyle ?? null,
     matchPreference: p.user.profile?.matchPreference ?? "mixed",
+    userLevel: p.user.userLevel ?? 1,
     user: { id: p.user.id, name: p.user.name },
   };
 

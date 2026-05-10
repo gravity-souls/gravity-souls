@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { grantXP } from "@/lib/grantXP";
 
 // POST /api/communities/join - join a community (idempotent)
 export async function POST(request: Request) {
@@ -29,14 +30,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Community not found" }, { status: 404 });
   }
 
-  // Idempotent: upsert to avoid duplicate key errors
-  const membership = await prisma.communityMembership.upsert({
-    where: {
-      userId_communityId: { userId, communityId },
-    },
-    create: { userId, communityId },
-    update: {},
+  const existingMembership = await prisma.communityMembership.findUnique({
+    where: { userId_communityId: { userId, communityId } },
   });
 
-  return NextResponse.json({ joined: true, membership });
+  if (existingMembership) {
+    return NextResponse.json({ joined: true, membership: existingMembership, xpEvent: null, leveledUp: false });
+  }
+
+  const membership = await prisma.communityMembership.create({
+    data: { userId, communityId },
+  });
+
+  const xpEvent = await grantXP(userId, "GALAXY_JOINED");
+
+  return NextResponse.json({ joined: true, membership, xpEvent, leveledUp: xpEvent.leveledUp });
 }

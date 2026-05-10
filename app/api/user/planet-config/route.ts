@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
+import { grantXP } from '@/lib/grantXP'
+import { requireLevel } from '@/lib/requireLevel'
 
 interface PlanetConfigBody {
   baseTexture?: unknown
@@ -98,16 +100,65 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'customTextureUrl must be an uploaded planet texture URL' }, { status: 400 })
   }
 
-  const currentUser = await prisma.user.findUnique({
+  const currentUserConfig = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { userLevel: true },
+    select: {
+      planetTint: true,
+      planetAtmoColor: true,
+      planetAtmoDensity: true,
+      planetHasRing: true,
+      planetRingColor: true,
+      planetRotationSpeed: true,
+      planetCloudOpacity: true,
+      planetCustomTexture: true,
+    },
   })
 
-  const effectiveUserLevel = Math.max(currentUser?.userLevel ?? 0, 5)
-
-  if (customTextureUrl && effectiveUserLevel < 5) {
-    return NextResponse.json({ error: 'Custom textures unlock at Lv.5' }, { status: 403 })
+  if (!currentUserConfig) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
+
+  async function requireConfigLevel(minLevel: number, message: string) {
+    const levelCheck = await requireLevel(request, minLevel)
+    if (!levelCheck.authorized) {
+      return NextResponse.json({ error: message }, { status: 403 })
+    }
+
+    return null
+  }
+
+  if (tintColor !== currentUserConfig.planetTint) {
+    const response = await requireConfigLevel(2, 'Planet colors unlock at Lv.2')
+    if (response) return response
+  }
+
+  if (
+    atmosphereColor !== currentUserConfig.planetAtmoColor
+    || atmosphereDensity !== currentUserConfig.planetAtmoDensity
+    || hasRing !== currentUserConfig.planetHasRing
+    || ringColor !== currentUserConfig.planetRingColor
+  ) {
+    const response = await requireConfigLevel(3, 'Atmosphere and rings unlock at Lv.3')
+    if (response) return response
+  }
+
+  if (
+    rotationSpeed !== currentUserConfig.planetRotationSpeed
+    || cloudOpacity !== currentUserConfig.planetCloudOpacity
+  ) {
+    const response = await requireConfigLevel(4, 'Motion and surface controls unlock at Lv.4')
+    if (response) return response
+  }
+
+  if ((customTextureUrl || null) !== currentUserConfig.planetCustomTexture) {
+    const response = await requireConfigLevel(5, 'Custom textures unlock at Lv.5')
+    if (response) return response
+  }
+
+  const hasProfileCompletedXP = await prisma.xPEvent.findFirst({
+    where: { userId: session.user.id, type: 'PROFILE_COMPLETED' },
+    select: { id: true },
+  })
 
   const updatedUser = await prisma.user.update({
     where: { id: session.user.id },
@@ -124,5 +175,7 @@ export async function PATCH(request: Request) {
     },
   })
 
-  return NextResponse.json(updatedUser)
+  const xpEvent = hasProfileCompletedXP ? null : await grantXP(session.user.id, 'PROFILE_COMPLETED')
+
+  return NextResponse.json({ ...updatedUser, xpEvent, leveledUp: xpEvent?.leveledUp ?? false })
 }

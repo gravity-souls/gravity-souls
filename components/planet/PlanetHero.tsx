@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import GlowButton from '@/components/ui/GlowButton'
+import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 
@@ -165,13 +166,15 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
         {/* Identity column  -  right on desktop, below on mobile */}
         <div className="flex-1 flex flex-col gap-5 min-w-0 text-center md:text-left pt-2 md:pt-6">
 
-          {/* Eyebrow */}
-          <p
-            className="text-xs tracking-[0.25em] uppercase font-medium"
-            style={{ color: visual.coreColor, opacity: 0.75 }}
-          >
-            {viewerRole === 'self' ? 'Your planet' : 'Planet profile'}
-          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
+            <p
+              className="text-xs tracking-[0.25em] uppercase font-medium"
+              style={{ color: visual.coreColor, opacity: 0.75 }}
+            >
+              {viewerRole === 'self' ? 'Your planet' : 'Planet profile'}
+            </p>
+            <LevelBadge level={planet.userLevel ?? 1} size="md" />
+          </div>
 
           {/* Name */}
           <h1

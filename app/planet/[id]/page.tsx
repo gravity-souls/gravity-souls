@@ -244,6 +244,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     filmTaste: (data.filmTaste as string[]) ?? [],
     communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
     matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    userLevel: typeof data.userLevel === 'number' ? data.userLevel : 1,
     createdAt: (data.createdAt as string) ?? new Date().toISOString(),
     userId: (data.userId as string) ?? '',
   }

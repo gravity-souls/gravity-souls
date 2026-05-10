@@ -10,6 +10,8 @@ import EmptyState from '@/components/ui/EmptyState'
 import Tag from '@/components/ui/Tag'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetCustomizer from '@/components/planet/PlanetCustomizer'
+import LevelBadge from '@/components/planet/LevelBadge'
+import XPProgressBar from '@/components/planet/XPProgressBar'
 import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
@@ -24,6 +26,11 @@ import { getSharedPostsForPlanets } from '@/lib/mock-posts'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
+
+interface XPSummary {
+  xp: number
+  userLevel: number
+}
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
@@ -131,6 +138,7 @@ function fallbackResonanceScore(id: string): number {
 export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
+  const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [customizerOpen, setCustomizerOpen] = useState(false)
   const hydrated = useHydrated()
@@ -141,7 +149,7 @@ export default function MyPlanetPage() {
     async function load() {
       let p: PlanetProfile | null = null
       let userPlanetConfig: PlanetConfig | null = null
-      let userLevel = 5
+      let userLevel = 1
 
       // 1. Try loading from DB via API (single source of truth)
       try {
@@ -191,7 +199,7 @@ export default function MyPlanetPage() {
           } as PlanetProfile
 
           userPlanetConfig = planetConfigFromSource(meData?.user?.planetConfig ?? meData?.user, p)
-          userLevel = Math.max(numberValue(meData?.user?.userLevel, 5), 5)
+          userLevel = numberValue(meData?.user?.userLevel, 1)
         }
       } catch {
         // API failed - fall back to localStorage
@@ -209,6 +217,19 @@ export default function MyPlanetPage() {
       if (p) {
         setPlanet(p)
         setStoredUser({ planetConfig: userPlanetConfig ?? planetConfigFromSource(null, p), userLevel })
+
+        try {
+          const xpRes = await fetch('/api/user/xp')
+          if (xpRes.ok) {
+            const xpData = await xpRes.json()
+            if (typeof xpData?.xp === 'number' && typeof xpData?.userLevel === 'number') {
+              setXpSummary({ xp: xpData.xp, userLevel: xpData.userLevel })
+              setStoredUser((user) => user ? { ...user, userLevel: xpData.userLevel } : user)
+            }
+          }
+        } catch {
+          // XP is available for authenticated users only.
+        }
 
         // Fetch real planets for resonance map
         try {
@@ -247,6 +268,19 @@ export default function MyPlanetPage() {
     load()
   }, [])
 
+  useEffect(() => {
+    function handleXPUpdated(event: Event) {
+      const data = (event as CustomEvent).detail
+      if (typeof data?.xp === 'number' && typeof data?.userLevel === 'number') {
+        setXpSummary({ xp: data.xp, userLevel: data.userLevel })
+        setStoredUser((user) => user ? { ...user, userLevel: data.userLevel } : user)
+      }
+    }
+
+    window.addEventListener('xp:updated', handleXPUpdated)
+    return () => window.removeEventListener('xp:updated', handleXPUpdated)
+  }, [])
+
   if (!hydrated || loading) return null
 
   // -- Explorer state  -  no planet formed yet ----------------------------------
@@ -275,7 +309,7 @@ export default function MyPlanetPage() {
 
   const { visual } = planet
   const textureFile = resolvePlanetTexture(planet)
-  const currentUser = storedUser ?? { planetConfig: planetConfigFromSource(null, planet), userLevel: 5 }
+  const currentUser = storedUser ?? { planetConfig: planetConfigFromSource(null, planet), userLevel: xpSummary?.userLevel ?? 1 }
   const globeSize = isDesktop ? 300 : 200
 
   // --- Derived data for dashboard sections ---
@@ -347,6 +381,10 @@ export default function MyPlanetPage() {
                 Your Planet
               </p>
 
+              <div className="flex justify-center md:justify-start">
+                <LevelBadge level={xpSummary?.userLevel ?? currentUser.userLevel} size="md" />
+              </div>
+
               <h1
                 className="text-4xl sm:text-5xl font-bold leading-tight"
                 style={{
@@ -415,6 +453,12 @@ export default function MyPlanetPage() {
             </div>
           </div>
         </section>
+
+        {xpSummary && (
+          <section className="mt-4">
+            <XPProgressBar xp={xpSummary.xp} userLevel={xpSummary.userLevel} />
+          </section>
+        )}
 
         <div className="mt-5">
           <button

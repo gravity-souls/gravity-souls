@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import type { PlanetConfig } from '@/types/planet'
+import LevelBadge from '@/components/planet/LevelBadge'
 
 interface Props {
   planetConfig?: PlanetConfig
@@ -17,6 +18,8 @@ interface Props {
   rotating?: boolean
   /** Seconds per surface rotation */
   rotationDuration?: number
+  showBadge?: boolean
+  level?: number
   className?: string
 }
 
@@ -31,6 +34,8 @@ export default function PlanetAvatar({
   glowColor = '#a78bfa',
   rotating = false,
   rotationDuration = 18,
+  showBadge = false,
+  level = 1,
   className = '',
 }: Props) {
   const [failed, setFailed] = useState(false)
@@ -98,6 +103,12 @@ export default function PlanetAvatar({
           background: 'radial-gradient(circle at 72% 68%, rgba(0,0,0,0.35) 0%, transparent 50%)',
         }}
       />
+
+      {showBadge && (
+        <span className="absolute -right-1 -top-1 z-10">
+          <LevelBadge level={level} size="sm" />
+        </span>
+      )}
     </div>
   )
 }

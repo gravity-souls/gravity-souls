@@ -154,6 +154,8 @@ export interface PlanetProfile {
   sbtiCn?: string
   /** SBTI pattern string, e.g. "HHH-HMH-MHH-HHH-MHM" */
   sbtiPattern?: string
+  /** Owner progression level */
+  userLevel?: number
 
   // Metadata
   createdAt: string

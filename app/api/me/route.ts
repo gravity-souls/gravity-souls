@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { grantDailyLoginXP } from "@/lib/grantXP";
 
 // Get full user data bundle for current authenticated user
 export async function GET() {
@@ -38,10 +39,18 @@ export async function GET() {
         planetRotationSpeed: true,
         planetCloudOpacity: true,
         planetCustomTexture: true,
+        xp: true,
         userLevel: true,
       },
     }),
   ]);
+
+  const dailyXP = await grantDailyLoginXP(userId);
+
+  if (currentUser && dailyXP) {
+    currentUser.xp = dailyXP.newXP;
+    currentUser.userLevel = dailyXP.newLevel;
+  }
 
   const planetConfig = currentUser
     ? {
@@ -63,5 +72,7 @@ export async function GET() {
     questionnaire,
     planet,
     communities: communities.map((m: { community: unknown }) => m.community),
+    xpEvent: dailyXP,
+    leveledUp: dailyXP?.leveledUp ?? false,
   });
 }

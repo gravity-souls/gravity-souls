@@ -33,6 +33,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
       introspective: (data.introspectiveAxis as number) ?? 50,
     },
     emotionalBars: [],
+    userLevel: typeof data.userLevel === 'number' ? data.userLevel : 1,
     createdAt: (data.createdAt as string) ?? new Date().toISOString(),
     userId: (data.userId as string) ?? '',
   }
@@ -73,6 +74,8 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
           glowColor={visual.coreColor}
           rotating
           rotationDuration={18 + (planet.id.length % 5) * 3}
+          showBadge
+          level={planet.userLevel}
         />
       </div>
 
