@@ -19,6 +19,7 @@ import ProfileLayerSection from '@/components/planet/ProfileLayerSection'
 import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeCloud } from '@/components/planet/PlanetModules'
 import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetById } from '@/lib/mock-planets'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
 import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
@@ -217,7 +218,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
 function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
   const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
 
-  return {
+  const profile: PlanetProfile = {
     id: data.id as string,
     name: (data.name as string) || 'Unknown',
     avatarSymbol: (data.avatarSymbol as string) || '?',
@@ -246,6 +247,8 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     createdAt: (data.createdAt as string) ?? new Date().toISOString(),
     userId: (data.userId as string) ?? '',
   }
+  profile.visual = { ...profile.visual, textureFile: resolvePlanetTexture(profile) }
+  return profile
 }
 
 // --- Page inner ---------------------------------------------------------------

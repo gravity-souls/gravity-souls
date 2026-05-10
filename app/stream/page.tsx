@@ -71,6 +71,8 @@ function StreamCard({ planet, index }: { planet: PlanetProfile; index: number })
           textureFile={resolvePlanetTexture(planet)}
           size={100}
           glowColor={visual.coreColor}
+          rotating
+          rotationDuration={18 + (planet.id.length % 5) * 3}
         />
       </div>
 
@@ -132,7 +134,7 @@ export default function StreamPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/planets')
+    fetch('/api/universe')
       .then((res) => (res.ok ? res.json() : []))
       .then((data: Record<string, unknown>[]) => {
         setPlanets(data.map(dbPlanetToProfile))

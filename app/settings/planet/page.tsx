@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
-import LivePlanetPreview from '@/components/creation/LivePlanetPreview'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
@@ -14,11 +14,13 @@ import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereSty
 import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
-import { PLANET_TEXTURE_OPTIONS, resolvePlanetTexture } from '@/lib/planet-textures'
+import { PLANET_TEXTURE_OPTIONS, resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetProfile, savePlanetProfile, getOrCreateUserId } from '@/lib/user'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
-import type { PlanetProfile } from '@/types/planet'
+import type { PlanetConfig, PlanetProfile } from '@/types/planet'
+
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
@@ -122,6 +124,22 @@ function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
   }
 }
 
+function planetConfigFromProfile(planet: PlanetProfile): PlanetConfig {
+  const introspection = planet.cognitiveAxes.introspective / 100
+  const abstraction = planet.cognitiveAxes.abstract / 100
+
+  return {
+    baseTexture: resolvePlanetTexture(planet),
+    tintColor: planet.visual.coreColor,
+    atmosphereColor: planet.visual.accentColor,
+    atmosphereDensity: 0.06 + introspection * 0.18,
+    hasRing: resolvePlanetHasRing(),
+    ringColor: planet.visual.accentColor,
+    rotationSpeed: 0.014 + abstraction * 0.012,
+    cloudOpacity: planet.communicationStyle === 'poetic' || planet.communicationStyle === 'reflective' ? 0.12 : 0,
+  }
+}
+
 // --- Page ---------------------------------------------------------------------
 
 export default function PlanetSettingsPage() {
@@ -201,6 +219,11 @@ export default function PlanetSettingsPage() {
     [draft, userId],
   )
 
+  const previewPlanetConfig = useMemo(
+    () => (previewPlanet ? planetConfigFromProfile(previewPlanet) : null),
+    [previewPlanet],
+  )
+
   // Keep accent color in sync with climate choice
   useEffect(() => {
     let cancelled = false
@@ -260,7 +283,7 @@ export default function PlanetSettingsPage() {
     setTimeout(() => setSaved(false), 2800)
   }
 
-  if (!mounted || !previewPlanet) return null
+  if (!mounted || !previewPlanet || !previewPlanetConfig) return null
 
   return (
     <AppShell>
@@ -279,7 +302,7 @@ export default function PlanetSettingsPage() {
           <h1
             className="text-3xl sm:text-4xl font-bold w-fit"
             style={{
-              background: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 100%)`,
+              backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -459,7 +482,7 @@ export default function PlanetSettingsPage() {
               >
                 Live preview
               </span>
-              <LivePlanetPreview planet={previewPlanet} size={140} />
+              <PlanetGlobe planetConfig={previewPlanetConfig} size={190} />
             </div>
 
             {/* Save button */}

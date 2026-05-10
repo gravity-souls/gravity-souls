@@ -4,6 +4,8 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import PlanetPicker from "@/components/planet/PlanetPicker";
+import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
 
 export default function SignUpPage() {
   return (
@@ -20,6 +22,7 @@ function SignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetConfig>(PRESET_PLANETS[0]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +42,22 @@ function SignUpForm() {
       if (result.error) {
         setError(result.error.message ?? "Sign up failed");
         return;
+      }
+
+      try {
+        await fetch("/api/user/planet-config", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseTexture: selectedPlanet.baseTexture,
+            tintColor: selectedPlanet.tintColor,
+            atmosphereColor: selectedPlanet.atmosphereColor,
+            hasRing: selectedPlanet.hasRing,
+            ringColor: selectedPlanet.ringColor,
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to save planet texture config:", e);
       }
 
       const raw = searchParams.get('next') || '/create-universe';
@@ -122,6 +141,15 @@ function SignUpForm() {
             required
             minLength={8}
           />
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+              Planet texture
+            </span>
+          </div>
+          <PlanetPicker selectedPlanet={selectedPlanet} onSelect={setSelectedPlanet} />
         </div>
 
         {error && (

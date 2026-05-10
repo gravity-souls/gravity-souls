@@ -12,6 +12,8 @@ interface Props {
   size?: number
   /** Show the planet name label below the orb */
   showLabel?: boolean
+  /** Animate the texture surface for visible homepage orbit nodes */
+  rotating?: boolean
   style?: CSSProperties
   className?: string
 }
@@ -30,6 +32,7 @@ export default function PlanetCard({
   onClick,
   size = 48,
   showLabel = true,
+  rotating = false,
   style,
   className = '',
 }: Props) {
@@ -62,6 +65,8 @@ export default function PlanetCard({
         textureFile={resolvePlanetTexture(planet)}
         size={size}
         glowColor={coreColor}
+        rotating={rotating}
+        rotationDuration={16 + (planet.id.length % 5) * 3}
       />
 
       {/* Scale ring  -  grows on hover */}

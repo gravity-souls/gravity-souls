@@ -75,6 +75,10 @@ export function resolvePlanetTexture(planet: Pick<PlanetProfile, 'mood' | 'lifes
   return isKnownTexture(selected) ? selected : getTextureFile([planet.mood, planet.lifestyle, ...planet.coreThemes])
 }
 
+export function resolvePlanetHasRing(): boolean {
+  return false
+}
+
 /**
  * Derive a glow color from a planet's coreColor or default to a violet hue.
  */

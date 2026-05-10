@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
+import dynamic from 'next/dynamic'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -8,20 +9,23 @@ import GlowButton from '@/components/ui/GlowButton'
 import EmptyState from '@/components/ui/EmptyState'
 import Tag from '@/components/ui/Tag'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import PlanetCustomizer from '@/components/planet/PlanetCustomizer'
 import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
-import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
 import { MOCK_GALAXIES } from '@/lib/mock-galaxies'
 import { mockPlanets } from '@/lib/mock-planets'
 import { getSharedPostsForPlanets } from '@/lib/mock-posts'
-import type { PlanetProfile } from '@/types/planet'
+import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
+
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
@@ -35,6 +39,57 @@ const DEFAULT_VISUAL: PlanetProfile['visual'] = {
 const emptySubscribe = () => () => {}
 function useHydrated() {
   return useSyncExternalStore(emptySubscribe, () => true, () => false)
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(media.matches)
+
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return isDesktop
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function stringValue(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.length > 0 ? value : fallback
+}
+
+function booleanValue(value: unknown, fallback: boolean) {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function numberValue(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function optionalStringValue(value: unknown) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function planetConfigFromSource(source: unknown, planet: PlanetProfile): PlanetConfig {
+  const config = isRecord(source) ? source : {}
+
+  return {
+    baseTexture: stringValue(config.baseTexture ?? config.planetTexture, resolvePlanetTexture(planet)),
+    tintColor: stringValue(config.tintColor ?? config.planetTint, planet.visual.coreColor),
+    atmosphereColor: stringValue(config.atmosphereColor ?? config.planetAtmoColor, planet.visual.accentColor),
+    atmosphereDensity: numberValue(config.atmosphereDensity ?? config.planetAtmoDensity, 0.12),
+    hasRing: booleanValue(config.hasRing ?? config.planetHasRing, resolvePlanetHasRing()),
+    ringColor: stringValue(config.ringColor ?? config.planetRingColor, planet.visual.accentColor),
+    rotationSpeed: numberValue(config.rotationSpeed ?? config.planetRotationSpeed, 0.018),
+    cloudOpacity: numberValue(config.cloudOpacity ?? config.planetCloudOpacity, 0),
+    customTextureUrl: optionalStringValue(config.customTextureUrl ?? config.planetCustomTexture),
+  }
 }
 
 // --- Mock data for dashboard sections ----------------------------------------
@@ -75,13 +130,18 @@ function fallbackResonanceScore(id: string): number {
 
 export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
+  const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
+  const [customizerOpen, setCustomizerOpen] = useState(false)
   const hydrated = useHydrated()
+  const isDesktop = useIsDesktop()
   const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
     async function load() {
       let p: PlanetProfile | null = null
+      let userPlanetConfig: PlanetConfig | null = null
+      let userLevel = 5
 
       // 1. Try loading from DB via API (single source of truth)
       try {
@@ -129,6 +189,9 @@ export default function MyPlanetPage() {
               sbtiPattern: meData.profile.sbtiPattern ?? undefined,
             } : {}),
           } as PlanetProfile
+
+          userPlanetConfig = planetConfigFromSource(meData?.user?.planetConfig ?? meData?.user, p)
+          userLevel = Math.max(numberValue(meData?.user?.userLevel, 5), 5)
         }
       } catch {
         // API failed - fall back to localStorage
@@ -145,6 +208,7 @@ export default function MyPlanetPage() {
 
       if (p) {
         setPlanet(p)
+        setStoredUser({ planetConfig: userPlanetConfig ?? planetConfigFromSource(null, p), userLevel })
 
         // Fetch real planets for resonance map
         try {
@@ -211,6 +275,8 @@ export default function MyPlanetPage() {
 
   const { visual } = planet
   const textureFile = resolvePlanetTexture(planet)
+  const currentUser = storedUser ?? { planetConfig: planetConfigFromSource(null, planet), userLevel: 5 }
+  const globeSize = isDesktop ? 300 : 200
 
   // --- Derived data for dashboard sections ---
   // Resonant match cards (from DB planets or mock fallback)
@@ -239,6 +305,11 @@ export default function MyPlanetPage() {
   const recommendedGalaxies = getRecommendedGalaxies()
   const sharedMoments = getSharedPostsForPlanets(matchPool, 3)
 
+  function handleCustomizerSaved(planetConfig: PlanetConfig) {
+    setStoredUser((user) => ({ planetConfig, userLevel: user?.userLevel ?? currentUser.userLevel }))
+    setCustomizerOpen(false)
+  }
+
   return (
     <AppShell>
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
@@ -265,33 +336,9 @@ export default function MyPlanetPage() {
             style={{ background: `linear-gradient(90deg, transparent, ${visual.coreColor}55, rgba(255,255,255,0.12), ${visual.coreColor}55, transparent)` }} />
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
-            {/* Planet photo */}
-            <div className="shrink-0 flex items-center justify-center">
-              <div className="relative flex items-center justify-center" style={{ width: 280, height: 280 }}>
-                <div
-                  className="absolute rounded-full pointer-events-none"
-                  style={{
-                    width: 248,
-                    height: 248,
-                    background: `radial-gradient(circle, ${visual.coreColor}22 0%, transparent 70%)`,
-                    filter: 'blur(6px)',
-                  }}
-                  aria-hidden="true"
-                />
-                {visual.ringStyle !== 'none' && (
-                  <div
-                    className="absolute rounded-full pointer-events-none"
-                    style={{
-                      width: 250,
-                      height: 250,
-                      border: `1px solid ${visual.coreColor}26`,
-                      transform: 'rotate(-14deg) scaleX(1.22)',
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
-                <PlanetAvatar textureFile={textureFile} size={192} glowColor={visual.coreColor} />
-              </div>
+            {/* Planet globe */}
+            <div className="shrink-0 flex w-full items-center justify-center md:w-auto">
+              <PlanetGlobe planetConfig={currentUser.planetConfig} size={globeSize} />
             </div>
 
             {/* Identity column */}
@@ -368,6 +415,43 @@ export default function MyPlanetPage() {
             </div>
           </div>
         </section>
+
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={() => setCustomizerOpen((open) => !open)}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold transition"
+            style={{ color: 'var(--foreground)', background: 'rgba(255,255,255,0.04)' }}
+            aria-expanded={customizerOpen}
+          >
+            ✦ Customize your planet
+            {customizerOpen && <span className="text-xs" style={{ color: 'var(--ghost)' }}>Open</span>}
+          </button>
+        </div>
+
+        {customizerOpen && isDesktop && (
+          <section className="mt-4 rounded-2xl border border-white/10 bg-[rgba(5,4,18,0.76)] p-4 backdrop-blur">
+            <PlanetCustomizer
+              initialConfig={currentUser.planetConfig}
+              planetName={planet.name}
+              userLevel={currentUser.userLevel}
+              onClose={() => setCustomizerOpen(false)}
+              onSaved={handleCustomizerSaved}
+            />
+          </section>
+        )}
+
+        {customizerOpen && !isDesktop && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(3,3,15,0.96)] p-4 backdrop-blur-xl">
+            <PlanetCustomizer
+              initialConfig={currentUser.planetConfig}
+              planetName={planet.name}
+              userLevel={currentUser.userLevel}
+              onClose={() => setCustomizerOpen(false)}
+              onSaved={handleCustomizerSaved}
+            />
+          </div>
+        )}
 
         {/* ================================================================
             THREE-COLUMN DASHBOARD ROW

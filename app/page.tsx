@@ -13,6 +13,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import { getUserRole } from '@/lib/user'
 import { authClient } from '@/lib/auth-client'
 import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 
@@ -62,7 +63,7 @@ function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
     ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
     satelliteCount: 1, size: 'md' as const,
   }
-  return {
+  const profile: PlanetProfile = {
     id: p.id,
     name: p.name,
     avatarSymbol: p.avatarSymbol,
@@ -79,6 +80,8 @@ function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
     createdAt: '',
     userId: '',
   }
+  profile.visual = { ...profile.visual, textureFile: resolvePlanetTexture(profile) }
+  return profile
 }
 
 function buildPositionedPlanets(apiPlanets: UniversePlanet[]): PlanetProfile[] {
@@ -448,6 +451,7 @@ export default function UniversePage() {
                       <PlanetCard
                         planet={planet}
                         size={pos.size}
+                        rotating
                         onClick={() => setSelectedPlanet(planet)}
                       />
                     </div>

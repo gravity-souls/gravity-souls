@@ -13,7 +13,7 @@ export async function GET() {
 
   const userId = session.user.id;
 
-  const [profile, questionnaire, planet, communities] = await Promise.all([
+  const [profile, questionnaire, planet, communities, currentUser] = await Promise.all([
     prisma.profile.findUnique({ where: { userId } }),
     prisma.questionnaireResult.findFirst({
       where: { userId },
@@ -26,10 +26,39 @@ export async function GET() {
       where: { userId },
       include: { community: true },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        planetTexture: true,
+        planetTint: true,
+        planetAtmoColor: true,
+        planetAtmoDensity: true,
+        planetHasRing: true,
+        planetRingColor: true,
+        planetRotationSpeed: true,
+        planetCloudOpacity: true,
+        planetCustomTexture: true,
+        userLevel: true,
+      },
+    }),
   ]);
 
+  const planetConfig = currentUser
+    ? {
+        baseTexture: currentUser.planetTexture,
+        tintColor: currentUser.planetTint,
+        atmosphereColor: currentUser.planetAtmoColor,
+        atmosphereDensity: currentUser.planetAtmoDensity,
+        hasRing: currentUser.planetHasRing,
+        ringColor: currentUser.planetRingColor,
+        rotationSpeed: currentUser.planetRotationSpeed,
+        cloudOpacity: currentUser.planetCloudOpacity,
+        customTextureUrl: currentUser.planetCustomTexture ?? undefined,
+      }
+    : null;
+
   return NextResponse.json({
-    user: session.user,
+    user: { ...session.user, ...currentUser, planetConfig },
     profile,
     questionnaire,
     planet,

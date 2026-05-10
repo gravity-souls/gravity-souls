@@ -14,6 +14,16 @@ model user {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  planetTexture String    @default("jupiter.jpg")
+  planetTint    String    @default("#7c4dbf")
+  planetAtmoColor String  @default("#b39ddb")
+  planetAtmoDensity Float @default(0.12)
+  planetHasRing Boolean   @default(false)
+  planetRingColor String  @default("#9b7de0")
+  planetRotationSpeed Float @default(0.018)
+  planetCloudOpacity Float @default(0.0)
+  planetCustomTexture String?
+  userLevel     Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

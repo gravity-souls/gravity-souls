@@ -31,6 +31,31 @@ export interface ExplorationTrace {
 
 // --- Visual config ---------------------------------------------------------
 
+export interface PlanetConfig {
+  name?: string
+  desc?: string
+  baseTexture: string
+  tintColor: string
+  atmosphereColor: string
+  atmosphereDensity: number
+  hasRing: boolean
+  ringColor: string
+  rotationSpeed: number
+  cloudOpacity: number
+  customTextureUrl?: string
+}
+
+export const PRESET_PLANETS: PlanetConfig[] = [
+  { name: 'Elaris',  baseTexture: 'jupiter.jpg',       tintColor: '#7c4dbf', atmosphereColor: '#b39ddb', atmosphereDensity: 0.12, hasRing: true,  ringColor: '#9b7de0', rotationSpeed: 0.018, cloudOpacity: 0, desc: 'The wandering deep thinker' },
+  { name: 'Astraea', baseTexture: 'earth_day.jpg',     tintColor: '#2563eb', atmosphereColor: '#7dd3fc', atmosphereDensity: 0.12, hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0.15, desc: 'The warm connector' },
+  { name: 'Orionis', baseTexture: 'mars.jpg',          tintColor: '#c2410c', atmosphereColor: '#fdba74', atmosphereDensity: 0.1,  hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0, desc: 'The restless explorer' },
+  { name: 'Veylora', baseTexture: 'neptune.jpg',       tintColor: '#1d4ed8', atmosphereColor: '#a5f3fc', atmosphereDensity: 0.14, hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0, desc: 'The silent observer' },
+  { name: 'Caelion', baseTexture: 'venus_surface.jpg', tintColor: '#b45309', atmosphereColor: '#fde68a', atmosphereDensity: 0.16, hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0.2, desc: 'The burning creator' },
+  { name: 'Thalor',  baseTexture: 'mercury.jpg',       tintColor: '#4b5563', atmosphereColor: '#c4b5fd', atmosphereDensity: 0.08, hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0, desc: 'The hidden sage' },
+  { name: 'Lunaris', baseTexture: 'moon.jpg',          tintColor: '#6b7280', atmosphereColor: '#e5e7eb', atmosphereDensity: 0.06, hasRing: false, ringColor: '',        rotationSpeed: 0.018, cloudOpacity: 0, desc: 'Lonely but free' },
+  { name: 'Solenne', baseTexture: 'saturn.jpg',        tintColor: '#92400e', atmosphereColor: '#fcd34d', atmosphereDensity: 0.12, hasRing: true,  ringColor: '#d97706', rotationSpeed: 0.018, cloudOpacity: 0, desc: 'The one with gravity' },
+]
+
 export interface PlanetVisualConfig {
   /** Primary colour for the planet surface glow */
   coreColor:    string

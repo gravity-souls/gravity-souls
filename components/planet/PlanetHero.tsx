@@ -1,8 +1,13 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import GlowButton from '@/components/ui/GlowButton'
-import type { PlanetProfile } from '@/types/planet'
-import { resolvePlanetTexture } from '@/lib/planet-textures'
+import type { PlanetConfig, PlanetProfile } from '@/types/planet'
+import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
 // --- Language display ---------------------------------------------------------
 
@@ -71,6 +76,36 @@ function SelfActions() {
 
 // --- PlanetHero ---------------------------------------------------------------
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(media.matches)
+
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return isDesktop
+}
+
+function planetConfigFromPlanet(planet: PlanetProfile): PlanetConfig {
+  const textureFile = resolvePlanetTexture(planet)
+
+  return {
+    baseTexture: textureFile,
+    tintColor: planet.visual.coreColor,
+    atmosphereColor: planet.visual.accentColor,
+    atmosphereDensity: 0.12,
+    hasRing: resolvePlanetHasRing(),
+    ringColor: planet.visual.accentColor,
+    rotationSpeed: 0.018,
+    cloudOpacity: 0,
+  }
+}
+
 interface Props {
   planet: PlanetProfile
   /** Viewer perspective  -  determines which actions render */
@@ -79,7 +114,9 @@ interface Props {
 
 export default function PlanetHero({ planet, viewerRole }: Props) {
   const { visual } = planet
-  const textureFile = resolvePlanetTexture(planet)
+  const isDesktop = useIsDesktop()
+  const globeSize = isDesktop ? 260 : 200
+  const planetConfig = planetConfigFromPlanet(planet)
 
   return (
     <section
@@ -120,33 +157,9 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
       {/* -- Content grid ------------------------------------------------ */}
       <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 p-8 md:p-12">
 
-        {/* Planet photo  -  left column on desktop, top on mobile */}
-        <div className="shrink-0 flex items-center justify-center">
-          <div className="relative flex items-center justify-center" style={{ width: 240, height: 240 }}>
-            <div
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                width: 224,
-                height: 224,
-                background: `radial-gradient(circle, ${visual.coreColor}22 0%, transparent 70%)`,
-                filter: 'blur(6px)',
-              }}
-              aria-hidden="true"
-            />
-            {visual.ringStyle !== 'none' && (
-              <div
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 224,
-                  height: 224,
-                  border: `1px solid ${visual.coreColor}26`,
-                  transform: 'rotate(-14deg) scaleX(1.22)',
-                }}
-                aria-hidden="true"
-              />
-            )}
-            <PlanetAvatar textureFile={textureFile} size={172} glowColor={visual.coreColor} />
-          </div>
+        {/* Planet globe  -  left column on desktop, top on mobile */}
+        <div className="shrink-0 flex w-full items-center justify-center md:w-auto">
+          <PlanetGlobe planetConfig={planetConfig} size={globeSize} />
         </div>
 
         {/* Identity column  -  right on desktop, below on mobile */}

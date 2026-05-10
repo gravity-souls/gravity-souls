@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import LockedLayer from '@/components/ui/LockedLayer'
 import { isSaved, savePlanetId } from '@/lib/social-storage'
-import { resolvePlanetTexture } from '@/lib/planet-textures'
-import type { PlanetProfile } from '@/types/planet'
+import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import type { PlanetConfig, PlanetProfile } from '@/types/planet'
+
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
 interface Props {
   planet:   PlanetProfile | null
@@ -101,6 +103,16 @@ function DrawerContent({
   const { coreColor } = planet.visual
   const fragment = planet.contentFragments[0]
   const textureFile = resolvePlanetTexture(planet)
+  const planetConfig: PlanetConfig = {
+    baseTexture: textureFile,
+    tintColor: planet.visual.coreColor,
+    atmosphereColor: planet.visual.accentColor,
+    atmosphereDensity: 0.12,
+    hasRing: resolvePlanetHasRing(),
+    ringColor: planet.visual.accentColor,
+    rotationSpeed: 0.018,
+    cloudOpacity: 0,
+  }
   const [saved, setSaved] = useState(false)
   const [sending, setSending] = useState(false)
 
@@ -181,17 +193,7 @@ function DrawerContent({
       {/* Planet visual */}
       <div className="flex justify-center py-6 shrink-0">
         <div className="relative flex items-center justify-center" style={{ width: 220, height: 220 }}>
-          <div
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: 190,
-              height: 190,
-              background: `radial-gradient(circle, ${coreColor}24 0%, transparent 72%)`,
-              filter: 'blur(4px)',
-            }}
-            aria-hidden="true"
-          />
-          <PlanetAvatar textureFile={textureFile} size={128} glowColor={coreColor} />
+          <PlanetGlobe planetConfig={planetConfig} size={190} />
         </div>
       </div>
 

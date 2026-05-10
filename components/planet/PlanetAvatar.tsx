@@ -1,15 +1,22 @@
 'use client'
 
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
+
 import { useState } from 'react'
+import type { PlanetConfig } from '@/types/planet'
 
 interface Props {
+  planetConfig?: PlanetConfig
   /** Texture filename inside /textures/, e.g. "mars.jpg" */
-  textureFile: string
+  textureFile?: string
   /** Diameter in pixels (default 48) */
   size?: number
   /** Hex glow color for the box-shadow aura (default #a78bfa) */
   glowColor?: string
+  /** Animate the surface horizontally for small non-WebGL previews */
+  rotating?: boolean
+  /** Seconds per surface rotation */
+  rotationDuration?: number
   className?: string
 }
 
@@ -18,12 +25,18 @@ interface Props {
  * Uses Next Image with CSS border-radius + box-shadow glow. No WebGL.
  */
 export default function PlanetAvatar({
+  planetConfig,
   textureFile,
   size = 48,
   glowColor = '#a78bfa',
+  rotating = false,
+  rotationDuration = 18,
   className = '',
 }: Props) {
   const [failed, setFailed] = useState(false)
+  const resolvedTexture = planetConfig?.baseTexture ?? textureFile ?? 'jupiter.jpg'
+  const resolvedGlowColor = planetConfig?.tintColor ?? glowColor
+  const textureSrc = planetConfig?.customTextureUrl ?? `/textures/${resolvedTexture}`
 
   return (
     <div
@@ -31,7 +44,7 @@ export default function PlanetAvatar({
       style={{
         width: size,
         height: size,
-        boxShadow: `0 0 ${Math.round(size * 0.4)}px ${glowColor}55, 0 0 ${size}px ${glowColor}20`,
+        boxShadow: `0 0 ${Math.round(size * 0.4)}px ${resolvedGlowColor}80, 0 0 ${size}px ${resolvedGlowColor}20`,
       }}
     >
       {failed ? (
@@ -39,19 +52,34 @@ export default function PlanetAvatar({
         <div
           className="w-full h-full rounded-full"
           style={{
-            background: `radial-gradient(circle at 35% 30%, ${glowColor}cc 0%, ${glowColor}44 60%, ${glowColor}18 100%)`,
+            background: `radial-gradient(circle at 35% 30%, ${resolvedGlowColor}cc 0%, ${resolvedGlowColor}44 60%, ${resolvedGlowColor}18 100%)`,
           }}
         />
+      ) : rotating ? (
+        <div
+          className="planet-avatar-rotating w-full h-full rounded-full select-none"
+          style={{
+            width: size,
+            height: size,
+            backgroundImage: `url(${textureSrc})`,
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: '210% 100%',
+            backgroundPosition: '0% 50%',
+            overflow: 'hidden',
+            animation: `shimmer ${rotationDuration}s linear infinite`,
+          }}
+          aria-hidden="true"
+        >
+          <img src={textureSrc} alt="" className="hidden" onError={() => setFailed(true)} />
+        </div>
       ) : (
-        <Image
-          src={`/textures/${textureFile}`}
+        <img
+          src={textureSrc}
           alt=""
-          width={size}
-          height={size}
           draggable={false}
           onError={() => setFailed(true)}
           className="w-full h-full object-cover rounded-full select-none"
-          style={{ display: 'block' }}
+          style={{ display: 'block', width: size, height: size }}
         />
       )}
 
