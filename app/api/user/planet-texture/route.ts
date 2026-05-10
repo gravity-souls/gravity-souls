@@ -15,12 +15,43 @@ const MIME_TO_EXTENSION: Record<string, string> = {
   'image/webp': 'webp',
 }
 
+function shouldUseBlobStorage() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+}
+
+function isProductionRuntime() {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+}
+
+async function storeTexture({ bytes, contentType, filename }: { bytes: Buffer; contentType: string; filename: string }) {
+  if (shouldUseBlobStorage()) {
+    const { put } = await import('@vercel/blob')
+    const blob = await put(`planet-textures/${filename}`, bytes, {
+      access: 'public',
+      addRandomSuffix: false,
+      contentType,
+    })
+
+    return blob.url
+  }
+
+  if (isProductionRuntime()) {
+    throw new Error('missing_blob_storage')
+  }
+
+  const filePath = path.join(UPLOAD_DIR, filename)
+  await mkdir(UPLOAD_DIR, { recursive: true })
+  await writeFile(filePath, bytes)
+
+  return `/uploads/planet-textures/${filename}`
+}
+
 export async function POST(request: Request) {
   let session
   try {
     session = await requireUser()
-  } catch (res) {
-    return res as Response
+  } catch {
+    return NextResponse.json({ error: 'Sign in before uploading a custom texture' }, { status: 401 })
   }
 
   const currentUser = await prisma.user.findUnique({
@@ -34,7 +65,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Custom textures unlock at Lv.5' }, { status: 403 })
   }
 
-  const formData = await request.formData()
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    return NextResponse.json({ error: 'Upload request could not be read' }, { status: 400 })
+  }
+
   const file = formData.get('file')
 
   if (!(file instanceof File)) {
@@ -52,10 +89,25 @@ export async function POST(request: Request) {
 
   const bytes = Buffer.from(await file.arrayBuffer())
   const filename = `${session.user.id}-${randomUUID()}.${extension}`
-  const filePath = path.join(UPLOAD_DIR, filename)
+  let url: string
 
-  await mkdir(UPLOAD_DIR, { recursive: true })
-  await writeFile(filePath, bytes)
+  try {
+    url = await storeTexture({ bytes, contentType: file.type, filename })
+  } catch (error) {
+    console.error('Planet texture upload failed', error)
 
-  return NextResponse.json({ url: `/uploads/planet-textures/${filename}` })
+    if (error instanceof Error && error.message === 'missing_blob_storage') {
+      return NextResponse.json(
+        { error: 'Production uploads need Vercel Blob storage. Add BLOB_READ_WRITE_TOKEN in your deployment.' },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json(
+      { error: 'Texture storage is not available on this server' },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({ url })
 }

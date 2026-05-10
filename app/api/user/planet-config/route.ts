@@ -28,7 +28,19 @@ function isNumberInRange(value: unknown, min: number, max: number): value is num
 
 function isCustomTextureUrl(value: unknown): value is string | null | undefined {
   if (value === undefined || value === null || value === '') return true
-  return typeof value === 'string' && /^\/uploads\/planet-textures\/[a-z0-9-]+\.(jpg|jpeg|png|webp)$/i.test(value)
+  if (typeof value !== 'string') return false
+  if (/^\/uploads\/planet-textures\/[a-z0-9-]+\.(jpg|jpeg|png|webp)$/i.test(value)) return true
+
+  try {
+    const url = new URL(value)
+    return (
+      url.protocol === 'https:'
+      && url.hostname.endsWith('.public.blob.vercel-storage.com')
+      && /^\/planet-textures\/[a-z0-9-]+\.(jpg|jpeg|png|webp)$/i.test(url.pathname)
+    )
+  } catch {
+    return false
+  }
 }
 
 export async function PATCH(request: Request) {

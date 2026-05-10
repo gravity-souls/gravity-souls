@@ -22,6 +22,7 @@
     "@prisma/client": "^7.7.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
+    "@vercel/blob": "^2.3.3",
     "ai": "^6.0.134",
     "better-auth": "^1.6.5",
     "clsx": "^2.1.1",

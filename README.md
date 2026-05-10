@@ -37,3 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 # Gravity-Souls — Where souls find their gravity
 
 Domain: gravitysouls.com
+
+## Production Uploads
+
+Custom planet textures are stored on local disk only during development. In production, configure Vercel Blob and add `BLOB_READ_WRITE_TOKEN` to the deployment environment so uploaded textures persist across serverless runs and deploys.

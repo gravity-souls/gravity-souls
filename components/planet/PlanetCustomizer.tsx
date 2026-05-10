@@ -1,6 +1,7 @@
 'use client'
 
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
+
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Check, Lock, RotateCcw, Save, Upload, X } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
@@ -51,6 +52,18 @@ function normalizeConfig(config: PlanetConfig): PlanetConfig {
 
 function findPreset(config: PlanetConfig) {
   return PRESET_PLANETS.find((planet) => planet.baseTexture === config.baseTexture) ?? PRESET_PLANETS[0]
+}
+
+async function readResponseError(response: Response, fallback: string) {
+  if (response.status === 401) return 'Sign in before uploading a custom texture'
+  if (response.status === 403) return 'Custom textures are locked for this planet'
+  if (response.status === 413) return 'The texture file is too large'
+  if (response.status >= 500) return 'The server could not store this texture'
+
+  const data = await response.json().catch(() => null)
+  if (typeof data?.error === 'string') return data.error
+
+  return fallback
 }
 
 function findColorOption(value: string) {
@@ -241,8 +254,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       })
 
       if (!response.ok) {
-        const data = await response.json().catch(() => null)
-        throw new Error(data?.error ?? 'Could not save planet')
+        throw new Error(await readResponseError(response, 'Could not save planet'))
       }
 
       setSavedConfig(localConfig)
@@ -278,16 +290,20 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
 
     try {
       const response = await fetch('/api/user/planet-texture', { method: 'POST', body: formData })
-      const data = await response.json().catch(() => null)
 
-      if (!response.ok || typeof data?.url !== 'string') {
-        throw new Error(data?.error ?? 'Upload failed')
+      if (!response.ok) {
+        throw new Error(await readResponseError(response, 'Upload failed'))
+      }
+
+      const data = await response.json().catch(() => null)
+      if (typeof data?.url !== 'string') {
+        throw new Error('The server did not return a texture URL')
       }
 
       updateConfig({ customTextureUrl: data.url })
       setMessage('Texture uploaded')
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Upload failed')
+      setMessage(error instanceof Error ? error.message : 'Upload failed. Check that the app server is running.')
     } finally {
       setUploading(false)
     }
@@ -391,7 +407,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {localConfig.customTextureUrl && (
-                <Image src={localConfig.customTextureUrl} alt="" width={56} height={56} className="h-14 w-14 rounded-full object-cover" />
+                <img src={localConfig.customTextureUrl} alt="" className="h-14 w-14 rounded-full object-cover" />
               )}
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm transition" style={{ color: 'var(--ink)', background: 'rgba(255,255,255,0.04)' }}>
                 <Upload size={16} />
