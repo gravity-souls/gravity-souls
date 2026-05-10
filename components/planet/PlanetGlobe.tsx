@@ -176,7 +176,7 @@ export default function PlanetGlobe({ planetConfig, size = 300 }: Props) {
   }, [])
 
   if (webGLAvailable === false) {
-    return <PlanetAvatar planetConfig={planetConfig} size={size} className="mx-auto" />
+    return <PlanetAvatar planetConfig={planetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />
   }
 
   if (webGLAvailable === null) {
@@ -184,7 +184,7 @@ export default function PlanetGlobe({ planetConfig, size = 300 }: Props) {
   }
 
   return (
-    <PlanetGlobeErrorBoundary fallback={<PlanetAvatar planetConfig={planetConfig} size={size} className="mx-auto" />}>
+    <PlanetGlobeErrorBoundary fallback={<PlanetAvatar planetConfig={planetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />}>
       <Suspense fallback={<GlobeFallback planetConfig={planetConfig} size={size} />}>
         <div className="relative" style={{ width: size, height: size }}>
           <Canvas

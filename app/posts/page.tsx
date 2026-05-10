@@ -33,7 +33,7 @@ export default function PostsPage() {
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <PlanetAvatar textureFile={post.avatarTexture} size={42} glowColor={post.avatarGlow} />
+                  <PlanetAvatar textureFile={post.avatarTexture} size={42} glowColor={post.avatarGlow} rotating />
                   <div className="min-w-0">
                     <Link href={`/planet/${post.planetId}`} className="text-sm font-semibold truncate block" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
                       {post.authorName}

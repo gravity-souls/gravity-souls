@@ -88,6 +88,8 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
             textureFile={resolvePlanetTexture(planet)}
             size={48}
             glowColor={color}
+            rotating
+            rotationDuration={18 + (planet.id.length % 5) * 3}
             showBadge
             level={planet.userLevel}
           />

@@ -582,6 +582,7 @@ export default function MyPlanetPage() {
             textureFile={textureFile}
             size={36}
             glowColor={visual.coreColor}
+            rotating
           />
           <div className="flex flex-col">
             <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>

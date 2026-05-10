@@ -36,7 +36,7 @@ export default async function PostPage({ params }: Props) {
         >
           <div className="flex items-center justify-between gap-4 px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3 min-w-0">
-              <PlanetAvatar textureFile={post.avatarTexture} size={44} glowColor={post.avatarGlow} />
+              <PlanetAvatar textureFile={post.avatarTexture} size={44} glowColor={post.avatarGlow} rotating />
               <div className="min-w-0">
                 <Link href={`/planet/${post.planetId}`} className="text-sm font-semibold truncate block" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>
                   {post.authorName}

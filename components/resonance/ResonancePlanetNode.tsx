@@ -56,6 +56,8 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
           textureFile={resolvePlanetTexture(planet)}
           size={size}
           glowColor={planet.visual.coreColor}
+          rotating
+          rotationDuration={16 + (planet.id.length % 5) * 3}
         />
 
         {/* Score badge */}

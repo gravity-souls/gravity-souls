@@ -912,6 +912,7 @@ export default function GalaxyPage({ params }: Props) {
                             key={planet.id}
                             planet={planet}
                             size={48}
+                            rotating
                             onClick={() => setSelectedPlanet(planet)}
                           />
                         ))}

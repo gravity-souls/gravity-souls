@@ -71,7 +71,7 @@ export default function PlanetAvatar({
             backgroundSize: '210% 100%',
             backgroundPosition: '0% 50%',
             overflow: 'hidden',
-            animation: `shimmer ${rotationDuration}s linear infinite`,
+            animation: `planet-surface-drift ${rotationDuration}s linear infinite`,
           }}
           aria-hidden="true"
         >

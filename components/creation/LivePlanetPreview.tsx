@@ -41,7 +41,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
               boxShadow: `0 0 ${Math.round(size * 0.35)}px ${visual.coreColor}22`,
             }}
           />
-          <PlanetAvatar textureFile={textureFile} size={size} glowColor={visual.coreColor} />
+          <PlanetAvatar textureFile={textureFile} size={size} glowColor={visual.coreColor} rotating />
         </div>
       </div>
 

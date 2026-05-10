@@ -71,6 +71,7 @@ export default function SharedMomentsFeed({ moments, className = '' }: Props) {
                 textureFile={m.avatarTexture}
                 size={32}
                 glowColor={m.avatarGlow}
+                rotating
               />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)' }}>
@@ -136,6 +137,7 @@ export default function SharedMomentsFeed({ moments, className = '' }: Props) {
                   textureFile={selectedMoment.avatarTexture}
                   size={38}
                   glowColor={selectedMoment.avatarGlow}
+                  rotating
                 />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>
