@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import LightCone from '@/components/fx/LightCone'
+import AppShell from '@/components/layout/AppShell'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import GalaxyCard from '@/components/galaxy/GalaxyCard'
@@ -252,7 +253,7 @@ export default function UniversePage() {
   ]
 
   return (
-    <>
+    <AppShell>
       <div className="flex flex-col">
 
         {/* -- Atmospheric light cone ---------------------------------------- */}
@@ -636,6 +637,6 @@ export default function UniversePage() {
         onClose={() => setSelectedPlanet(null)}
         userRole={userRole}
       />
-    </>
+    </AppShell>
   )
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 import { grantXP } from "@/lib/grantXP";
+import { NotificationTemplates } from "@/lib/createNotification";
 
 function serializeReply(reply: {
   id: string;
@@ -226,6 +227,29 @@ export async function POST(
   });
 
   const xpEvent = await grantXP(userId, "POST_CREATED");
+
+  const community = await prisma.community.findUnique({
+    where: { id },
+    select: {
+      name: true,
+      slug: true,
+      memberships: {
+        where: { userId: { not: userId } },
+        select: { userId: true },
+      },
+    },
+  });
+
+  if (community && community.memberships.length > 0) {
+    const template = NotificationTemplates.galaxyNewPost(community.name, `/galaxy/${community.slug}`);
+
+    await prisma.notification.createMany({
+      data: community.memberships.map((member) => ({
+        userId: member.userId,
+        ...template,
+      })),
+    });
+  }
 
   return NextResponse.json({ post: serializePost(post), xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });
 }

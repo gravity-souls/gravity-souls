@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { NotificationTemplates, createNotification } from "@/lib/createNotification";
 
 // GET /api/conversations/[id] - get messages for a conversation
 export async function GET(
@@ -124,6 +125,13 @@ export async function POST(
   await prisma.conversationThread.update({
     where: { id },
     data: { lastMessageAt: new Date() },
+  });
+
+  const recipientId = conversation.userAId === userId ? conversation.userBId : conversation.userAId;
+
+  await createNotification({
+    userId: recipientId,
+    ...NotificationTemplates.resonanceAccepted(session.user.name ?? "A planet", `/messages/${id}`),
   });
 
   return NextResponse.json({

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
-import Nav from '@/components/nav/Nav'
+import Topbar from '@/components/layout/Topbar'
 import CosmicBackground from '@/components/fx/CosmicBackground'
 import StarfieldCanvas from '@/components/fx/StarfieldCanvas'
 import AuthSyncProvider from '@/components/layout/AuthSyncProvider'
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geist.variable} h-full`}>
-      <body className="cosmic-bg min-h-full text-[var(--foreground)] antialiased overflow-x-hidden">
+      <body className="cosmic-bg min-h-full text-foreground antialiased overflow-x-hidden">
         <LanguageProvider>
           <AuthSyncProvider>
             <CosmicBackground />
             <StarfieldCanvas />
-            <Nav />
+            <Topbar />
             <LevelUpToast />
             {/* pt = nav height so content clears the fixed header */}
             <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>

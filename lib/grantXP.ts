@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { XP_EVENTS, type XPEventType, calculateLevel } from '@/lib/xp'
+import { NotificationTemplates, createNotification } from '@/lib/createNotification'
+import { LEVEL_NAMES, XP_EVENTS, type XPEventType, calculateLevel, clampLevel } from '@/lib/xp'
 
 export async function grantXP(
   userId: string,
@@ -45,6 +46,11 @@ export async function grantXP(
     await prisma.user.update({
       where: { id: userId },
       data: { userLevel: newLevel },
+    })
+
+    await createNotification({
+      userId,
+      ...NotificationTemplates.levelUp(newLevel, LEVEL_NAMES[clampLevel(newLevel)]),
     })
   }
 

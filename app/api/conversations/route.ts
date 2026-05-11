@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { grantXP } from "@/lib/grantXP";
+import { NotificationTemplates, createNotification } from "@/lib/createNotification";
 
 // GET /api/conversations - list all conversations for the current user
 export async function GET() {
@@ -142,6 +143,11 @@ export async function POST(request: Request) {
   });
 
   const xpEvent = await grantXP(userId, "RESONANCE_SENT");
+
+  await createNotification({
+    userId: recipientId,
+    ...NotificationTemplates.resonanceReceived(session.user.name ?? "A planet", `/messages/${conversation.id}`),
+  });
 
   return NextResponse.json({ conversationId: conversation.id, message: msg, xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });
 }

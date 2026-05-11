@@ -45,6 +45,32 @@ model user {
   communityDiscussions CommunityDiscussion[]
   communityDiscussionReplies CommunityDiscussionReply[]
   xpEvents XPEvent[]
+  notifications Notification[]
+}
+
+enum NotificationType {
+  RESONANCE_RECEIVED
+  RESONANCE_ACCEPTED
+  GALAXY_NEW_POST
+  GALAXY_NEW_EVENT
+  EVENT_REMINDER
+  LEVEL_UP
+  NEW_MATCH
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  read      Boolean          @default(false)
+  actionUrl String?
+  createdAt DateTime         @default(now())
+  user      user             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
 }
 
 model XPEvent {

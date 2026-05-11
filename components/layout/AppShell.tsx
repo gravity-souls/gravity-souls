@@ -50,7 +50,7 @@ interface Props {
  *     )
  *   }
  */
-export default function AppShell({ children, defaultExpanded = false, noSideNav = false }: Props) {
+export default function AppShell({ children, defaultExpanded = true, noSideNav = false }: Props) {
   const [collapsed, setCollapsed] = useState(!defaultExpanded)
 
   const toggleSideNav = () => setCollapsed((c) => !c)
