@@ -46,6 +46,9 @@ model user {
   communityDiscussionReplies CommunityDiscussionReply[]
   xpEvents XPEvent[]
   notifications Notification[]
+  proposedEvents Event[] @relation("ProposedEvents")
+  eventRSVPs EventRSVP[]
+  createdCommunities Community[] @relation("CommunityCreator")
 }
 
 enum NotificationType {
@@ -251,6 +254,8 @@ model Community {
   mood        String   @default("vibrant")
   accentColor String   @default("#6366f1")
   maturity    String   @default("forming")
+  creatorId   String?
+  creator     user?    @relation("CommunityCreator", fields: [creatorId], references: [id], onDelete: SetNull)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -258,14 +263,21 @@ model Community {
   memberships CommunityMembership[]
   posts       CommunityPost[]
   discussions CommunityDiscussion[]
+  events      Event[]
 
   @@map("community")
+}
+
+enum CommunityRole {
+  MEMBER
+  ADMIN
 }
 
 model CommunityMembership {
   id          String    @id @default(cuid())
   userId      String
   communityId String
+  role        CommunityRole @default(MEMBER)
   user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
   community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
@@ -273,6 +285,60 @@ model CommunityMembership {
 
   @@unique([userId, communityId])
   @@map("community_membership")
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  galaxyId     String
+  proposerId   String
+  title        String
+  description  String
+  date         DateTime
+  location     String?
+  onlineUrl    String?
+  maxAttendees Int?
+  category     EventCategory
+  status       EventStatus   @default(PENDING)
+  coverImage   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  galaxy       Community     @relation(fields: [galaxyId], references: [id], onDelete: Cascade)
+  proposer     user          @relation("ProposedEvents", fields: [proposerId], references: [id], onDelete: Cascade)
+  rsvps        EventRSVP[]
+
+  @@index([galaxyId, status, date])
+  @@index([proposerId, createdAt])
+  @@map("event")
+}
+
+model EventRSVP {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId, createdAt])
+  @@map("event_rsvp")
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PASSED
+}
+
+enum EventCategory {
+  MEETUP
+  ONLINE
+  WORKSHOP
+  STARGAZING
+  DISCUSSION
+  OTHER
 }
 
 model CommunityPost {

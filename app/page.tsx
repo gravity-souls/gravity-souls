@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import EventCard from '@/components/events/EventCard'
+import EventDetail from '@/components/events/EventDetail'
 import LightCone from '@/components/fx/LightCone'
 import AppShell from '@/components/layout/AppShell'
 import PlanetCard from '@/components/planet/PlanetCard'
@@ -15,6 +17,7 @@ import { getUserRole } from '@/lib/user'
 import { authClient } from '@/lib/auth-client'
 import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 
@@ -120,8 +123,10 @@ export default function UniversePage() {
   const router = useRouter()
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
+  const [upcomingEvent, setUpcomingEvent] = useState<GalaxyEventSummary | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -179,6 +184,39 @@ export default function UniversePage() {
       .catch(() => {})
     return () => { cancelled = true }
   }, [session])
+
+  useEffect(() => {
+    if (sessionPending || !session?.user) {
+      let cancelled = false
+      Promise.resolve().then(() => {
+        if (!cancelled) setUpcomingEvent(null)
+      })
+      return () => { cancelled = true }
+    }
+
+    let cancelled = false
+    fetch('/api/user/upcoming-events')
+      .then((res) => res.ok ? res.json() : { event: null })
+      .then((data: { event?: GalaxyEventSummary | null }) => {
+        if (!cancelled) setUpcomingEvent(data.event ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setUpcomingEvent(null)
+      })
+    return () => { cancelled = true }
+  }, [session, sessionPending])
+
+  async function openUpcomingEvent(event: GalaxyEventSummary) {
+    const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`)
+    if (!res.ok) return
+    const data = await res.json() as { event: GalaxyEventDetail }
+    setSelectedEvent(data.event)
+  }
+
+  function applyUpcomingRSVPChange(eventId: string, state: { rsvpCount: number; userHasRSVPed: boolean }) {
+    setUpcomingEvent((event) => event?.id === eventId ? { ...event, ...state } : event)
+    setSelectedEvent((event) => event?.id === eventId ? { ...event, ...state, spotsRemaining: event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - state.rsvpCount) } : event)
+  }
 
   // --- Nearby planets state ---------------------------------------------------
   const [nearbyPlanets, setNearbyPlanets] = useState<PlanetProfile[]>([])
@@ -536,6 +574,21 @@ export default function UniversePage() {
           </div>
         </section>
 
+        {upcomingEvent && (
+          <section className="px-6 py-14">
+            <div className="max-w-3xl mx-auto">
+              <SectionHeader
+                eyebrow="Upcoming activity"
+                title="Next orbit"
+                subtitle="The nearest approved event in your joined galaxies."
+              />
+              <div className="mt-6">
+                <EventCard event={upcomingEvent} compact onOpen={openUpcomingEvent} onRSVPChange={applyUpcomingRSVPChange} />
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ===============================================================
             SECTION 3  -  Bottom CTA (Explorer vs Resonator)
         =============================================================== */}
@@ -636,6 +689,13 @@ export default function UniversePage() {
         open={!!selectedPlanet}
         onClose={() => setSelectedPlanet(null)}
         userRole={userRole}
+      />
+      <EventDetail
+        event={selectedEvent}
+        open={!!selectedEvent}
+        isAdmin={false}
+        onClose={() => setSelectedEvent(null)}
+        onRSVPChange={applyUpcomingRSVPChange}
       />
     </AppShell>
   )

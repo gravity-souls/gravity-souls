@@ -19,19 +19,21 @@ export async function GET() {
     userId
       ? prisma.communityMembership.findMany({
           where: { userId },
-          select: { communityId: true },
+          select: { communityId: true, role: true },
         })
       : Promise.resolve([]),
   ]);
 
-  const joinedIds = new Set(memberships.map((m: { communityId: string }) => m.communityId));
+  const membershipsByCommunityId = new Map(memberships.map((m: { communityId: string; role?: string }) => [m.communityId, m]));
 
   const result = communities.map((c) => {
     const { _count, ...rest } = c;
+    const membership = membershipsByCommunityId.get(c.id);
     return {
       ...rest,
       memberCount: _count.memberships,
-      joined: joinedIds.has(c.id),
+      joined: !!membership,
+      isAdmin: c.creatorId === userId || membership?.role === "ADMIN",
     };
   });
 

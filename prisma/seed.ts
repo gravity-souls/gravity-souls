@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { EventCategory, EventStatus, PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -59,6 +59,87 @@ const communities = [
   },
 ];
 
+const seededEvents = [
+  {
+    id: "seed-event-deep-thinkers-reading-circle",
+    galaxySlug: "deep-thinkers",
+    title: "Slow Reading Circle: Notes from the Underground",
+    description: "A quiet discussion for readers who enjoy difficult questions, marginal notes, and generous pauses.",
+    dayOffset: 6,
+    hour: 20,
+    minute: 0,
+    location: "Librairie Tropismes, Brussels",
+    maxAttendees: 18,
+    category: EventCategory.DISCUSSION,
+    status: EventStatus.APPROVED,
+  },
+  {
+    id: "seed-event-creative-nebula-showcase",
+    galaxySlug: "creative-nebula",
+    title: "Tiny Works Showcase",
+    description: "Bring one unfinished sketch, song loop, poem, photo set, or strange little experiment for a gentle peer showcase.",
+    dayOffset: 13,
+    hour: 18,
+    minute: 30,
+    location: "Atelier Volta, Paris",
+    maxAttendees: 28,
+    category: EventCategory.MEETUP,
+    status: EventStatus.APPROVED,
+  },
+  {
+    id: "seed-event-tech-forge-open-source-night",
+    galaxySlug: "tech-forge",
+    title: "Open Source Night Shift",
+    description: "A focused build session for maintainers, first-time contributors, and anyone who wants to ship a small useful patch.",
+    dayOffset: 21,
+    hour: 19,
+    minute: 0,
+    onlineUrl: "https://meet.gravitysouls.dev/open-source-night",
+    maxAttendees: 40,
+    category: EventCategory.ONLINE,
+    status: EventStatus.APPROVED,
+  },
+  {
+    id: "seed-event-nomadic-stars-coffee-walk",
+    galaxySlug: "nomadic-stars",
+    title: "Lisbon Coffee Walk",
+    description: "A relaxed route through three small cafes, with map swaps, language tips, and stories from recent arrivals.",
+    dayOffset: 31,
+    hour: 10,
+    minute: 30,
+    location: "Praca das Flores, Lisbon",
+    maxAttendees: 16,
+    category: EventCategory.MEETUP,
+    status: EventStatus.APPROVED,
+  },
+  {
+    id: "seed-event-quiet-orbits-night-sky",
+    galaxySlug: "quiet-orbits",
+    title: "Night Sky Listening Session",
+    description: "A low-pressure evening outside the city with warm drinks, ambient playlists, and room for comfortable silence.",
+    dayOffset: -9,
+    hour: 22,
+    minute: 0,
+    location: "Foret de Soignes, Brussels",
+    maxAttendees: 14,
+    category: EventCategory.STARGAZING,
+    status: EventStatus.PASSED,
+  },
+  {
+    id: "seed-event-creative-nebula-zine-table",
+    galaxySlug: "creative-nebula",
+    title: "Zine Table and Print Swap",
+    description: "A hands-on afternoon of folding, cutting, trading prints, and turning half-formed ideas into pocket-sized artifacts.",
+    dayOffset: -18,
+    hour: 15,
+    minute: 0,
+    location: "Le Signe, Paris",
+    maxAttendees: 22,
+    category: EventCategory.WORKSHOP,
+    status: EventStatus.PASSED,
+  },
+];
+
 // ── Seed user (owner for mock planets) ────────────────────────────────────
 
 const SEED_USER_ID = "seed-user-gravity-souls";
@@ -68,6 +149,13 @@ const SEED_USER = {
   email: "seed@gravitysouls.com",
   emailVerified: false,
 };
+
+function makeSeedEventDate(dayOffset: number, hour: number, minute: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  date.setHours(hour, minute, 0, 0);
+  return date;
+}
 
 // ── Mock planets ──────────────────────────────────────────────────────────
 
@@ -195,26 +283,87 @@ const planets = [
 ];
 
 async function main() {
-  console.log("Seeding communities...");
-
-  for (const c of communities) {
-    await prisma.community.upsert({
-      where: { slug: c.slug },
-      update: c,
-      create: c,
-    });
-  }
-
-  console.log(`Seeded ${communities.length} communities.`);
-
-  // Seed user for mock planets
-  console.log("Seeding seed user + planets...");
+  // Seed user for mock planets and community ownership
+  console.log("Seeding seed user...");
 
   await prisma.user.upsert({
     where: { id: SEED_USER_ID },
     update: { name: SEED_USER.name, email: SEED_USER.email },
     create: SEED_USER,
   });
+
+  console.log("Seeding communities...");
+
+  const communityBySlug = new Map<string, { id: string; name: string }>();
+
+  for (const communitySeed of communities) {
+    const community = await prisma.community.upsert({
+      where: { slug: communitySeed.slug },
+      update: { ...communitySeed, creatorId: SEED_USER_ID },
+      create: { ...communitySeed, creatorId: SEED_USER_ID },
+    });
+
+    communityBySlug.set(community.slug, { id: community.id, name: community.name });
+
+    await prisma.communityMembership.upsert({
+      where: { userId_communityId: { userId: SEED_USER_ID, communityId: community.id } },
+      update: { role: "ADMIN" },
+      create: { userId: SEED_USER_ID, communityId: community.id, role: "ADMIN" },
+    });
+  }
+
+  console.log(`Seeded ${communities.length} communities.`);
+
+  console.log("Seeding galaxy events...");
+
+  for (const eventSeed of seededEvents) {
+    const community = communityBySlug.get(eventSeed.galaxySlug);
+
+    if (!community) {
+      throw new Error(`Missing community for event seed: ${eventSeed.galaxySlug}`);
+    }
+
+    const eventDate = makeSeedEventDate(eventSeed.dayOffset, eventSeed.hour, eventSeed.minute);
+    const event = await prisma.event.upsert({
+      where: { id: eventSeed.id },
+      update: {
+        galaxyId: community.id,
+        proposerId: SEED_USER_ID,
+        title: eventSeed.title,
+        description: eventSeed.description,
+        date: eventDate,
+        location: eventSeed.location ?? null,
+        onlineUrl: eventSeed.onlineUrl ?? null,
+        maxAttendees: eventSeed.maxAttendees,
+        category: eventSeed.category,
+        status: eventSeed.status,
+      },
+      create: {
+        id: eventSeed.id,
+        galaxyId: community.id,
+        proposerId: SEED_USER_ID,
+        title: eventSeed.title,
+        description: eventSeed.description,
+        date: eventDate,
+        location: eventSeed.location ?? null,
+        onlineUrl: eventSeed.onlineUrl ?? null,
+        maxAttendees: eventSeed.maxAttendees,
+        category: eventSeed.category,
+        status: eventSeed.status,
+      },
+    });
+
+    await prisma.eventRSVP.upsert({
+      where: { eventId_userId: { eventId: event.id, userId: SEED_USER_ID } },
+      update: {},
+      create: { eventId: event.id, userId: SEED_USER_ID },
+    });
+  }
+
+  console.log(`Seeded ${seededEvents.length} galaxy events.`);
+
+  // Seed user for mock planets
+  console.log("Seeding seed user + planets...");
 
   for (const p of planets) {
     // Use upsert on a unique key; since there's no unique slug, check by name+userId

@@ -22,21 +22,25 @@ export interface ActivityEvent {
 interface Props {
   event: ActivityEvent
   className?: string
+  onOpen?: () => void
+  compact?: boolean
 }
 
 /**
  * UpcomingActivityCard — displays a single upcoming event/activity
  * with cover image, title, date/time, location, and tags.
  */
-export default function UpcomingActivityCard({ event, className = '' }: Props) {
+export default function UpcomingActivityCard({ event, className = '', onOpen, compact = false }: Props) {
   const accent = event.accentColor ?? '#a78bfa'
   const date = new Date(event.date)
-  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const dateStr = date.toLocaleDateString('en-US', compact
+    ? { weekday: 'short', month: 'short', day: 'numeric' }
+    : { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
   const ctaStyle = {
     background: `linear-gradient(135deg, ${accent}44 0%, ${accent}22 100%)`,
     border: `1px solid ${accent}44`,
     color: 'var(--foreground)',
-    cursor: event.href ? 'pointer' : 'default',
+    cursor: event.href || onOpen ? 'pointer' : 'default',
     textDecoration: 'none',
   }
 
@@ -49,7 +53,7 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
       }}
     >
       {/* Cover image */}
-      {event.imageUrl && (
+      {event.imageUrl && !compact && (
         <div className="relative w-full h-32 overflow-hidden">
           <Image
             src={event.imageUrl}
@@ -68,9 +72,9 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
       )}
 
       {/* Content */}
-      <div className="p-4 flex flex-col gap-3">
+      <div className={`${compact ? 'p-3 gap-2.5' : 'p-4 gap-3'} flex flex-col`}>
         <div>
-          <h4 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+          <h4 className={`${compact ? 'line-clamp-2 text-xs' : 'text-sm'} font-semibold`} style={{ color: 'var(--foreground)' }}>
             {event.title}
           </h4>
           {event.subtitle && (
@@ -122,10 +126,19 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
         )}
 
         {/* CTA */}
-        {event.href ? (
+        {onOpen ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all text-center`}
+            style={ctaStyle}
+          >
+            View details &amp; RSVP
+          </button>
+        ) : event.href ? (
           <Link
             href={event.href}
-            className="w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all text-center"
+            className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all text-center`}
             style={ctaStyle}
           >
             View details &amp; RSVP
@@ -134,7 +147,7 @@ export default function UpcomingActivityCard({ event, className = '' }: Props) {
           <button
             type="button"
             disabled
-            className="w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all opacity-60"
+            className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all opacity-60`}
             style={ctaStyle}
           >
             Details coming soon

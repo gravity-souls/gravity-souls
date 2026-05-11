@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -14,6 +15,7 @@ import LevelBadge from '@/components/planet/LevelBadge'
 import XPProgressBar from '@/components/planet/XPProgressBar'
 import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
+import EventDetail from '@/components/events/EventDetail'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
@@ -25,6 +27,7 @@ import { mockPlanets } from '@/lib/mock-planets'
 import { getSharedPostsForPlanets } from '@/lib/mock-posts'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
+import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
 
 interface XPSummary {
@@ -99,18 +102,13 @@ function planetConfigFromSource(source: unknown, planet: PlanetProfile): PlanetC
   }
 }
 
-// --- Mock data for dashboard sections ----------------------------------------
-
-const MOCK_ACTIVITY: ActivityEvent = {
-  id: 'evt-001',
-  title: 'Stargazers Gathering',
-  subtitle: 'Night Sky Watch Party',
-  date: '2026-05-30',
-  time: '8:30 PM',
-  location: 'Echo Ridge, Blue Mountains',
-  tags: ['Night Walk', 'Outdoors'],
-  accentColor: '#a78bfa',
-  href: '/galaxy/slow-thinkers',
+const CATEGORY_LABELS: Record<EventCategory, string> = {
+  MEETUP: 'Meetup',
+  ONLINE: 'Online',
+  WORKSHOP: 'Workshop',
+  STARGAZING: 'Stargazing',
+  DISCUSSION: 'Discussion',
+  OTHER: 'Other',
 }
 
 function getRecommendedGalaxies(): GalaxyPreview[] {
@@ -133,6 +131,22 @@ function fallbackResonanceScore(id: string): number {
   return 40 + (seed % 51)
 }
 
+function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string): ActivityEvent {
+  const date = new Date(event.date)
+
+  return {
+    id: event.id,
+    title: event.title,
+    subtitle: event.galaxy?.name ?? event.description,
+    date: event.date,
+    time: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date),
+    location: event.location ?? (event.onlineUrl ? 'Online' : undefined),
+    tags: [CATEGORY_LABELS[event.category], event.userHasRSVPed ? 'Going' : 'Open'],
+    imageUrl: event.coverImage ?? undefined,
+    accentColor: event.galaxy?.accentColor ?? fallbackAccent,
+  }
+}
+
 // --- Page --------------------------------------------------------------------
 
 export default function MyPlanetPage() {
@@ -140,6 +154,8 @@ export default function MyPlanetPage() {
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
+  const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [customizerOpen, setCustomizerOpen] = useState(false)
   const hydrated = useHydrated()
   const isDesktop = useIsDesktop()
@@ -229,6 +245,18 @@ export default function MyPlanetPage() {
           }
         } catch {
           // XP is available for authenticated users only.
+        }
+
+        try {
+          const upcomingRes = await fetch('/api/user/upcoming-events?limit=2')
+          if (upcomingRes.ok) {
+            const upcomingData = await upcomingRes.json() as { event?: GalaxyEventSummary | null; events?: GalaxyEventSummary[] }
+            setUpcomingEvents(upcomingData.events ?? (upcomingData.event ? [upcomingData.event] : []))
+          } else {
+            setUpcomingEvents([])
+          }
+        } catch {
+          setUpcomingEvents([])
         }
 
         // Fetch real planets for resonance map
@@ -342,6 +370,19 @@ export default function MyPlanetPage() {
   function handleCustomizerSaved(planetConfig: PlanetConfig) {
     setStoredUser((user) => ({ planetConfig, userLevel: user?.userLevel ?? currentUser.userLevel }))
     setCustomizerOpen(false)
+  }
+
+  async function openUpcomingEvent(event: GalaxyEventSummary) {
+    const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`)
+    if (!res.ok) return
+
+    const data = await res.json() as { event: GalaxyEventDetail }
+    setSelectedEvent(data.event)
+  }
+
+  function applyUpcomingRSVPChange(eventId: string, state: { rsvpCount: number; userHasRSVPed: boolean }) {
+    setUpcomingEvents((events) => events.map((event) => event.id === eventId ? { ...event, ...state } : event))
+    setSelectedEvent((event) => event?.id === eventId ? { ...event, ...state, spotsRemaining: event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - state.rsvpCount) } : event)
   }
 
   return (
@@ -519,14 +560,35 @@ export default function MyPlanetPage() {
             <ResonantMatchesCarousel matches={matchEntries} />
           </OrbitCard>
 
-          {/* -- Upcoming Activity -- */}
+          {/* -- Upcoming Events -- */}
           <OrbitCard glowColor="#a78bfa" className="lg:col-span-3 p-0 overflow-hidden">
-            <div className="p-4 pb-0">
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--foreground)' }}>
-                Upcoming Activity
-              </h3>
+            <div className="flex items-center justify-between gap-3 p-4 pb-0">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--foreground)' }}>
+                  Upcoming Events
+                </h3>
+                {upcomingEvents.length > 0 && (
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--ghost)' }}>Next {upcomingEvents.length}</p>
+                )}
+              </div>
+              <Link href="/galaxies/events" className="rounded-full px-3 py-1.5 text-[10px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
+                View all
+              </Link>
             </div>
-            <UpcomingActivityCard event={MOCK_ACTIVITY} />
+            {upcomingEvents.length > 0 ? (
+              <div className="grid gap-3 px-4 pb-4 pt-3">
+                {upcomingEvents.map((event) => (
+                  <UpcomingActivityCard key={event.id} event={toActivityEvent(event, visual.coreColor)} compact onOpen={() => openUpcomingEvent(event)} />
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 pb-4">
+                <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>No upcoming event</p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>Join a galaxy or RSVP to an approved event to see it here.</p>
+                </div>
+              </div>
+            )}
           </OrbitCard>
         </div>
 
@@ -603,6 +665,13 @@ export default function MyPlanetPage() {
         </div>
 
       </div>
+      <EventDetail
+        event={selectedEvent}
+        open={!!selectedEvent}
+        isAdmin={false}
+        onClose={() => setSelectedEvent(null)}
+        onRSVPChange={applyUpcomingRSVPChange}
+      />
     </AppShell>
   )
 }

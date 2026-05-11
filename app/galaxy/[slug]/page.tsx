@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AppShell from '@/components/layout/AppShell'
+import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import LockedLayer from '@/components/ui/LockedLayer'
@@ -17,6 +18,7 @@ interface CommunityRow {
   slug: string
   name: string
   joined: boolean
+  isAdmin?: boolean
 }
 
 interface CommunityPost {
@@ -706,6 +708,7 @@ export default function GalaxyPage({ params }: Props) {
 
   const discussions = discussionTopics.length > 0 ? discussionTopics : (DISCUSSION_TOPICS[resolvedSlug] ?? [])
   const { accentColor } = galaxy
+  const isGalaxyAdmin = community?.isAdmin ?? false
   const selectedDiscussionReplies = selectedTopic
     ? discussionReplyOverrides[getDiscussionKey(resolvedSlug, selectedTopic.title)] ?? selectedTopic.replyItems ?? getDiscussionReplies(resolvedSlug, selectedTopic)
     : []
@@ -926,6 +929,15 @@ export default function GalaxyPage({ params }: Props) {
                       <p className="text-sm" style={{ color: 'var(--ghost)' }}>No active planets yet.</p>
                     </div>
                   )}
+                </section>
+
+                {/* Events */}
+                <section>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-data-label">Events</p>
+                    {isGalaxyAdmin && <span className="text-xs" style={{ color: accentColor }}>Admin</span>}
+                  </div>
+                  <EventsTab galaxyId={community?.id ?? null} isAdmin={isGalaxyAdmin} canPropose={communityJoined || isGalaxyAdmin} />
                 </section>
 
                 {/* Discussions */}
