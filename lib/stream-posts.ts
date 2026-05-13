@@ -8,6 +8,7 @@ import { PostCategory, type Post } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
+import type { StreamComment } from '@/types/stream'
 
 export const POST_PAGE_SIZE = 20
 export const COMMENT_PAGE_SIZE = 20
@@ -70,9 +71,13 @@ export type StreamActivePlanetInclude = {
 export type StreamCommentInclude = {
   id: string
   postId: string
+  parentId: string | null
   content: string
+  likeCount: number
   createdAt: Date
   author: StreamAuthorInclude
+  likes?: { userId: string }[]
+  replies?: StreamCommentInclude[]
 }
 
 export async function getOptionalSession() {
@@ -155,15 +160,19 @@ export async function uploadStreamMedia(files: File[], userId: string) {
   return { mediaUrls, mediaTypes }
 }
 
-export function serializeComment(comment: StreamCommentInclude) {
+export function serializeComment(comment: StreamCommentInclude, userId?: string | null): StreamComment {
   const author = serializeAuthor(comment.author)
 
   return {
     id: comment.id,
     postId: comment.postId,
+    parentId: comment.parentId,
     content: comment.content,
+    likeCount: comment.likeCount,
     createdAt: comment.createdAt.toISOString(),
     author,
+    userHasLiked: userId ? (comment.likes?.some((like) => like.userId === userId) ?? false) : false,
+    ...(comment.replies ? { replies: comment.replies.map((reply) => serializeComment(reply, userId)) } : {}),
   }
 }
 
@@ -184,7 +193,7 @@ export function serializePost(post: StreamPostInclude, userId?: string | null) {
     updatedAt: post.updatedAt.toISOString(),
     author,
     userHasLiked: userId ? (post.likes?.some((like) => like.userId === userId) ?? false) : false,
-    ...(post.comments ? { comments: post.comments.map(serializeComment) } : {}),
+    ...(post.comments ? { comments: post.comments.map((comment) => serializeComment(comment, userId)) } : {}),
   }
 }
 

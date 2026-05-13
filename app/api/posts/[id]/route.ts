@@ -32,9 +32,20 @@ export async function GET(
       author: { select: AUTHOR_SELECT },
       likes: userId ? { where: { userId }, select: { userId: true } } : { take: 0, select: { userId: true } },
       comments: {
+        where: { parentId: null },
         orderBy: { createdAt: 'desc' },
         take: 20,
-        include: { author: { select: AUTHOR_SELECT } },
+        include: {
+          author: { select: AUTHOR_SELECT },
+          likes: userId ? { where: { userId }, select: { userId: true } } : { take: 0, select: { userId: true } },
+          replies: {
+            orderBy: { createdAt: 'asc' },
+            include: {
+              author: { select: AUTHOR_SELECT },
+              likes: userId ? { where: { userId }, select: { userId: true } } : { take: 0, select: { userId: true } },
+            },
+          },
+        },
       },
     },
   })

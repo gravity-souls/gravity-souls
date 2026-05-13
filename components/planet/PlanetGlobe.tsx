@@ -165,7 +165,15 @@ function PlanetScene({ planetConfig, sceneScale }: { planetConfig: PlanetConfig;
 
 export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero' }: Props) {
   const [webGLAvailable, setWebGLAvailable] = useState<boolean | null>(null)
+  const [checkedCustomTexture, setCheckedCustomTexture] = useState<{ source?: string; url?: string }>({})
+  const customTextureUrl = planetConfig.customTextureUrl
+  const availableCustomTextureUrl = customTextureUrl && !customTextureUrl.startsWith('/')
+    ? customTextureUrl
+    : checkedCustomTexture.source === customTextureUrl
+      ? checkedCustomTexture.url
+      : undefined
   const sceneScale = framing === 'avatar' ? 0.9 : 0.58
+  const renderPlanetConfig = { ...planetConfig, customTextureUrl: availableCustomTextureUrl }
 
   useEffect(() => {
     let cancelled = false
@@ -177,17 +185,34 @@ export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero'
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+
+    if (!customTextureUrl) return () => { cancelled = true }
+    if (!customTextureUrl.startsWith('/')) return () => { cancelled = true }
+
+    fetch(customTextureUrl, { method: 'HEAD' })
+      .then((response) => {
+        if (!cancelled) setCheckedCustomTexture({ source: customTextureUrl, url: response.ok ? customTextureUrl : undefined })
+      })
+      .catch(() => {
+        if (!cancelled) setCheckedCustomTexture({ source: customTextureUrl, url: undefined })
+      })
+
+    return () => { cancelled = true }
+  }, [customTextureUrl])
+
   if (webGLAvailable === false) {
-    return <PlanetAvatar planetConfig={planetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />
+    return <PlanetAvatar planetConfig={renderPlanetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />
   }
 
   if (webGLAvailable === null) {
-    return <GlobeFallback planetConfig={planetConfig} size={size} />
+    return <GlobeFallback planetConfig={renderPlanetConfig} size={size} />
   }
 
   return (
-    <PlanetGlobeErrorBoundary fallback={<PlanetAvatar planetConfig={planetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />}>
-      <Suspense fallback={<GlobeFallback planetConfig={planetConfig} size={size} />}>
+    <PlanetGlobeErrorBoundary fallback={<PlanetAvatar planetConfig={renderPlanetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />}>
+      <Suspense fallback={<GlobeFallback planetConfig={renderPlanetConfig} size={size} />}>
         <div className="relative" style={{ width: size, height: size }}>
           <Canvas
             camera={{ position: [0, 0, 2.8], fov: 45 }}
@@ -196,7 +221,7 @@ export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero'
             onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
           >
             <Suspense fallback={null}>
-              <PlanetScene planetConfig={planetConfig} sceneScale={sceneScale} />
+              <PlanetScene planetConfig={renderPlanetConfig} sceneScale={sceneScale} />
             </Suspense>
           </Canvas>
         </div>

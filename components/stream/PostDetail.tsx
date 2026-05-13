@@ -4,10 +4,10 @@
 
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { Heart, LoaderCircle, Share2, Trash2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Heart, LoaderCircle, Reply, Share2, Trash2, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import LevelBadge from '@/components/planet/LevelBadge'
-import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
 import type { StreamComment, StreamPost } from '@/types/stream'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
@@ -34,10 +34,13 @@ function timeAgo(value: string) {
 export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated }: PostDetailProps) {
   const [detail, setDetail] = useState<StreamPost | null>(post)
   const [commentText, setCommentText] = useState('')
+  const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null)
   const [commentCursor, setCommentCursor] = useState<string | null>(null)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [shared, setShared] = useState(false)
+  const [expandedReplyThreads, setExpandedReplyThreads] = useState<Record<string, boolean>>({})
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     if (!open || !post) return
@@ -49,6 +52,8 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
         const comments = data.post?.comments ?? []
         setCommentCursor(comments.length === 20 ? comments[comments.length - 1]?.id ?? null : null)
       })
+    setReplyTarget(null)
+      setExpandedReplyThreads({})
   }, [open, post])
 
   if (!open || !detail) return null
@@ -83,20 +88,126 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
     if (!detail || !commentText.trim()) return
     setSubmittingComment(true)
     try {
+      const parentId = replyTarget?.id ?? null
       const res = await fetch(`/api/posts/${detail.id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: commentText.trim() }),
+        body: JSON.stringify(parentId ? { content: commentText.trim(), parentId } : { content: commentText.trim() }),
       })
       const data = await res.json() as { comment?: StreamComment }
       if (!res.ok || !data.comment) return
-      const updated = { ...detail, comments: [data.comment, ...(detail.comments ?? [])], commentCount: detail.commentCount + 1 }
+      const updatedComments = data.comment.parentId
+        ? (detail.comments ?? []).map((comment) => (
+          comment.id === data.comment?.parentId
+            ? { ...comment, replies: [...(comment.replies ?? []), data.comment] }
+            : comment
+        ))
+        : [data.comment, ...(detail.comments ?? [])]
+      const updated = { ...detail, comments: updatedComments, commentCount: detail.commentCount + 1 }
       setDetail(updated)
       setCommentText('')
+      setReplyTarget(null)
       onPostUpdated?.(updated)
     } finally {
       setSubmittingComment(false)
     }
+  }
+
+  function startReply(comment: StreamComment) {
+    setReplyTarget({ id: comment.id, authorName: comment.author.name })
+    window.requestAnimationFrame(() => commentInputRef.current?.focus())
+  }
+
+  function updateCommentById(comments: StreamComment[], commentId: string, updater: (comment: StreamComment) => StreamComment) {
+    return comments.map((comment) => {
+      if (comment.id === commentId) return updater(comment)
+      if (!comment.replies?.length) return comment
+
+      return {
+        ...comment,
+        replies: comment.replies.map((reply) => reply.id === commentId ? updater(reply) : reply),
+      }
+    })
+  }
+
+  async function toggleCommentLike(comment: StreamComment) {
+    if (!detail) return
+    if (!currentUserId) {
+      window.location.href = `/sign-in?next=/stream/${detail.id}`
+      return
+    }
+
+    const previous = detail
+    const optimisticComments = updateCommentById(detail.comments ?? [], comment.id, (targetComment) => ({
+      ...targetComment,
+      userHasLiked: !targetComment.userHasLiked,
+      likeCount: Math.max(0, targetComment.likeCount + (targetComment.userHasLiked ? -1 : 1)),
+    }))
+    const optimistic = { ...detail, comments: optimisticComments }
+    setDetail(optimistic)
+    onPostUpdated?.(optimistic)
+
+    try {
+      const res = await fetch(`/api/posts/${detail.id}/comments/${comment.id}/like`, { method: 'POST' })
+      if (!res.ok) throw new Error('comment like failed')
+      const data = await res.json() as { liked: boolean; likeCount: number }
+      const updated = {
+        ...optimistic,
+        comments: updateCommentById(optimistic.comments ?? [], comment.id, (targetComment) => ({
+          ...targetComment,
+          userHasLiked: data.liked,
+          likeCount: data.likeCount,
+        })),
+      }
+      setDetail(updated)
+      onPostUpdated?.(updated)
+    } catch {
+      setDetail(previous)
+      onPostUpdated?.(previous)
+    }
+  }
+
+  function renderCommentAvatar(comment: StreamComment, size: number) {
+    const avatar = (
+      <div className="relative grid shrink-0 place-items-center overflow-hidden rounded-full" style={{ width: size, height: size }}>
+        <PlanetGlobe planetConfig={comment.author.planetConfig} size={size} framing="avatar" />
+      </div>
+    )
+
+    return comment.author.planetId ? (
+      <Link href={`/planet/${comment.author.planetId}`} aria-label={`Visit ${comment.author.name}'s planet`}>
+        {avatar}
+      </Link>
+    ) : avatar
+  }
+
+  function renderCommentMeta(comment: StreamComment) {
+    const level = clampLevel(comment.author.userLevel)
+
+    return (
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-semibold">
+        {comment.author.planetId ? (
+          <Link href={`/planet/${comment.author.planetId}`} style={{ color: 'var(--foreground)', textDecoration: 'none' }}>{comment.author.name}</Link>
+        ) : <span style={{ color: 'var(--foreground)' }}>{comment.author.name}</span>}
+        <span style={{ color: 'var(--ghost)', fontWeight: 400 }}>{level} {LEVEL_NAMES[level]}</span>
+        <span style={{ color: 'var(--ghost)', fontWeight: 400 }}>{timeAgo(comment.createdAt)}</span>
+      </p>
+    )
+  }
+
+  function renderCommentActions(comment: StreamComment) {
+    return (
+      <div className="mt-1 flex items-center gap-3">
+        <button type="button" onClick={() => toggleCommentLike(comment)} className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: comment.userHasLiked ? '#fb7185' : 'var(--ghost)' }}>
+          <Heart size={12} fill={comment.userHasLiked ? 'currentColor' : 'none'} /> {comment.likeCount}
+        </button>
+        {currentUserId && (
+          <button type="button" onClick={() => startReply(comment)} className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: replyTarget?.id === comment.id ? '#fff' : 'var(--star)' }}>
+            <Reply size={12} /> Reply
+          </button>
+        )}
+      </div>
+    )
   }
 
   async function loadMoreComments() {
@@ -186,27 +297,69 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
           </div>
 
           <div className="mt-4 flex-1 overflow-y-auto">
-            <p className="text-data-label mb-3">Comments</p>
+            <p className="text-data-label mb-3">Comments ({detail.commentCount})</p>
             <div className="grid gap-3">
-              {(detail.comments ?? []).map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <PlanetAvatar planetConfig={comment.author.planetConfig} size={32} glowColor={comment.author.tintColor} showBadge level={comment.author.userLevel} />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>{comment.author.name} <span style={{ color: 'var(--ghost)', fontWeight: 400 }}>{timeAgo(comment.createdAt)}</span></p>
-                    <p className="text-sm leading-6" style={{ color: 'var(--ink)' }}>{comment.content}</p>
+              {(detail.comments ?? []).map((comment) => {
+                const replies = comment.replies ?? []
+                const repliesExpanded = Boolean(expandedReplyThreads[comment.id])
+                const visibleReplies = repliesExpanded ? replies : replies.slice(0, 2)
+                const hiddenReplyCount = Math.max(0, replies.length - visibleReplies.length)
+
+                return (
+                  <div key={comment.id} className="flex gap-3">
+                    {renderCommentAvatar(comment, 36)}
+                    <div className="min-w-0">
+                      {renderCommentMeta(comment)}
+                      <p className="text-sm leading-6" style={{ color: 'var(--ink)' }}>{comment.content}</p>
+                      {renderCommentActions(comment)}
+                      {replies.length > 0 && (
+                        <div className="mt-3 grid gap-2 border-l border-white/10 pl-3">
+                          {visibleReplies.map((reply) => (
+                            <div key={reply.id} className="flex gap-2">
+                              {renderCommentAvatar(reply, 28)}
+                              <div className="min-w-0">
+                                {renderCommentMeta(reply)}
+                                <p className="text-sm leading-6" style={{ color: 'var(--ink)' }}>{reply.content}</p>
+                                {renderCommentActions(reply)}
+                              </div>
+                            </div>
+                          ))}
+                          {replies.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedReplyThreads((current) => ({ ...current, [comment.id]: !repliesExpanded }))}
+                              className="justify-self-start text-[11px] font-semibold"
+                              style={{ color: 'var(--star)' }}
+                            >
+                              {repliesExpanded ? 'Hide replies' : `View ${hiddenReplyCount} more ${hiddenReplyCount === 1 ? 'reply' : 'replies'}`}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             {commentCursor && <button type="button" onClick={loadMoreComments} disabled={loadingMore} className="mt-4 text-xs font-semibold" style={{ color: 'var(--star)' }}>{loadingMore ? 'Loading...' : 'Load more comments'}</button>}
           </div>
 
           {currentUserId ? (
-            <div className="mt-4 flex gap-2 border-t border-white/8 pt-4">
-              <textarea value={commentText} onChange={(event) => setCommentText(event.target.value.slice(0, 500))} placeholder="Send a signal..." rows={2} className="min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
-              <button type="button" onClick={submitComment} disabled={submittingComment || !commentText.trim()} className="grid h-12 w-12 place-items-center rounded-xl" style={{ color: '#fff', background: 'rgba(124,58,237,0.78)', border: '1px solid rgba(167,139,250,0.42)', opacity: submittingComment || !commentText.trim() ? 0.55 : 1 }}>
-                {submittingComment ? <LoaderCircle size={16} className="animate-spin" /> : '↗'}
-              </button>
+            <div className="mt-4 border-t border-white/8 pt-4">
+              {replyTarget && (
+                <div className="mb-2 flex items-center justify-between gap-3 px-1" style={{ color: 'var(--ink)' }}>
+                  <span className="min-w-0 truncate text-xs">Replying to <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{replyTarget.authorName}</span></span>
+                  <button type="button" onClick={() => setReplyTarget(null)} className="grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ color: 'var(--ghost)' }} aria-label="Cancel reply">
+                    <X size={13} />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <textarea ref={commentInputRef} value={commentText} onChange={(event) => setCommentText(event.target.value.slice(0, 500))} placeholder={replyTarget ? `Reply to ${replyTarget.authorName}...` : 'Send a signal...'} rows={2} className="min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
+                <button type="button" onClick={submitComment} disabled={submittingComment || !commentText.trim()} className="grid h-12 w-12 place-items-center rounded-xl" style={{ color: '#fff', background: 'rgba(124,58,237,0.78)', border: '1px solid rgba(167,139,250,0.42)', opacity: submittingComment || !commentText.trim() ? 0.55 : 1 }}>
+                  {submittingComment ? <LoaderCircle size={16} className="animate-spin" /> : replyTarget ? <Reply size={16} /> : '↗'}
+                </button>
+              </div>
             </div>
           ) : (
             <Link href={`/sign-in?next=/stream/${detail.id}`} className="mt-4 rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>

@@ -17,9 +17,13 @@ export interface StreamAuthor {
 export interface StreamComment {
   id: string
   postId: string
+  parentId: string | null
   content: string
+  likeCount: number
   createdAt: string
   author: StreamAuthor
+  userHasLiked: boolean
+  replies?: StreamComment[]
 }
 
 export interface StreamPost {

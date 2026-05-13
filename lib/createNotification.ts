@@ -68,4 +68,10 @@ export const NotificationTemplates = {
     body: `${commenterName} left a comment`,
     actionUrl,
   }),
+  commentReplyReceived: (commenterName: string, actionUrl: string) => ({
+    type: NotificationType.COMMENT_RECEIVED,
+    title: 'Someone replied to your comment',
+    body: `${commenterName} replied to you`,
+    actionUrl,
+  }),
 }

@@ -52,6 +52,7 @@ model user {
   posts        Post[]
   postLikes    PostLike[]
   postComments PostComment[]
+  postCommentLikes PostCommentLike[]
 }
 
 enum NotificationType {
@@ -385,14 +386,34 @@ model PostComment {
   id        String   @id @default(cuid())
   postId    String
   authorId  String
+  parentId  String?
   content   String
+  likeCount Int      @default(0)
   createdAt DateTime @default(now())
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    user     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    PostComment?  @relation("PostCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   PostComment[] @relation("PostCommentReplies")
+  likes     PostCommentLike[]
 
   @@index([postId, createdAt])
+  @@index([postId, parentId, createdAt])
   @@index([authorId, createdAt])
+  @@index([parentId, createdAt])
   @@map("post_comment")
+}
+
+model PostCommentLike {
+  id        String      @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime    @default(now())
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      user        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([userId, createdAt])
+  @@map("post_comment_like")
 }
 
 enum PostCategory {

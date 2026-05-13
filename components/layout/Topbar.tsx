@@ -2,12 +2,24 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, LogOut, MessageCircle, Search, Settings, UserCircle } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
-import type { PlanetConfig } from '@/types/planet'
+import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
 import NotificationBell from '@/components/ui/NotificationBell'
-import PlanetAvatar from '@/components/planet/PlanetAvatar'
+
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
+const FALLBACK_PLANET_CONFIG: PlanetConfig = PRESET_PLANETS[0] ?? {
+  baseTexture: 'jupiter.jpg',
+  tintColor: '#7c4dbf',
+  atmosphereColor: '#b39ddb',
+  atmosphereDensity: 0.12,
+  hasRing: true,
+  ringColor: '#9b7de0',
+  rotationSpeed: 0.018,
+  cloudOpacity: 0,
+}
 
 interface MeResponse {
   user?: {
@@ -24,6 +36,7 @@ export default function Topbar() {
   const [planetConfig, setPlanetConfig] = useState<PlanetConfig | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const currentPlanetConfig = session?.user?.id ? planetConfig : null
+  const topbarPlanetConfig = currentPlanetConfig ?? FALLBACK_PLANET_CONFIG
 
   useEffect(() => {
     if (!session?.user?.id) return
@@ -130,7 +143,7 @@ export default function Topbar() {
                 aria-expanded={isMenuOpen}
                 className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/4.5 py-1 pl-1 pr-3 text-white/80 transition hover:bg-white/8 hover:text-white"
               >
-                <PlanetAvatar planetConfig={currentPlanetConfig ?? undefined} size={32} rotating rotationDuration={22} />
+                <PlanetGlobe planetConfig={topbarPlanetConfig} size={32} framing="avatar" />
                 <span className="max-w-32 truncate text-sm font-semibold">{userName}</span>
                 <ChevronDown className="h-4 w-4 text-white/38" />
               </button>
