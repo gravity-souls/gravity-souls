@@ -10,6 +10,7 @@ import type { PlanetConfig } from '@/types/planet'
 interface Props {
   planetConfig: PlanetConfig
   size?: number
+  framing?: 'hero' | 'avatar'
 }
 
 
@@ -146,13 +147,13 @@ function PlanetRing({ planetConfig }: { planetConfig: PlanetConfig }) {
   )
 }
 
-function PlanetScene({ planetConfig }: { planetConfig: PlanetConfig }) {
+function PlanetScene({ planetConfig, sceneScale }: { planetConfig: PlanetConfig; sceneScale: number }) {
   return (
     <>
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 2, 2]} intensity={1.8} />
       <directionalLight position={[-3, -1, -2]} intensity={0.3} color="#8844ff" />
-      <group scale={0.58}>
+      <group scale={sceneScale}>
         <AtmosphereGlow planetConfig={planetConfig} />
         {planetConfig.hasRing && <PlanetRing planetConfig={planetConfig} />}
         <PlanetSphere planetConfig={planetConfig} />
@@ -162,8 +163,9 @@ function PlanetScene({ planetConfig }: { planetConfig: PlanetConfig }) {
   )
 }
 
-export default function PlanetGlobe({ planetConfig, size = 300 }: Props) {
+export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero' }: Props) {
   const [webGLAvailable, setWebGLAvailable] = useState<boolean | null>(null)
+  const sceneScale = framing === 'avatar' ? 0.9 : 0.58
 
   useEffect(() => {
     let cancelled = false
@@ -194,7 +196,7 @@ export default function PlanetGlobe({ planetConfig, size = 300 }: Props) {
             onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
           >
             <Suspense fallback={null}>
-              <PlanetScene planetConfig={planetConfig} />
+              <PlanetScene planetConfig={planetConfig} sceneScale={sceneScale} />
             </Suspense>
           </Canvas>
         </div>

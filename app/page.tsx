@@ -10,6 +10,8 @@ import AppShell from '@/components/layout/AppShell'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import GalaxyCard from '@/components/galaxy/GalaxyCard'
+import PostCard from '@/components/stream/PostCard'
+import PostDetail from '@/components/stream/PostDetail'
 import UniverseSearch from '@/components/universe/UniverseSearch'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
@@ -20,6 +22,7 @@ import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
+import type { StreamPost } from '@/types/stream'
 
 // Shape returned by GET /api/universe
 interface UniversePlanet {
@@ -127,6 +130,8 @@ export default function UniversePage() {
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
   const [upcomingEvent, setUpcomingEvent] = useState<GalaxyEventSummary | null>(null)
+  const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
+  const [selectedStreamPost, setSelectedStreamPost] = useState<StreamPost | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -163,6 +168,19 @@ export default function UniversePage() {
       })
     return () => { cancelled = true }
   }, [session, sessionPending])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/posts?limit=6')
+      .then((res) => res.ok ? res.json() : { posts: [] })
+      .then((data: { posts?: StreamPost[] }) => {
+        if (!cancelled) setSharedPosts(data.posts ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) setSharedPosts([])
+      })
+    return () => { cancelled = true }
+  }, [])
 
   // --- Community / galaxy state -----------------------------------------------
   interface CommunityRow {
@@ -589,6 +607,34 @@ export default function UniversePage() {
           </section>
         )}
 
+        <section className="px-6 py-14">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-end justify-between gap-4 mb-6">
+              <SectionHeader
+                eyebrow="Shared moments"
+                title="Open signals"
+                subtitle="Fresh posts from planets across the public stream."
+              />
+              <Link href="/stream" className="text-xs font-medium shrink-0 mb-1.5" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
+                View all →
+              </Link>
+            </div>
+            {sharedPosts.length > 0 ? (
+              <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
+                {sharedPosts.map((post) => (
+                  <div key={post.id} className="w-64 flex-none sm:w-72">
+                    <PostCard post={post} onOpen={setSelectedStreamPost} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl px-5 py-8 text-sm" style={{ color: 'var(--ghost)', background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-soft)' }}>
+                Signals are still gathering.
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* ===============================================================
             SECTION 3  -  Bottom CTA (Explorer vs Resonator)
         =============================================================== */}
@@ -696,6 +742,13 @@ export default function UniversePage() {
         isAdmin={false}
         onClose={() => setSelectedEvent(null)}
         onRSVPChange={applyUpcomingRSVPChange}
+      />
+      <PostDetail
+        post={selectedStreamPost}
+        open={!!selectedStreamPost}
+        currentUserId={session?.user.id}
+        onClose={() => setSelectedStreamPost(null)}
+        onPostUpdated={(post) => setSelectedStreamPost(post)}
       />
     </AppShell>
   )

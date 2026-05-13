@@ -19,6 +19,9 @@ import EventDetail from '@/components/events/EventDetail'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
+import CreatePostModal from '@/components/stream/CreatePostModal'
+import PostDetail from '@/components/stream/PostDetail'
+import PostGrid from '@/components/stream/PostGrid'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
@@ -29,6 +32,7 @@ import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
+import type { StreamPost } from '@/types/stream'
 
 interface XPSummary {
   xp: number
@@ -156,6 +160,10 @@ export default function MyPlanetPage() {
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
+  const [createPostOpen, setCreatePostOpen] = useState(false)
+  const [selectedPost, setSelectedPost] = useState<StreamPost | null>(null)
+  const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
+  const [postRefreshKey, setPostRefreshKey] = useState(0)
   const [customizerOpen, setCustomizerOpen] = useState(false)
   const hydrated = useHydrated()
   const isDesktop = useIsDesktop()
@@ -600,6 +608,28 @@ export default function MyPlanetPage() {
         </OrbitCard>
 
         {/* ================================================================
+            MY POSTS
+            ================================================================ */}
+        <OrbitCard glowColor={visual.accentColor} className="mt-4 p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>Stream archive</p>
+              <h2 className="mt-1 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>My Posts</h2>
+            </div>
+            <button type="button" onClick={() => setCreatePostOpen(true)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ color: '#fff', background: 'rgba(124,58,237,0.76)', border: '1px solid rgba(167,139,250,0.38)' }}>
+              Create your first post
+            </button>
+          </div>
+          <PostGrid
+            authorId={planet.userId}
+            refreshKey={postRefreshKey}
+            prependPost={createdPost}
+            emptyMessage="You haven't sent any signals yet."
+            onPostOpen={setSelectedPost}
+          />
+        </OrbitCard>
+
+        {/* ================================================================
             SHARED MOMENTS + FOOTER IDENTITY
             ================================================================ */}
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -671,6 +701,25 @@ export default function MyPlanetPage() {
         isAdmin={false}
         onClose={() => setSelectedEvent(null)}
         onRSVPChange={applyUpcomingRSVPChange}
+      />
+      <CreatePostModal
+        open={createPostOpen}
+        onClose={() => setCreatePostOpen(false)}
+        onCreated={(post) => {
+          setCreatedPost(post)
+          setPostRefreshKey((key) => key + 1)
+        }}
+      />
+      <PostDetail
+        post={selectedPost}
+        open={!!selectedPost}
+        currentUserId={planet.userId}
+        onClose={() => setSelectedPost(null)}
+        onPostUpdated={(post) => setSelectedPost(post)}
+        onDeleted={() => {
+          setSelectedPost(null)
+          setPostRefreshKey((key) => key + 1)
+        }}
       />
     </AppShell>
   )

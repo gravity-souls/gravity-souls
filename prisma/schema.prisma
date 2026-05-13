@@ -49,6 +49,9 @@ model user {
   proposedEvents Event[] @relation("ProposedEvents")
   eventRSVPs EventRSVP[]
   createdCommunities Community[] @relation("CommunityCreator")
+  posts        Post[]
+  postLikes    PostLike[]
+  postComments PostComment[]
 }
 
 enum NotificationType {
@@ -59,6 +62,7 @@ enum NotificationType {
   EVENT_REMINDER
   LEVEL_UP
   NEW_MATCH
+  COMMENT_RECEIVED
 }
 
 model Notification {
@@ -339,6 +343,67 @@ enum EventCategory {
   STARGAZING
   DISCUSSION
   OTHER
+}
+
+model Post {
+  id           String       @id @default(cuid())
+  authorId     String
+  content      String
+  mediaUrls    String[]     @default([])
+  mediaTypes   String[]     @default([])
+  tags         String[]     @default([])
+  category     PostCategory @default(GENERAL)
+  likeCount    Int          @default(0)
+  commentCount Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  author       user         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes        PostLike[]
+  comments     PostComment[]
+
+  @@index([category, createdAt])
+  @@index([authorId, createdAt])
+  @@index([createdAt])
+  @@map("post")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+  @@map("post_like")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    user     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("post_comment")
+}
+
+enum PostCategory {
+  GENERAL
+  NATURE
+  NIGHT
+  TRAVEL
+  THOUGHTS
+  MUSIC
+  ART
+  COSMIC
 }
 
 model CommunityPost {

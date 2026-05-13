@@ -62,4 +62,10 @@ export const NotificationTemplates = {
     body: 'Your daily resonance matches are ready',
     actionUrl: '/resonance',
   }),
+  commentReceived: (commenterName: string, actionUrl: string) => ({
+    type: NotificationType.COMMENT_RECEIVED,
+    title: 'Someone resonated with your signal',
+    body: `${commenterName} left a comment`,
+    actionUrl,
+  }),
 }

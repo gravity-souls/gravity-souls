@@ -218,6 +218,28 @@ body {
   animation-iteration-count: infinite;
 }
 
+.stream-masonry {
+  columns: 5 300px;
+  column-gap: 12px;
+}
+
+.stream-masonry > * {
+  break-inside: avoid;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1024px) {
+  .stream-masonry {
+    columns: 3 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stream-masonry {
+    columns: 2 150px;
+  }
+}
+
 .planet-avatar-rotating::before {
   content: '';
   position: absolute;
