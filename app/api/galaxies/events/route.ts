@@ -17,14 +17,24 @@ export async function GET(request: Request) {
 
   const userId = session.user.id
   const url = new URL(request.url)
+  const status = url.searchParams.get('status') ?? 'upcoming'
   const category = parseEventCategory(url.searchParams.get('category'))
   const search = (url.searchParams.get('search') ?? '').trim()
   const page = Math.max(1, Number(url.searchParams.get('page') ?? '1') || 1)
 
   const where: Prisma.EventWhereInput = {
-    status: EventStatus.APPROVED,
-    date: { gte: new Date() },
     galaxy: { memberships: { some: { userId } } },
+  }
+
+  if (status === 'passed') {
+    where.status = EventStatus.PASSED
+  } else if (status === 'going') {
+    where.status = EventStatus.APPROVED
+    where.date = { gte: new Date() }
+    where.rsvps = { some: { userId } }
+  } else {
+    where.status = EventStatus.APPROVED
+    where.date = { gte: new Date() }
   }
 
   if (category) where.category = category
@@ -38,7 +48,7 @@ export async function GET(request: Request) {
   const [events, total] = await Promise.all([
     prisma.event.findMany({
       where,
-      orderBy: { date: 'asc' },
+      orderBy: status === 'passed' ? { date: 'desc' } : { date: 'asc' },
       skip: (page - 1) * EVENT_PAGE_SIZE,
       take: EVENT_PAGE_SIZE,
       include: {

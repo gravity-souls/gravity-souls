@@ -571,7 +571,7 @@ export default function MyPlanetPage() {
                   <p className="mt-1 text-[10px]" style={{ color: 'var(--ghost)' }}>Next {upcomingEvents.length}</p>
                 )}
               </div>
-              <Link href="/galaxies/events" className="rounded-full px-3 py-1.5 text-[10px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
+              <Link href="/galaxies/events?status=upcoming" className="rounded-full px-3 py-1.5 text-[10px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
                 View all
               </Link>
             </div>

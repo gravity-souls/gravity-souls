@@ -9,9 +9,17 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 
 const CATEGORIES: ('ALL' | EventCategory)[] = ['ALL', 'MEETUP', 'ONLINE', 'WORKSHOP', 'STARGAZING', 'DISCUSSION', 'OTHER']
+type EventListTab = 'upcoming' | 'going' | 'passed'
+
+const TABS: { value: EventListTab; label: string; empty: string }[] = [
+  { value: 'upcoming', label: 'Upcoming', empty: 'No upcoming events in your joined galaxies yet.' },
+  { value: 'going', label: 'Going', empty: 'You have not RSVPed to any upcoming events yet.' },
+  { value: 'passed', label: 'Passed', empty: 'No passed events in your joined galaxies yet.' },
+]
 
 export default function GalaxyEventsPage() {
   const [events, setEvents] = useState<GalaxyEventSummary[]>([])
+  const [tab, setTab] = useState<EventListTab>('upcoming')
   const [category, setCategory] = useState<'ALL' | EventCategory>('ALL')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -19,11 +27,31 @@ export default function GalaxyEventsPage() {
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
 
   const queryString = useMemo(() => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams({ status: tab })
     if (category !== 'ALL') params.set('category', category)
     if (search.trim()) params.set('search', search.trim())
     return params.toString()
-  }, [category, search])
+  }, [category, search, tab])
+
+  const currentTab = TABS.find((item) => item.value === tab) ?? TABS[0]
+
+  useEffect(() => {
+    let cancelled = false
+    const requestedStatus = new URLSearchParams(window.location.search).get('status')
+    if (requestedStatus === 'upcoming' || requestedStatus === 'going' || requestedStatus === 'passed') {
+      Promise.resolve().then(() => {
+        if (!cancelled) setTab(requestedStatus)
+      })
+    }
+    return () => { cancelled = true }
+  }, [])
+
+  function selectTab(nextTab: EventListTab) {
+    setTab(nextTab)
+    const url = new URL(window.location.href)
+    url.searchParams.set('status', nextTab)
+    window.history.replaceState(null, '', url)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -69,11 +97,30 @@ export default function GalaxyEventsPage() {
         <SectionHeader
           eyebrow="Galaxies"
           level={1}
-          title="Events"
-          subtitle="Upcoming approved events across galaxies you have joined, sorted by date."
+          title="Joined galaxy events"
+          subtitle="Member-only events from galaxies you have joined. Use Galaxies to discover and join more."
         />
 
+        <div className="mt-4">
+          <Link href="/galaxies" className="inline-flex rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
+            Discover galaxies
+          </Link>
+        </div>
+
         <div className="mt-8 flex flex-col gap-3">
+          <div className="flex gap-1.5 rounded-2xl p-1" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            {TABS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => selectTab(item.value)}
+                className="rounded-xl px-3 py-2 text-xs font-semibold"
+                style={{ color: tab === item.value ? '#fff' : 'var(--ghost)', background: tab === item.value ? 'rgba(124,58,237,0.50)' : 'transparent' }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((item) => (
               <button key={item} type="button" onClick={() => setCategory(item)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: category === item ? '#fff' : 'var(--ghost)', background: category === item ? 'rgba(124,58,237,0.34)' : 'rgba(255,255,255,0.035)', border: category === item ? '1px solid rgba(167,139,250,0.42)' : '1px solid rgba(255,255,255,0.07)' }}>
@@ -96,7 +143,7 @@ export default function GalaxyEventsPage() {
             </div>
           ) : events.length === 0 ? (
             <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-              <p className="text-sm" style={{ color: 'var(--ghost)' }}>No upcoming events in your joined galaxies yet.</p>
+              <p className="text-sm" style={{ color: 'var(--ghost)' }}>{currentTab.empty}</p>
             </div>
           ) : (
             events.map((event) => (
