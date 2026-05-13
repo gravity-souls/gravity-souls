@@ -117,7 +117,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
   const { visual } = planet
   const isDesktop = useIsDesktop()
   const globeSize = isDesktop ? 260 : 200
-  const planetConfig = planetConfigFromPlanet(planet)
+  const planetConfig = planet.planetConfig ?? planetConfigFromPlanet(planet)
 
   return (
     <section

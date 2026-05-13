@@ -136,6 +136,8 @@ export interface PlanetProfile {
   travelCities?: string[]
   /** Whether this planet seeks similar or complementary companions */
   matchPreference?: 'similar' | 'complementary' | 'mixed'
+  /** Rendered planet appearance shared across identity surfaces */
+  planetConfig?: PlanetConfig
   /** How this planet communicates  -  shapes atmosphere halo in PlanetScene */
   communicationStyle?: CommunicationStyle
   /** Active presence state */

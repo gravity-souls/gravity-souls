@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveUserPlanetConfig, type UserPlanetConfigSource } from "@/lib/user-planet-config";
 
 // GET /api/planets/[id] - returns a single planet by ID (public)
 export async function GET(
@@ -23,7 +24,7 @@ export async function GET(
     return NextResponse.json({ error: "Planet not found" }, { status: 404 });
   }
 
-  const p = planet as Record<string, unknown> & { user: Record<string, unknown> & { profile: Record<string, unknown> | null } };
+  const p = planet as Record<string, unknown> & { user: UserPlanetConfigSource & Record<string, unknown> & { profile: Record<string, unknown> | null } };
 
   const result = {
     ...p,
@@ -37,6 +38,7 @@ export async function GET(
     communicationStyle: p.user.profile?.communicationStyle ?? null,
     matchPreference: p.user.profile?.matchPreference ?? "mixed",
     userLevel: p.user.userLevel ?? 1,
+    planetConfig: resolveUserPlanetConfig(p.user, planet),
     user: { id: p.user.id, name: p.user.name },
   };
 

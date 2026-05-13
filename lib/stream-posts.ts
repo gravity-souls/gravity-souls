@@ -6,8 +6,7 @@ import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { PostCategory, type Post } from '@prisma/client'
 import { auth } from '@/lib/auth'
-import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
-import type { PlanetProfile } from '@/types/planet'
+import { planetConfigFromUser, planetConfigFromVisual } from '@/lib/user-planet-config'
 import type { StreamComment } from '@/types/stream'
 
 export const POST_PAGE_SIZE = 20
@@ -19,15 +18,6 @@ export const IMAGE_MAX_SIZE = 5 * 1024 * 1024
 export const VIDEO_MAX_SIZE = 50 * 1024 * 1024
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'stream')
-const DEFAULT_PLANET_VISUAL: PlanetProfile['visual'] = {
-  coreColor: '#a78bfa',
-  accentColor: '#c4b5fd',
-  ringStyle: 'single',
-  surfaceStyle: 'smooth',
-  satelliteCount: 1,
-  size: 'lg',
-}
-
 const IMAGE_MIME_TO_EXTENSION: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -212,26 +202,12 @@ function serializeAuthor(author: StreamAuthorInclude) {
 }
 
 function serializeAuthorPlanetConfig(author: StreamAuthorInclude) {
+  const userPlanetConfig = planetConfigFromUser(author)
+  if (userPlanetConfig) return userPlanetConfig
+
   const activePlanet = author.planets?.[0]
   if (activePlanet) {
-    const visual = normalizePlanetVisual(activePlanet.visual)
-
-    return {
-      baseTexture: resolvePlanetTexture({
-        mood: activePlanet.mood as PlanetProfile['mood'],
-        lifestyle: activePlanet.lifestyle as PlanetProfile['lifestyle'],
-        coreThemes: activePlanet.coreThemes,
-        visual,
-      }),
-      tintColor: visual.coreColor,
-      atmosphereColor: visual.accentColor,
-      atmosphereDensity: 0.12,
-      hasRing: resolvePlanetHasRing(),
-      ringColor: visual.accentColor,
-      rotationSpeed: 0.018,
-      cloudOpacity: 0,
-      customTextureUrl: undefined,
-    }
+    return planetConfigFromVisual(activePlanet)
   }
 
   return {
@@ -245,11 +221,6 @@ function serializeAuthorPlanetConfig(author: StreamAuthorInclude) {
     cloudOpacity: author.planetCloudOpacity,
     customTextureUrl: getAvailableCustomTextureUrl(author.planetCustomTexture),
   }
-}
-
-function normalizePlanetVisual(value: unknown): PlanetProfile['visual'] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return DEFAULT_PLANET_VISUAL
-  return { ...DEFAULT_PLANET_VISUAL, ...(value as Partial<PlanetProfile['visual']>) }
 }
 
 function getAvailableCustomTextureUrl(customTextureUrl: string | null) {

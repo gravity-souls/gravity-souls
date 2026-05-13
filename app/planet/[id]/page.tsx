@@ -22,7 +22,7 @@ import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetById } from '@/lib/mock-planets'
 import { getPlanetProfile, getUserRole } from '@/lib/user'
-import type { PlanetProfile, ResonancePlanet } from '@/types/planet'
+import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
@@ -217,6 +217,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
 
 function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
   const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
+  const planetConfig = isPlanetConfig(data.planetConfig) ? data.planetConfig : undefined
 
   const profile: PlanetProfile = {
     id: data.id as string,
@@ -244,12 +245,24 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     filmTaste: (data.filmTaste as string[]) ?? [],
     communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
     matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
+    planetConfig,
     userLevel: typeof data.userLevel === 'number' ? data.userLevel : 1,
     createdAt: (data.createdAt as string) ?? new Date().toISOString(),
     userId: (data.userId as string) ?? '',
   }
   profile.visual = { ...profile.visual, textureFile: resolvePlanetTexture(profile) }
   return profile
+}
+
+function isPlanetConfig(value: unknown): value is PlanetConfig {
+  return Boolean(
+    value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && typeof (value as PlanetConfig).baseTexture === 'string'
+    && typeof (value as PlanetConfig).tintColor === 'string'
+    && typeof (value as PlanetConfig).atmosphereColor === 'string',
+  )
 }
 
 // --- Page inner ---------------------------------------------------------------
