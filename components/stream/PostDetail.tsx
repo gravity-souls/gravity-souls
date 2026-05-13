@@ -31,6 +31,10 @@ function timeAgo(value: string) {
   return `${Math.floor(hours / 24)}d ago`
 }
 
+function countCommentTree(comments: StreamComment[] = []) {
+  return comments.reduce((total, comment) => total + 1 + (comment.replies?.length ?? 0), 0)
+}
+
 export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated }: PostDetailProps) {
   const [detail, setDetail] = useState<StreamPost | null>(post)
   const [commentText, setCommentText] = useState('')
@@ -60,6 +64,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
   const ownPost = currentUserId === detail.authorId
   const accent = detail.author.tintColor || '#a78bfa'
+  const visibleCommentCount = countCommentTree(detail.comments)
 
   async function toggleLike() {
     if (!detail) return
@@ -297,7 +302,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
           </div>
 
           <div className="mt-4 flex-1 overflow-y-auto">
-            <p className="text-data-label mb-3">Comments ({detail.commentCount})</p>
+            <p className="text-data-label mb-3">Comments ({visibleCommentCount})</p>
             <div className="grid gap-3">
               {(detail.comments ?? []).map((comment) => {
                 const replies = comment.replies ?? []
