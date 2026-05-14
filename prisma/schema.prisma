@@ -25,6 +25,7 @@ model user {
   planetCustomTexture String?
   xp            Int       @default(0)
   userLevel     Int       @default(1)
+  lastActiveAt  DateTime? @updatedAt
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

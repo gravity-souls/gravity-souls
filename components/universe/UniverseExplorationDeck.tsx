@@ -1,21 +1,140 @@
 'use client'
 
 import Link from 'next/link'
-import { startTransition, useState, type CSSProperties } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { startTransition, useEffect, useState, type CSSProperties } from 'react'
 import AppShell from '@/components/layout/AppShell'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetVisual from '@/components/planet/PlanetVisual'
 import GlassPanel from '@/components/ui/GlassPanel'
 import GlowButton from '@/components/ui/GlowButton'
-import { getGalaxyBySlug, getGalaxyPreviews, getRelatedGalaxies } from '@/lib/mock-galaxies'
-import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
-import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
-import type { PlanetProfile } from '@/types/planet'
+import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 type DeckMode = 'planets' | 'galaxies'
 
 interface DeckNodePosition {
   left: string
   top: string
+}
+
+interface UniverseGalaxySummary {
+  id: string
+  name: string
+}
+
+interface UniverseTelemetry {
+  cognitive: PlanetProfile['cognitiveAxes']
+  emotional: {
+    depth: number
+    warmth: number
+    clarity: number
+    resonance: number
+  }
+  signalScore: number
+  linkedPlanets: number
+  attachedGalaxies: UniverseGalaxySummary[]
+}
+
+type UniversePlanet = PlanetProfile & {
+  userId: string
+  planetConfig: PlanetConfig
+  moodTags: string[]
+  userLevel: number
+  isOnline: boolean
+  galaxies: UniverseGalaxySummary[]
+  telemetry: UniverseTelemetry
+}
+
+interface UniverseGalaxy {
+  id: string
+  slug: string
+  name: string
+  symbol: string
+  description: string
+  tagline: string | null
+  keywords: string[]
+  mood: string
+  maturity: string
+  accentColor: string
+  memberCount: number
+  recentActivityScore: number
+  topTags: string[]
+  upcomingEventsCount: number
+  members: {
+    id: string
+    name: string
+    planetConfig: PlanetConfig
+    userLevel: number
+  }[]
+}
+
+const EMPTY_GALAXY: UniverseGalaxy = {
+  id: 'empty-galaxy',
+  slug: 'galaxies',
+  name: 'No galaxy joined',
+  symbol: '✦',
+  description: 'Join a galaxy to see live cluster telemetry here.',
+  tagline: 'Join a galaxy to activate this atlas.',
+  keywords: [],
+  mood: 'quiet',
+  maturity: 'emerging',
+  accentColor: '#7dd3fc',
+  memberCount: 0,
+  recentActivityScore: 0,
+  topTags: [],
+  upcomingEventsCount: 0,
+  members: [],
+}
+
+const EMPTY_PLANET: UniversePlanet = {
+  id: 'empty-planet',
+  userId: 'empty-user',
+  name: 'Your planet',
+  avatarSymbol: '✦',
+  tagline: 'Your orbit is empty. Start with Resonance.',
+  role: 'resonator',
+  mood: 'mixed',
+  style: 'minimal',
+  lifestyle: 'solitary',
+  coreThemes: [],
+  contentFragments: [],
+  visual: {
+    coreColor: '#7dd3fc',
+    accentColor: '#a78bfa',
+    ringStyle: 'none',
+    surfaceStyle: 'smooth',
+    satelliteCount: 0,
+    size: 'xl',
+  },
+  cognitiveAxes: { abstract: 0, introspective: 0 },
+  emotionalBars: [
+    { label: 'Depth', value: 0, color: '#a78bfa' },
+    { label: 'Warmth', value: 0, color: '#f97316' },
+    { label: 'Clarity', value: 0, color: '#60a5fa' },
+    { label: 'Resonance', value: 0, color: '#34d399' },
+  ],
+  createdAt: new Date(0).toISOString(),
+  planetConfig: {
+    baseTexture: 'jupiter.jpg',
+    tintColor: '#7dd3fc',
+    atmosphereColor: '#a78bfa',
+    atmosphereDensity: 0.12,
+    hasRing: false,
+    ringColor: '#a78bfa',
+    rotationSpeed: 0.018,
+    cloudOpacity: 0,
+  },
+  moodTags: [],
+  userLevel: 1,
+  isOnline: false,
+  galaxies: [],
+  telemetry: {
+    cognitive: { abstract: 0, introspective: 0 },
+    emotional: { depth: 0, warmth: 0, clarity: 0, resonance: 0 },
+    signalScore: 0,
+    linkedPlanets: 0,
+    attachedGalaxies: [],
+  },
 }
 
 const GALAXY_RING_POSITIONS: DeckNodePosition[] = [
@@ -131,7 +250,7 @@ function ModeSwitch({
   )
 }
 
-function GalaxyCore({ galaxy }: { galaxy: Galaxy }) {
+function GalaxyCore({ galaxy }: { galaxy: UniverseGalaxy }) {
   return (
     <div className="relative flex items-center justify-center">
       <div
@@ -183,7 +302,7 @@ function PlanetChip({
   active,
   onClick,
 }: {
-  planet: PlanetProfile
+  planet: UniversePlanet
   active: boolean
   onClick: () => void
 }) {
@@ -199,22 +318,18 @@ function PlanetChip({
       }}
     >
       <div className="flex items-center gap-3">
-        <div
-          className="flex h-11 w-11 items-center justify-center rounded-full text-lg"
-          style={{
-            color: planet.visual.accentColor,
-            background: `radial-gradient(circle, ${planet.visual.accentColor}24 0%, ${planet.visual.coreColor}12 70%, transparent 100%)`,
-            boxShadow: `0 0 20px ${planet.visual.coreColor}22`,
-          }}
-        >
-          {planet.avatarSymbol}
-        </div>
+        <PlanetAvatar planetConfig={planet.planetConfig} size={32} glowColor={planet.visual.coreColor} rotating />
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{planet.name}</div>
           <div className="truncate text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>
             {planet.mood} · {planet.lifestyle}
           </div>
         </div>
+        {planet.isOnline && (
+          <span className="rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#86efac', border: '1px solid rgba(134,239,172,0.25)' }}>
+            Live
+          </span>
+        )}
       </div>
     </button>
   )
@@ -225,7 +340,7 @@ function GalaxyChip({
   active,
   onClick,
 }: {
-  galaxy: GalaxyPreview
+  galaxy: UniverseGalaxy
   active: boolean
   onClick: () => void
 }) {
@@ -267,7 +382,7 @@ function PlanetOrbitNode({
   position,
   onClick,
 }: {
-  planet: PlanetProfile
+  planet: UniversePlanet
   position: DeckNodePosition
   onClick: () => void
 }) {
@@ -278,6 +393,7 @@ function PlanetOrbitNode({
       className="absolute flex flex-col items-center gap-2 text-center transition-transform duration-300 hover:scale-105"
       style={{ left: position.left, top: position.top, transform: 'translate(-50%, -50%)' }}
     >
+      {/* TODO: replace with miniature PlanetGlobe when performance allows */}
       <div
         className="flex h-16 w-16 items-center justify-center rounded-full text-2xl"
         style={{
@@ -301,10 +417,11 @@ function GalaxyOrbitNode({
   position,
   onClick,
 }: {
-  galaxy: GalaxyPreview
+  galaxy: UniverseGalaxy
   position: DeckNodePosition
   onClick: () => void
 }) {
+  const size = Math.max(56, Math.min(88, 56 + galaxy.memberCount * 2))
   return (
     <button
       type="button"
@@ -313,8 +430,10 @@ function GalaxyOrbitNode({
       style={{ left: position.left, top: position.top, transform: 'translate(-50%, -50%)' }}
     >
       <div
-        className="flex h-16 w-16 items-center justify-center rounded-full text-2xl"
+        className="flex items-center justify-center rounded-full text-2xl"
         style={{
+          width: size,
+          height: size,
           color: galaxy.accentColor,
           background: `radial-gradient(circle, ${galaxy.accentColor}2f 0%, rgba(2,6,23,0.95) 72%)`,
           border: `1px solid ${galaxy.accentColor}44`,
@@ -347,50 +466,87 @@ function drawConnectionLines(nodes: DeckNodePosition[], color: string) {
 }
 
 export default function UniverseExplorationDeck() {
-  const galaxies = getGalaxyPreviews()
+  const searchParams = useSearchParams()
   const [mode, setMode] = useState<DeckMode>('planets')
-  const [selectedPlanetId, setSelectedPlanetId] = useState(mockPlanets[0]?.id ?? '')
-  const [selectedGalaxySlug, setSelectedGalaxySlug] = useState(galaxies[0]?.slug ?? '')
+  const [selectedPlanetId, setSelectedPlanetId] = useState('')
+  const [selectedGalaxyId, setSelectedGalaxyId] = useState('')
+  const [planets, setPlanets] = useState<UniversePlanet[]>([])
+  const [currentPlanet, setCurrentPlanet] = useState<UniversePlanet | null>(null)
+  const [galaxies, setGalaxies] = useState<UniverseGalaxy[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const selectedPlanet = getPlanetById(selectedPlanetId) ?? mockPlanets[0]
-  const selectedGalaxy = getGalaxyBySlug(selectedGalaxySlug) ?? getGalaxyBySlug(galaxies[0]?.slug ?? '')
+  useEffect(() => {
+    let cancelled = false
 
-  if (!selectedPlanet || !selectedGalaxy) {
-    return null
-  }
+    async function loadUniverse() {
+      setLoading(true)
+      try {
+        const [planetResponse, galaxyResponse] = await Promise.all([
+          fetch('/api/universe/planets'),
+          fetch('/api/universe/galaxies'),
+        ])
+        if (!planetResponse.ok || !galaxyResponse.ok) throw new Error('Universe data unavailable')
 
-  const linkedGalaxies = (selectedPlanet.galaxyIds ?? [])
-    .map((slug) => getGalaxyBySlug(slug))
-    .filter((galaxy): galaxy is Galaxy => Boolean(galaxy))
+        const planetPayload = await planetResponse.json() as { currentPlanet: UniversePlanet | null; planets: UniversePlanet[] }
+        const galaxyPayload = await galaxyResponse.json() as { galaxies: UniverseGalaxy[] }
+        if (cancelled) return
 
-  const relatedPlanets = mockPlanets
-    .filter((planet) => planet.id !== selectedPlanet.id)
-    .filter((planet) =>
-      planet.mood === selectedPlanet.mood ||
-      planet.lifestyle === selectedPlanet.lifestyle ||
-      planet.style === selectedPlanet.style
-    )
-    .slice(0, PLANET_RING_POSITIONS.length)
+        const loadedPlanets = planetPayload.planets ?? []
+        const loadedGalaxies = galaxyPayload.galaxies ?? []
+        setCurrentPlanet(planetPayload.currentPlanet ?? null)
+        setPlanets(loadedPlanets)
+        setGalaxies(loadedGalaxies)
 
-  const galaxyMembers = selectedGalaxy.activePlanetIds
-    .map((id) => getPlanetById(id))
-    .filter((planet): planet is PlanetProfile => Boolean(planet))
+        const focus = searchParams.get('focus')
+        const focusType = searchParams.get('type')
+        if (focusType === 'galaxy' && focus) {
+          setMode('galaxies')
+          setSelectedGalaxyId(focus)
+        } else if (focus) {
+          const focusedPlanet = [planetPayload.currentPlanet, ...loadedPlanets]
+            .filter((planet): planet is UniversePlanet => Boolean(planet))
+            .find((planet) => planet.userId === focus || planet.id === focus)
+          if (focusedPlanet) setSelectedPlanetId(focusedPlanet.id)
+        } else if (loadedPlanets[0]) {
+          setSelectedPlanetId(loadedPlanets[0].id)
+        } else if (planetPayload.currentPlanet) {
+          setSelectedPlanetId(planetPayload.currentPlanet.id)
+        }
+
+        if (!focus || focusType !== 'galaxy') setSelectedGalaxyId(loadedGalaxies[0]?.id ?? EMPTY_GALAXY.id)
+      } catch {
+        if (!cancelled) {
+          setCurrentPlanet(null)
+          setPlanets([])
+          setGalaxies([])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadUniverse()
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams])
+
+  const emptyOrbit = !loading && planets.length === 0
+  const visiblePlanets = planets.length > 0 ? planets : currentPlanet ? [currentPlanet] : [EMPTY_PLANET]
+  const selectedPlanet = visiblePlanets.find((planet) => planet.id === selectedPlanetId) ?? visiblePlanets[0]
+  const selectedGalaxy = galaxies.find((galaxy) => galaxy.id === selectedGalaxyId || galaxy.slug === selectedGalaxyId) ?? galaxies[0] ?? EMPTY_GALAXY
+  const linkedGalaxies = selectedPlanet
+    ? selectedPlanet.galaxies.map((galaxy) => galaxies.find((item) => item.id === galaxy.id) ?? ({ ...EMPTY_GALAXY, id: galaxy.id, slug: galaxy.id, name: galaxy.name }))
+    : []
+  const relatedPlanets = selectedPlanet
+    ? planets.filter((planet) => planet.id !== selectedPlanet.id).slice(0, PLANET_RING_POSITIONS.length)
+    : []
+  const adjacentGalaxies = galaxies
+    .filter((galaxy) => galaxy.id !== selectedGalaxy.id)
+    .sort((a, b) => b.memberCount - a.memberCount)
     .slice(0, GALAXY_RING_POSITIONS.length)
 
-  const adjacentGalaxies = getRelatedGalaxies(selectedGalaxy.keywords, selectedGalaxy.slug)
-    .slice(0, 3)
-    .map((galaxy) => ({
-      id: galaxy.id,
-      slug: galaxy.slug,
-      name: galaxy.name,
-      symbol: galaxy.symbol,
-      tagline: galaxy.tagline,
-      keywords: galaxy.keywords,
-      mood: galaxy.mood,
-      memberCount: galaxy.memberCount,
-      maturity: galaxy.maturity,
-      accentColor: galaxy.accentColor,
-    }))
+  const focusedGalaxyHref = selectedGalaxy.id === EMPTY_GALAXY.id ? '/galaxies' : `/galaxy/${selectedGalaxy.slug}`
 
   const viewportStyle: CSSProperties = {
     backgroundImage: [
@@ -439,7 +595,7 @@ export default function UniverseExplorationDeck() {
               <div className="flex flex-col items-start gap-3 lg:items-end">
                 <ModeSwitch mode={mode} onChange={(nextMode) => switchMode(setMode, nextMode)} />
                 <div className="flex flex-wrap gap-3">
-                  <GlowButton href={mode === 'planets' ? `/planet/${selectedPlanet.id}` : `/galaxy/${selectedGalaxy.slug}`} variant="secondary" className="px-5 py-3 text-xs uppercase tracking-[0.24em]">
+                  <GlowButton href={mode === 'planets' ? `/planet/${selectedPlanet.id}` : focusedGalaxyHref} variant="secondary" className="px-5 py-3 text-xs uppercase tracking-[0.24em]">
                     Open focused object
                   </GlowButton>
                   <GlowButton href={mode === 'planets' ? '/galaxies' : '/'} variant="ghost" className="px-5 py-3 text-xs uppercase tracking-[0.24em]">
@@ -474,8 +630,16 @@ export default function UniverseExplorationDeck() {
               </p>
 
               <div className="mt-5 flex flex-col gap-3">
-                {mode === 'planets'
-                  ? mockPlanets.slice(0, 7).map((planet) => (
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="h-18 animate-pulse rounded-2xl" style={{ background: 'rgba(148,163,184,0.08)' }} />
+                  ))
+                ) : mode === 'planets'
+                  ? emptyOrbit ? (
+                      <div className="rounded-2xl p-4 text-sm leading-7" style={{ color: 'var(--ink)', background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
+                        Your orbit is empty. Start with Resonance.
+                      </div>
+                    ) : planets.slice(0, 7).map((planet) => (
                       <PlanetChip
                         key={planet.id}
                         planet={planet}
@@ -487,8 +651,8 @@ export default function UniverseExplorationDeck() {
                       <GalaxyChip
                         key={galaxy.id}
                         galaxy={galaxy}
-                        active={galaxy.slug === selectedGalaxy.slug}
-                        onClick={() => startTransition(() => setSelectedGalaxySlug(galaxy.slug))}
+                        active={galaxy.id === selectedGalaxy.id}
+                        onClick={() => startTransition(() => setSelectedGalaxyId(galaxy.id))}
                       />
                     ))}
               </div>
@@ -584,13 +748,17 @@ export default function UniverseExplorationDeck() {
                 <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
                   {mode === 'planets'
                     ? drawConnectionLines(PLANET_RING_POSITIONS.slice(0, relatedPlanets.length), 'rgba(125, 211, 252, 0.38)')
-                    : drawConnectionLines(GALAXY_RING_POSITIONS.slice(0, galaxyMembers.length), 'rgba(148, 163, 184, 0.38)')}
+                    : drawConnectionLines(GALAXY_RING_POSITIONS.slice(0, adjacentGalaxies.length), 'rgba(148, 163, 184, 0.38)')}
                 </svg>
 
                 {mode === 'planets' ? (
                   <>
                     <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                      <PlanetVisual visual={{ ...selectedPlanet.visual, size: 'xl' }} symbol={selectedPlanet.avatarSymbol} />
+                      {loading ? (
+                        <div className="h-48 w-48 animate-pulse rounded-full" style={{ background: 'radial-gradient(circle, rgba(125,211,252,0.2), rgba(15,23,42,0.8))', border: '1px solid rgba(125,211,252,0.2)' }} />
+                      ) : (
+                        <PlanetVisual visual={{ ...selectedPlanet.visual, size: 'xl' }} symbol={selectedPlanet.avatarSymbol} />
+                      )}
                     </div>
 
                     {relatedPlanets.map((planet, index) => (
@@ -605,22 +773,11 @@ export default function UniverseExplorationDeck() {
                     {linkedGalaxies.map((galaxy, index) => (
                       <GalaxyOrbitNode
                         key={galaxy.id}
-                        galaxy={{
-                          id: galaxy.id,
-                          slug: galaxy.slug,
-                          name: galaxy.name,
-                          symbol: galaxy.symbol,
-                          tagline: galaxy.tagline,
-                          keywords: galaxy.keywords,
-                          mood: galaxy.mood,
-                          memberCount: galaxy.memberCount,
-                          maturity: galaxy.maturity,
-                          accentColor: galaxy.accentColor,
-                        }}
+                        galaxy={galaxy}
                         position={PLANET_RING_POSITIONS[index + relatedPlanets.length] ?? { left: '50%', top: '82%' }}
                         onClick={() => {
                           startTransition(() => {
-                            setSelectedGalaxySlug(galaxy.slug)
+                            setSelectedGalaxyId(galaxy.id)
                             setMode('galaxies')
                           })
                         }}
@@ -633,15 +790,14 @@ export default function UniverseExplorationDeck() {
                       <GalaxyCore galaxy={selectedGalaxy} />
                     </div>
 
-                    {galaxyMembers.map((planet, index) => (
-                      <PlanetOrbitNode
-                        key={planet.id}
-                        planet={planet}
+                    {adjacentGalaxies.map((galaxy, index) => (
+                      <GalaxyOrbitNode
+                        key={galaxy.id}
+                        galaxy={galaxy}
                         position={GALAXY_RING_POSITIONS[index]}
                         onClick={() => {
                           startTransition(() => {
-                            setSelectedPlanetId(planet.id)
-                            setMode('planets')
+                            setSelectedGalaxyId(galaxy.id)
                           })
                         }}
                       />
@@ -667,14 +823,14 @@ export default function UniverseExplorationDeck() {
                         </div>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
                           <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Signal score</div>
-                          <div className="mt-1 text-xl font-semibold text-slate-50">{Math.round((selectedPlanet.cognitiveAxes.abstract + selectedPlanet.cognitiveAxes.introspective) / 2)}</div>
+                          <div className="mt-1 text-xl font-semibold text-slate-50">{selectedPlanet.telemetry.signalScore}</div>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
                           <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Active planets</div>
-                          <div className="mt-1 text-xl font-semibold text-slate-50">{galaxyMembers.length}</div>
+                          <div className="mt-1 text-xl font-semibold text-slate-50">{selectedGalaxy.memberCount}</div>
                         </div>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
                           <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Adjacencies</div>
@@ -702,16 +858,22 @@ export default function UniverseExplorationDeck() {
                 </div>
               </div>
 
-              {mode === 'planets' ? (
+              {loading ? (
+                <div className="mt-5 flex flex-col gap-4">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="h-16 animate-pulse rounded-2xl" style={{ background: 'rgba(148,163,184,0.08)' }} />
+                  ))}
+                </div>
+              ) : mode === 'planets' ? (
                 <div className="mt-5 flex flex-col gap-5">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Mood class</div>
-                      <div className="mt-2 text-lg font-semibold" style={{ color: MOOD_COLORS[selectedPlanet.mood] }}>{selectedPlanet.mood}</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Signal Score</div>
+                      <div className="mt-2 text-lg font-semibold" style={{ color: MOOD_COLORS[selectedPlanet.mood] }}>{selectedPlanet.telemetry.signalScore}</div>
                     </div>
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Communication</div>
-                      <div className="mt-2 text-lg font-semibold text-slate-50">{selectedPlanet.communicationStyle ?? 'unknown'}</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Linked Planets</div>
+                      <div className="mt-2 text-lg font-semibold text-slate-50">{selectedPlanet.telemetry.linkedPlanets}</div>
                     </div>
                   </div>
 
@@ -737,7 +899,7 @@ export default function UniverseExplorationDeck() {
                           type="button"
                           onClick={() => {
                             startTransition(() => {
-                              setSelectedGalaxySlug(galaxy.slug)
+                              setSelectedGalaxyId(galaxy.id)
                               setMode('galaxies')
                             })
                           }}
@@ -754,13 +916,24 @@ export default function UniverseExplorationDeck() {
                 <div className="mt-5 flex flex-col gap-5">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Cluster mood</div>
-                      <div className="mt-2 text-lg font-semibold" style={{ color: selectedGalaxy.accentColor }}>{selectedGalaxy.mood}</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Members</div>
+                      <div className="mt-2 text-lg font-semibold" style={{ color: selectedGalaxy.accentColor }}>{selectedGalaxy.memberCount.toLocaleString()}</div>
                     </div>
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Maturity</div>
-                      <div className="mt-2 text-lg font-semibold text-slate-50">{selectedGalaxy.maturity}</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Recent activity</div>
+                      <div className="mt-2 text-lg font-semibold text-slate-50">{selectedGalaxy.recentActivityScore}</div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Upcoming events</div>
+                      <div className="mt-2 text-lg font-semibold text-slate-50">{selectedGalaxy.upcomingEventsCount}</div>
+                    </div>
+                    <Link href={focusedGalaxyHref} className="rounded-2xl p-4 transition-all duration-300 hover:-translate-y-0.5" style={{ background: 'rgba(8, 15, 32, 0.82)', border: `1px solid ${selectedGalaxy.accentColor}33`, color: selectedGalaxy.accentColor, textDecoration: 'none' }}>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Galaxy page</div>
+                      <div className="mt-2 text-sm font-semibold">View Galaxy →</div>
+                    </Link>
                   </div>
 
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
@@ -773,7 +946,7 @@ export default function UniverseExplorationDeck() {
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
                     <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Keywords</div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {selectedGalaxy.keywords.map((keyword) => (
+                      {(selectedGalaxy.topTags.length > 0 ? selectedGalaxy.topTags : selectedGalaxy.keywords).map((keyword) => (
                         <span
                           key={keyword}
                           className="rounded-full px-3 py-2 text-[11px] uppercase tracking-[0.18em]"
@@ -792,7 +965,7 @@ export default function UniverseExplorationDeck() {
                         <button
                           key={galaxy.id}
                           type="button"
-                          onClick={() => startTransition(() => setSelectedGalaxySlug(galaxy.slug))}
+                          onClick={() => startTransition(() => setSelectedGalaxyId(galaxy.id))}
                           className="flex items-center justify-between rounded-2xl p-3 text-left transition-all duration-300 hover:translate-x-1"
                           style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}
                         >

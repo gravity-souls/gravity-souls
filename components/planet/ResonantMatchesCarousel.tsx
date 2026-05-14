@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { Telescope } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
@@ -82,17 +83,16 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
       >
         {matches.map(({ planet, score, traits }) => {
           const color = planet.visual?.coreColor ?? '#a78bfa'
+          const focusUserId = (planet as PlanetProfile & { userId?: string }).userId ?? planet.id
           return (
-            <Link
+            <div
               key={planet.id}
-              href={`/planet/${planet.id}`}
-              className="shrink-0 flex flex-col items-center gap-2 p-3 rounded-xl"
+              className="relative shrink-0 rounded-xl"
               style={{
                 width: 150,
                 scrollSnapAlign: 'start',
                 background: 'rgba(255,255,255,0.02)',
                 border: '1px solid rgba(255,255,255,0.06)',
-                textDecoration: 'none',
                 transition: 'border-color 0.2s, background 0.2s',
               }}
               onMouseEnter={(e) => {
@@ -104,50 +104,65 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
                 ;(e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'
               }}
             >
-              {/* Avatar */}
-              <PlanetAvatar
-                textureFile={resolvePlanetTexture(planet)}
-                size={56}
-                glowColor={color}
-                rotating
-                rotationDuration={17 + (planet.id.length % 5) * 3}
-              />
+              <Link
+                href={`/planet/${planet.id}`}
+                className="flex h-full flex-col items-center gap-2 p-3"
+                style={{ textDecoration: 'none' }}
+              >
+                {/* Avatar */}
+                <PlanetAvatar
+                  textureFile={resolvePlanetTexture(planet)}
+                  size={56}
+                  glowColor={color}
+                  rotating
+                  rotationDuration={17 + (planet.id.length % 5) * 3}
+                />
 
-              {/* Name + symbol */}
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)', maxWidth: 100 }}>
-                  {planet.name}
-                </span>
-                <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>{planet.avatarSymbol}</span>
-              </div>
-
-              {/* Traits */}
-              <div className="text-center">
-                {traits.slice(0, 2).map((trait) => (
-                  <p key={trait} className="text-[10px] leading-tight" style={{ color: 'var(--ghost)' }}>
-                    · {trait}
-                  </p>
-                ))}
-              </div>
-
-              {/* Compatibility bar */}
-              <div className="w-full mt-auto">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${Math.min(score, 100)}%`, background: color }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>
-                    {score}%
+                {/* Name + symbol */}
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)', maxWidth: 100 }}>
+                    {planet.name}
                   </span>
+                  <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>{planet.avatarSymbol}</span>
                 </div>
-                <p className="text-[9px] mt-0.5" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-                  compatible
-                </p>
-              </div>
-            </Link>
+
+                {/* Traits */}
+                <div className="text-center">
+                  {traits.slice(0, 2).map((trait) => (
+                    <p key={trait} className="text-[10px] leading-tight" style={{ color: 'var(--ghost)' }}>
+                      · {trait}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Compatibility bar */}
+                <div className="w-full mt-auto">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Math.min(score, 100)}%`, background: color }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold tabular-nums" style={{ color }}>
+                      {score}%
+                    </span>
+                  </div>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
+                    compatible
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href={`/universe/demo?focus=${focusUserId}`}
+                title="View in Universe"
+                aria-label="View in Universe"
+                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-105"
+                style={{ color, background: 'rgba(2,6,23,0.78)', border: `1px solid ${color}44`, textDecoration: 'none' }}
+              >
+                <Telescope size={14} aria-hidden="true" />
+              </Link>
+            </div>
           )
         })}
       </div>

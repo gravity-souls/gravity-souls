@@ -2,10 +2,9 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { PostCategory, type Post } from '@prisma/client'
-import { auth } from '@/lib/auth'
+import { getOptionalUserSession } from '@/lib/session'
 import { planetConfigFromUser, planetConfigFromVisual } from '@/lib/user-planet-config'
 import type { StreamComment } from '@/types/stream'
 
@@ -71,7 +70,7 @@ export type StreamCommentInclude = {
 }
 
 export async function getOptionalSession() {
-  return auth.api.getSession({ headers: await headers() })
+  return getOptionalUserSession()
 }
 
 export function jsonError(message: string, status: number) {

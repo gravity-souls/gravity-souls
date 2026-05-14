@@ -239,6 +239,7 @@ export default function UniversePage() {
   // --- Nearby planets state ---------------------------------------------------
   const [nearbyPlanets, setNearbyPlanets] = useState<PlanetProfile[]>([])
   const [nearbyLoading, setNearbyLoading] = useState(true)
+  const [orbitTeaserCount, setOrbitTeaserCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -259,6 +260,27 @@ export default function UniversePage() {
       .finally(() => { if (!cancelled) setNearbyLoading(false) })
     return () => { cancelled = true }
   }, [session])
+
+  useEffect(() => {
+    if (sessionPending || !session?.user) {
+      let cancelled = false
+      Promise.resolve().then(() => {
+        if (!cancelled) setOrbitTeaserCount(0)
+      })
+      return () => { cancelled = true }
+    }
+
+    let cancelled = false
+    fetch('/api/universe/planets')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data: { currentPlanet?: { telemetry?: { linkedPlanets?: number } } | null } | null) => {
+        if (!cancelled) setOrbitTeaserCount(data?.currentPlanet?.telemetry?.linkedPlanets ?? 0)
+      })
+      .catch(() => {
+        if (!cancelled) setOrbitTeaserCount(0)
+      })
+    return () => { cancelled = true }
+  }, [session, sessionPending])
 
   // Convert DB communities to GalaxyPreview shape for GalaxyCard
   const galaxies: GalaxyPreview[] = communities.map((c) => ({
@@ -533,6 +555,20 @@ export default function UniversePage() {
             </div>
           </div>
         </section>
+
+        {orbitTeaserCount > 0 && (
+          <section className="px-4 pb-6 sm:px-6">
+            <div className="mx-auto max-w-7xl">
+              <Link
+                href="/universe/demo"
+                className="block rounded-2xl px-5 py-4 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
+                style={{ color: 'var(--star)', background: 'rgba(18,14,52,0.64)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}
+              >
+                ✦ {orbitTeaserCount} planets are in your orbit — explore your universe →
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* ===============================================================
             SECTION 2  -  Galaxy strip

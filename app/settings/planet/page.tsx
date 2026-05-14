@@ -8,6 +8,7 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { authClient } from '@/lib/auth-client'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
 import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereStyle'
@@ -82,7 +83,7 @@ function SaveToast({ visible }: { visible: boolean }) {
         style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }}
       />
       <span className="text-xs font-medium" style={{ color: '#34d399' }}>
-        Planet updated
+        Settings updated
       </span>
     </div>
   )
@@ -144,12 +145,15 @@ function planetConfigFromProfile(planet: PlanetProfile): PlanetConfig {
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
+  const { data: session, refetch: refetchSession } = authClient.useSession()
   const [mounted,   setMounted]   = useState(false)
   const [userId,    setUserId]    = useState('')
   const [draft,     setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
+  const [accountName, setAccountName] = useState('')
   const [planetName, setPlanetName] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [saved,     setSaved]     = useState(false)
+  const [error,     setError]     = useState('')
   const [accentColor, setAccentColor] = useState('#a78bfa')
 
   useEffect(() => {
@@ -192,6 +196,7 @@ export default function PlanetSettingsPage() {
             router.replace('/create-planet')
             return
           }
+          setAccountName(meData?.user?.name ?? session?.user?.name ?? '')
           setPlanetName(planet.name)
           const converted = planetProfileToDraft(planet)
           setDraft(converted)
@@ -204,6 +209,7 @@ export default function PlanetSettingsPage() {
             router.replace('/create-planet')
             return
           }
+          setAccountName(session?.user?.name ?? '')
           setPlanetName(planet.name)
           const converted = planetProfileToDraft(planet)
           setDraft(converted)
@@ -212,7 +218,7 @@ export default function PlanetSettingsPage() {
     })
 
     return () => { cancelled = true }
-  }, [router])
+  }, [router, session?.user?.name])
 
   const previewPlanet = useMemo(
     () => (userId ? buildPlanetFromDraft(draft, userId) : null),
@@ -239,18 +245,37 @@ export default function PlanetSettingsPage() {
 
   async function handleSave() {
     if (!userId || !previewPlanet) return
+    const nextAccountName = accountName.trim()
+    const nextPlanetName = planetName.trim()
+
+    if (!nextAccountName) {
+      setError('Display name is required')
+      return
+    }
+
+    if (!nextPlanetName) {
+      setError('Planet name is required')
+      return
+    }
+
     setSaving(true)
+    setError('')
 
     // Always keep localStorage in sync
-    const savedPlanet = { ...previewPlanet, name: planetName || previewPlanet.name }
+    const savedPlanet = { ...previewPlanet, name: nextPlanetName }
     savePlanetProfile(savedPlanet)
 
     try {
+      const accountResult = await authClient.updateUser({ name: nextAccountName })
+      if (accountResult.error) {
+        throw new Error(accountResult.error.message ?? 'Failed to update display name')
+      }
+
       const res = await fetch('/api/my-planet', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: planetName || previewPlanet.name,
+          name: nextPlanetName,
           tagline: previewPlanet.tagline,
           mood: previewPlanet.mood,
           style: previewPlanet.style,
@@ -272,15 +297,20 @@ export default function PlanetSettingsPage() {
         }),
       })
       if (!res.ok) {
-        console.error('Failed to save planet to API:', await res.text())
+        throw new Error((await res.text()) || 'Failed to save planet')
       }
+      setAccountName(nextAccountName)
+      setPlanetName(nextPlanetName)
+      await refetchSession()
+      router.refresh()
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2800)
     } catch (e) {
-      console.error('Failed to save planet to API:', e)
+      console.error('Failed to save settings:', e)
+      setError(e instanceof Error ? e.message : 'Failed to save settings')
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2800)
   }
 
   if (!mounted || !previewPlanet || !previewPlanetConfig) return null
@@ -325,26 +355,55 @@ export default function PlanetSettingsPage() {
 
             <SectionCard
               title="Identity"
-              description="Your planet's name - how others will find you in the cosmos."
+              description="Your account display name and the planet name others see in orbit."
               color={accentColor}
             >
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                  Planet name
-                </label>
-                <input
-                  type="text"
-                  value={planetName}
-                  onChange={(e) => setPlanetName(e.target.value)}
-                  maxLength={40}
-                  className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    color: 'var(--foreground)',
-                  }}
-                  placeholder="Name your planet..."
-                />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="account-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                    Display name
+                  </label>
+                  <input
+                    id="account-name"
+                    type="text"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    maxLength={40}
+                    className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'var(--foreground)',
+                    }}
+                    placeholder="Your display name..."
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="planet-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                    Planet name
+                  </label>
+                  <input
+                    id="planet-name"
+                    type="text"
+                    value={planetName}
+                    onChange={(e) => setPlanetName(e.target.value)}
+                    maxLength={40}
+                    className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
+                    style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'var(--foreground)',
+                    }}
+                    placeholder="Name your planet..."
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-xs font-medium" style={{ color: '#f87171' }}>
+                    {error}
+                  </p>
+                )}
               </div>
             </SectionCard>
 

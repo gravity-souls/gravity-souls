@@ -39,6 +39,11 @@ interface XPSummary {
   userLevel: number
 }
 
+interface UniverseSummary {
+  signalScore: number
+  linkedPlanets: number
+}
+
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
@@ -157,6 +162,7 @@ export default function MyPlanetPage() {
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
+  const [universeSummary, setUniverseSummary] = useState<UniverseSummary | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
@@ -267,6 +273,16 @@ export default function MyPlanetPage() {
           setUpcomingEvents([])
         }
 
+        try {
+          const universeRes = await fetch('/api/universe/planets')
+          if (universeRes.ok) {
+            const universeData = await universeRes.json() as { currentPlanet?: { telemetry?: UniverseSummary } | null }
+            if (universeData.currentPlanet?.telemetry) setUniverseSummary(universeData.currentPlanet.telemetry)
+          }
+        } catch {
+          setUniverseSummary(null)
+        }
+
         // Fetch real planets for resonance map
         try {
           const planetsRes = await fetch('/api/planets')
@@ -360,6 +376,11 @@ export default function MyPlanetPage() {
     if (p.coreThemes[0]) traits.push(p.coreThemes[0])
     return { planet: p, score, traits }
   })
+  const currentFocusUserId = (planet as PlanetProfile & { userId?: string }).userId ?? planet.id
+  const matchReportSummary = universeSummary ?? {
+    signalScore: Math.min(100, Math.floor((xpSummary?.xp ?? 0) / 20)),
+    linkedPlanets: otherPlanets.length,
+  }
 
   // Resonance radar dimensions
   const radarDimensions = [
@@ -566,6 +587,17 @@ export default function MyPlanetPage() {
           {/* -- Resonant Matches (carousel) -- */}
           <OrbitCard glowColor={visual.accentColor} className="lg:col-span-6 p-5">
             <ResonantMatchesCarousel matches={matchEntries} />
+            <div className="mt-5 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>Match Report</p>
+                <p className="mt-1 text-sm" style={{ color: 'var(--ink)' }}>
+                  Signal Score: {matchReportSummary.signalScore} · {matchReportSummary.linkedPlanets} planets in orbit
+                </p>
+              </div>
+              <Link href={`/universe/demo?focus=${currentFocusUserId}`} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
+                Universe View
+              </Link>
+            </div>
           </OrbitCard>
 
           {/* -- Upcoming Events -- */}
