@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { resolveGalaxySlug } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
@@ -36,23 +39,25 @@ const MATURITY_LABEL: Record<GalaxyPreview['maturity'], string> = {
 // --- GalaxyCard -------------------------------------------------------------
 
 export default function GalaxyCard({ galaxy, variant = 'full', joined, onJoin, joinLoading }: Props) {
+  const t = useTranslations('galaxies')
   const { slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor } = galaxy
 
   if (variant === 'compact') {
-    return <CompactCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords.slice(0, 3)} memberCount={memberCount} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} />
+    return <CompactCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords.slice(0, 3)} memberCount={memberCount} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} joinLabel={t('join')} joinedLabel={t('joined')} membersLabel={t('members', { count: memberCount })} />
   }
 
-  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} />
+  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} joinLabel={t('join')} joinedLabel={t('joined')} membersLabel={t('members', { count: memberCount })} />
 }
 
 // --- Compact variant  -  strip card -------------------------------------------
 
 function CompactCard({
-  slug, name, symbol, tagline, keywords, memberCount, accentColor, joined, onJoin, joinLoading,
+  slug, name, symbol, tagline, keywords, accentColor, joined, onJoin, joinLoading, joinLabel, joinedLabel, membersLabel,
 }: {
   slug: string; name: string; symbol: string; tagline?: string; keywords: string[]
   memberCount: number; accentColor: string
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
+  joinLabel: string; joinedLabel: string; membersLabel: string
 }) {
   const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
@@ -138,7 +143,7 @@ function CompactCard({
           className="ml-auto text-[9px] tracking-wide self-center"
           style={{ color: 'var(--ghost)' }}
         >
-          {memberCount.toLocaleString()} ·
+          {membersLabel} ·
         </span>
       </div>
     </>
@@ -163,7 +168,7 @@ function CompactCard({
               className="inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-lg tracking-wide"
               style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}
             >
-              Joined ✓
+              {joinedLabel} ✓
             </span>
           ) : (
             <button
@@ -177,7 +182,7 @@ function CompactCard({
                 cursor: 'pointer',
               }}
             >
-              {joinLoading ? '...' : 'Join'}
+              {joinLoading ? '...' : joinLabel}
             </button>
           )}
         </div>
@@ -202,12 +207,14 @@ function CompactCard({
 // --- Full variant  -  directory card ------------------------------------------
 
 function FullCard({
-  slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor, joined, onJoin, joinLoading,
+  slug, name, symbol, tagline, keywords, mood, maturity, accentColor, joined, onJoin, joinLoading, joinLabel, joinedLabel, membersLabel,
 }: {
   slug: string; name: string; symbol: string; tagline?: string; keywords: string[]
   mood: GalaxyPreview['mood']; memberCount: number; maturity: GalaxyPreview['maturity']; accentColor: string
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
+  joinLabel: string; joinedLabel: string; membersLabel: string
 }) {
+  const t = useTranslations('galaxies')
   const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
     background: 'linear-gradient(160deg, rgba(18,14,52,0.80) 0%, rgba(6,4,20,0.90) 100%)',
@@ -272,7 +279,7 @@ function FullCard({
           {symbol}
         </div>
         <div>
-          <p className="text-eyebrow mb-0.5">Galaxy</p>
+          <p className="text-eyebrow mb-0.5">{t('galaxy')}</p>
           <h3 className="text-base font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
             {name}
           </h3>
@@ -309,7 +316,7 @@ function FullCard({
       {/* Footer stats */}
       <div className="flex items-center gap-3 relative z-10 mt-auto pt-2" style={{ borderTop: `1px solid ${accentColor}15` }}>
         <span className="text-xs" style={{ color: 'var(--ghost)' }}>
-          {memberCount.toLocaleString()} planets
+          {membersLabel}
         </span>
         <span className="text-xs" style={{ color: 'var(--ghost)' }}>·</span>
         <span className="text-xs" style={{ color: MOOD_LABEL[mood] ? accentColor : 'var(--ghost)', opacity: 0.8 }}>
@@ -341,7 +348,7 @@ function FullCard({
               className="inline-flex items-center gap-1 text-[10px] px-3 py-1.5 rounded-lg tracking-wide"
               style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}
             >
-              Joined ✓
+              {joinedLabel} ✓
             </span>
           ) : (
             <button
@@ -355,7 +362,7 @@ function FullCard({
                 cursor: 'pointer',
               }}
             >
-              {joinLoading ? '...' : 'Join'}
+              {joinLoading ? '...' : joinLabel}
             </button>
           )}
         </div>

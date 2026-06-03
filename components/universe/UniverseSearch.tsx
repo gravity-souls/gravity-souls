@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { mockPlanets } from '@/lib/mock-planets'
 import { searchGalaxies } from '@/lib/mock-galaxies'
 import type { PlanetProfile } from '@/types/planet'
@@ -27,6 +28,8 @@ const QUICK_CHIPS = [
 // --- UniverseSearch ----------------------------------------------------------
 
 export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
+  const t = useTranslations('universeSearch')
+  const tCommon = useTranslations('common')
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -104,7 +107,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
-              placeholder={placeholder ?? 'Search themes, galaxies, cities… 搜索关键词'}
+              placeholder={placeholder ?? t('placeholder')}
               className="flex-1 bg-transparent outline-none px-4 py-4 text-sm"
               style={{
                 color:       'var(--foreground)',
@@ -121,7 +124,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                 onClick={() => { setQuery(''); inputRef.current?.focus() }}
                 className="pr-4 text-sm transition-colors duration-150"
                 style={{ color: 'var(--ghost)', cursor: 'pointer', background: 'none', border: 'none' }}
-                aria-label="Clear search"
+                aria-label={tCommon('clearSearch')}
               >
                 ×
               </button>
@@ -139,7 +142,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                   cursor:     'pointer',
                 }}
               >
-                Search
+                {tCommon('search')}
               </button>
             )}
           </div>
@@ -158,14 +161,14 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
           >
             {!hasResults && (
               <div className="px-5 py-4 text-sm" style={{ color: 'var(--ghost)' }}>
-                No results for &ldquo;{trimmed}&rdquo;
+                {t('noResults', { query: trimmed })}
               </div>
             )}
 
             {/* Galaxy results */}
             {matchedGalaxies.length > 0 && (
               <div className="px-2 pt-2">
-                <p className="text-data-label px-3 mb-1.5">Galaxies</p>
+                <p className="text-data-label px-3 mb-1.5">{t('galaxies')}</p>
                 {matchedGalaxies.map((g) => (
                   <Link
                     key={g.id}
@@ -195,7 +198,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
             {/* Planet results */}
             {matchedPlanets.length > 0 && (
               <div className="px-2 py-2">
-                <p className="text-data-label px-3 mb-1.5">Planets</p>
+                <p className="text-data-label px-3 mb-1.5">{t('planets')}</p>
                 {matchedPlanets.map((p) => (
                   <button
                     key={p.id}
@@ -219,7 +222,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{p.name}</p>
                       <p className="text-xs truncate" style={{ color: 'var(--ghost)' }}>{p.tagline}</p>
                     </div>
-                    <span className="text-xs shrink-0" style={{ color: 'var(--dim)' }}>Preview</span>
+                    <span className="text-xs shrink-0" style={{ color: 'var(--dim)' }}>{t('preview')}</span>
                   </button>
                 ))}
               </div>
@@ -239,7 +242,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                   }}
                   onClick={() => setFocused(false)}
                 >
-                  Search all galaxies for &ldquo;{trimmed}&rdquo; →
+                  {t('searchAll', { query: trimmed })}
                 </Link>
               </div>
             )}
@@ -248,7 +251,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
       </div>
 
       {/* -- Quick keyword chips -------------------------------------------- */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Quick search keywords">
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t('quickKeywords')}>
         {QUICK_CHIPS.map(({ label, q }) => (
           <Link
             key={label}

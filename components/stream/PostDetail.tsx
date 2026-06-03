@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { Heart, LoaderCircle, Reply, Share2, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import LevelBadge from '@/components/planet/LevelBadge'
 import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
 import type { StreamComment, StreamPost } from '@/types/stream'
@@ -22,20 +23,13 @@ interface PostDetailProps {
   onPostUpdated?: (post: StreamPost) => void
 }
 
-function timeAgo(value: string) {
-  const diff = Date.now() - new Date(value).getTime()
-  const minutes = Math.max(1, Math.floor(diff / 60000))
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
-}
-
 function countCommentTree(comments: StreamComment[] = []) {
   return comments.reduce((total, comment) => total + 1 + (comment.replies?.length ?? 0), 0)
 }
 
 export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated }: PostDetailProps) {
+  const t = useTranslations('stream')
+  const tCommon = useTranslations('common')
   const [detail, setDetail] = useState<StreamPost | null>(post)
   const [commentText, setCommentText] = useState('')
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null)
@@ -65,6 +59,15 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   const ownPost = currentUserId === detail.authorId
   const accent = detail.author.tintColor || '#a78bfa'
   const visibleCommentCount = countCommentTree(detail.comments)
+
+  function timeAgo(value: string) {
+    const diff = Date.now() - new Date(value).getTime()
+    const minutes = Math.max(1, Math.floor(diff / 60000))
+    if (minutes < 60) return t('minutesAgo', { count: minutes })
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return t('hoursAgo', { count: hours })
+    return t('daysAgo', { count: Math.floor(hours / 24) })
+  }
 
   async function toggleLike() {
     if (!detail) return
@@ -180,7 +183,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
     )
 
     return comment.author.planetId ? (
-      <Link href={`/planet/${comment.author.planetId}`} aria-label={`Visit ${comment.author.name}'s planet`}>
+      <Link href={`/planet/${comment.author.planetId}`} aria-label={t('visitPlanet', { name: comment.author.name })}>
         {avatar}
       </Link>
     ) : avatar
@@ -208,7 +211,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
         </button>
         {currentUserId && (
           <button type="button" onClick={() => startReply(comment)} className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: replyTarget?.id === comment.id ? '#fff' : 'var(--star)' }}>
-            <Reply size={12} /> Reply
+            <Reply size={12} /> {t('reply')}
           </button>
         )}
       </div>
@@ -251,10 +254,10 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   }
 
   return (
-    <div className="fixed inset-0 z-80 flex items-end justify-center bg-black/72 px-0 backdrop-blur-md sm:items-center sm:px-6" role="dialog" aria-modal="true" aria-label="Post detail">
-      <button type="button" className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Close post" />
+    <div className="fixed inset-0 z-80 flex items-end justify-center bg-black/72 px-0 backdrop-blur-md sm:items-center sm:px-6" role="dialog" aria-modal="true" aria-label={t('postDetail')}>
+      <button type="button" className="absolute inset-0 cursor-default" onClick={onClose} aria-label={t('closePost')} />
       <article className="relative grid max-h-[94vh] w-full overflow-y-auto rounded-t-2xl sm:max-w-5xl sm:grid-cols-[minmax(0,1.1fr)_420px] sm:rounded-2xl" style={{ background: 'rgba(8,10,28,0.98)', border: '1px solid var(--border-soft)', boxShadow: '0 28px 80px rgba(0,0,0,0.45)' }}>
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full" style={{ background: 'rgba(0,0,0,0.45)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }} aria-label="Close">
+        <button type="button" onClick={onClose} className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full" style={{ background: 'rgba(0,0,0,0.45)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }} aria-label={t('close')}>
           <X size={16} />
         </button>
 
@@ -278,14 +281,14 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
         <div className="flex min-h-0 flex-col p-5">
           <div className="flex items-center gap-3">
-            <div className="relative -ml-2 grid h-[72px] w-[72px] place-items-center overflow-hidden">
+            <div className="relative -ml-2 grid h-18 w-18 place-items-center overflow-hidden">
               <PlanetGlobe planetConfig={detail.author.planetConfig} size={72} framing="avatar" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{detail.author.name}</p>
               <div className="mt-1"><LevelBadge level={detail.author.userLevel} size="md" /></div>
             </div>
-            {detail.author.planetId && <Link href={`/planet/${detail.author.planetId}`} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>View Planet</Link>}
+            {detail.author.planetId && <Link href={`/planet/${detail.author.planetId}`} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>{t('viewPlanet')}</Link>}
           </div>
 
           <p className="mt-5 whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink)' }}>{detail.content}</p>
@@ -296,13 +299,13 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
               <Heart size={18} fill={detail.userHasLiked ? 'currentColor' : 'none'} className={detail.userHasLiked ? 'scale-110 transition-transform duration-200' : 'transition-transform duration-200'} /> {detail.likeCount}
             </button>
             <div className="flex gap-3">
-              <button type="button" onClick={sharePost} className="inline-flex items-center gap-1 text-xs" style={{ color: shared ? 'var(--star)' : 'var(--ghost)' }}><Share2 size={14} /> {shared ? 'Copied' : 'Share'}</button>
-              {ownPost && <button type="button" onClick={deletePost} className="inline-flex items-center gap-1 text-xs" style={{ color: '#fca5a5' }}><Trash2 size={14} /> Delete</button>}
+              <button type="button" onClick={sharePost} className="inline-flex items-center gap-1 text-xs" style={{ color: shared ? 'var(--star)' : 'var(--ghost)' }}><Share2 size={14} /> {shared ? t('copied') : t('share')}</button>
+              {ownPost && <button type="button" onClick={deletePost} className="inline-flex items-center gap-1 text-xs" style={{ color: '#fca5a5' }}><Trash2 size={14} /> {tCommon('delete')}</button>}
             </div>
           </div>
 
           <div className="mt-4 flex-1 overflow-y-auto">
-            <p className="text-data-label mb-3">Comments ({visibleCommentCount})</p>
+            <p className="text-data-label mb-3">{t('commentsCount', { count: visibleCommentCount })}</p>
             <div className="grid gap-3">
               {(detail.comments ?? []).map((comment) => {
                 const replies = comment.replies ?? []
@@ -336,7 +339,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
                               className="justify-self-start text-[11px] font-semibold"
                               style={{ color: 'var(--star)' }}
                             >
-                              {repliesExpanded ? 'Hide replies' : `View ${hiddenReplyCount} more ${hiddenReplyCount === 1 ? 'reply' : 'replies'}`}
+                              {repliesExpanded ? t('hideReplies') : t('viewMoreReplies', { count: hiddenReplyCount })}
                             </button>
                           )}
                         </div>
@@ -346,21 +349,21 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
                 )
               })}
             </div>
-            {commentCursor && <button type="button" onClick={loadMoreComments} disabled={loadingMore} className="mt-4 text-xs font-semibold" style={{ color: 'var(--star)' }}>{loadingMore ? 'Loading...' : 'Load more comments'}</button>}
+            {commentCursor && <button type="button" onClick={loadMoreComments} disabled={loadingMore} className="mt-4 text-xs font-semibold" style={{ color: 'var(--star)' }}>{loadingMore ? tCommon('loading') : t('loadMoreComments')}</button>}
           </div>
 
           {currentUserId ? (
             <div className="mt-4 border-t border-white/8 pt-4">
               {replyTarget && (
                 <div className="mb-2 flex items-center justify-between gap-3 px-1" style={{ color: 'var(--ink)' }}>
-                  <span className="min-w-0 truncate text-xs">Replying to <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{replyTarget.authorName}</span></span>
-                  <button type="button" onClick={() => setReplyTarget(null)} className="grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ color: 'var(--ghost)' }} aria-label="Cancel reply">
+                  <span className="min-w-0 truncate text-xs">{t('replyingTo')} <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{replyTarget.authorName}</span></span>
+                  <button type="button" onClick={() => setReplyTarget(null)} className="grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ color: 'var(--ghost)' }} aria-label={t('cancelReply')}>
                     <X size={13} />
                   </button>
                 </div>
               )}
               <div className="flex gap-2">
-                <textarea ref={commentInputRef} value={commentText} onChange={(event) => setCommentText(event.target.value.slice(0, 500))} placeholder={replyTarget ? `Reply to ${replyTarget.authorName}...` : 'Send a signal...'} rows={2} className="min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
+                <textarea ref={commentInputRef} value={commentText} onChange={(event) => setCommentText(event.target.value.slice(0, 500))} placeholder={replyTarget ? t('replyPlaceholder', { name: replyTarget.authorName }) : t('commentPlaceholder')} rows={2} className="min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
                 <button type="button" onClick={submitComment} disabled={submittingComment || !commentText.trim()} className="grid h-12 w-12 place-items-center rounded-xl" style={{ color: '#fff', background: 'rgba(124,58,237,0.78)', border: '1px solid rgba(167,139,250,0.42)', opacity: submittingComment || !commentText.trim() ? 0.55 : 1 }}>
                   {submittingComment ? <LoaderCircle size={16} className="animate-spin" /> : replyTarget ? <Reply size={16} /> : '↗'}
                 </button>
@@ -368,7 +371,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
             </div>
           ) : (
             <Link href={`/sign-in?next=/stream/${detail.id}`} className="mt-4 rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
-              Sign in to send a signal
+              {t('signInToSignal')}
             </Link>
           )}
         </div>

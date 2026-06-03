@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import GlowButton from '@/components/ui/GlowButton'
 import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -20,6 +21,8 @@ const LANG_LABEL: Record<string, string> = {
 // --- Viewer-aware action rows -------------------------------------------------
 
 function ExplorerActions() {
+  const t = useTranslations('planetPage')
+
   return (
     <div
       className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm"
@@ -29,19 +32,21 @@ function ExplorerActions() {
         border: '1px solid rgba(167,139,250,0.12)',
       }}
     >
-      <span style={{ color: 'var(--ghost)' }}>Create your planet to send a signal.</span>
+      <span style={{ color: 'var(--ghost)' }}>{t('explorerSignalRequired')}</span>
       <Link
         href="/create-planet"
         className="font-medium whitespace-nowrap transition-colors duration-150"
         style={{ color: 'var(--star)', textDecoration: 'none' }}
       >
-        Begin →
+        {t('begin')}
       </Link>
     </div>
   )
 }
 
 function ResonatorActions({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations('planetPage')
+
   return (
     <div className="flex flex-wrap gap-2">
       <GlowButton
@@ -49,27 +54,29 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
         variant="primary"
         className="px-5 py-2.5 text-sm"
       >
-        Send a beam
+        {t('sendBeam')}
       </GlowButton>
       <GlowButton
         href={`/saved?add=${planet.id}`}
         variant="secondary"
         className="px-5 py-2.5 text-sm"
       >
-        Save to orbit
+        {t('saveOrbit')}
       </GlowButton>
     </div>
   )
 }
 
 function SelfActions() {
+  const t = useTranslations('planetPage')
+
   return (
     <div className="flex flex-wrap gap-2">
       <GlowButton href="/settings/planet" variant="secondary" className="px-5 py-2.5 text-sm">
-        Tune atmosphere
+        {t('tuneAtmosphere')}
       </GlowButton>
       <GlowButton href="/sbti?next=/my-planet" variant="ghost" className="px-5 py-2.5 text-sm">
-        Soul scan
+        {t('soulScan')}
       </GlowButton>
     </div>
   )
@@ -114,6 +121,7 @@ interface Props {
 }
 
 export default function PlanetHero({ planet, viewerRole }: Props) {
+  const t = useTranslations('planetPage')
   const { visual } = planet
   const isDesktop = useIsDesktop()
   const globeSize = isDesktop ? 260 : 200
@@ -171,7 +179,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
               className="text-xs tracking-[0.25em] uppercase font-medium"
               style={{ color: visual.coreColor, opacity: 0.75 }}
             >
-              {viewerRole === 'self' ? 'Your planet' : 'Planet profile'}
+              {viewerRole === 'self' ? t('yourPlanet') : t('planetProfile')}
             </p>
             <LevelBadge level={planet.userLevel ?? 1} size="md" />
           </div>

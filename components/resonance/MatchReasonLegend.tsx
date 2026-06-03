@@ -1,14 +1,15 @@
 import type { OrbitReasonKey } from '@/types/match'
+import { useTranslations } from 'next-intl'
 
 // --- Legend entries -----------------------------------------------------------
 
-const LEGEND: Array<{ reason: OrbitReasonKey; label: string }> = [
-  { reason: 'shared-interest',      label: 'Shared interests'   },
-  { reason: 'expression-style',     label: 'Expression style'   },
-  { reason: 'emotional-theme',      label: 'Emotional theme'    },
-  { reason: 'culture-travel',       label: 'Culture & travel'   },
-  { reason: 'art-books-music',      label: 'Arts & music'       },
-  { reason: 'worldview-complement', label: 'Worldview contrast' },
+const LEGEND: Array<{ reason: OrbitReasonKey; labelKey: string }> = [
+  { reason: 'shared-interest',      labelKey: 'reasons.sharedInterest'      },
+  { reason: 'expression-style',     labelKey: 'reasons.expressionStyle'     },
+  { reason: 'emotional-theme',      labelKey: 'reasons.emotionalTheme'      },
+  { reason: 'culture-travel',       labelKey: 'reasons.cultureTravel'       },
+  { reason: 'art-books-music',      labelKey: 'reasons.artBooksMusic'       },
+  { reason: 'worldview-complement', labelKey: 'reasons.worldviewComplement' },
 ]
 
 const REASON_COLOR: Record<OrbitReasonKey, string> = {
@@ -29,9 +30,10 @@ interface Props {
 }
 
 export default function MatchReasonLegend({ active, className = '' }: Props) {
+  const t = useTranslations('resonance')
   return (
     <div className={`flex flex-wrap gap-x-4 gap-y-2 ${className}`}>
-      {LEGEND.map(({ reason, label }) => {
+      {LEGEND.map(({ reason, labelKey }) => {
         const color = REASON_COLOR[reason]
         const isActive = reason === active
         return (
@@ -48,7 +50,7 @@ export default function MatchReasonLegend({ active, className = '' }: Props) {
               className="text-[10px] uppercase tracking-widest"
               style={{ color: isActive ? color : 'var(--ghost)', opacity: isActive ? 1 : 0.6 }}
             >
-              {label}
+              {t(labelKey)}
             </span>
           </div>
         )

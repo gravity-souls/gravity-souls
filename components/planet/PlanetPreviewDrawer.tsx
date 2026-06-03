@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
 import { isSaved, savePlanetId } from '@/lib/social-storage'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
@@ -27,6 +28,7 @@ interface Props {
  * Renders as a fixed right-side panel on desktop, bottom sheet on mobile.
  */
 export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 'explorer' }: Props) {
+  const t = useTranslations('planetPage')
   const isResonator = userRole === 'resonator'
 
   // Close on Escape
@@ -65,7 +67,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={planet ? `Planet ${planet.name}` : 'Planet preview'}
+        aria-label={planet ? `${t('planetLabel')} ${planet.name}` : t('planetPreview')}
         className="fixed z-50 flex flex-col"
         style={{
           // Desktop: right-side panel
@@ -99,6 +101,7 @@ function DrawerContent({
   isResonator:  boolean
   onClose:      () => void
 }) {
+  const t = useTranslations('planetPage')
   const router = useRouter()
   const { coreColor } = planet.visual
   const fragment = planet.contentFragments[0]
@@ -166,7 +169,7 @@ function DrawerContent({
 
       {/* Close button */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
-        <span className="text-eyebrow">Planet</span>
+        <span className="text-eyebrow">{t('planetLabel')}</span>
         <button
           onClick={onClose}
           className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200"
@@ -184,7 +187,7 @@ function DrawerContent({
             ;(e.currentTarget as HTMLElement).style.background = 'transparent'
             ;(e.currentTarget as HTMLElement).style.color = 'var(--ghost)'
           }}
-          aria-label="Close preview"
+          aria-label={t('closePreview')}
         >
           ×
         </button>
@@ -248,7 +251,7 @@ function DrawerContent({
 
         {/* Core themes */}
         <div>
-          <p className="text-data-label mb-2">Themes</p>
+          <p className="text-data-label mb-2">{t('themes')}</p>
           <div className="flex flex-wrap gap-1.5">
             {planet.coreThemes.slice(0, 4).map((theme) => (
               <span
@@ -288,7 +291,7 @@ function DrawerContent({
         {/* Emotional bars  -  Resonator only */}
         {isResonator ? (
           <div>
-            <p className="text-data-label mb-3">Resonance profile</p>
+            <p className="text-data-label mb-3">{t('resonanceProfile')}</p>
             <div className="flex flex-col gap-2.5">
               {planet.emotionalBars.map((bar) => (
                 <div key={bar.label} className="flex items-center gap-3">
@@ -323,8 +326,8 @@ function DrawerContent({
           </div>
         ) : (
           <LockedLayer
-            reason="Create your planet to see full resonance profiles"
-            ctaLabel="Begin formation"
+            reason={t('fullProfileLocked')}
+            ctaLabel={t('begin')}
             ctaHref="/create-planet"
             blur={false}
             className="rounded-xl"
@@ -364,7 +367,7 @@ function DrawerContent({
             ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
           }}
         >
-          View planet
+          {t('viewFullPlanet')}
         </Link>
 
         {/* Resonator-only actions */}
@@ -382,7 +385,7 @@ function DrawerContent({
               onClick={handleSave}
               disabled={saved}
             >
-              {saved ? 'Saved' : 'Save planet'}
+              {saved ? t('saved') : t('savePlanet')}
             </button>
             <button
               type="button"
@@ -397,12 +400,12 @@ function DrawerContent({
               onClick={handleSendBeam}
               disabled={sending}
             >
-              {sending ? 'Sending...' : 'Send beam'}
+              {sending ? t('sending') : t('sendBeam')}
             </button>
           </div>
         ) : (
           <p className="text-center text-xs" style={{ color: 'var(--ghost)' }}>
-            Create your planet to connect
+            {t('createToConnect')}
           </p>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { SharedPost } from '@/lib/mock-posts'
 
@@ -17,6 +18,7 @@ interface Props {
  * Shows planet avatar, name, timestamp, text content, hashtags, and engagement counts.
  */
 export default function SharedMomentsFeed({ moments, className = '' }: Props) {
+  const tA11y = useTranslations('a11y')
   const [selectedMoment, setSelectedMoment] = useState<SharedMoment | null>(null)
 
   useEffect(() => {
@@ -153,7 +155,7 @@ export default function SharedMomentsFeed({ moments, className = '' }: Props) {
                 onClick={() => setSelectedMoment(null)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ghost)', cursor: 'pointer' }}
-                aria-label="Close shared moment"
+                aria-label={tA11y('closeSharedMoment')}
               >
                 ×
               </button>

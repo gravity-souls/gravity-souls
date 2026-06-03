@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
@@ -18,6 +19,8 @@ export default function SignUpPage() {
 function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,11 +43,12 @@ function SignUpForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Sign up failed");
+        setError(result.error.message ?? tAuth("signUpFailed"));
         return;
       }
 
       try {
+        await fetch("/api/user/language", { cache: "no-store" });
         await fetch("/api/user/planet-config", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -66,7 +70,7 @@ function SignUpForm() {
       router.push(next);
       router.refresh();
     } catch {
-      setError("Something went wrong during sign up");
+      setError(tCommon("error"));
     } finally {
       setLoading(false);
     }
@@ -75,23 +79,23 @@ function SignUpForm() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <h1 className="mb-2 text-3xl font-semibold" style={{ color: "var(--foreground)" }}>
-        Create your account
+        {tAuth("signUp")}
       </h1>
       <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
-        Start your GravitySouls journey.
+        {tAuth("signUpSubtitle")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            Name
+            {tAuth("name")}
           </label>
           <input
             id="name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder={tAuth("namePlaceholder")}
             className="w-full rounded-xl px-4 py-3 text-sm outline-none"
             style={{
               background: "var(--surface)",
@@ -104,14 +108,14 @@ function SignUpForm() {
 
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            Email
+            {tAuth("email")}
           </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={tAuth("emailPlaceholder")}
             className="w-full rounded-xl px-4 py-3 text-sm outline-none"
             style={{
               background: "var(--surface)",
@@ -124,14 +128,14 @@ function SignUpForm() {
 
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            Password
+            {tAuth("password")}
           </label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 8 characters"
+            placeholder={tAuth("passwordMinPlaceholder")}
             className="w-full rounded-xl px-4 py-3 text-sm outline-none"
             style={{
               background: "var(--surface)",
@@ -146,7 +150,7 @@ function SignUpForm() {
         <div className="space-y-3 pt-2">
           <div className="flex flex-col gap-1">
             <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-              Planet texture
+              {tAuth("planetTexture")}
             </span>
           </div>
           <PlanetPicker selectedPlanet={selectedPlanet} onSelect={setSelectedPlanet} />
@@ -167,14 +171,14 @@ function SignUpForm() {
             color: "#fff",
           }}
         >
-          {loading ? "Creating account..." : "Sign up"}
+          {loading ? tCommon("loading") : tAuth("signUp")}
         </button>
       </form>
 
       <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
-        Already have an account?{" "}
+        {tAuth("hasAccount")}{" "}
         <Link href="/sign-in" className="underline" style={{ color: "var(--star)" }}>
-          Sign in
+          {tAuth("signIn")}
         </Link>
       </p>
     </main>

@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
+import { Noto_Sans_SC } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import './globals.css'
 import Topbar from '@/components/layout/Topbar'
 import CosmicBackground from '@/components/fx/CosmicBackground'
@@ -13,33 +16,44 @@ const geist = Geist({
   subsets: ['latin'],
 })
 
+const notoSansSC = Noto_Sans_SC({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Gravity-Souls  -  Where souls find their gravity',
   description:
     'Gravity-Souls connects you with those who share your inner pull. Discover resonance, compatibility, and genuine connection through the power of authentic expression.',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
+    <html lang={locale} className={`${geist.variable} ${locale === 'zh' ? notoSansSC.className : ''} h-full`}>
       <body className="cosmic-bg min-h-full text-foreground antialiased overflow-x-hidden">
-        <LanguageProvider>
-          <AuthSyncProvider>
-            <CosmicBackground />
-            <StarfieldCanvas />
-            <Topbar />
-            <LevelUpToast />
-            {/* pt = nav height so content clears the fixed header */}
-            <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
-            <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-              Planet textures by{' '}
-              <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer" className="underline">
-                Solar System Scope
-              </a>{' '}
-              (CC BY 4.0)
-            </footer>
-          </AuthSyncProvider>
-        </LanguageProvider>
+        <NextIntlClientProvider messages={messages}>
+          <LanguageProvider>
+            <AuthSyncProvider>
+              <CosmicBackground />
+              <StarfieldCanvas />
+              <Topbar />
+              <LevelUpToast />
+              {/* pt = nav height so content clears the fixed header */}
+              <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
+              <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
+                Planet textures by{' '}
+                <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer" className="underline">
+                  Solar System Scope
+                </a>{' '}
+                (CC BY 4.0)
+              </footer>
+            </AuthSyncProvider>
+          </LanguageProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

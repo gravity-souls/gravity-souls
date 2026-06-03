@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
@@ -55,9 +56,10 @@ interface ConversationItem {
 // --- Conversation card -------------------------------------------------------
 
 function ConversationCard({ conv }: { conv: ConversationItem }) {
+  const t = useTranslations('messagesPage')
   const planet = conv.otherPlanet
   const color = planet?.visual?.coreColor ?? '#a78bfa'
-  const preview = conv.lastMessage?.content ?? 'No messages yet'
+  const preview = conv.lastMessage?.content ?? t('noMessagesYet')
 
   return (
     <Link href={`/messages/${conv.id}`}>
@@ -116,14 +118,16 @@ export default function MessagesPage() {
 }
 
 function MessagesLoading() {
+  const t = useTranslations('messagesPage')
+
   return (
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-2xl mx-auto">
         <SectionHeader
-          eyebrow="Signals"
+          eyebrow={t('eyebrow')}
           level={1}
-          title="Messages"
-          subtitle="Communication beams between planets. Signals sent, signals received."
+          title={t('title')}
+          subtitle={t('subtitle')}
         />
         <div className="flex items-center justify-center py-20">
           <div
@@ -137,6 +141,8 @@ function MessagesLoading() {
 }
 
 function MessagesInner() {
+  const t = useTranslations('messagesPage')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const searchParams = useSearchParams()
   const targetPlanetId = searchParams.get('to')
@@ -166,14 +172,14 @@ function MessagesInner() {
 
             setOpenError(demoPlanet
               ? {
-                  message: `${demoPlanet.name} is demo data, so it has a profile but no real inbox yet. Use a planet from Discover to start a real conversation.`,
+                  message: t('demoInboxMissing', { name: demoPlanet.name }),
                   actionHref: `/planet/${demoPlanet.id}`,
-                  actionLabel: 'View demo planet',
+                  actionLabel: t('viewDemoPlanet'),
                 }
               : {
-                  message: 'This planet could not be found anymore.',
+                  message: t('planetMissing'),
                   actionHref: '/discover',
-                  actionLabel: 'Explore planets',
+                  actionLabel: t('explorePlanets'),
                 })
             setLoading(false)
             return
@@ -184,9 +190,9 @@ function MessagesInner() {
 
           if (!recipientId) {
             setOpenError({
-              message: 'This planet is missing a message recipient.',
+              message: t('recipientMissing'),
               actionHref: '/discover',
-              actionLabel: 'Explore planets',
+              actionLabel: t('explorePlanets'),
             })
             setLoading(false)
             return
@@ -197,7 +203,7 @@ function MessagesInner() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               recipientId,
-              message: `First signal to ${planet.name ?? 'this planet'}`,
+              message: t('firstSignal', { name: planet.name ?? t('thisPlanet') }),
             }),
           })
           if (cancelled) return
@@ -215,9 +221,9 @@ function MessagesInner() {
           }
 
           setOpenError({
-            message: 'This signal could not be opened yet.',
+            message: t('openSignalError'),
             actionHref: '/discover',
-            actionLabel: 'Explore planets',
+            actionLabel: t('explorePlanets'),
           })
           setLoading(false)
           return
@@ -235,9 +241,9 @@ function MessagesInner() {
       } catch {
         if (!cancelled) {
           setOpenError({
-            message: 'Messages could not be loaded right now.',
+            message: t('loadError'),
             actionHref: '/discover',
-            actionLabel: 'Explore planets',
+            actionLabel: t('explorePlanets'),
           })
         }
       } finally {
@@ -250,16 +256,16 @@ function MessagesInner() {
     })
 
     return () => { cancelled = true }
-  }, [router, targetPlanetId])
+  }, [router, targetPlanetId, t])
 
   return (
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-2xl mx-auto">
         <SectionHeader
-          eyebrow="Signals"
+          eyebrow={t('eyebrow')}
           level={1}
-          title="Messages"
-          subtitle="Communication beams between planets. Signals sent, signals received."
+          title={t('title')}
+          subtitle={t('subtitle')}
         />
 
         {loading && (
@@ -274,9 +280,9 @@ function MessagesInner() {
         {!loading && !authed && (
           <EmptyState
             symbol="&#9676;"
-            title="Sign in required"
-            subtitle="Sign in to view your messages."
-            action={<GlowButton href="/sign-in" variant="primary">Sign in</GlowButton>}
+            title={t('signInRequiredTitle')}
+            subtitle={t('signInRequiredSubtitle')}
+            action={<GlowButton href="/sign-in" variant="primary">{tAuth('signIn')}</GlowButton>}
             className="mt-8"
           />
         )}
@@ -284,7 +290,7 @@ function MessagesInner() {
         {!loading && authed && openError && (
           <EmptyState
             symbol="&#9676;"
-            title="Signal unavailable"
+            title={t('signalUnavailable')}
             subtitle={openError.message}
             action={<GlowButton href={openError.actionHref} variant="secondary">{openError.actionLabel}</GlowButton>}
             className="mt-8"
@@ -294,9 +300,9 @@ function MessagesInner() {
         {!loading && authed && !openError && conversations.length === 0 && (
           <EmptyState
             symbol="&#8599;"
-            title="No beams yet"
-            subtitle="Find a planet that resonates and send it a first signal."
-            action={<GlowButton href="/discover" variant="secondary">Explore the cosmos</GlowButton>}
+            title={t('emptyTitle')}
+            subtitle={t('emptySubtitle')}
+            action={<GlowButton href="/discover" variant="secondary">{t('exploreCosmos')}</GlowButton>}
             className="mt-8"
           />
         )}

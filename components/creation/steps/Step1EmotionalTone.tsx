@@ -1,4 +1,5 @@
 import { CLIMATE_OPTIONS } from '@/types/creation'
+import { useTranslations } from 'next-intl'
 
 // --- Step1EmotionalTone -------------------------------------------------------
 // Mood / climate picker. Selecting a value immediately changes the planet's
@@ -10,15 +11,16 @@ interface Props {
 }
 
 export default function Step1EmotionalTone({ value, onChange }: Props) {
+  const t = useTranslations('creationSteps')
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Set the climate of your world
+          {t('climateTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This is not your personality. It is the current weather of your inner world  -  the tone
-          that shapes how your planet reads to others.
+          {t('climateSubtitle')}
         </p>
       </div>
 
@@ -78,7 +80,7 @@ export default function Step1EmotionalTone({ value, onChange }: Props) {
 
       {value && (
         <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
-          Climate locked  -  you can change this any time from your planet settings.
+          {t('climateLocked')}
         </p>
       )}
     </div>

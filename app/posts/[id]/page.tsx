@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
@@ -15,6 +16,7 @@ export function generateStaticParams() {
 }
 
 export default async function PostPage({ params }: Props) {
+  const t = await getTranslations('postsPage')
   const { id } = await params
   const post = getSharedPostById(id)
   if (!post) notFound()
@@ -47,7 +49,7 @@ export default async function PostPage({ params }: Props) {
               </div>
             </div>
             <Link href="/posts" className="text-xs" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
-              All posts
+              {t('title')}
             </Link>
           </div>
 
@@ -67,15 +69,15 @@ export default async function PostPage({ params }: Props) {
             )}
 
             <div className="flex items-center gap-4 text-[11px]" style={{ color: 'var(--ghost)' }}>
-              <span>{post.likes} likes</span>
-              <span>{post.replies} replies</span>
+              <span>{t('likes', { count: post.likes })}</span>
+              <span>{t('replies', { count: post.replies })}</span>
               <span>{new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
 
             {author?.tagline && (
               <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <p className="text-xs uppercase tracking-[0.22em] mb-2" style={{ color: post.avatarGlow }}>
-                  Author planet
+                  {t('authorPlanet')}
                 </p>
                 <p className="text-sm italic" style={{ color: 'var(--ink)', opacity: 0.74 }}>
                   &ldquo;{author.tagline}&rdquo;
@@ -85,10 +87,10 @@ export default async function PostPage({ params }: Props) {
 
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <GlowButton href={`/planet/${post.planetId}`} variant="primary" className="flex-1 text-center py-3 text-sm">
-                View planet
+                {t('viewPlanet')}
               </GlowButton>
               <GlowButton href="/posts" variant="ghost" className="flex-1 text-center py-3 text-sm">
-                Back to posts
+                {t('backToPosts')}
               </GlowButton>
             </div>
           </div>

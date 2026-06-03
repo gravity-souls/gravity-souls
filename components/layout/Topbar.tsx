@@ -4,9 +4,11 @@ import { FormEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, LogOut, MessageCircle, Search, Settings, UserCircle } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import NotificationBell from '@/components/ui/NotificationBell'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
@@ -30,6 +32,10 @@ interface MeResponse {
 
 export default function Topbar() {
   const router = useRouter()
+  const tNav = useTranslations('nav')
+  const tTopbar = useTranslations('topbar')
+  const tAuth = useTranslations('auth')
+  const tA11y = useTranslations('a11y')
   const { data: session } = authClient.useSession()
   const [query, setQuery] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -102,7 +108,7 @@ export default function Topbar() {
       style={{ height: 'var(--nav-h)' }}
     >
       <div className="grid h-full w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-4 md:grid-cols-[220px_minmax(280px,1fr)_auto] lg:px-5">
-        <Link href="/" aria-label="Gravity Souls home" className="flex min-w-0 items-center gap-2 justify-self-start text-white no-underline">
+        <Link href="/" aria-label={tA11y('homeNav')} className="flex min-w-0 items-center gap-2 justify-self-start text-white no-underline">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-400/12 text-sm font-semibold text-violet-100 shadow-[0_0_24px_rgba(124,58,237,0.18)]">
             GS
           </span>
@@ -111,12 +117,12 @@ export default function Topbar() {
 
         <form onSubmit={handleSearch} className="hidden w-full max-w-2xl items-center justify-self-center md:flex">
           <label className="relative w-full">
-            <span className="sr-only">Search planets, galaxies, or signals</span>
+            <span className="sr-only">{tTopbar('searchPlaceholder')}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/34" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search planets, galaxies, signals..."
+              placeholder={tTopbar('searchPlaceholder')}
               className="h-10 w-full rounded-full border border-white/10 bg-white/4.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-violet-300/45 focus:bg-white/[0.07]"
             />
           </label>
@@ -124,11 +130,12 @@ export default function Topbar() {
 
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
           <NotificationBell />
+          <LanguageSwitcher variant="desktop" />
 
           {/* TODO: replace this placeholder with the dedicated chat system entry point. */}
           <Link
             href="/stream"
-            aria-label="Messages"
+            aria-label={tA11y('messages')}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white md:hidden"
           >
             <MessageCircle className="h-4.5 w-4.5" />
@@ -139,7 +146,7 @@ export default function Topbar() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen((current) => !current)}
-                aria-label="Open user menu"
+                aria-label={tA11y('openUserMenu')}
                 aria-expanded={isMenuOpen}
                 className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/4.5 py-1 pl-1 pr-3 text-white/80 transition hover:bg-white/8 hover:text-white"
               >
@@ -156,7 +163,7 @@ export default function Topbar() {
                     className="flex items-center gap-2 px-3 py-2.5 text-sm text-white/76 no-underline transition hover:bg-white/6 hover:text-white"
                   >
                     <UserCircle className="h-4 w-4" />
-                    My Planet
+                    {tNav('myPlanet')}
                   </Link>
                   <Link
                     href="/settings/planet"
@@ -164,7 +171,7 @@ export default function Topbar() {
                     className="flex items-center gap-2 px-3 py-2.5 text-sm text-white/76 no-underline transition hover:bg-white/6 hover:text-white"
                   >
                     <Settings className="h-4 w-4" />
-                    Settings
+                    {tNav('settings')}
                   </Link>
                   <button
                     type="button"
@@ -172,7 +179,7 @@ export default function Topbar() {
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-white/76 transition hover:bg-white/6 hover:text-white"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    {tNav('signOut')}
                   </button>
                 </div>
               )}
@@ -182,7 +189,7 @@ export default function Topbar() {
               href="/sign-in"
               className="hidden rounded-full border border-violet-300/20 bg-violet-400/12 px-4 py-2 text-sm font-semibold text-violet-100 no-underline transition hover:bg-violet-400/18 md:inline-flex"
             >
-              Sign in
+              {tAuth('signIn')}
             </Link>
           )}
         </div>

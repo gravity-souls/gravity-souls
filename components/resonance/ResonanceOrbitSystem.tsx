@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { getPlanetById } from '@/lib/mock-planets'
@@ -61,6 +62,7 @@ export default function ResonanceOrbitSystem({
   onSelect,
   size = 520,
 }: Props) {
+  const tHome = useTranslations('home')
   const cx = size / 2
   const cy = size / 2
   const hubR = 54
@@ -136,7 +138,7 @@ export default function ResonanceOrbitSystem({
           outline: 'none',
         }}
         onClick={() => onSelect(null)}
-        aria-label={`${sourcePlanet.name}  -  your planet`}
+        aria-label={`${sourcePlanet.name} - ${tHome('yourPlanet')}`}
       >
         {sourcePlanet.avatarSymbol}
       </button>
@@ -152,7 +154,7 @@ export default function ResonanceOrbitSystem({
           opacity: 0.5,
         }}
       >
-        Your planet
+        {tHome('yourPlanet')}
       </div>
 
       {/* Orbiting planet nodes */}

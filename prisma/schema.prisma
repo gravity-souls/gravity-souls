@@ -14,6 +14,7 @@ model user {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  language      String    @default("en")
   planetTexture String    @default("jupiter.jpg")
   planetTint    String    @default("#7c4dbf")
   planetAtmoColor String  @default("#b39ddb")

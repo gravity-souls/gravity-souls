@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -122,6 +123,8 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
 // --- Page --------------------------------------------------------------------
 
 export default function DiscoverPage() {
+  const t = useTranslations('discover')
+  const tAuth = useTranslations('auth')
   const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [loading, setLoading] = useState(true)
@@ -157,17 +160,17 @@ export default function DiscoverPage() {
           const planets = (data as Record<string, unknown>[]).map(dbPlanetToProfile)
           setOtherPlanets(planets)
         } else if (res.status === 401) {
-          setError('Sign in to discover other planets')
+          setError(t('signInRequired'))
         }
       } catch {
-        setError('Failed to load planets')
+        setError(t('loadError'))
       }
 
       setLoading(false)
     }
 
     load()
-  }, [])
+  }, [t])
 
   // Score and sort planets by resonance
   const scored = myPlanet
@@ -191,13 +194,13 @@ export default function DiscoverPage() {
             className="text-xs font-medium tracking-[0.3em] uppercase"
             style={{ color: 'var(--star)', opacity: 0.6 }}
           >
-            Resonance map
+            {t('eyebrow')}
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
-            Discover planets
+            {t('title')}
           </h1>
           <p className="text-sm max-w-lg leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
-            Planets in your gravitational field, ranked by resonance strength.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -213,9 +216,9 @@ export default function DiscoverPage() {
         {error && (
           <EmptyState
             symbol="&#9676;"
-            title="Cannot discover"
+            title={t('cannotDiscover')}
             subtitle={error}
-            action={<GlowButton href="/sign-in" variant="primary">Sign in</GlowButton>}
+            action={<GlowButton href="/sign-in" variant="primary">{tAuth('signIn')}</GlowButton>}
             className="mt-8"
           />
         )}
@@ -223,8 +226,8 @@ export default function DiscoverPage() {
         {!loading && !error && scored.length === 0 && (
           <EmptyState
             symbol="&#9676;"
-            title="Empty cosmos"
-            subtitle="No other planets have formed yet. You are the first explorer in this region."
+            title={t('emptyTitle')}
+            subtitle={t('emptySubtitle')}
             className="mt-8"
           />
         )}

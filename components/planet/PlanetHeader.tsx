@@ -1,15 +1,19 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { PlanetProfile, ActiveStatus } from '@/types/planet'
 
 // --- Status badge ---------------------------------------------------------
 
-const STATUS_CONFIG: Record<ActiveStatus, { label: string; color: string; bg: string }> = {
-  active:   { label: 'Active',   color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
-  drifting: { label: 'Drifting', color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
-  quiet:    { label: 'Quiet',    color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
+const STATUS_CONFIG: Record<ActiveStatus, { labelKey: string; color: string; bg: string }> = {
+  active:   { labelKey: 'statusActive',   color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
+  drifting: { labelKey: 'statusDrifting', color: '#a78bfa', bg: 'rgba(167,139,250,0.1)' },
+  quiet:    { labelKey: 'statusQuiet',    color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
 }
 
 function StatusBadge({ status }: { status: ActiveStatus }) {
+  const t = useTranslations('planetPage')
   const cfg = STATUS_CONFIG[status]
   return (
     <span
@@ -20,7 +24,7 @@ function StatusBadge({ status }: { status: ActiveStatus }) {
         className="w-1.5 h-1.5 rounded-full animate-pulse"
         style={{ background: cfg.color }}
       />
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   )
 }
@@ -28,6 +32,7 @@ function StatusBadge({ status }: { status: ActiveStatus }) {
 // --- Viewer-state action buttons ------------------------------------------
 
 function ExplorerActions() {
+  const t = useTranslations('planetPage')
   return (
     <Link
       href="/create-planet"
@@ -39,12 +44,13 @@ function ExplorerActions() {
       }}
     >
       <span style={{ opacity: 0.6 }}>◌</span>
-      Create your planet to connect
+      {t('createToConnect')}
     </Link>
   )
 }
 
 function ResonatorActions({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations('planetPage')
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <button
@@ -55,7 +61,7 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
           color: planet.visual.coreColor,
         }}
       >
-        ⟡ Send beam
+        ⟡ {t('sendBeam')}
       </button>
       <button
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
@@ -65,7 +71,7 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
           color: 'var(--ink)',
         }}
       >
-        ◈ Save
+        ◈ {t('save')}
       </button>
     </div>
   )
@@ -88,6 +94,7 @@ interface Props {
  * active status badge, and viewer-state-aware action buttons.
  */
 export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) {
+  const t = useTranslations('planetPage')
   const { visual, name, tagline, location, languages, activeStatus, communicationStyle } = planet
 
   return (
@@ -95,10 +102,10 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
       {/* -- Breadcrumb ---------------------------------------------------- */}
       <nav className="flex items-center gap-1.5 text-xs flex-wrap" style={{ color: 'var(--ghost)' }}>
         {viewerRole === 'self' ? (
-          <span style={{ color: 'var(--star)', opacity: 0.55 }}>My planet</span>
+          <span style={{ color: 'var(--star)', opacity: 0.55 }}>{t('myPlanetCrumb')}</span>
         ) : (
           <>
-            <Link href="/galaxies" className="hover:opacity-80 transition-opacity">Galaxies</Link>
+            <Link href="/galaxies" className="hover:opacity-80 transition-opacity">{t('galaxiesCrumb')}</Link>
             {fromPlanet && (
               <>
                 <span style={{ opacity: 0.35 }}>/</span>

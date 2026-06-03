@@ -2,6 +2,7 @@
 
 import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GalaxyCard from '@/components/galaxy/GalaxyCard'
@@ -16,13 +17,13 @@ const ALL_GALAXIES = getGalaxyPreviews()
 
 type MoodFilter = GalaxyPreview['mood'] | 'all'
 
-const MOOD_OPTIONS: { value: MoodFilter; label: string }[] = [
-  { value: 'all',           label: 'All' },
-  { value: 'contemplative', label: 'Contemplative' },
-  { value: 'creative',      label: 'Creative' },
-  { value: 'intimate',      label: 'Intimate' },
-  { value: 'technical',     label: 'Technical' },
-  { value: 'vibrant',       label: 'Vibrant' },
+const MOOD_OPTIONS: { value: MoodFilter; labelKey: string }[] = [
+  { value: 'all',           labelKey: 'all' },
+  { value: 'contemplative', labelKey: 'moodContemplative' },
+  { value: 'creative',      labelKey: 'moodCreative' },
+  { value: 'intimate',      labelKey: 'moodIntimate' },
+  { value: 'technical',     labelKey: 'moodTechnical' },
+  { value: 'vibrant',       labelKey: 'moodVibrant' },
 ]
 
 // --- Page --------------------------------------------------------------------
@@ -37,6 +38,10 @@ export default function GalaxiesPage() {
 }
 
 function GalaxiesInner() {
+  const tNav = useTranslations('nav')
+  const tHome = useTranslations('home')
+  const tGalaxies = useTranslations('galaxies')
+  const tCommon = useTranslations('common')
   const searchParams = useSearchParams()
   const initialQ = searchParams.get('q') ?? ''
 
@@ -62,10 +67,10 @@ function GalaxiesInner() {
 
         {/* Header */}
         <SectionHeader
-          eyebrow="Communities"
+          eyebrow={tHome('recommendedCommunities')}
           level={1}
-          title="Galaxies"
-          subtitle="Keyword-based clusters where planets find their orbit. Each galaxy is a thematic world  -  join, explore, or drift through."
+          title={tNav('galaxies')}
+          subtitle={tGalaxies('subtitle')}
         />
 
         {/* -- Search + filters -------------------------------------------- */}
@@ -84,7 +89,7 @@ function GalaxiesInner() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, keyword, or theme…"
+              placeholder={tGalaxies('searchPlaceholder')}
               className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none"
               style={{
                 background:  'rgba(18,14,52,0.65)',
@@ -100,7 +105,7 @@ function GalaxiesInner() {
 
           {/* Mood filter */}
           <div className="flex gap-1.5 flex-wrap sm:flex-nowrap">
-            {MOOD_OPTIONS.map(({ value, label }) => (
+            {MOOD_OPTIONS.map(({ value, labelKey }) => (
               <button
                 key={value}
                 onClick={() => setMoodFilter(value)}
@@ -112,7 +117,7 @@ function GalaxiesInner() {
                   cursor:      'pointer',
                 }}
               >
-                {label}
+                {tGalaxies(labelKey)}
               </button>
             ))}
           </div>
@@ -120,8 +125,7 @@ function GalaxiesInner() {
 
         {/* Result count */}
         <p className="mt-4 text-xs" style={{ color: 'var(--ghost)' }}>
-          {filtered.length} {filtered.length === 1 ? 'galaxy' : 'galaxies'} found
-          {query ? ` for "${query}"` : ''}
+          {query ? tGalaxies('foundFor', { count: filtered.length, query }) : tGalaxies('found', { count: filtered.length })}
         </p>
 
         {/* -- Galaxy grid ------------------------------------------------- */}
@@ -129,8 +133,8 @@ function GalaxiesInner() {
           {filtered.length === 0 ? (
             <EmptyState
               symbol="◈"
-              title="No galaxies match"
-              subtitle="Try a different keyword or clear the filter."
+              title={tCommon('noResults')}
+              subtitle={tGalaxies('emptySubtitle')}
               size="md"
               className="mt-12"
             />

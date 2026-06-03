@@ -1,5 +1,6 @@
 import type { CommunicationStyle } from '@/types/planet'
 import { COMM_STYLE_OPTIONS } from '@/types/creation'
+import { useTranslations } from 'next-intl'
 
 // --- Step3AtmosphereStyle -----------------------------------------------------
 // Communication style picker + two cognitive axis sliders.
@@ -65,22 +66,23 @@ export default function Step3AtmosphereStyle({
   onAbstractChange,
   onIntrospectiveChange,
 }: Props) {
+  const t = useTranslations('creationSteps')
+
   return (
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Define how others feel your atmosphere
+          {t('atmosphereTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This shapes the halo and texture of your planet  -  how it projects outward into the field
-          before anyone reaches the surface.
+          {t('atmosphereSubtitle')}
         </p>
       </div>
 
       {/* Communication style */}
       <div className="flex flex-col gap-3">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          How you communicate
+          {t('communication')}
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {COMM_STYLE_OPTIONS.map((opt) => {
@@ -122,29 +124,28 @@ export default function Step3AtmosphereStyle({
       {/* Cognitive axes */}
       <div className="flex flex-col gap-5">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Cognitive signature
+          {t('cognitiveSignature')}
         </span>
 
         <div className="flex flex-col gap-4">
           <AxisSlider
             value={abstractAxis}
             onChange={onAbstractChange}
-            labelLeft="Concrete"
-            labelRight="Abstract"
+            labelLeft={t('concrete')}
+            labelRight={t('abstract')}
             color="#60a5fa"
           />
           <AxisSlider
             value={introspectiveAxis}
             onChange={onIntrospectiveChange}
-            labelLeft="Outward"
-            labelRight="Introspective"
+            labelLeft={t('outward')}
+            labelRight={t('introspective')}
             color="#a78bfa"
           />
         </div>
 
         <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
-          These are not types or boxes. They describe your current centre of gravity  -  and they
-          shape how the resonance engine reads your planet against others.
+          {t('axisHint')}
         </p>
       </div>
     </div>

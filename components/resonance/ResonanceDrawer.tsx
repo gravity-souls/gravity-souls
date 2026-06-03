@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { getPlanetById } from '@/lib/mock-planets'
@@ -11,12 +12,12 @@ import MatchDimensionBars from '@/components/resonance/MatchDimensionBars'
 
 // --- Relationship type labels -------------------------------------------------
 
-const REL_LABEL: Record<string, string> = {
-  'chat':                 'Casual signal',
-  'friendship':           'Mutual orbit',
-  'activity-buddy':       'Activity companion',
-  'community-companion':  'Galaxy co-member',
-  'deep-conversation':    'Deep conversation',
+const REL_KEY: Record<string, string> = {
+  'chat':                 'relationships.chat',
+  'friendship':           'relationships.friendship',
+  'activity-buddy':       'relationships.activityBuddy',
+  'community-companion':  'relationships.communityCompanion',
+  'deep-conversation':    'relationships.deepConversation',
 }
 
 // --- Score ring ---------------------------------------------------------------
@@ -55,6 +56,7 @@ interface Props {
 }
 
 export default function ResonanceDrawer({ match, onClose }: Props) {
+  const t = useTranslations('resonance')
   const open = match !== null
 
   // Escape key to close
@@ -102,7 +104,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
           <DrawerContent planet={planet} match={match} color={color} onClose={onClose} />
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <span style={{ color: 'var(--ghost)' }}>Select a planet to see its resonance.</span>
+            <span style={{ color: 'var(--ghost)' }}>{t('selectPlanetDetail')}</span>
           </div>
         )}
       </div>
@@ -123,6 +125,8 @@ function DrawerContent({
   color:   string
   onClose: () => void
 }) {
+  const t = useTranslations('resonance')
+  const tA11y = useTranslations('a11y')
   return (
     <>
       {/* Top color bar */}
@@ -134,7 +138,7 @@ function DrawerContent({
         {/* Close button */}
         <div className="flex items-center justify-between">
           <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-            Resonance detail
+            {t('compatibility')}
           </span>
           <button
             onClick={onClose}
@@ -144,7 +148,7 @@ function DrawerContent({
               border: '1px solid rgba(255,255,255,0.08)',
               color: 'var(--ghost)',
             }}
-            aria-label="Close"
+            aria-label={tA11y('close')}
           >
             ×
           </button>
@@ -191,7 +195,7 @@ function DrawerContent({
         {/* Dimension bars */}
         <div className="flex flex-col gap-3">
           <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-            Resonance map
+            {t('cognitiveMap')}
           </span>
           <MatchDimensionBars dimensions={match.dimensions} primaryColor={match.orbitColor} />
         </div>
@@ -234,7 +238,7 @@ function DrawerContent({
         {match.suggestedTypes.length > 0 && (
           <div className="flex flex-col gap-2">
             <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-              Suggested orbit
+              {t('suggestedOrbit')}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {match.suggestedTypes.map((type) => (
@@ -247,7 +251,7 @@ function DrawerContent({
                     color,
                   }}
                 >
-                  {REL_LABEL[type] ?? type}
+                  {REL_KEY[type] ? t(REL_KEY[type]) : type}
                 </span>
               ))}
             </div>
@@ -266,14 +270,14 @@ function DrawerContent({
           variant="primary"
           className="w-full py-3 text-sm text-center"
         >
-          Send a beam
+          {t('sendSignal')}
         </GlowButton>
         <Link
           href={`/planet/${planet.id}`}
           className="text-center text-xs py-2 transition-opacity hover:opacity-80"
           style={{ color: 'var(--ghost)', textDecoration: 'none' }}
         >
-          View full planet →
+          {t('viewPlanet')}
         </Link>
       </div>
     </>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import EventCard from '@/components/events/EventCard'
 import EventDetail from '@/components/events/EventDetail'
@@ -11,13 +12,15 @@ import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/typ
 const CATEGORIES: ('ALL' | EventCategory)[] = ['ALL', 'MEETUP', 'ONLINE', 'WORKSHOP', 'STARGAZING', 'DISCUSSION', 'OTHER']
 type EventListTab = 'upcoming' | 'going' | 'passed'
 
-const TABS: { value: EventListTab; label: string; empty: string }[] = [
-  { value: 'upcoming', label: 'Upcoming', empty: 'No upcoming events in your joined galaxies yet.' },
-  { value: 'going', label: 'Going', empty: 'You have not RSVPed to any upcoming events yet.' },
-  { value: 'passed', label: 'Passed', empty: 'No passed events in your joined galaxies yet.' },
+const TABS: { value: EventListTab; labelKey: string; emptyKey: string }[] = [
+  { value: 'upcoming', labelKey: 'tabs.upcoming', emptyKey: 'emptyUpcoming' },
+  { value: 'going', labelKey: 'tabs.going', emptyKey: 'emptyGoing' },
+  { value: 'passed', labelKey: 'tabs.passed', emptyKey: 'emptyPassed' },
 ]
 
 export default function GalaxyEventsPage() {
+  const t = useTranslations('eventsPage')
+  const tAuth = useTranslations('auth')
   const [events, setEvents] = useState<GalaxyEventSummary[]>([])
   const [tab, setTab] = useState<EventListTab>('upcoming')
   const [category, setCategory] = useState<'ALL' | EventCategory>('ALL')
@@ -95,15 +98,15 @@ export default function GalaxyEventsPage() {
     <AppShell>
       <div className="mx-auto max-w-5xl px-6 pb-20 pt-8">
         <SectionHeader
-          eyebrow="Galaxies"
+          eyebrow={t('eyebrow')}
           level={1}
-          title="Joined galaxy events"
-          subtitle="Member-only events from galaxies you have joined. Use Galaxies to discover and join more."
+          title={t('title')}
+          subtitle={t('subtitle')}
         />
 
         <div className="mt-4">
           <Link href="/galaxies" className="inline-flex rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
-            Discover galaxies
+            {t('discoverGalaxies')}
           </Link>
         </div>
 
@@ -117,33 +120,33 @@ export default function GalaxyEventsPage() {
                 className="rounded-xl px-3 py-2 text-xs font-semibold"
                 style={{ color: tab === item.value ? '#fff' : 'var(--ghost)', background: tab === item.value ? 'rgba(124,58,237,0.50)' : 'transparent' }}
               >
-                {item.label}
+                {t(item.labelKey)}
               </button>
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((item) => (
               <button key={item} type="button" onClick={() => setCategory(item)} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: category === item ? '#fff' : 'var(--ghost)', background: category === item ? 'rgba(124,58,237,0.34)' : 'rgba(255,255,255,0.035)', border: category === item ? '1px solid rgba(167,139,250,0.42)' : '1px solid rgba(255,255,255,0.07)' }}>
-                {item}
+                {t(`categories.${item.toLowerCase()}`)}
               </button>
             ))}
           </div>
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search events" className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('searchPlaceholder')} className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
         </div>
 
         <div className="mt-6 grid gap-3">
           {loading ? (
-            <p className="text-sm" style={{ color: 'var(--ghost)' }}>Loading events...</p>
+            <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('loading')}</p>
           ) : authRequired ? (
             <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-              <p className="text-sm" style={{ color: 'var(--ghost)' }}>Sign in to see upcoming events from galaxies you have joined.</p>
+              <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('signInRequired')}</p>
               <Link href="/sign-in" className="mt-4 inline-flex rounded-xl px-4 py-2 text-xs font-semibold" style={{ color: '#fff', background: 'rgba(124,58,237,0.78)', border: '1px solid rgba(167,139,250,0.42)', textDecoration: 'none' }}>
-                Sign in
+                {tAuth('signIn')}
               </Link>
             </div>
           ) : events.length === 0 ? (
             <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-              <p className="text-sm" style={{ color: 'var(--ghost)' }}>{currentTab.empty}</p>
+              <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t(currentTab.emptyKey)}</p>
             </div>
           ) : (
             events.map((event) => (

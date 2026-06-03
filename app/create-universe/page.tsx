@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import GlassCard from '@/components/ui/GlassCard'
 import GlowButton from '@/components/ui/GlowButton'
 import { moodOptions } from '@/lib/mock-data'
-import { useLanguage } from '@/contexts/language-context'
-import { t } from '@/lib/translations'
 import { getOrCreateUserId, buildUniverseFromInput, saveUserUniverse, buildPlanetFromInput, savePlanetProfile } from '@/lib/user'
 import { savePlanetToDb } from '@/lib/save-to-db'
 
@@ -14,7 +13,8 @@ type Step = 'idle' | 'processing' | 'mapping'
 
 export default function CreateUniversePage() {
   const router = useRouter()
-  const { lang } = useLanguage()
+  const t = useTranslations('createUniverse')
+  const tCommon = useTranslations('common')
   const [expression, setExpression] = useState('')
   const [selectedMood, setSelectedMood] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -65,13 +65,13 @@ export default function CreateUniversePage() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
             <span className="text-xs font-medium tracking-[0.3em] text-star uppercase opacity-60">
-              Universe formation
+              {t('formation')}
             </span>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              {t(lang, 'create.title')}
+              {t('title')}
             </h1>
             <p className="text-sm text-muted leading-relaxed max-w-sm">
-              {t(lang, 'create.subtitle')}
+              {t('subtitle')}
             </p>
           </div>
           {/* Completion indicator */}
@@ -88,7 +88,7 @@ export default function CreateUniversePage() {
                 />
               ))}
             </div>
-            <span className="text-xs text-muted opacity-50">{completionCount}/2 signals</span>
+            <span className="text-xs text-muted opacity-50">{t('signalsCount', { count: completionCount })}</span>
           </div>
         </div>
 
@@ -97,13 +97,13 @@ export default function CreateUniversePage() {
           {/* -- Expression textarea ----------------------------------- */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
-              Your expression
+              {t('expressionLabel')}
             </label>
             <GlassCard className="p-0 overflow-hidden" style={{ transition: 'box-shadow 0.3s' }}>
               <textarea
                 value={expression}
                 onChange={(e) => setExpression(e.target.value)}
-                placeholder={t(lang, 'create.text.placeholder')}
+                placeholder={t('textPlaceholder')}
                 rows={8}
                 disabled={isSubmitting}
                 className="w-full bg-transparent px-6 py-5 text-sm text-foreground placeholder:text-muted leading-7 resize-none outline-none disabled:opacity-40"
@@ -120,7 +120,7 @@ export default function CreateUniversePage() {
                   />
                   <span className="text-xs text-muted">{expression.length} / 1000</span>
                 </div>
-                <span className="text-xs text-muted opacity-40 italic">no rules, no judgment</span>
+                <span className="text-xs text-muted opacity-40 italic">{t('noRules')}</span>
               </div>
             </GlassCard>
           </div>
@@ -128,7 +128,7 @@ export default function CreateUniversePage() {
           {/* -- Mood chips -------------------------------------------- */}
           <div className="flex flex-col gap-3">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
-              {t(lang, 'create.mood.label')}
+              {t('moodLabel')}
             </label>
             <div className="flex flex-wrap gap-2">
               {moodOptions.map((mood) => {
@@ -155,7 +155,7 @@ export default function CreateUniversePage() {
             </div>
             {selectedMood && (
               <p className="text-xs text-muted opacity-60 italic pl-1">
-                Signal locked: <span className="text-star opacity-80">{selectedMood}</span>
+                {t('signalLocked')} <span className="text-star opacity-80">{selectedMood}</span>
               </p>
             )}
           </div>
@@ -163,8 +163,8 @@ export default function CreateUniversePage() {
           {/* -- Image upload dropzone ---------------------------------- */}
           <div className="flex flex-col gap-3">
             <label className="text-xs font-medium tracking-widest text-star uppercase opacity-60">
-              Visual fragment{' '}
-              <span className="text-muted normal-case tracking-normal font-normal opacity-50"> -  optional, coming soon</span>
+              {t('visualFragment')}{' '}
+              <span className="text-muted normal-case tracking-normal font-normal opacity-50"> {t('optionalComingSoon')}</span>
             </label>
             <div
               onDragEnter={() => setIsDragOver(true)}
@@ -200,9 +200,9 @@ export default function CreateUniversePage() {
                 ◌
               </span>
               <div className="text-center">
-                <p className="text-xs text-muted opacity-60">Drop an image or caption</p>
+                <p className="text-xs text-muted opacity-60">{t('dropImage')}</p>
                 <p className="text-xs text-muted opacity-30 mt-1">
-                  Visual traces will be read alongside your text
+                  {t('visualTraces')}
                 </p>
               </div>
             </div>
@@ -217,30 +217,30 @@ export default function CreateUniversePage() {
               fullWidth
               className="py-4 text-base"
             >
-              {step === 'idle' && 'Generate my universe'}
+              {step === 'idle' && t('generate')}
               {step === 'processing' && (
                 <span className="flex items-center gap-3">
                   <ProcessingDots />
-                  Reading your signal...
+                  {t('reading')}
                 </span>
               )}
               {step === 'mapping' && (
                 <span className="flex items-center gap-3">
                   <ProcessingDots />
-                  Mapping the universe...
+                  {t('mapping')}
                 </span>
               )}
             </GlowButton>
             {!isSubmitting && (
               <GlowButton href="/" variant="ghost" className="text-xs whitespace-nowrap">
-                Cancel
+                {tCommon('cancel')}
               </GlowButton>
             )}
           </div>
 
           {!filled.expression && (
             <p className="text-center text-xs text-muted opacity-40">
-              Begin with your expression  -  even a single line is enough.
+              {t('beginHint')}
             </p>
           )}
         </form>

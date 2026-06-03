@@ -3,10 +3,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { authClient } from '@/lib/auth-client'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
@@ -65,6 +67,8 @@ function SectionCard({
 // --- Save confirmation toast --------------------------------------------------
 
 function SaveToast({ visible }: { visible: boolean }) {
+  const t = useTranslations('planetSettings')
+
   return (
     <div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl flex items-center gap-2.5 transition-all duration-300"
@@ -83,7 +87,7 @@ function SaveToast({ visible }: { visible: boolean }) {
         style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }}
       />
       <span className="text-xs font-medium" style={{ color: '#34d399' }}>
-        Settings updated
+        {t('updated')}
       </span>
     </div>
   )
@@ -145,6 +149,8 @@ function planetConfigFromProfile(planet: PlanetProfile): PlanetConfig {
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
+  const tSettings = useTranslations('planetSettings')
+  const tLanguage = useTranslations('language')
   const { data: session, refetch: refetchSession } = authClient.useSession()
   const [mounted,   setMounted]   = useState(false)
   const [userId,    setUserId]    = useState('')
@@ -249,12 +255,12 @@ export default function PlanetSettingsPage() {
     const nextPlanetName = planetName.trim()
 
     if (!nextAccountName) {
-      setError('Display name is required')
+      setError(tSettings('displayNameRequired'))
       return
     }
 
     if (!nextPlanetName) {
-      setError('Planet name is required')
+      setError(tSettings('planetNameRequired'))
       return
     }
 
@@ -268,7 +274,7 @@ export default function PlanetSettingsPage() {
     try {
       const accountResult = await authClient.updateUser({ name: nextAccountName })
       if (accountResult.error) {
-        throw new Error(accountResult.error.message ?? 'Failed to update display name')
+        throw new Error(accountResult.error.message ?? tSettings('displayNameFailed'))
       }
 
       const res = await fetch('/api/my-planet', {
@@ -297,7 +303,7 @@ export default function PlanetSettingsPage() {
         }),
       })
       if (!res.ok) {
-        throw new Error((await res.text()) || 'Failed to save planet')
+        throw new Error((await res.text()) || tSettings('savePlanetFailed'))
       }
       setAccountName(nextAccountName)
       setPlanetName(nextPlanetName)
@@ -307,7 +313,7 @@ export default function PlanetSettingsPage() {
       setTimeout(() => setSaved(false), 2800)
     } catch (e) {
       console.error('Failed to save settings:', e)
-      setError(e instanceof Error ? e.message : 'Failed to save settings')
+      setError(e instanceof Error ? e.message : tSettings('saveSettingsFailed'))
     } finally {
       setSaving(false)
     }
@@ -327,7 +333,7 @@ export default function PlanetSettingsPage() {
             className="text-xs uppercase tracking-[0.25em] font-medium"
             style={{ color: accentColor, opacity: 0.7 }}
           >
-            Settings
+            {tSettings('settings')}
           </p>
           <h1
             className="text-3xl sm:text-4xl font-bold w-fit"
@@ -342,8 +348,7 @@ export default function PlanetSettingsPage() {
             {planetName || previewPlanet.name}
           </h1>
           <p className="text-sm max-w-lg" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-            Reshape any dimension of your world. Changes update the live preview instantly and are
-            saved when you confirm.
+            {tSettings('description')}
           </p>
         </div>
 
@@ -354,14 +359,14 @@ export default function PlanetSettingsPage() {
           <div className="flex flex-col gap-6">
 
             <SectionCard
-              title="Identity"
-              description="Your account display name and the planet name others see in orbit."
+              title={tSettings('identity')}
+              description={tSettings('identityDescription')}
               color={accentColor}
             >
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <label htmlFor="account-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                    Display name
+                    {tSettings('displayName')}
                   </label>
                   <input
                     id="account-name"
@@ -375,13 +380,13 @@ export default function PlanetSettingsPage() {
                       border: '1px solid rgba(255,255,255,0.08)',
                       color: 'var(--foreground)',
                     }}
-                    placeholder="Your display name..."
+                    placeholder={tSettings('displayNamePlaceholder')}
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label htmlFor="planet-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                    Planet name
+                    {tSettings('planetName')}
                   </label>
                   <input
                     id="planet-name"
@@ -395,7 +400,7 @@ export default function PlanetSettingsPage() {
                       border: '1px solid rgba(255,255,255,0.08)',
                       color: 'var(--foreground)',
                     }}
-                    placeholder="Name your planet..."
+                    placeholder={tSettings('planetNamePlaceholder')}
                   />
                 </div>
 
@@ -407,9 +412,19 @@ export default function PlanetSettingsPage() {
               </div>
             </SectionCard>
 
+            <div className="md:hidden">
+              <SectionCard
+                title={tLanguage('title')}
+                description=""
+                color={accentColor}
+              >
+                <LanguageSwitcher variant="mobile" />
+              </SectionCard>
+            </div>
+
             <SectionCard
-              title="Planet photo"
-              description="Choose the texture other users see on your profile, cards, and messages."
+              title={tSettings('planetPhoto')}
+              description={tSettings('planetPhotoDescription')}
               color={accentColor}
             >
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -442,8 +457,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <SectionCard
-              title="Emotional climate"
-              description="The current weather of your inner world. Drives color and surface."
+              title={tSettings('emotionalClimate')}
+              description={tSettings('emotionalClimateDescription')}
               color={accentColor}
             >
               <Step1EmotionalTone
@@ -453,8 +468,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <SectionCard
-              title="Interest ecology"
-              description="Your core themes and habitat pattern. Shapes the terrain of your planet."
+              title={tSettings('interestEcology')}
+              description={tSettings('interestEcologyDescription')}
               color={accentColor}
             >
               <Step2InterestEcology
@@ -466,8 +481,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <SectionCard
-              title="Atmosphere"
-              description="How you communicate and your cognitive signature. Shapes the halo."
+              title={tSettings('atmosphere')}
+              description={tSettings('atmosphereDescription')}
               color="#a78bfa"
             >
               <Step3AtmosphereStyle
@@ -481,8 +496,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <SectionCard
-              title="Cultural paths"
-              description="Location, languages, cities, and cultural touchstones."
+              title={tSettings('culturalPaths')}
+              description={tSettings('culturalPathsDescription')}
               color="#34d399"
             >
               <Step4CulturalPaths
@@ -498,8 +513,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <SectionCard
-              title="Relational gravity"
-              description="What kinds of connections you seek. Influences your resonance field."
+              title={tSettings('relationalGravity')}
+              description={tSettings('relationalGravityDescription')}
               color="#fbbf24"
             >
               <Step5RelationalGravity
@@ -519,7 +534,7 @@ export default function PlanetSettingsPage() {
                 disabled={saving}
                 className="py-4 text-sm"
               >
-                {saving ? 'Saving…' : 'Save changes'}
+                {saving ? tSettings('saving') : tSettings('saveChanges')}
               </GlowButton>
             </div>
           </div>
@@ -539,7 +554,7 @@ export default function PlanetSettingsPage() {
                 className="text-[10px] uppercase tracking-widest self-start"
                 style={{ color: 'var(--ghost)', opacity: 0.5 }}
               >
-                Live preview
+                {tSettings('livePreview')}
               </span>
               <PlanetGlobe planetConfig={previewPlanetConfig} size={190} />
             </div>
@@ -552,11 +567,11 @@ export default function PlanetSettingsPage() {
               disabled={saving}
               className="py-4 text-sm"
             >
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? tSettings('saving') : tSettings('saveChanges')}
             </GlowButton>
 
             <GlowButton href="/my-planet" variant="ghost" fullWidth className="text-xs py-2.5">
-              View my planet →
+              {tSettings('viewMyPlanet')}
             </GlowButton>
           </div>
         </div>

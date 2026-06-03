@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -41,6 +42,7 @@ function CulturalCoordinates({ culturalTags, travelCities, accentColor }: {
   travelCities?: string[]
   accentColor: string
 }) {
+  const t = useTranslations('planetPage')
   const hasTags   = culturalTags   && culturalTags.length > 0
   const hasCities = travelCities   && travelCities.length > 0
   if (!hasTags && !hasCities) return null
@@ -51,13 +53,13 @@ function CulturalCoordinates({ culturalTags, travelCities, accentColor }: {
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Cultural coordinates
+        {t('culturalCoordinates')}
       </span>
 
       {hasTags && (
         <div className="flex flex-col gap-2">
           <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>
-            Touchstones
+            {t('touchstones')}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {culturalTags!.map((tag) => (
@@ -80,7 +82,7 @@ function CulturalCoordinates({ culturalTags, travelCities, accentColor }: {
       {hasCities && (
         <div className="flex flex-col gap-2">
           <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>
-            Orbit cities
+            {t('orbitCities')}
           </p>
           <div className="flex flex-wrap gap-2">
             {travelCities!.map((city) => (
@@ -113,6 +115,8 @@ function FogVeil({
   title: string
   message: string
 }) {
+  const t = useTranslations('planetPage')
+
   return (
     <div
       className="relative overflow-hidden rounded-2xl flex flex-col items-center justify-center gap-4 py-10 px-6 text-center"
@@ -151,7 +155,7 @@ function FogVeil({
         </p>
       </div>
       <GlowButton href="/create-planet" variant="primary" className="relative px-6 py-2.5 text-sm">
-        Begin formation →
+        {t('beginFormation')}
       </GlowButton>
     </div>
   )
@@ -161,6 +165,7 @@ function FogVeil({
 
 function SendSignalButton({ planet }: { planet: PlanetProfile }) {
   const router = useRouter()
+  const t = useTranslations('planetPage')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -173,7 +178,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recipientId: planet.userId,
-          message: `First signal to ${planet.name}`,
+          message: t('firstSignal', { name: planet.name }),
         }),
       })
       if (res.ok) {
@@ -187,9 +192,9 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
         return
       }
 
-      setError('This demo planet is not connected to a real inbox yet.')
+      setError(t('demoInboxError'))
     } catch {
-      setError('Could not open this signal right now.')
+      setError(t('openSignalError'))
     }
     setSending(false)
   }
@@ -202,7 +207,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
         onClick={handleSend}
         disabled={sending}
       >
-        {sending ? 'Sending signal...' : 'Send signal'}
+        {sending ? t('sendingSignal') : t('sendSignal')}
       </GlowButton>
       {error && (
         <p className="text-xs" style={{ color: 'var(--ghost)' }}>
@@ -268,6 +273,8 @@ function isPlanetConfig(value: unknown): value is PlanetConfig {
 // --- Page inner ---------------------------------------------------------------
 
 function PlanetPageInner() {
+  const t = useTranslations('planetPage')
+  const tNav = useTranslations('nav')
   const params = useParams()
   const id = params?.id as string
 
@@ -353,9 +360,9 @@ function PlanetPageInner() {
       <AppShell>
         <EmptyState
           symbol="◌"
-          title="Planet not found"
-          subtitle="These coordinates lead to empty space. The planet may have drifted or never existed."
-          action={<GlowButton href="/stream" variant="secondary">Return to stream</GlowButton>}
+          title={t('planetNotFound')}
+          subtitle={t('planetNotFoundSubtitle')}
+          action={<GlowButton href="/stream" variant="secondary">{t('returnToStream')}</GlowButton>}
           className="min-h-[60vh] justify-center"
         />
       </AppShell>
@@ -375,7 +382,7 @@ function PlanetPageInner() {
         {/* -- Breadcrumb ------------------------------------------------ */}
         <nav className="flex items-center gap-2 text-xs mb-6" style={{ color: 'var(--ghost)' }}>
           <Link href="/stream" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--ghost)' }}>
-            Stream
+            {tNav('stream')}
           </Link>
           <span style={{ opacity: 0.4 }}>/</span>
           <span style={{ color: visual.coreColor }}>{planet.name}</span>
@@ -387,7 +394,7 @@ function PlanetPageInner() {
                 className="transition-opacity hover:opacity-80"
                 style={{ color: 'var(--star)' }}
               >
-                View full planet →
+                {t('viewFullPlanet')}
               </Link>
             </>
           )}
@@ -422,8 +429,8 @@ function PlanetPageInner() {
                 <CognitiveStyleModule planet={planet} />
               ) : (
                 <LockedLayer
-                  reason="Only resonators can map another planet's cognitive signature."
-                  ctaLabel="Begin formation"
+                  reason={t('cognitiveLocked')}
+                  ctaLabel={t('beginFormation')}
                   ctaHref="/create-planet"
                 >
                   <CognitiveStyleModule planet={planet} />
@@ -437,8 +444,8 @@ function PlanetPageInner() {
                 <EmotionalFrequencyModule planet={planet} />
               ) : (
                 <LockedLayer
-                  reason="Emotional frequencies are only visible between resonators."
-                  ctaLabel="Create your planet"
+                  reason={t('emotionalLocked')}
+                  ctaLabel={t('createPlanet')}
                   ctaHref="/create-planet"
                 >
                   <EmotionalFrequencyModule planet={planet} />
@@ -457,7 +464,7 @@ function PlanetPageInner() {
                     className="text-xs tracking-widest uppercase"
                     style={{ color: 'var(--star)', opacity: 0.55 }}
                   >
-                    Thought fragments
+                    {t('thoughtFragments')}
                   </span>
                   {planet.contentFragments.slice(0, 1).map((fragment, i) => (
                     <div
@@ -475,8 +482,8 @@ function PlanetPageInner() {
                   ))}
                   {planet.contentFragments.length > 1 && (
                     <FogVeil
-                      title="This orbit layer is sealed"
-                      message={`${planet.contentFragments.length - 1} more fragments from ${planet.name}  -  only resonators can read them.`}
+                      title={t('orbitSealed')}
+                      message={t('moreFragments', { count: planet.contentFragments.length - 1, name: planet.name })}
                     />
                   )}
                 </div>
@@ -504,8 +511,8 @@ function PlanetPageInner() {
                   />
                 ) : (
                   <LockedLayer
-                    reason="Cultural coordinates are a deeper layer. Create your planet to explore."
-                    ctaLabel="Begin formation"
+                    reason={t('culturalLocked')}
+                    ctaLabel={t('beginFormation')}
                     ctaHref="/create-planet"
                   >
                     <CulturalCoordinates
@@ -529,10 +536,10 @@ function PlanetPageInner() {
             {planet.explorationTraces && planet.explorationTraces.length > 0 && (
               <OrbitCard glowColor={visual.accentColor} className="p-5">
                 <ProfileLayerSection
-                  title="Exploration traces"
+                  title={t('explorationTraces')}
                   locked={!isResonator && !isSelf}
-                  lockReason="Create your planet to unlock deeper resonance"
-                  lockCtaLabel="Begin formation"
+                  lockReason={t('deeperLocked')}
+                  lockCtaLabel={t('beginFormation')}
                   lockCtaHref="/create-planet"
                   accentColor={visual.coreColor}
                 >
@@ -550,14 +557,14 @@ function PlanetPageInner() {
                 <ResonanceMap
                   planets={resonances}
                   hubColor={visual.coreColor}
-                  title={`Resonances of ${planet.name}`}
+                  title={t('resonancesOf', { name: planet.name })}
                 />
               </OrbitCard>
             ) : (!isResonator && !isSelf) && (
               <OrbitCard glowColor={visual.coreColor} className="p-5">
                 <FogVeil
-                  title="Resonance field hidden"
-                  message="Only resonators can see which planets orbit in this field."
+                  title={t('resonanceHidden')}
+                  message={t('resonanceHiddenMessage')}
                 />
               </OrbitCard>
             )}
@@ -568,14 +575,14 @@ function PlanetPageInner() {
         {/* -- Footer navigation ------------------------------------------ */}
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 mt-4 border-t border-[rgba(167,139,250,0.07)]">
           <GlowButton href="/discover" variant="secondary" className="py-3 text-sm">
-            Back to discover
+            {t('backToDiscover')}
           </GlowButton>
           {!isSelf && isResonator && (
             <SendSignalButton planet={planet} />
           )}
           {!isSelf && (
             <GlowButton href="/my-planet" variant="ghost" className="py-3 text-sm">
-              View my planet
+              {t('viewMyPlanet')}
             </GlowButton>
           )}
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
@@ -50,6 +51,8 @@ function RelationshipGroup({
 // --- RelationshipsPage --------------------------------------------------------
 
 export default function RelationshipsPage() {
+  const t = useTranslations('relationshipsPage')
+  const tCommon = useTranslations('common')
   const [role, setRole] = useState<'explorer' | 'resonator' | null>(null)
 
   useEffect(() => {
@@ -82,18 +85,18 @@ export default function RelationshipsPage() {
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-2xl mx-auto">
         <SectionHeader
-          eyebrow="Orbit Map"
+          eyebrow={t('eyebrow')}
           level={1}
-          title="Relationships"
-          subtitle="Planets in your orbit. From first signal to deep alignment."
+          title={t('title')}
+          subtitle={t('subtitle')}
         />
 
         {role === 'explorer' && (
           <EmptyState
             symbol="◌"
-            title="Orbit map requires a planet"
-            subtitle="Create your planet to begin forming connections and tracking relationships."
-            action={<GlowButton href="/create-planet" variant="primary">Awaken my planet</GlowButton>}
+            title={t('requiresPlanetTitle')}
+            subtitle={t('requiresPlanetSubtitle')}
+            action={<GlowButton href="/create-planet" variant="primary">{t('awakenPlanet')}</GlowButton>}
             className="mt-8"
           />
         )}
@@ -101,9 +104,9 @@ export default function RelationshipsPage() {
         {role === 'resonator' && !hasAny && (
           <EmptyState
             symbol="◍"
-            title="No connections yet"
-            subtitle="Visit a planet and send a first signal to begin forming an orbit."
-            action={<GlowButton href="/stream" variant="secondary">Explore the stream</GlowButton>}
+            title={t('emptyTitle')}
+            subtitle={t('emptySubtitle')}
+            action={<GlowButton href="/stream" variant="secondary">{tCommon('exploreStream')}</GlowButton>}
             className="mt-8"
           />
         )}

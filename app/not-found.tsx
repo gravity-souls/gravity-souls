@@ -1,8 +1,11 @@
 import GlowButton from '@/components/ui/GlowButton'
+import { getTranslations } from 'next-intl/server'
 
 // --- Global 404 ---------------------------------------------------------------
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations('common')
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-8">
       {/* Ambient glow */}
@@ -43,20 +46,20 @@ export default function NotFound() {
       <div className="flex flex-col gap-3 max-w-sm">
         <p className="text-eyebrow">404</p>
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
-          This planet doesn&apos;t exist
+          {t('notFoundTitle')}
         </h1>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-          The coordinates you followed lead to empty space. The planet may have drifted, or never existed.
+          {t('notFoundDescription')}
         </p>
       </div>
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <GlowButton href="/" variant="primary">
-          Return to universe
+          {t('returnToUniverse')}
         </GlowButton>
         <GlowButton href="/stream" variant="ghost">
-          Explore the stream
+          {t('exploreStream')}
         </GlowButton>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import EventCard from '@/components/events/EventCard'
 import EventDetail from '@/components/events/EventDetail'
 import LightCone from '@/components/fx/LightCone'
@@ -101,10 +102,10 @@ function buildPositionedPlanets(apiPlanets: UniversePlanet[]): PlanetProfile[] {
 // --- Nebula zones  -  thematic atmospheric clusters ----------------------------
 
 const NEBULA_ZONES = [
-  { id: 'contemplative', label: '孤独 / 内省', x: 14, y: 35, color: '#a78bfa', size: 340, galaxySlug: 'slow-thinkers' },
-  { id: 'technical',     label: '构建 / 系统', x: 72, y: 30, color: '#60a5fa', size: 290, galaxySlug: 'signal-noise'  },
-  { id: 'emotional',     label: '情感 / 温暖', x: 46, y: 68, color: '#f9a8d4', size: 320, galaxySlug: 'warm-frequency' },
-  { id: 'wandering',     label: '流浪 / 边界', x: 19, y: 76, color: '#34d399', size: 240, galaxySlug: 'threshold-states' },
+  { id: 'contemplative', labelKey: 'nebulaContemplative', x: 14, y: 35, color: '#a78bfa', size: 340, galaxySlug: 'slow-thinkers' },
+  { id: 'technical',     labelKey: 'nebulaTechnical', x: 72, y: 30, color: '#60a5fa', size: 290, galaxySlug: 'signal-noise'  },
+  { id: 'emotional',     labelKey: 'nebulaEmotional', x: 46, y: 68, color: '#f9a8d4', size: 320, galaxySlug: 'warm-frequency' },
+  { id: 'wandering',     labelKey: 'nebulaWandering', x: 19, y: 76, color: '#34d399', size: 240, galaxySlug: 'threshold-states' },
 ]
 
 const ORBIT_PATHS = [
@@ -115,15 +116,17 @@ const ORBIT_PATHS = [
 ]
 
 const SIGNAL_PULSE = [
-  { label: 'Slow Thinkers', value: '18 new replies', color: '#a78bfa', href: '/galaxy/slow-thinkers' },
-  { label: 'Warm Frequency', value: '5 active rooms', color: '#f9a8d4', href: '/galaxy/warm-frequency' },
-  { label: 'Signal / Noise', value: '12 build logs', color: '#60a5fa', href: '/galaxy/signal-noise' },
+  { label: 'Slow Thinkers', valueKey: 'signalNewReplies', color: '#a78bfa', href: '/galaxy/slow-thinkers' },
+  { label: 'Warm Frequency', valueKey: 'signalActiveRooms', color: '#f9a8d4', href: '/galaxy/warm-frequency' },
+  { label: 'Signal / Noise', valueKey: 'signalBuildLogs', color: '#60a5fa', href: '/galaxy/signal-noise' },
 ]
 
 // --- Page --------------------------------------------------------------------
 
 export default function UniversePage() {
   const router = useRouter()
+  const tHome = useTranslations('home')
+  const tNav = useTranslations('nav')
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
@@ -325,9 +328,9 @@ export default function UniversePage() {
   const featuredPlanet = nearbyPlanets[0] ?? mockPlanets[0]
   const activeCommunityCount = galaxies.length || NEBULA_ZONES.length
   const homepageStats = [
-    { label: 'planets nearby', value: String(nearbyPlanets.length || POSITIONED_PLANET_IDS.length) },
-    { label: 'galaxies awake', value: String(activeCommunityCount) },
-    { label: 'open signals', value: '24h' },
+    { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length || POSITIONED_PLANET_IDS.length) },
+    { label: tHome('statsGalaxiesAwake'), value: String(activeCommunityCount) },
+    { label: tHome('statsOpenSignals'), value: '24h' },
   ]
 
   return (
@@ -360,13 +363,13 @@ export default function UniversePage() {
           <div className="relative z-10 max-w-7xl mx-auto grid lg:grid-cols-[minmax(320px,420px)_1fr] gap-8 lg:gap-10 items-center" style={{ minHeight: 'calc(100vh - 96px)' }}>
             <div className="flex flex-col gap-6 pt-4 lg:pt-0">
               <div className="flex flex-col gap-4">
-                <p className="text-eyebrow">Live universe</p>
+                <p className="text-eyebrow">{tHome('liveUniverse')}</p>
                 <div className="flex flex-col gap-3">
                   <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight" style={{ color: 'var(--foreground)', letterSpacing: 0 }}>
                     Gravity-Souls
                   </h1>
                   <p className="text-base sm:text-lg leading-8 max-w-md" style={{ color: 'var(--ink)', opacity: 0.78 }}>
-                    A social universe where each profile becomes a planet, and communities form the gravity between them.
+                    {tHome('heroSubtitle')}
                   </p>
                 </div>
               </div>
@@ -393,37 +396,37 @@ export default function UniversePage() {
                 >
                   {session?.user && hasActivePlanet === true && (
                     <>
-                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>Your planet is live.</span>
+                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tHome('planetLive')}</span>
                       <Link href="/my-planet" className="text-sm font-medium" style={{ color: 'var(--star)', textDecoration: 'none' }}>
-                        View my planet -&gt;
+                        {tHome('viewMyPlanet')}
                       </Link>
                     </>
                   )}
 
                   {session?.user && hasActivePlanet === false && (
                     <>
-                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>Your planet doesn&apos;t exist yet.</span>
+                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tHome('planetMissing')}</span>
                       <button
                         type="button"
                         onClick={() => router.push('/create-planet')}
                         className="text-sm font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer text-left sm:text-right"
                         style={{ color: 'var(--star)' }}
                       >
-                        Take the soul scan -&gt;
+                        {tHome('takeSoulScan')}
                       </button>
                     </>
                   )}
 
                   {!session?.user && (
                     <>
-                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>Your planet doesn&apos;t exist yet.</span>
+                      <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tHome('planetMissing')}</span>
                       <button
                         type="button"
                         onClick={() => router.push('/sign-up?next=/create-planet')}
                         className="text-sm font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer text-left sm:text-right"
                         style={{ color: 'var(--star)' }}
                       >
-                        Take the soul scan -&gt;
+                        {tHome('takeSoulScan')}
                       </button>
                     </>
                   )}
@@ -442,16 +445,16 @@ export default function UniversePage() {
                       <span className="w-1 h-8 rounded-full shrink-0" style={{ background: signal.color, boxShadow: `0 0 16px ${signal.color}55` }} aria-hidden="true" />
                       <span className="min-w-0">
                         <span className="block text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{signal.label}</span>
-                        <span className="block text-xs mt-0.5" style={{ color: 'var(--ghost)' }}>{signal.value}</span>
+                        <span className="block text-xs mt-0.5" style={{ color: 'var(--ghost)' }}>{tHome(signal.valueKey)}</span>
                       </span>
                     </span>
-                    <span className="text-xs transition-transform duration-200 group-hover:translate-x-1" style={{ color: signal.color }}>Open</span>
+                    <span className="text-xs transition-transform duration-200 group-hover:translate-x-1" style={{ color: signal.color }}>{tHome('open')}</span>
                   </Link>
                 ))}
               </div>
             </div>
 
-            <div className="relative min-h-140 lg:min-h-170" aria-label="Universe field  -  explore planets and galaxy clusters">
+            <div className="relative min-h-140 lg:min-h-170" aria-label={tHome('universeFieldLabel')}>
               <div
                 className="absolute inset-0"
                 style={{
@@ -486,7 +489,7 @@ export default function UniversePage() {
                       fontWeight: 600,
                     }}
                   >
-                    {zone.label}
+                    {tHome(zone.labelKey)}
                   </span>
                 </Link>
               ))}
@@ -545,7 +548,7 @@ export default function UniversePage() {
                   className="absolute left-1/2 bottom-4 -translate-x-1/2 rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-all duration-200"
                   style={{ background: 'rgba(3,3,15,0.70)', backdropFilter: 'blur(18px)', border: '1px solid var(--border-mid)', cursor: 'pointer' }}
                 >
-                  <span className="text-data-label shrink-0">Closest orbit</span>
+                  <span className="text-data-label shrink-0">{tHome('closestOrbit')}</span>
                   <span className="min-w-0">
                     <span className="block text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{featuredPlanet.name}</span>
                     <span className="block text-xs truncate" style={{ color: 'var(--ghost)' }}>{featuredPlanet.tagline}</span>
@@ -564,7 +567,7 @@ export default function UniversePage() {
                 className="block rounded-2xl px-5 py-4 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
                 style={{ color: 'var(--star)', background: 'rgba(18,14,52,0.64)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}
               >
-                ✦ {orbitTeaserCount} planets are in your orbit — explore your universe →
+                {tHome('exploreUniverse', { count: orbitTeaserCount })}
               </Link>
             </div>
           </section>
@@ -577,9 +580,9 @@ export default function UniversePage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-6">
               <SectionHeader
-                eyebrow="Communities"
-                title="Galaxies"
-                subtitle="Thematic clusters where planets find their orbit."
+                eyebrow={tHome('recommendedCommunities')}
+                title={tNav('galaxies')}
+                subtitle={tHome('galaxyStripSubtitle')}
               />
               <Link
                 href="/galaxies"
@@ -588,7 +591,7 @@ export default function UniversePage() {
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--star)' }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ghost)' }}
               >
-                View all →
+                {tHome('viewAll')} →
               </Link>
             </div>
 
@@ -622,7 +625,7 @@ export default function UniversePage() {
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-soft)' }}
               >
                 <span style={{ color: 'var(--star)', fontSize: '1.5rem' }}>◈</span>
-                <span className="text-xs" style={{ color: 'var(--ghost)' }}>All galaxies</span>
+                <span className="text-xs" style={{ color: 'var(--ghost)' }}>{tHome('allGalaxies')}</span>
               </Link>
             </div>
           </div>
@@ -632,9 +635,9 @@ export default function UniversePage() {
           <section className="px-6 py-14">
             <div className="max-w-3xl mx-auto">
               <SectionHeader
-                eyebrow="Upcoming activity"
-                title="Next orbit"
-                subtitle="The nearest approved event in your joined galaxies."
+                eyebrow={tHome('upcomingActivity')}
+                title={tHome('nextOrbit')}
+                subtitle={tHome('nextEventSubtitle')}
               />
               <div className="mt-6">
                 <EventCard event={upcomingEvent} compact onOpen={openUpcomingEvent} onRSVPChange={applyUpcomingRSVPChange} />
@@ -647,12 +650,12 @@ export default function UniversePage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between gap-4 mb-6">
               <SectionHeader
-                eyebrow="Shared moments"
-                title="Open signals"
-                subtitle="Fresh posts from planets across the public stream."
+                eyebrow={tHome('sharedMoments')}
+                title={tHome('openSignals')}
+                subtitle={tHome('openSignalsSubtitle')}
               />
               <Link href="/stream" className="text-xs font-medium shrink-0 mb-1.5" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
-                View all →
+                {tHome('viewAllPosts')} →
               </Link>
             </div>
             {sharedPosts.length > 0 ? (
@@ -665,7 +668,7 @@ export default function UniversePage() {
               </div>
             ) : (
               <div className="rounded-2xl px-5 py-8 text-sm" style={{ color: 'var(--ghost)', background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-soft)' }}>
-                Signals are still gathering.
+                {tHome('signalsGathering')}
               </div>
             )}
           </div>
@@ -693,18 +696,18 @@ export default function UniversePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                    Your planet doesn&apos;t exist yet
+                    {tHome('planetMissing')}
                   </h2>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-                    Creating your planet is not registration. It&apos;s the moment you tell the universe who you are  -  and let the right people find you.
+                    {tHome('planetMissingDescription')}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <GlowButton onClick={() => router.push('/sign-up?next=/create-planet')} variant="primary" className="px-8 py-3">
-                    Begin formation
+                    {tHome('beginFormation')}
                   </GlowButton>
                   <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
-                    Just drift for now
+                    {tHome('driftForNow')}
                   </GlowButton>
                 </div>
               </>
@@ -721,18 +724,18 @@ export default function UniversePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                    Your planet doesn&apos;t exist yet
+                    {tHome('planetMissing')}
                   </h2>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-                    Creating your planet is not registration. It&apos;s the moment you tell the universe who you are  -  and let the right people find you.
+                    {tHome('planetMissingDescription')}
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <GlowButton onClick={() => router.push('/create-planet')} variant="primary" className="px-8 py-3">
-                    Begin formation
+                    {tHome('beginFormation')}
                   </GlowButton>
                   <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
-                    Just drift for now
+                    {tHome('driftForNow')}
                   </GlowButton>
                 </div>
               </>
@@ -749,14 +752,14 @@ export default function UniversePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-                    Your daily resonance is ready
+                    {tHome('dailyResonanceReady')}
                   </h2>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-                    Five planets have entered your orbit today. See who resonates, and why.
+                    {tHome('dailyResonanceDescription')}
                   </p>
                 </div>
                 <GlowButton href="/resonance" variant="primary" className="px-8 py-3">
-                  Open resonance
+                  {tHome('openResonance')}
                 </GlowButton>
               </>
             )}

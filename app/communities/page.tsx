@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import GlowButton from '@/components/ui/GlowButton'
@@ -23,6 +24,8 @@ interface CommunityWithJoined {
 
 export default function CommunitiesPage() {
   const router = useRouter()
+  const t = useTranslations('communities')
+  const tGalaxies = useTranslations('galaxies')
   const [communities, setCommunities] = useState<CommunityWithJoined[]>([])
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState<string | null>(null)
@@ -33,18 +36,18 @@ export default function CommunitiesPage() {
       try {
         const res = await fetch('/api/communities')
         if (!res.ok) {
-          setError('Failed to load communities')
+          setError(t('loadError'))
           return
         }
         setCommunities(await res.json())
       } catch {
-        setError('Failed to load communities')
+        setError(t('loadError'))
       } finally {
         setLoading(false)
       }
     }
     load()
-  }, [])
+  }, [t])
 
   async function handleJoin(communityId: string) {
     setJoining(communityId)
@@ -79,20 +82,20 @@ export default function CommunitiesPage() {
           className="text-[10px] uppercase tracking-[0.3em] mb-2"
           style={{ color: 'var(--star)', opacity: 0.55 }}
         >
-          Communities
+          {t('eyebrow')}
         </p>
         <h1
           className="text-2xl sm:text-3xl font-bold mb-2"
           style={{ color: 'var(--foreground)' }}
         >
-          Find your galaxies
+          {t('title')}
         </h1>
         <p className="text-sm mb-8" style={{ color: 'var(--ghost)' }}>
-          Join communities that resonate with your frequency.
+          {t('subtitle')}
         </p>
 
         {loading && (
-          <p className="text-sm" style={{ color: 'var(--ghost)' }}>Loading communities...</p>
+          <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('loading')}</p>
         )}
 
         {error && (
@@ -100,7 +103,7 @@ export default function CommunitiesPage() {
         )}
 
         {!loading && !error && communities.length === 0 && (
-          <p className="text-sm" style={{ color: 'var(--ghost)' }}>No communities yet.</p>
+          <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('empty')}</p>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -175,7 +178,7 @@ export default function CommunitiesPage() {
                       border: `1px solid ${c.accentColor}30`,
                     }}
                   >
-                    Joined
+                    {tGalaxies('joined')}
                   </span>
                 ) : (
                   <div onClick={(e) => e.stopPropagation()}>
@@ -185,7 +188,7 @@ export default function CommunitiesPage() {
                       disabled={joining === c.id}
                       className="text-xs px-4 py-1.5"
                     >
-                      {joining === c.id ? 'Joining...' : 'Join'}
+                      {joining === c.id ? t('joining') : tGalaxies('join')}
                     </GlowButton>
                   </div>
                 )}

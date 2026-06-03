@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { Conversation } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
@@ -14,6 +17,7 @@ interface Props {
 }
 
 export default function CommunicationHeader({ conversation, myPlanet, otherPlanet }: Props) {
+  const tA11y = useTranslations('a11y')
   const color    = orbitColorHex(conversation.orbitColor)
   const strength = conversation.connectionStrength
 
@@ -36,7 +40,7 @@ export default function CommunicationHeader({ conversation, myPlanet, otherPlane
           color: 'var(--ghost)',
           textDecoration: 'none',
         }}
-        aria-label="Back to messages"
+        aria-label={tA11y('backToMessages')}
       >
         ←
       </Link>

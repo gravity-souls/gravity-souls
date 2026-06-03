@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { startTransition, useEffect, useState, type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetVisual from '@/components/planet/PlanetVisual'
@@ -162,14 +163,14 @@ const MOOD_COLORS: Record<PlanetProfile['mood'], string> = {
   mixed: '#34d399',
 }
 
-function modeTitle(mode: DeckMode) {
-  return mode === 'planets' ? 'Planet observatory' : 'Galaxy atlas'
+function modeTitle(mode: DeckMode, t: ReturnType<typeof useTranslations>) {
+  return mode === 'planets' ? t('planetObservatory') : t('galaxyAtlas')
 }
 
-function modeSubtitle(mode: DeckMode) {
+function modeSubtitle(mode: DeckMode, t: ReturnType<typeof useTranslations>) {
   return mode === 'planets'
-    ? 'Inspect one identity core at a time, then pivot into the galaxies and neighboring signatures around it.'
-    : 'Move between cultural clusters, inspect active members, and follow how each galaxy links to the next.'
+    ? t('planetSubtitle')
+    : t('galaxySubtitle')
 }
 
 function switchMode(setMode: (mode: DeckMode) => void, mode: DeckMode) {
@@ -214,6 +215,8 @@ function ModeSwitch({
   mode: DeckMode
   onChange: (mode: DeckMode) => void
 }) {
+  const t = useTranslations('universeDeck')
+
   return (
     <div
       className="inline-flex items-center gap-2 rounded-full p-1"
@@ -242,7 +245,7 @@ function ModeSwitch({
               boxShadow: active ? '0 0 24px rgba(56,189,248,0.12)' : 'none',
             }}
           >
-            {item}
+            {item === 'planets' ? t('planets') : t('galaxies')}
           </button>
         )
       })}
@@ -466,6 +469,7 @@ function drawConnectionLines(nodes: DeckNodePosition[], color: string) {
 }
 
 export default function UniverseExplorationDeck() {
+  const t = useTranslations('universeDeck')
   const searchParams = useSearchParams()
   const [mode, setMode] = useState<DeckMode>('planets')
   const [selectedPlanetId, setSelectedPlanetId] = useState('')
@@ -582,13 +586,13 @@ export default function UniverseExplorationDeck() {
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
                 <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.34em]" style={{ color: '#7dd3fc' }}>
-                  Deep Space Demo
+                  {t('eyebrow')}
                 </div>
                 <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-slate-50 sm:text-5xl">
-                  A cinematic navigation deck for exploring planets and galaxies.
+                  {t('title')}
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-7 sm:text-base" style={{ color: 'var(--ink)' }}>
-                  This is a productized &ldquo;mission control&rdquo; layer inspired by scientific exploration interfaces, adapted to Gravity-Souls data instead of copying NASA&apos;s UI. The center canvas is the spatial story. The panels are operational context.
+                  {t('subtitle')}
                 </p>
               </div>
 
@@ -596,10 +600,10 @@ export default function UniverseExplorationDeck() {
                 <ModeSwitch mode={mode} onChange={(nextMode) => switchMode(setMode, nextMode)} />
                 <div className="flex flex-wrap gap-3">
                   <GlowButton href={mode === 'planets' ? `/planet/${selectedPlanet.id}` : focusedGalaxyHref} variant="secondary" className="px-5 py-3 text-xs uppercase tracking-[0.24em]">
-                    Open focused object
+                    {t('openFocusedObject')}
                   </GlowButton>
                   <GlowButton href={mode === 'planets' ? '/galaxies' : '/'} variant="ghost" className="px-5 py-3 text-xs uppercase tracking-[0.24em]">
-                    Return to standard view
+                    {t('returnStandardView')}
                   </GlowButton>
                 </div>
               </div>
@@ -617,16 +621,16 @@ export default function UniverseExplorationDeck() {
             >
               <div className="flex items-center justify-between gap-3 border-b pb-4" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Mission index</div>
-                  <div className="mt-1 text-lg font-semibold text-slate-50">{modeTitle(mode)}</div>
+                  <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('missionIndex')}</div>
+                  <div className="mt-1 text-lg font-semibold text-slate-50">{modeTitle(mode, t)}</div>
                 </div>
                 <div className="rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.28em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.16)' }}>
-                  Live
+                  {t('live')}
                 </div>
               </div>
 
               <p className="mt-4 text-sm leading-7" style={{ color: 'var(--ink)' }}>
-                {modeSubtitle(mode)}
+                {modeSubtitle(mode, t)}
               </p>
 
               <div className="mt-5 flex flex-col gap-3">
@@ -637,7 +641,7 @@ export default function UniverseExplorationDeck() {
                 ) : mode === 'planets'
                   ? emptyOrbit ? (
                       <div className="rounded-2xl p-4 text-sm leading-7" style={{ color: 'var(--ink)', background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                        Your orbit is empty. Start with Resonance.
+                        {t('emptyOrbit')}
                       </div>
                     ) : planets.slice(0, 7).map((planet) => (
                       <PlanetChip
@@ -658,11 +662,11 @@ export default function UniverseExplorationDeck() {
               </div>
 
               <div className="mt-5 rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Flight path</div>
+                <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('flightPath')}</div>
                 <div className="mt-3 flex flex-col gap-3 text-sm leading-6" style={{ color: 'var(--ink)' }}>
-                  <div>Start with a focal {mode === 'planets' ? 'planet' : 'galaxy'}.</div>
-                  <div>Follow orbit nodes to jump between related entities.</div>
-                  <div>Use the right panel as telemetry instead of opening a new page every time.</div>
+                  <div>{t('flightStart', { mode: mode === 'planets' ? t('planet') : t('galaxy') })}</div>
+                  <div>{t('flightFollow')}</div>
+                  <div>{t('flightTelemetry')}</div>
                 </div>
               </div>
             </GlassPanel>
@@ -678,7 +682,7 @@ export default function UniverseExplorationDeck() {
               <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.28em]" style={{ color: '#7dd3fc' }}>
-                    Spatial viewport
+                    {t('spatialViewport')}
                   </div>
                   <div className="mt-1 text-xl font-semibold text-slate-50">
                     {mode === 'planets' ? selectedPlanet.name : selectedGalaxy.name}
@@ -807,7 +811,7 @@ export default function UniverseExplorationDeck() {
 
                 <div className="absolute bottom-4 left-4 right-4 grid gap-3 rounded-3xl border p-4 backdrop-blur-xl lg:grid-cols-[1.2fr_0.8fr]" style={{ borderColor: 'rgba(148,163,184,0.12)', background: 'rgba(2, 6, 23, 0.72)' }}>
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.28em]" style={{ color: '#7dd3fc' }}>Focus briefing</div>
+                    <div className="text-[11px] uppercase tracking-[0.28em]" style={{ color: '#7dd3fc' }}>{t('focusBriefing')}</div>
                     <div className="mt-2 text-sm leading-7" style={{ color: 'var(--ink)' }}>
                       {mode === 'planets'
                         ? selectedPlanet.tagline
@@ -818,22 +822,22 @@ export default function UniverseExplorationDeck() {
                     {mode === 'planets' ? (
                       <>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Linked galaxies</div>
+                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('linkedGalaxies')}</div>
                           <div className="mt-1 text-xl font-semibold text-slate-50">{linkedGalaxies.length}</div>
                         </div>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Signal score</div>
+                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('signalScore')}</div>
                           <div className="mt-1 text-xl font-semibold text-slate-50">{selectedPlanet.telemetry.signalScore}</div>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Active planets</div>
+                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('activePlanets')}</div>
                           <div className="mt-1 text-xl font-semibold text-slate-50">{selectedGalaxy.memberCount}</div>
                         </div>
                         <div className="rounded-2xl p-3" style={{ background: 'rgba(15, 23, 42, 0.72)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Adjacencies</div>
+                          <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('adjacencies')}</div>
                           <div className="mt-1 text-xl font-semibold text-slate-50">{adjacentGalaxies.length}</div>
                         </div>
                       </>
@@ -852,7 +856,7 @@ export default function UniverseExplorationDeck() {
               }}
             >
               <div className="border-b pb-4" style={{ borderColor: 'rgba(148,163,184,0.12)' }}>
-                <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Telemetry</div>
+                <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('telemetry')}</div>
                 <div className="mt-1 text-lg font-semibold text-slate-50">
                   {mode === 'planets' ? selectedPlanet.name : selectedGalaxy.name}
                 </div>
@@ -868,30 +872,30 @@ export default function UniverseExplorationDeck() {
                 <div className="mt-5 flex flex-col gap-5">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Signal Score</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('signalScore')}</div>
                       <div className="mt-2 text-lg font-semibold" style={{ color: MOOD_COLORS[selectedPlanet.mood] }}>{selectedPlanet.telemetry.signalScore}</div>
                     </div>
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Linked Planets</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('linkedPlanets')}</div>
                       <div className="mt-2 text-lg font-semibold text-slate-50">{selectedPlanet.telemetry.linkedPlanets}</div>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-4 rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Cognitive map</div>
-                    <DataBar label="Abstract" value={selectedPlanet.cognitiveAxes.abstract} color="#7dd3fc" />
-                    <DataBar label="Introspective" value={selectedPlanet.cognitiveAxes.introspective} color="#a78bfa" />
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('cognitiveMap')}</div>
+                    <DataBar label={t('abstract')} value={selectedPlanet.cognitiveAxes.abstract} color="#7dd3fc" />
+                    <DataBar label={t('introspective')} value={selectedPlanet.cognitiveAxes.introspective} color="#a78bfa" />
                   </div>
 
                   <div className="flex flex-col gap-4 rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Emotional signal</div>
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('emotionalSignal')}</div>
                     {selectedPlanet.emotionalBars.map((bar) => (
                       <DataBar key={bar.label} label={bar.label} value={bar.value} color={bar.color} />
                     ))}
                   </div>
 
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Attached galaxies</div>
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('attachedGalaxies')}</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {linkedGalaxies.map((galaxy) => (
                         <button
@@ -916,35 +920,35 @@ export default function UniverseExplorationDeck() {
                 <div className="mt-5 flex flex-col gap-5">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Members</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('members')}</div>
                       <div className="mt-2 text-lg font-semibold" style={{ color: selectedGalaxy.accentColor }}>{selectedGalaxy.memberCount.toLocaleString()}</div>
                     </div>
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Recent activity</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('recentActivity')}</div>
                       <div className="mt-2 text-lg font-semibold text-slate-50">{selectedGalaxy.recentActivityScore}</div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Upcoming events</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('upcomingEvents')}</div>
                       <div className="mt-2 text-lg font-semibold text-slate-50">{selectedGalaxy.upcomingEventsCount}</div>
                     </div>
                     <Link href={focusedGalaxyHref} className="rounded-2xl p-4 transition-all duration-300 hover:-translate-y-0.5" style={{ background: 'rgba(8, 15, 32, 0.82)', border: `1px solid ${selectedGalaxy.accentColor}33`, color: selectedGalaxy.accentColor, textDecoration: 'none' }}>
-                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>Galaxy page</div>
-                      <div className="mt-2 text-sm font-semibold">View Galaxy →</div>
+                      <div className="text-[10px] uppercase tracking-[0.24em]" style={{ color: 'var(--ghost)' }}>{t('galaxyPage')}</div>
+                      <div className="mt-2 text-sm font-semibold">{t('viewGalaxy')}</div>
                     </Link>
                   </div>
 
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Description</div>
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('description')}</div>
                     <p className="mt-3 text-sm leading-7" style={{ color: 'var(--ink)' }}>
                       {selectedGalaxy.description}
                     </p>
                   </div>
 
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Keywords</div>
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('keywords')}</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(selectedGalaxy.topTags.length > 0 ? selectedGalaxy.topTags : selectedGalaxy.keywords).map((keyword) => (
                         <span
@@ -959,7 +963,7 @@ export default function UniverseExplorationDeck() {
                   </div>
 
                   <div className="rounded-2xl p-4" style={{ background: 'rgba(8, 15, 32, 0.82)', border: '1px solid rgba(148,163,184,0.12)' }}>
-                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Adjacent clusters</div>
+                    <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('adjacentClusters')}</div>
                     <div className="mt-3 flex flex-col gap-3">
                       {adjacentGalaxies.map((galaxy) => (
                         <button
@@ -985,41 +989,41 @@ export default function UniverseExplorationDeck() {
 
           <div className="grid gap-4 lg:grid-cols-3">
             <GlassPanel className="rounded-[28px] p-5" style={{ background: 'rgba(2, 6, 23, 0.76)', border: '1px solid rgba(148,163,184,0.12)' }}>
-              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Why this works</div>
+              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('whyWorks')}</div>
               <p className="mt-3 text-sm leading-7" style={{ color: 'var(--ink)' }}>
-                The viewport does the emotional heavy lifting first. Lists and metrics become support layers, which is the right hierarchy for a world-exploration product.
+                {t('whyWorksBody')}
               </p>
             </GlassPanel>
             <GlassPanel className="rounded-[28px] p-5" style={{ background: 'rgba(2, 6, 23, 0.76)', border: '1px solid rgba(148,163,184,0.12)' }}>
-              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Interaction model</div>
+              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('interactionModel')}</div>
               <p className="mt-3 text-sm leading-7" style={{ color: 'var(--ink)' }}>
-                Focus one object, inspect nearby signals, then jump sideways. That keeps navigation spatial instead of turning everything into repeated cards and pages.
+                {t('interactionModelBody')}
               </p>
             </GlassPanel>
             <GlassPanel className="rounded-[28px] p-5" style={{ background: 'rgba(2, 6, 23, 0.76)', border: '1px solid rgba(148,163,184,0.12)' }}>
-              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Production path</div>
+              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('productionPath')}</div>
               <p className="mt-3 text-sm leading-7" style={{ color: 'var(--ink)' }}>
-                This can become a real product surface by adding zoom states, camera transitions, live filtering, and route-synced focus so the deck is deep-linkable.
+                {t('productionPathBody')}
               </p>
             </GlassPanel>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border px-5 py-4" style={{ borderColor: 'rgba(148,163,184,0.12)', background: 'rgba(2, 6, 23, 0.64)' }}>
             <div>
-              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>Route links</div>
+              <div className="text-[11px] uppercase tracking-[0.26em]" style={{ color: '#7dd3fc' }}>{t('routeLinks')}</div>
               <div className="mt-1 text-sm" style={{ color: 'var(--ink)' }}>
-                Use this demo as the reference layer before deciding whether the command deck should replace the current home universe view.
+                {t('routeLinksBody')}
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/" className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.16)', textDecoration: 'none' }}>
-                Home universe
+                {t('homeUniverse')}
               </Link>
               <Link href="/galaxies" className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.16)', textDecoration: 'none' }}>
-                Galaxy library
+                {t('galaxyLibrary')}
               </Link>
               <Link href={`/planet/${selectedPlanet.id}`} className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.16)', textDecoration: 'none' }}>
-                Focused planet
+                {t('focusedPlanet')}
               </Link>
             </div>
           </div>

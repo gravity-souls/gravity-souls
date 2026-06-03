@@ -3,10 +3,13 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
   const router = useRouter();
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,14 +29,16 @@ export default function SignInPage() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Sign in failed");
+        setError(result.error.message ?? tAuth("signInFailed"));
         return;
       }
+
+      await fetch("/api/user/language", { cache: "no-store" }).catch(() => null);
 
       router.push("/stream");
       router.refresh();
     } catch {
-      setError("Something went wrong during sign in");
+      setError(tCommon("error"));
     } finally {
       setLoading(false);
     }
@@ -42,23 +47,23 @@ export default function SignInPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <h1 className="mb-2 text-3xl font-semibold" style={{ color: "var(--foreground)" }}>
-        Welcome back
+        {tAuth("signIn")}
       </h1>
       <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
-        Sign in to continue your GravitySouls experience.
+        {tAuth("signInSubtitle")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            Email
+            {tAuth("email")}
           </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={tAuth("emailPlaceholder")}
             className="w-full rounded-xl px-4 py-3 text-sm outline-none"
             style={{
               background: "var(--surface)",
@@ -71,14 +76,14 @@ export default function SignInPage() {
 
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            Password
+            {tAuth("password")}
           </label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
+            placeholder={tAuth("passwordPlaceholder")}
             className="w-full rounded-xl px-4 py-3 text-sm outline-none"
             style={{
               background: "var(--surface)",
@@ -104,14 +109,14 @@ export default function SignInPage() {
             color: "#fff",
           }}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? tCommon("loading") : tAuth("signIn")}
         </button>
       </form>
 
       <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
-        Don&apos;t have an account?{" "}
+        {tAuth("noAccount")}{" "}
         <Link href="/sign-up" className="underline" style={{ color: "var(--star)" }}>
-          Sign up
+          {tAuth("signUp")}
         </Link>
       </p>
     </main>

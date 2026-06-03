@@ -4,6 +4,7 @@
 // Catches unhandled errors in the React tree and renders a branded fallback.
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import GlowButton from '@/components/ui/GlowButton'
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function GlobalError({ error, reset }: Props) {
+  const t = useTranslations('common')
+
   useEffect(() => {
     // Log to an error reporting service in production
     console.error('[Gravity-Souls error]', error)
@@ -53,12 +56,12 @@ export default function GlobalError({ error, reset }: Props) {
 
       {/* Copy */}
       <div className="flex flex-col gap-3 max-w-sm">
-        <p className="text-eyebrow">Signal disrupted</p>
+        <p className="text-eyebrow">{t('errorEyebrow')}</p>
         <h1 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-          Something went wrong
+          {t('error')}
         </h1>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.65 }}>
-          An unexpected error occurred while rendering this part of the universe. You can try again or return home.
+          {t('errorDescription')}
         </p>
         {error.digest && (
           <p className="text-[10px] font-mono" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
@@ -73,10 +76,10 @@ export default function GlobalError({ error, reset }: Props) {
           onClick={reset}
           className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-medium tracking-wide transition-all duration-300 nebula-gradient text-white shadow-lg hover:opacity-90"
         >
-          Try again
+          {t('retry')}
         </button>
         <GlowButton href="/" variant="ghost">
-          Return to universe
+          {t('returnToUniverse')}
         </GlowButton>
       </div>
     </div>

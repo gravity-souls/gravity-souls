@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type KeyboardEvent } from 'react'
+import { useTranslations } from 'next-intl'
 
 // --- SignalComposer -----------------------------------------------------------
 // Sticky bottom composer for the conversation detail page.
@@ -18,6 +19,7 @@ export default function SignalComposer({
   placeholder = 'Transmit a signal…',
   accentColor = '#a78bfa',
 }: Props) {
+  const tA11y = useTranslations('a11y')
   const [value, setValue] = useState('')
 
   function handleSend() {
@@ -85,7 +87,7 @@ export default function SignalComposer({
             cursor: value.trim() && !disabled ? 'pointer' : 'not-allowed',
             opacity: value.trim() && !disabled ? 1 : 0.45,
           }}
-          aria-label="Send signal"
+          aria-label={tA11y('sendSignal')}
         >
           ↑
         </button>

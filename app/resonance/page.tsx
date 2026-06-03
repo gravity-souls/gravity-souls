@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import ResonanceOrbitSystem from '@/components/resonance/ResonanceOrbitSystem'
@@ -16,11 +17,13 @@ import type { PlanetProfile } from '@/types/planet'
 // --- Session stats strip -----------------------------------------------------
 
 function SessionStats({ session }: { session: ResonanceSession }) {
+  const t = useTranslations('resonance')
+  const locale = useLocale()
   const avg = Math.round(
     session.matches.reduce((sum, m) => sum + m.score, 0) / session.matches.length,
   )
   const topMatch = session.matches[0]
-  const date = new Date(session.date).toLocaleDateString('en-US', {
+  const date = new Date(session.date).toLocaleDateString(locale, {
     month: 'long', day: 'numeric', year: 'numeric',
   })
 
@@ -34,29 +37,29 @@ function SessionStats({ session }: { session: ResonanceSession }) {
     >
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Session date
+          {t('sessionDate')}
         </span>
         <span className="text-xs" style={{ color: 'var(--ink)' }}>{date}</span>
       </div>
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Planets in orbit
+          {t('planetsInOrbit', { count: session.matches.length })}
         </span>
         <span className="text-xs" style={{ color: 'var(--ink)' }}>{session.matches.length}</span>
       </div>
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Avg resonance
+          {t('avgResonance')}
         </span>
         <span className="text-xs font-medium" style={{ color: '#a78bfa' }}>{avg}</span>
       </div>
       {topMatch && (
         <div className="flex flex-col gap-0.5 ml-auto">
           <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-            Strongest pull
+            {t('strongestPull')}
           </span>
           <span className="text-xs font-medium" style={{ color: 'var(--star)' }}>
-            Score {topMatch.score}
+            {t('signalScore')} {topMatch.score}
           </span>
         </div>
       )}
@@ -67,12 +70,13 @@ function SessionStats({ session }: { session: ResonanceSession }) {
 // --- Hint strip --------------------------------------------------------------
 
 function HintStrip({ hasActive }: { hasActive: boolean }) {
+  const t = useTranslations('resonance')
   return (
     <p
       className="text-center text-[11px] transition-opacity duration-300"
       style={{ color: 'var(--ghost)', opacity: hasActive ? 0 : 0.45 }}
     >
-      Select a planet to open its resonance detail
+      {t('selectPlanetHint')}
     </p>
   )
 }
@@ -80,6 +84,8 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
 // --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
+  const tNav = useTranslations('nav')
+  const t = useTranslations('resonance')
   const [mounted, setMounted]     = useState(false)
   const [role, setRole]           = useState<'explorer' | 'resonator'>('explorer')
   const [myPlanet, setMyPlanet]   = useState<PlanetProfile | null>(null)
@@ -154,7 +160,7 @@ export default function ResonancePage() {
               className="text-xs uppercase tracking-[0.25em] font-medium"
               style={{ color: 'var(--star)', opacity: 0.65 }}
             >
-              Daily
+              {t('daily')}
             </p>
             <h1
               className="text-4xl sm:text-5xl font-bold"
@@ -165,10 +171,10 @@ export default function ResonancePage() {
                 backgroundClip: 'text',
               }}
             >
-              Resonance
+              {tNav('resonance')}
             </h1>
             <p className="text-sm" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-              Five planets drawn into your orbit today. Each orbit line tells you why.
+              {t('orbitSubtitle')}
             </p>
           </div>
 
@@ -191,7 +197,7 @@ export default function ResonancePage() {
             className="text-xs uppercase tracking-[0.25em] font-medium"
             style={{ color: accentColor, opacity: 0.7 }}
           >
-            Daily
+            {t('daily')}
           </p>
           <h1
             className="text-4xl sm:text-5xl font-bold"
@@ -202,10 +208,10 @@ export default function ResonancePage() {
               backgroundClip: 'text',
             }}
           >
-            Resonance
+            {tNav('resonance')}
           </h1>
           <p className="text-sm max-w-xl" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-            Five planets drawn into your orbit today. Each orbit line tells you why.
+            {t('orbitSubtitle')}
           </p>
         </div>
 
@@ -274,7 +280,7 @@ export default function ResonancePage() {
             }}
           >
             <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-              Open on desktop to see full resonance detail
+              {t('desktopDetailHint')}
             </p>
           </div>
         )}

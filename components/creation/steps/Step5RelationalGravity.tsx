@@ -1,4 +1,5 @@
 import { MATCH_PREF_OPTIONS, CONNECTION_TYPE_OPTIONS } from '@/types/creation'
+import { useTranslations } from 'next-intl'
 
 // --- Step5RelationalGravity ---------------------------------------------------
 // Match preference (3 cards) + connection type multi-select.
@@ -17,6 +18,8 @@ export default function Step5RelationalGravity({
   onMatchPrefChange,
   onConnectionTypesChange,
 }: Props) {
+  const t = useTranslations('creationSteps')
+
   function toggleConnection(key: string) {
     if (connectionTypes.includes(key)) {
       onConnectionTypesChange(connectionTypes.filter((k) => k !== key))
@@ -29,18 +32,17 @@ export default function Step5RelationalGravity({
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Set the gravity of the connections you want
+          {t('gravityTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          This shapes how the resonance field aligns planets for you. It is a tendency, not a rule  - 
-          you can always change it.
+          {t('gravitySubtitle')}
         </p>
       </div>
 
       {/* Match preference */}
       <div className="flex flex-col gap-3">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Your orbit tendency
+          {t('orbitTendency')}
         </span>
         <div className="flex flex-col gap-2">
           {MATCH_PREF_OPTIONS.map((opt) => {
@@ -98,7 +100,7 @@ export default function Step5RelationalGravity({
       {/* Connection types */}
       <div className="flex flex-col gap-3">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          What you are open to
+          {t('openTo')}
         </span>
         <div className="flex flex-col gap-1.5">
           {CONNECTION_TYPE_OPTIONS.map((opt) => {

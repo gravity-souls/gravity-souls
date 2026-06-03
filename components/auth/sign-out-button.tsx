@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 
 export function SignOutButton() {
   const router = useRouter();
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
@@ -31,7 +34,7 @@ export function SignOutButton() {
         color: "var(--ink)",
       }}
     >
-      {loading ? "Signing out..." : "Sign out"}
+      {loading ? tCommon("signingOut") : tNav("signOut")}
     </button>
   );
 }

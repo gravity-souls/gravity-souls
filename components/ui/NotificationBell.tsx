@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Bell } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import NotificationItem, { type SerializedNotification } from '@/components/ui/NotificationItem'
@@ -14,6 +15,9 @@ interface NotificationResponse {
 
 export default function NotificationBell() {
   const router = useRouter()
+  const tTopbar = useTranslations('topbar')
+  const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
   const { data: session } = authClient.useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<SerializedNotification[]>([])
@@ -144,7 +148,7 @@ export default function NotificationBell() {
     return (
       <Link
         href="/sign-in"
-        aria-label="Sign in to view notifications"
+        aria-label={tAuth('signIn')}
         className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/60 transition hover:bg-white/8 hover:text-white"
       >
         <Bell className="h-4.5 w-4.5" />
@@ -157,7 +161,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        aria-label="Notifications"
+        aria-label={tTopbar('notifications')}
         aria-expanded={isOpen}
         className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white"
       >
@@ -173,19 +177,19 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-white/10 bg-[#090d18]/95 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl">
           <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
             <div>
-              <p className="text-sm font-semibold text-white">Notifications</p>
-              <p className="text-[11px] text-white/42">Recent orbit activity</p>
+              <p className="text-sm font-semibold text-white">{tTopbar('notifications')}</p>
+              <p className="text-[11px] text-white/42">{tTopbar('signals')}</p>
             </div>
             {unreadCount > 0 && <span className="rounded-full bg-violet-400/16 px-2 py-1 text-[11px] font-semibold text-violet-200">{unreadCount} new</span>}
           </div>
 
           <div className="max-h-120 overflow-y-auto py-1">
             {isLoading && notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-white/48">Loading notifications...</div>
+              <div className="px-4 py-8 text-center text-sm text-white/48">{tCommon('loading')}</div>
             ) : error ? (
               <div className="px-4 py-8 text-center text-sm text-red-200/80">{error}</div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-white/48">No notifications yet.</div>
+              <div className="px-4 py-8 text-center text-sm text-white/48">{tTopbar('noNotifications')}</div>
             ) : (
               <ul className="divide-y divide-white/6">
                 {notifications.map((notification) => (

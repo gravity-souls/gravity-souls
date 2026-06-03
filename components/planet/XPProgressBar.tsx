@@ -1,4 +1,5 @@
 import { LEVEL_NAMES, clampLevel, xpToNextLevel } from '@/lib/xp'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   xp: number
@@ -6,6 +7,7 @@ interface Props {
 }
 
 export default function XPProgressBar({ xp, userLevel }: Props) {
+  const t = useTranslations('common')
   const level = clampLevel(userLevel)
   const progress = xpToNextLevel(xp)
   const nextLevel = clampLevel(level + 1)
@@ -15,7 +17,7 @@ export default function XPProgressBar({ xp, userLevel }: Props) {
     <div className="rounded-lg border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.035)' }}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>Planet level</p>
+          <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>{t('planetLevel')}</p>
           <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{LEVEL_NAMES[level]}</p>
         </div>
         <span className="text-xs font-semibold" style={{ color: level === 5 ? '#f59e0b' : 'var(--star)' }}>Lv.{level}</span>
@@ -36,8 +38,8 @@ export default function XPProgressBar({ xp, userLevel }: Props) {
 
       <p className="mt-2 text-xs" style={{ color: 'var(--ghost)' }}>
         {isMax
-          ? 'Maximum level reached ✦'
-          : `${progress.current} / ${progress.required} XP to ${LEVEL_NAMES[nextLevel]}`}
+          ? t('maximumLevelReached')
+          : t('xpToLevel', { current: progress.current, required: progress.required, level: LEVEL_NAMES[nextLevel] })}
       </p>
     </div>
   )

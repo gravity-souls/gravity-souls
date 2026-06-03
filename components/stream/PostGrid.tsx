@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import PostCard from '@/components/stream/PostCard'
 import type { StreamPost, StreamPostCategory } from '@/types/stream'
 
@@ -20,7 +21,9 @@ function SkeletonCard({ index }: { index: number }) {
   return <div className="mb-3 h-48 w-full animate-pulse rounded-2xl" style={{ height: 180 + (index % 4) * 42, background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.07)' }} />
 }
 
-export default function PostGrid({ category = 'ALL', tag, search, authorId, refreshKey = 0, prependPost, emptyMessage = 'The cosmos is quiet. Be the first signal.', onPostOpen, onPostsChange }: PostGridProps) {
+export default function PostGrid({ category = 'ALL', tag, search, authorId, refreshKey = 0, prependPost, emptyMessage, onPostOpen, onPostsChange }: PostGridProps) {
+  const tStream = useTranslations('stream')
+  const tCommon = useTranslations('common')
   const [posts, setPosts] = useState<StreamPost[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -102,7 +105,7 @@ export default function PostGrid({ category = 'ALL', tag, search, authorId, refr
   }
 
   if (!loading && displayPosts.length === 0) {
-    return <div className="rounded-2xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--border-soft)', color: 'var(--ghost)' }}>{emptyMessage}</div>
+    return <div className="rounded-2xl p-10 text-center" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--border-soft)', color: 'var(--ghost)' }}>{emptyMessage ?? tStream('noResults')}</div>
   }
 
   return (
@@ -111,7 +114,7 @@ export default function PostGrid({ category = 'ALL', tag, search, authorId, refr
         {displayPosts.map((post) => <PostCard key={post.id} post={post} onOpen={onPostOpen} />)}
       </div>
       <div ref={sentinelRef} className="h-8" />
-      {loadingMore && <p className="py-4 text-center text-xs" style={{ color: 'var(--ghost)' }}>Loading more signals...</p>}
+      {loadingMore && <p className="py-4 text-center text-xs" style={{ color: 'var(--ghost)' }}>{tCommon('loading')}</p>}
     </>
   )
 }

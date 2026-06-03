@@ -4,6 +4,7 @@
 
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Check, Lock, RotateCcw, Save, Upload, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetGlobe from '@/components/planet/PlanetGlobe'
 import XPProgressBar from '@/components/planet/XPProgressBar'
@@ -86,6 +87,7 @@ function ColorControl({
   value: string
   onChange: (color: string) => void
 }) {
+  const t = useTranslations('planetCustomizer')
   const selectedOption = findColorOption(value)
 
   return (
@@ -129,7 +131,7 @@ function ColorControl({
                 boxShadow: selected ? `0 0 18px ${option.color}44` : 'none',
                 transform: selected ? 'scale(1.08)' : 'scale(1)',
               }}
-              aria-label={`Choose ${option.name}`}
+              aria-label={t('chooseColor', { name: option.name })}
               aria-pressed={selected}
             >
               <span
@@ -205,6 +207,7 @@ function ControlSection({
   earlyAccess: boolean
   children: ReactNode
 }) {
+  const t = useTranslations('planetCustomizer')
   const locked = !earlyAccess && userLevel < level
   const unlockLevel = clampLevel(level)
 
@@ -214,7 +217,7 @@ function ControlSection({
         <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{title}</h3>
         {locked && (
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[11px]" style={{ color: 'var(--ghost)' }}>
-            <Lock size={12} /> Unlock at Lv.{level} - {LEVEL_NAMES[unlockLevel]}
+            <Lock size={12} /> {t('unlockAt', { level, name: LEVEL_NAMES[unlockLevel] })}
           </span>
         )}
       </div>
@@ -229,6 +232,7 @@ interface XPSummary {
 }
 
 export default function PlanetCustomizer({ initialConfig, planetName, userLevel, onSaved, onClose }: Props) {
+  const t = useTranslations('planetCustomizer')
   const [savedConfig, setSavedConfig] = useState(() => normalizeConfig(initialConfig))
   const [localConfig, setLocalConfig] = useState(() => normalizeConfig(initialConfig))
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -294,15 +298,15 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       })
 
       if (!response.ok) {
-        throw new Error(await readResponseError(response, 'Could not save planet'))
+        throw new Error(await readResponseError(response, t('saveError')))
       }
 
       setSavedConfig(localConfig)
       onSaved?.(localConfig)
-      setMessage('Saved')
+      setMessage(t('saved'))
       onClose?.()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not save planet')
+      setMessage(error instanceof Error ? error.message : t('saveError'))
     } finally {
       setSaving(false)
     }
@@ -314,12 +318,12 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
     if (!file) return
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setMessage('Use JPG, PNG, or WEBP')
+      setMessage(t('fileTypeError'))
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setMessage('Max file size is 5MB')
+      setMessage(t('fileSizeError'))
       return
     }
 
@@ -332,18 +336,18 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       const response = await fetch('/api/user/planet-texture', { method: 'POST', body: formData })
 
       if (!response.ok) {
-        throw new Error(await readResponseError(response, 'Upload failed'))
+        throw new Error(await readResponseError(response, t('uploadFailed')))
       }
 
       const data = await response.json().catch(() => null)
       if (typeof data?.url !== 'string') {
-        throw new Error('The server did not return a texture URL')
+        throw new Error(t('missingTextureUrl'))
       }
 
       updateConfig({ customTextureUrl: data.url })
-      setMessage('Texture uploaded')
+      setMessage(t('textureUploaded'))
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Upload failed. Check that the app server is running.')
+      setMessage(error instanceof Error ? error.message : t('uploadServerError'))
     } finally {
       setUploading(false)
     }
@@ -358,7 +362,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       <aside className="rounded-lg border border-white/10 p-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>Live preview</p>
+            <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>{t('livePreview')}</p>
             <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>{planetName}</h2>
           </div>
           <div className="flex items-center gap-2">
@@ -368,7 +372,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
                 type="button"
                 onClick={onClose}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:text-white md:hidden"
-                aria-label="Close customizer"
+                aria-label={t('close')}
               >
                 <X size={16} />
               </button>
@@ -384,11 +388,11 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       <div className="flex flex-col gap-4">
         {EARLY_ACCESS && (
           <div className="rounded-lg border border-amber-300/20 px-4 py-3 text-sm" style={{ background: 'rgba(245,158,11,0.08)', color: '#fbbf24' }}>
-            ✦ Early Access - all customizations unlocked
+            {t('earlyAccess')}
           </div>
         )}
 
-        <ControlSection title="Base" level={1} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        <ControlSection title={t('base')} level={1} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 md:grid-cols-4 xl:grid-cols-8">
             {PRESET_PLANETS.map((planet) => {
               const selected = planet.baseTexture === localConfig.baseTexture && !localConfig.customTextureUrl
@@ -414,42 +418,42 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           </div>
         </ControlSection>
 
-        <ControlSection title="Color" level={2} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
-          <ColorControl label="Planet tint" value={localConfig.tintColor} onChange={(tintColor) => updateConfig({ tintColor })} />
+        <ControlSection title={t('color')} level={2} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+          <ColorControl label={t('planetTint')} value={localConfig.tintColor} onChange={(tintColor) => updateConfig({ tintColor })} />
         </ControlSection>
 
-        <ControlSection title="Atmosphere & Ring" level={3} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        <ControlSection title={t('atmosphereRing')} level={3} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
-            <ColorControl label="Atmosphere" value={localConfig.atmosphereColor} onChange={(atmosphereColor) => updateConfig({ atmosphereColor })} />
-            <CosmicToggle label="Ring" checked={localConfig.hasRing} accentColor={localConfig.ringColor || localConfig.tintColor} onChange={(hasRing) => updateConfig({ hasRing })} />
+            <ColorControl label={t('atmosphere')} value={localConfig.atmosphereColor} onChange={(atmosphereColor) => updateConfig({ atmosphereColor })} />
+            <CosmicToggle label={t('ring')} checked={localConfig.hasRing} accentColor={localConfig.ringColor || localConfig.tintColor} onChange={(hasRing) => updateConfig({ hasRing })} />
             <label className="md:col-span-2 text-sm" style={{ color: 'var(--ink)' }}>
-              <span className="mb-2 flex justify-between"><span>Atmosphere density</span><span>{localConfig.atmosphereDensity.toFixed(2)}</span></span>
+              <span className="mb-2 flex justify-between"><span>{t('atmosphereDensity')}</span><span>{localConfig.atmosphereDensity.toFixed(2)}</span></span>
               <input type="range" min={0} max={0.3} step={0.01} value={localConfig.atmosphereDensity} onChange={(event) => updateConfig({ atmosphereDensity: readNumber(event.target.value, 0, 0.3) })} className="w-full accent-violet-400" />
             </label>
             {localConfig.hasRing && (
               <div className="md:col-span-2">
-                <ColorControl label="Ring color" value={localConfig.ringColor || localConfig.tintColor} onChange={(ringColor) => updateConfig({ ringColor })} />
+                <ColorControl label={t('ringColor')} value={localConfig.ringColor || localConfig.tintColor} onChange={(ringColor) => updateConfig({ ringColor })} />
               </div>
             )}
           </div>
         </ControlSection>
 
-        <ControlSection title="Motion & Surface" level={4} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        <ControlSection title={t('motionSurface')} level={4} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm" style={{ color: 'var(--ink)' }}>
-              <span className="mb-2 flex justify-between"><span>Rotation speed</span><span>{localConfig.rotationSpeed.toFixed(3)}</span></span>
+              <span className="mb-2 flex justify-between"><span>{t('rotationSpeed')}</span><span>{localConfig.rotationSpeed.toFixed(3)}</span></span>
               <input type="range" min={0.005} max={0.03} step={0.001} value={localConfig.rotationSpeed} onChange={(event) => updateConfig({ rotationSpeed: readNumber(event.target.value, 0.005, 0.03) })} className="w-full accent-violet-400" />
-              <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>Slow</span><span>Medium</span><span>Fast</span></span>
+              <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>{t('slow')}</span><span>{t('medium')}</span><span>{t('fast')}</span></span>
             </label>
             <label className="text-sm" style={{ color: 'var(--ink)' }}>
-              <span className="mb-2 flex justify-between"><span>Cloud opacity</span><span>{localConfig.cloudOpacity.toFixed(2)}</span></span>
+              <span className="mb-2 flex justify-between"><span>{t('cloudOpacity')}</span><span>{localConfig.cloudOpacity.toFixed(2)}</span></span>
               <input type="range" min={0} max={0.5} step={0.05} value={localConfig.cloudOpacity} onChange={(event) => updateConfig({ cloudOpacity: readNumber(event.target.value, 0, 0.5) })} className="w-full accent-violet-400" />
-              <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>None</span><span>Light</span><span>Dense</span></span>
+              <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>{t('none')}</span><span>{t('light')}</span><span>{t('dense')}</span></span>
             </label>
           </div>
         </ControlSection>
 
-        <ControlSection title="Custom Texture" level={5} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        <ControlSection title={t('customTexture')} level={5} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {localConfig.customTextureUrl && (
@@ -457,13 +461,13 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
               )}
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm transition" style={{ color: 'var(--ink)', background: 'rgba(255,255,255,0.04)' }}>
                 <Upload size={16} />
-                {uploading ? 'Uploading' : 'Upload texture'}
+                {uploading ? t('uploading') : t('uploadTexture')}
                 <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadTexture} disabled={uploading} className="hidden" />
               </label>
             </div>
             {localConfig.customTextureUrl && (
               <button type="button" onClick={() => updateConfig({ customTextureUrl: undefined })} className="rounded-lg border border-white/10 px-3 py-2 text-sm" style={{ color: 'var(--ghost)' }}>
-                Remove custom texture
+                {t('removeTexture')}
               </button>
             )}
           </div>
@@ -480,14 +484,14 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
             style={{ background: localConfig.tintColor, color: '#fff' }}
           >
             <Save size={16} />
-            Save Planet
-            {isDirty && <span className="h-2 w-2 rounded-full bg-white" aria-label="Unsaved changes" />}
+            {t('savePlanet')}
+            {isDirty && <span className="h-2 w-2 rounded-full bg-white" aria-label={t('unsavedChanges')} />}
           </button>
           <button type="button" onClick={resetToPreset} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm" style={{ color: 'var(--ink)' }}>
             <RotateCcw size={16} />
-            Reset to preset
+            {t('resetPreset')}
           </button>
-          {message && <span className="text-xs" style={{ color: message === 'Saved' || message === 'Texture uploaded' ? 'var(--star)' : '#f87171' }}>{message}</span>}
+          {message && <span className="text-xs" style={{ color: message === t('saved') || message === t('textureUploaded') ? 'var(--star)' : '#f87171' }}>{message}</span>}
         </div>
       </div>
     </div>

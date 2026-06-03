@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
@@ -295,6 +296,7 @@ interface Props {
 
 export default function GalaxyPage({ params }: Props) {
   const router = useRouter()
+  const t = useTranslations('galaxyPage')
   const { slug } = use(params)
   const resolvedSlug = resolveGalaxySlug(slug)
   const galaxy = getGalaxyBySlug(slug)
@@ -771,7 +773,7 @@ export default function GalaxyPage({ params }: Props) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-eyebrow mb-2">Galaxy</p>
+                <p className="text-eyebrow mb-2">{t('galaxy')}</p>
                 <h1
                   className="text-xl sm:text-2xl font-semibold leading-tight mb-2"
                   style={{ color: 'var(--foreground)' }}
@@ -793,7 +795,7 @@ export default function GalaxyPage({ params }: Props) {
                     className="px-3 py-1 rounded-xl text-xs"
                     style={{ background: `${accentColor}15`, color: accentColor, border: `1px solid ${accentColor}30` }}
                   >
-                    {galaxy.memberCount.toLocaleString()} planets
+                    {t('planetsCount', { count: galaxy.memberCount.toLocaleString() })}
                   </span>
                   <span
                     className="px-3 py-1 rounded-xl text-xs capitalize"
@@ -821,7 +823,7 @@ export default function GalaxyPage({ params }: Props) {
                       border:     `1px solid ${accentColor}35`,
                     }}
                   >
-                    Joined
+                    {t('joined')}
                   </span>
                 ) : userRole === 'resonator' ? (
                   <button
@@ -838,7 +840,7 @@ export default function GalaxyPage({ params }: Props) {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${accentColor}30` }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
                   >
-                    {joiningCommunity ? 'Joining...' : 'Join galaxy'}
+                    {joiningCommunity ? t('joining') : t('joinGalaxy')}
                   </button>
                 ) : (
                   <Link
@@ -851,7 +853,7 @@ export default function GalaxyPage({ params }: Props) {
                       textDecoration: 'none',
                     }}
                   >
-                    Create planet to join
+                    {t('createPlanetToJoin')}
                   </Link>
                 )}
               </div>
@@ -867,7 +869,7 @@ export default function GalaxyPage({ params }: Props) {
 
                 {/* About + keywords */}
                 <section>
-                  <p className="text-data-label mb-3">About this galaxy</p>
+                  <p className="text-data-label mb-3">{t('about')}</p>
                   <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--ink)', opacity: 0.75 }}>
                     {galaxy.description}
                   </p>
@@ -895,9 +897,9 @@ export default function GalaxyPage({ params }: Props) {
                 {/* Active members */}
                 <section>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-4">
-                    <p className="text-data-label">Active planets</p>
+                    <p className="text-data-label">{t('activePlanets')}</p>
                     <span className="text-xs" style={{ color: 'var(--ghost)' }}>
-                      {memberPlanets.length} shown of {galaxy.memberCount.toLocaleString()}
+                      {t('shownOf', { shown: memberPlanets.length, total: galaxy.memberCount.toLocaleString() })}
                     </span>
                   </div>
 
@@ -926,7 +928,7 @@ export default function GalaxyPage({ params }: Props) {
                       className="rounded-2xl p-8 text-center"
                       style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                     >
-                      <p className="text-sm" style={{ color: 'var(--ghost)' }}>No active planets yet.</p>
+                      <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('noActivePlanets')}</p>
                     </div>
                   )}
                 </section>
@@ -934,8 +936,8 @@ export default function GalaxyPage({ params }: Props) {
                 {/* Events */}
                 <section>
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-data-label">Events</p>
-                    {isGalaxyAdmin && <span className="text-xs" style={{ color: accentColor }}>Admin</span>}
+                    <p className="text-data-label">{t('events')}</p>
+                    {isGalaxyAdmin && <span className="text-xs" style={{ color: accentColor }}>{t('admin')}</span>}
                   </div>
                   <EventsTab galaxyId={community?.id ?? null} isAdmin={isGalaxyAdmin} canPropose={communityJoined || isGalaxyAdmin} />
                 </section>
@@ -943,7 +945,7 @@ export default function GalaxyPage({ params }: Props) {
                 {/* Discussions */}
                 {discussions.length > 0 && (
                   <section>
-                    <p className="text-data-label mb-4">Recent discussions</p>
+                    <p className="text-data-label mb-4">{t('recentDiscussions')}</p>
 
                     {userRole === 'resonator' ? (
                       <div className="flex flex-col gap-2">
@@ -1004,7 +1006,7 @@ export default function GalaxyPage({ params }: Props) {
                               <div className="w-1 h-10 rounded-full" style={{ background: `${accentColor}50` }} />
                               <div>
                                 <p className="text-sm leading-snug mb-1" style={{ color: 'var(--foreground)' }}>{topic.title}</p>
-                                <p className="text-xs" style={{ color: 'var(--ghost)' }}>{topic.replies} replies</p>
+                                <p className="text-xs" style={{ color: 'var(--ghost)' }}>{t('repliesCount', { count: topic.replies })}</p>
                               </div>
                             </div>
                           ))}
@@ -1016,9 +1018,9 @@ export default function GalaxyPage({ params }: Props) {
 
                 <section>
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-data-label">Community posts</p>
+                    <p className="text-data-label">{t('communityPosts')}</p>
                     <span className="text-xs" style={{ color: 'var(--ghost)' }}>
-                      {communityPosts.length} post{communityPosts.length === 1 ? '' : 's'}
+                      {t('postCount', { count: communityPosts.length })}
                     </span>
                   </div>
 
@@ -1268,7 +1270,7 @@ export default function GalaxyPage({ params }: Props) {
                 {/* Related galaxies */}
                 {relatedPreviews.length > 0 && (
                   <section>
-                    <p className="text-data-label mb-3">Related galaxies</p>
+                    <p className="text-data-label mb-3">{t('relatedGalaxies')}</p>
                     <div className="flex flex-col gap-3">
                       {relatedPreviews.map((g) => (
                         <Link
@@ -1298,7 +1300,7 @@ export default function GalaxyPage({ params }: Props) {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{g.name}</p>
                             <p className="text-xs truncate" style={{ color: 'var(--ghost)' }}>
-                              {g.memberCount.toLocaleString()} planets
+                              {t('planetsCount', { count: g.memberCount.toLocaleString() })}
                             </p>
                           </div>
                           <span className="text-xs shrink-0" style={{ color: 'var(--dim)' }}>→</span>
@@ -1313,13 +1315,13 @@ export default function GalaxyPage({ params }: Props) {
                   className="p-5 rounded-2xl"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                 >
-                  <p className="text-data-label mb-4">Galaxy stats</p>
+                  <p className="text-data-label mb-4">{t('galaxyStats')}</p>
                   <div className="flex flex-col gap-3">
                     {[
-                      { label: 'Members', value: galaxy.memberCount.toLocaleString() },
-                      { label: 'Atmosphere', value: galaxy.mood },
-                      { label: 'Status', value: galaxy.maturity },
-                      { label: 'Keywords', value: galaxy.keywords.length.toString() },
+                      { label: t('members'), value: galaxy.memberCount.toLocaleString() },
+                      { label: t('atmosphere'), value: galaxy.mood },
+                      { label: t('status'), value: galaxy.maturity },
+                      { label: t('keywords'), value: galaxy.keywords.length.toString() },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between">
                         <span className="text-xs" style={{ color: 'var(--ghost)' }}>{label}</span>
@@ -1342,7 +1344,7 @@ export default function GalaxyPage({ params }: Props) {
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink)' }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ghost)' }}
                 >
-                  ← All galaxies
+                  {t('allGalaxies')}
                 </Link>
               </div>
             </div>
@@ -1372,10 +1374,10 @@ export default function GalaxyPage({ params }: Props) {
             <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em]" style={{ color: accentColor, opacity: 0.75 }}>
-                  Galaxy discussion
+                  {t('galaxyDiscussion')}
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--ghost)' }}>
-                  {selectedTopic.replies} replies
+                  {t('repliesCount', { count: selectedTopic.replies })}
                 </p>
               </div>
               <button
@@ -1383,7 +1385,7 @@ export default function GalaxyPage({ params }: Props) {
                 onClick={() => setSelectedTopic(null)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ghost)', cursor: 'pointer' }}
-                aria-label="Close discussion preview"
+                aria-label={t('closeDiscussionPreview')}
               >
                 ×
               </button>
@@ -1401,7 +1403,7 @@ export default function GalaxyPage({ params }: Props) {
                     {selectedTopic.title}
                   </h2>
                   <p className="text-xs sm:text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
-                    All visible replies from {galaxy.name}. You can read the thread here and add your own signal below.
+                    {t('discussionIntro', { name: galaxy.name })}
                   </p>
                 </div>
               </div>
@@ -1409,10 +1411,10 @@ export default function GalaxyPage({ params }: Props) {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: accentColor, opacity: 0.8 }}>
-                    Recent replies
+                    {t('recentReplies')}
                   </p>
                   <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>
-                    Showing all {selectedDiscussionReplies.length}
+                    {t('showingAll', { count: selectedDiscussionReplies.length })}
                   </span>
                 </div>
 
@@ -1440,7 +1442,7 @@ export default function GalaxyPage({ params }: Props) {
                         className="mt-2 text-[10px] bg-transparent border-none p-0"
                         style={{ color: accentColor, cursor: 'pointer' }}
                       >
-                        Reply
+                        {t('reply')}
                       </button>
                     )}
                   </div>
@@ -1453,7 +1455,7 @@ export default function GalaxyPage({ params }: Props) {
                     value={discussionReplyDraft}
                     onChange={(event) => setDiscussionReplyDraft(event.target.value)}
                     rows={3}
-                    placeholder="Add your reply to this discussion..."
+                    placeholder={t('addReplyPlaceholder')}
                     className="w-full resize-none rounded-xl px-4 py-3 text-base sm:text-sm outline-none"
                     style={{
                       background: 'rgba(255,255,255,0.03)',
@@ -1475,7 +1477,7 @@ export default function GalaxyPage({ params }: Props) {
                         opacity: discussionReplyDraft.trim() && !postingDiscussionReply ? 1 : 0.55,
                       }}
                     >
-                      {postingDiscussionReply ? 'Saving...' : 'Send reply'}
+                      {postingDiscussionReply ? t('saving') : t('sendReply')}
                     </button>
                   </div>
                 </div>
@@ -1485,7 +1487,7 @@ export default function GalaxyPage({ params }: Props) {
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
                   <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                    Join this galaxy to reply to discussions.
+                    {t('joinToReplyHint')}
                   </p>
                   <button
                     type="button"
@@ -1494,7 +1496,7 @@ export default function GalaxyPage({ params }: Props) {
                     className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                     style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                   >
-                    {joiningCommunity ? 'Joining...' : 'Join to reply'}
+                    {joiningCommunity ? t('joining') : t('joinToReply')}
                   </button>
                 </div>
               )}
@@ -1506,7 +1508,7 @@ export default function GalaxyPage({ params }: Props) {
                   className="rounded-xl px-4 py-2 text-xs font-medium w-full sm:w-auto"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ink)', cursor: 'pointer' }}
                 >
-                  Close thread
+                  {t('closeThread')}
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type KeyboardEvent } from 'react'
+import { useTranslations } from 'next-intl'
 import { LANGUAGE_OPTIONS } from '@/types/creation'
 
 // --- Tag input ----------------------------------------------------------------
@@ -19,6 +20,7 @@ function TagInput({
   accent?:     string
 }) {
   const [input, setInput] = useState('')
+  const t = useTranslations('creationSteps')
 
   function commit() {
     const val = input.trim()
@@ -33,7 +35,7 @@ function TagInput({
 
   return (
     <div
-      className="flex flex-wrap gap-1.5 p-3 rounded-xl min-h-[44px]"
+      className="flex flex-wrap gap-1.5 p-3 rounded-xl min-h-11"
       style={{
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(167,139,250,0.12)',
@@ -50,7 +52,7 @@ function TagInput({
             type="button"
             onClick={() => onRemove(tag)}
             className="ml-0.5 leading-none opacity-60 hover:opacity-100"
-            aria-label={`Remove ${tag}`}
+            aria-label={t('removeTag', { tag })}
             style={{ color: accent }}
           >
             ×
@@ -64,7 +66,7 @@ function TagInput({
         onKeyDown={handleKey}
         onBlur={commit}
         placeholder={tags.length === 0 ? placeholder : ''}
-        className="flex-1 min-w-[120px] bg-transparent text-xs outline-none"
+        className="flex-1 min-w-30 bg-transparent text-xs outline-none"
         style={{ color: 'var(--ink)', caretColor: accent }}
       />
     </div>
@@ -94,6 +96,8 @@ export default function Step4CulturalPaths({
   onCitiesChange,
   onCulturalChange,
 }: Props) {
+  const t = useTranslations('creationSteps')
+
   function toggleLanguage(lang: string) {
     if (languages.includes(lang)) {
       onLanguagesChange(languages.filter((l) => l !== lang))
@@ -106,24 +110,23 @@ export default function Step4CulturalPaths({
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Map the paths that brought you here
+          {t('pathsTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          Every field here is optional. Share what feels right  -  nothing is required to form your
-          planet.
+          {t('pathsSubtitle')}
         </p>
       </div>
 
       {/* Location */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Where you are
+          {t('whereYouAre')}
         </label>
         <input
           type="text"
           value={location ?? ''}
           onChange={(e) => onLocationChange(e.target.value)}
-          placeholder="City · neighbourhood"
+          placeholder={t('locationPlaceholder')}
           maxLength={60}
           className="px-4 py-3 rounded-xl bg-transparent text-sm outline-none transition-all"
           style={{
@@ -138,7 +141,7 @@ export default function Step4CulturalPaths({
       {/* Languages */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Languages you move in
+          {t('languages')}
         </label>
         <div className="flex flex-wrap gap-2">
           {LANGUAGE_OPTIONS.map((lang) => {
@@ -168,34 +171,34 @@ export default function Step4CulturalPaths({
       {/* Travel cities */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Cities in your orbit
+          {t('orbitCities')}
         </label>
         <TagInput
           tags={travelCities}
           onAdd={(c) => onCitiesChange([...travelCities, c])}
           onRemove={(c) => onCitiesChange(travelCities.filter((x) => x !== c))}
-          placeholder="Type a city, press Enter"
+          placeholder={t('cityPlaceholder')}
           accent="#34d399"
         />
         <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-          Places you&apos;ve lived, love, or keep returning to.
+          {t('cityHint')}
         </p>
       </div>
 
       {/* Cultural touchstones */}
       <div className="flex flex-col gap-2">
         <label className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Cultural touchstones
+          {t('touchstones')}
         </label>
         <TagInput
           tags={culturalTags}
           onAdd={(t) => onCulturalChange([...culturalTags, t])}
           onRemove={(t) => onCulturalChange(culturalTags.filter((x) => x !== t))}
-          placeholder="Artists, authors, films, movements…"
+          placeholder={t('touchstonesPlaceholder')}
           accent="#a78bfa"
         />
         <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-          Things that shaped you. References that make you feel recognized.
+          {t('touchstonesHint')}
         </p>
       </div>
     </div>

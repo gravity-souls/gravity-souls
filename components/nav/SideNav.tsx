@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarDays,
@@ -12,7 +13,6 @@ import {
   CircleDot,
   Globe2,
   Home,
-  Languages,
   Orbit,
   Settings,
   Telescope,
@@ -21,7 +21,6 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { clampLevel } from '@/lib/xp'
-import { useLanguage, type Language } from '@/contexts/language-context'
 import LevelBadge from '@/components/planet/LevelBadge'
 
 const emptySubscribe = () => () => {}
@@ -31,11 +30,6 @@ function useHydrated() {
 
 const SIDEBAR_COLLAPSED_WIDTH = 40
 const SIDEBAR_EXPANDED_WIDTH = 220
-
-const LANGS: { value: Language; label: string }[] = [
-  { value: 'en', label: 'EN' },
-  { value: 'zh-CN', label: '中' },
-]
 
 const LEVEL_DOT_COLORS = {
   1: '#6b7280',
@@ -53,26 +47,26 @@ interface MeResponse {
 
 interface NavItem {
   href: string
-  label: string
+  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'settings'
   Icon: LucideIcon
   badge?: boolean
 }
 
 const MAIN_ITEMS: NavItem[] = [
-  { href: '/', label: 'Home', Icon: Home },
-  { href: '/stream', label: 'Stream', Icon: Waves },
-  { href: '/resonance', label: 'Resonance', Icon: CircleDot },
+  { href: '/', labelKey: 'home', Icon: Home },
+  { href: '/stream', labelKey: 'stream', Icon: Waves },
+  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot },
 ]
 
-const GALAXIES_ITEM: NavItem = { href: '/galaxies', label: 'Galaxies', Icon: Globe2 }
-const MY_PLANET_ITEM: NavItem = { href: '/my-planet', label: 'My Planet', Icon: Orbit, badge: true }
+const GALAXIES_ITEM: NavItem = { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 }
+const MY_PLANET_ITEM: NavItem = { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true }
 
 const MOBILE_TABS: NavItem[] = [
-  { href: '/', label: 'Home', Icon: Home },
-  { href: '/stream', label: 'Stream', Icon: Waves },
-  { href: '/resonance', label: 'Resonance', Icon: CircleDot },
-  { href: '/galaxies', label: 'Galaxies', Icon: Globe2 },
-  { href: '/my-planet', label: 'My Planet', Icon: Orbit, badge: true },
+  { href: '/', labelKey: 'home', Icon: Home },
+  { href: '/stream', labelKey: 'stream', Icon: Waves },
+  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot },
+  { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 },
+  { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true },
 ]
 
 interface Props {
@@ -96,11 +90,11 @@ function SectionLabel({ children, collapsed }: { children: string; collapsed: bo
   )
 }
 
-function NavLink({ item, active, collapsed, level }: { item: NavItem; active: boolean; collapsed: boolean; level: number }) {
+function NavLink({ item, active, collapsed, level, label }: { item: NavItem; active: boolean; collapsed: boolean; level: number; label: string }) {
   return (
     <Link
       href={item.href}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}
       className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium no-underline transition-colors hover:bg-white/5"
       style={{
@@ -114,7 +108,7 @@ function NavLink({ item, active, collapsed, level }: { item: NavItem; active: bo
         className="flex min-w-0 flex-1 items-center gap-2 truncate"
         style={{ opacity: collapsed ? 0 : 1, transition: 'opacity 150ms ease', whiteSpace: 'nowrap' }}
       >
-        <span className="truncate">{item.label}</span>
+        <span className="truncate">{label}</span>
         {item.badge && <LevelBadge level={level} size="sm" />}
       </span>
     </Link>
@@ -158,7 +152,8 @@ function SubLink({ href, label, active, Icon }: { href: string; label: string; a
 
 export default function SideNav({ collapsed, onToggle }: Props) {
   const pathname = usePathname()
-  const { lang, setLang } = useLanguage()
+  const tNav = useTranslations('nav')
+  const tA11y = useTranslations('a11y')
   const { data: session } = authClient.useSession()
   const hydrated = useHydrated()
   const isAuthenticated = hydrated && !!session?.user
@@ -214,15 +209,15 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   return (
     <>
       <aside
-        aria-label="Side navigation"
+        aria-label={tA11y('sideNav')}
         className="fixed bottom-0 left-0 top-(--nav-h) z-40 hidden overflow-hidden border-r border-white/6 bg-[#090d18]/95 backdrop-blur-xl transition-[width] duration-300 ease-out md:block"
         style={{ width }}
       >
         <nav className="flex h-full w-55 flex-col px-1.5 py-4">
-          <SectionLabel collapsed={collapsed}>Main</SectionLabel>
+          <SectionLabel collapsed={collapsed}>{tNav('main')}</SectionLabel>
           <div className="space-y-1">
             {MAIN_ITEMS.map((item) => (
-              <NavLink key={item.href} item={item} active={isRouteActive(pathname, item.href)} collapsed={collapsed} level={currentUserLevel} />
+              <NavLink key={item.href} item={item} label={tNav(item.labelKey)} active={isRouteActive(pathname, item.href)} collapsed={collapsed} level={currentUserLevel} />
             ))}
 
             <div>
@@ -235,21 +230,21 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               >
                 <Link
                   href={GALAXIES_ITEM.href}
-                  title={collapsed ? GALAXIES_ITEM.label : undefined}
+                  title={collapsed ? tNav(GALAXIES_ITEM.labelKey) : undefined}
                   aria-current={galaxiesActive ? 'page' : undefined}
                   className="flex min-w-0 items-center gap-3 px-2.5 text-sm font-medium no-underline"
                   style={{ color: galaxiesActive ? '#fff' : 'rgba(255,255,255,0.62)' }}
                 >
                   <Globe2 size={18} strokeWidth={galaxiesActive ? 2.1 : 1.7} className="shrink-0" />
                   <span style={{ opacity: collapsed ? 0 : 1, transition: 'opacity 150ms ease', whiteSpace: 'nowrap' }}>
-                    Galaxies
+                    {tNav('galaxies')}
                   </span>
                 </Link>
                 {!collapsed && (
                   <button
                     type="button"
                     onClick={() => setGalaxiesExpanded((value) => !value)}
-                    aria-label={showGalaxiesSubItems ? 'Collapse galaxy links' : 'Expand galaxy links'}
+                    aria-label={showGalaxiesSubItems ? tNav('collapseGalaxyLinks') : tNav('expandGalaxyLinks')}
                     aria-expanded={showGalaxiesSubItems}
                     className="mr-1 flex h-7 w-7 items-center justify-center rounded-lg text-white/38 transition hover:bg-white/6 hover:text-white/72"
                   >
@@ -258,50 +253,24 @@ export default function SideNav({ collapsed, onToggle }: Props) {
                 )}
               </div>
               <SubMenu open={showGalaxiesSubItems}>
-                <SubLink href="/galaxies/events" label="Events" active={isRouteActive(pathname, '/galaxies/events')} Icon={CalendarDays} />
+                <SubLink href="/galaxies/events" label={tNav('events')} active={isRouteActive(pathname, '/galaxies/events')} Icon={CalendarDays} />
               </SubMenu>
             </div>
           </div>
 
-          <SectionLabel collapsed={collapsed}>My Space</SectionLabel>
+          <SectionLabel collapsed={collapsed}>{tNav('mySpace')}</SectionLabel>
           <div className="space-y-1">
-            <NavLink item={MY_PLANET_ITEM} active={myPlanetActive} collapsed={collapsed} level={currentUserLevel} />
+            <NavLink item={MY_PLANET_ITEM} label={tNav('myPlanet')} active={myPlanetActive} collapsed={collapsed} level={currentUserLevel} />
             <SubMenu open={showMyPlanetSubItems}>
-              <SubLink href="/my-planet/customize" label="Customize Planet" active={isRouteActive(pathname, '/my-planet/customize')} Icon={Orbit} />
-              <SubLink href="/my-planet/report" label="Match Report" active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
-              <SubLink href="/universe/demo" label="Universe View" active={isRouteActive(pathname, '/universe/demo')} Icon={Telescope} />
+              <SubLink href="/settings/planet" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/settings/planet')} Icon={Orbit} />
+              <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
+              <SubLink href="/universe/demo" label={tNav('universeView')} active={isRouteActive(pathname, '/universe/demo')} Icon={Telescope} />
             </SubMenu>
           </div>
 
-          <SectionLabel collapsed={collapsed}>Account</SectionLabel>
+          <SectionLabel collapsed={collapsed}>{tNav('account')}</SectionLabel>
           <div className="space-y-1">
-            <NavLink item={{ href: '/settings/planet', label: 'Settings', Icon: Settings }} active={isRouteActive(pathname, '/settings')} collapsed={collapsed} level={currentUserLevel} />
-            <div className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-white/62">
-              <Languages size={18} className="shrink-0" />
-              <div
-                className="flex min-w-0 flex-1 items-center justify-between gap-2"
-                style={{ opacity: collapsed ? 0 : 1, transition: 'opacity 150ms ease', pointerEvents: collapsed ? 'none' : 'auto' }}
-              >
-                <span>Language</span>
-                <span className="flex overflow-hidden rounded-lg border border-white/8 bg-white/3" role="group" aria-label="Language">
-                  {LANGS.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setLang(value)}
-                      aria-pressed={lang === value}
-                      className="px-2 py-1 text-[10px] font-semibold tracking-widest transition-colors"
-                      style={{
-                        color: lang === value ? '#c4b5fd' : 'rgba(255,255,255,0.36)',
-                        background: lang === value ? 'rgba(124,58,237,0.18)' : 'transparent',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </span>
-              </div>
-            </div>
+            <NavLink item={{ href: '/settings/planet', labelKey: 'settings', Icon: Settings }} label={tNav('settings')} active={isRouteActive(pathname, '/settings')} collapsed={collapsed} level={currentUserLevel} />
           </div>
 
           <div className="flex-1" />
@@ -321,7 +290,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
       </aside>
 
       <nav
-        aria-label="Mobile navigation"
+        aria-label={tA11y('mobileNav')}
         className="fixed inset-x-0 bottom-0 z-50 grid h-16 grid-cols-5 border-t border-white/8 bg-[#090d18]/96 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
       >
         {MOBILE_TABS.map((item) => {
@@ -346,7 +315,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
                   />
                 )}
               </span>
-              <span className="max-w-full truncate">{item.label}</span>
+              <span className="max-w-full truncate">{tNav(item.labelKey)}</span>
             </Link>
           )
         })}

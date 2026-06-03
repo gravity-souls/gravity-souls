@@ -1,11 +1,13 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import SectionHeader from '@/components/ui/SectionHeader'
 import { getSharedPosts } from '@/lib/mock-posts'
 
-export default function PostsPage() {
+export default async function PostsPage() {
+  const t = await getTranslations('postsPage')
   const posts = getSharedPosts()
 
   return (
@@ -15,10 +17,10 @@ export default function PostsPage() {
 
         <div className="relative z-10 flex flex-col gap-8 animate-fade-up">
           <SectionHeader
-            eyebrow="Social orbit"
+            eyebrow={t('eyebrow')}
             level={1}
-            title="All posts"
-            subtitle="Shared moments from nearby planets. Open a post, visit its planet, or continue into the wider stream."
+            title={t('title')}
+            subtitle={t('subtitle')}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,16 +61,16 @@ export default function PostsPage() {
                 )}
 
                 <div className="flex items-center gap-4 text-[11px]" style={{ color: 'var(--ghost)' }}>
-                  <span>{post.likes} likes</span>
-                  <span>{post.replies} replies</span>
+                  <span>{t('likes', { count: post.likes })}</span>
+                  <span>{t('replies', { count: post.replies })}</span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
                   <Link href={`/posts/${post.id}`} className="flex-1 text-center rounded-xl px-4 py-2.5 text-sm font-medium" style={{ background: `${post.avatarGlow}22`, border: `1px solid ${post.avatarGlow}38`, color: 'var(--foreground)', textDecoration: 'none' }}>
-                    Open post
+                    {t('openPost')}
                   </Link>
                   <Link href={`/planet/${post.planetId}`} className="flex-1 text-center rounded-xl px-4 py-2.5 text-sm font-medium" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ink)', textDecoration: 'none' }}>
-                    View planet
+                    {t('viewPlanet')}
                   </Link>
                 </div>
               </article>

@@ -1,10 +1,12 @@
 import GlowButton from '@/components/ui/GlowButton'
+import { useTranslations } from 'next-intl'
 
 // --- ResonanceEmptyState ------------------------------------------------------
 // Shown on /resonance when the viewer is an Explorer (no planet formed yet).
 // Teases the orbital system without full reveal.
 
 export default function ResonanceEmptyState() {
+  const t = useTranslations('resonance')
   return (
     <div className="relative flex flex-col items-center justify-center gap-8 py-16 px-6">
 
@@ -81,16 +83,15 @@ export default function ResonanceEmptyState() {
       {/* Copy */}
       <div className="flex flex-col items-center gap-3 text-center max-w-xs">
         <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-          Your orbit is empty
+          {t('emptyTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          Five planets are drawn into resonance with yours each day.
-          Form your planet first  -  then the field aligns.
+          {t('emptyBody')}
         </p>
       </div>
 
       <GlowButton href="/create-planet" variant="primary" className="px-8 py-3.5 text-sm">
-        Begin formation
+        {t('beginFormation')}
       </GlowButton>
 
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   QUESTIONS,
   SPECIAL_QUESTIONS,
@@ -36,13 +37,7 @@ const DIM_GROUPS: { label: string; dims: DimKey[] }[] = [
 
 // --- Constants -----------------------------------------------------------------
 
-const COMPUTING_LABELS = [
-  'Scanning soul matrix…',
-  'Aligning cosmic dimensions…',
-  'Cross-referencing 26 archetypes…',
-  'Calibrating inner universe…',
-  'Crystallising your type…',
-]
+const COMPUTING_LABEL_KEYS = ['computing1', 'computing2', 'computing3', 'computing4', 'computing5'] as const
 
 // --- Utility: Shuffle array ----------------------------------------------------
 
@@ -60,6 +55,7 @@ function shuffleArray<T>(array: T[]): T[] {
 function SbtiPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useTranslations('sbti')
   const [phase, setPhase] = useState<Phase>('intro')
   const [qIndex, setQIndex] = useState(0)
   const [answers, setAnswers] = useState<Answers>({ main: {} })
@@ -84,7 +80,7 @@ function SbtiPage() {
   useEffect(() => {
     if (phase !== 'computing') return
     computingRef.current = setInterval(() => {
-      setComputingLabel((n) => (n + 1) % COMPUTING_LABELS.length)
+      setComputingLabel((n) => (n + 1) % COMPUTING_LABEL_KEYS.length)
     }, 700)
     const timer = setTimeout(() => {
       if (computingRef.current) clearInterval(computingRef.current)
@@ -215,7 +211,7 @@ function SbtiPage() {
       )}
 
       {phase === 'computing' && (
-        <ComputingScreen label={COMPUTING_LABELS[computingLabel]} />
+        <ComputingScreen label={t(COMPUTING_LABEL_KEYS[computingLabel])} />
       )}
 
       {phase === 'result' && result && (
@@ -244,6 +240,9 @@ function SbtiPage() {
 // --- Intro Screen ---------------------------------------------------------------
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
+  const t = useTranslations('sbti')
+  const featureTags = [t('featureQuestions'), t('featureDimensions'), t('featureArchetypes'), t('featureTime')]
+
   return (
     <div className="relative z-10 max-w-lg w-full flex flex-col gap-8 text-center">
       <div className="flex flex-col gap-3">
@@ -251,7 +250,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           className="text-xs font-mono tracking-widest uppercase"
           style={{ color: 'var(--nebula)' }}
         >
-          Soul Scan Protocol
+          {t('protocol')}
         </p>
         <h1
           className="text-5xl sm:text-6xl font-bold tracking-tight"
@@ -263,21 +262,21 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           className="text-lg font-medium"
           style={{ color: 'var(--star)' }}
         >
-          Silly Big Personality Test
+          {t('subtitle')}
         </p>
         <p className="text-base leading-relaxed mt-2" style={{ color: 'var(--ink)', opacity: 0.75 }}>
-          MBTI已经过时，SBTI来了。
+          {t('introChinese')}
         </p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-          30 soul questions · 15 dimensions · 26 archetypes.
+          {t('introMeta')}
           <br />
-          Find out which entity inhabits your inner cosmos.
+          {t('introHelp')}
         </p>
       </div>
 
       {/* Feature pills */}
       <div className="flex flex-wrap gap-2 justify-center">
-        {['30 Questions', '15 Dimensions', '26 Archetypes', '~5 min'].map((tag) => (
+        {featureTags.map((tag) => (
           <span
             key={tag}
             className="px-3 py-1 rounded-full text-xs font-mono"
@@ -293,11 +292,11 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       </div>
 
       <GlowButton onClick={onStart} variant="primary">
-        Begin Soul Scan →
+        {t('begin')}
       </GlowButton>
 
       <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-        For entertainment purposes only
+        {t('entertainment')}
       </p>
     </div>
   )
@@ -427,14 +426,16 @@ function SpecialScreen({
   onAnswer: (v: number) => void
   onSkip: () => void
 }) {
+  const t = useTranslations('sbti')
+
   return (
     <div className="relative z-10 max-w-lg w-full flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <p className="text-xs font-mono tracking-widest uppercase" style={{ color: 'var(--nebula)' }}>
-          Hidden Dimension
+          {t('hiddenDimension')}
         </p>
         <p className="text-sm" style={{ color: 'var(--ghost)' }}>
-          One bonus question. Answer honestly  -  or skip.
+          {t('bonusHint')}
         </p>
       </div>
 
@@ -500,7 +501,7 @@ function SpecialScreen({
           ((e.currentTarget as HTMLButtonElement).style.color = 'var(--ghost)')
         }
       >
-        Skip bonus question →
+        {t('skipBonus')}
       </button>
     </div>
   )
@@ -509,6 +510,8 @@ function SpecialScreen({
 // --- Computing Screen --------------------------------------------------------------
 
 function ComputingScreen({ label }: { label: string }) {
+  const t = useTranslations('sbti')
+
   return (
     <div className="relative z-10 flex flex-col items-center gap-6 text-center">
       {/* Pulsing orbit rings */}
@@ -529,7 +532,7 @@ function ComputingScreen({ label }: { label: string }) {
           {label}
         </p>
         <p className="text-xs font-mono" style={{ color: 'var(--ghost)' }}>
-          Mapping your inner cosmos
+          {t('mappingInner')}
         </p>
       </div>
     </div>
@@ -557,6 +560,7 @@ function ResultScreen({
   onContinue: () => void
   onViewPlanet: () => void
 }) {
+  const t = useTranslations('sbti')
   const typeColor = TYPE_COLORS[result.typeCode] ?? '#a78bfa'
 
   return (
@@ -575,7 +579,7 @@ function ResultScreen({
           className="text-xs font-mono tracking-widest uppercase"
           style={{ color: typeColor, opacity: 0.75 }}
         >
-          Your Soul Archetype
+          {t('yourArchetype')}
         </p>
 
         {/* Type code */}
@@ -604,10 +608,10 @@ function ResultScreen({
 
         {/* Pattern */}
         <p className="text-xs font-mono" style={{ color: 'var(--ghost)' }}>
-          Pattern: {result.patternString}
+          {t('pattern', { pattern: result.patternString })}
         </p>
         <p className="text-xs font-mono" style={{ color: 'var(--ghost)' }}>
-          Match confidence: {result.confidencePercent}%
+          {t('confidence', { percent: result.confidencePercent })}
         </p>
       </div>
 
@@ -631,7 +635,7 @@ function ResultScreen({
           style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border-soft)' }}
         >
           <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>
-            15 Dimension Profile
+            {t('dimensionProfile')}
           </p>
         </div>
 
@@ -692,27 +696,27 @@ function ResultScreen({
       <div className="flex flex-col sm:flex-row gap-3 pb-4">
         {!hasPlanet && (
           <GlowButton onClick={onContinue} variant="primary" fullWidth>
-            Continue to Planet Creation →
+            {t('continuePlanet')}
           </GlowButton>
         )}
         {hasPlanet && !saved && (
           <GlowButton onClick={onSave} variant="primary" fullWidth>
-            ⊙ Save to Planet Profile
+            {t('saveToPlanet')}
           </GlowButton>
         )}
         {saved && (
           <GlowButton onClick={onViewPlanet} variant="secondary" fullWidth>
-            View My Planet →
+            {t('viewMyPlanet')}
           </GlowButton>
         )}
         <GlowButton onClick={onRetake} variant="ghost" fullWidth>
-          Retake Test
+          {t('retake')}
         </GlowButton>
       </div>
 
       {!hasPlanet && (
         <p className="text-xs text-center" style={{ color: 'var(--ghost)' }}>
-          Next step: {nextHref}
+          {t('nextStep', { href: nextHref })}
         </p>
       )}
     </div>

@@ -31,6 +31,7 @@ export async function GET() {
     prisma.user.findUnique({
       where: { id: userId },
       select: {
+        language: true,
         planetTexture: true,
         planetTint: true,
         planetAtmoColor: true,

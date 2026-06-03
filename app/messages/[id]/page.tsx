@@ -3,6 +3,7 @@
 import { use, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import SignalComposer from '@/components/social/SignalComposer'
 import { getConversation, getMessages } from '@/lib/mock-conversations'
 import { getPlanetById } from '@/lib/mock-planets'
@@ -54,6 +55,7 @@ function MessageBubble({ msg, isOwn, color }: { msg: MsgData; isOwn: boolean; co
 // --- Conversation header -----------------------------------------------------
 
 function ConvHeader({ planet, onBack }: { planet: PlanetData | null; onBack: () => void }) {
+  const t = useTranslations('messagesPage')
   const color = planet?.visual?.coreColor ?? '#a78bfa'
   return (
     <div
@@ -78,7 +80,7 @@ function ConvHeader({ planet, onBack }: { planet: PlanetData | null; onBack: () 
       </div>
       <div className="flex flex-col">
         <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-          {planet?.name ?? 'Unknown'}
+          {planet?.name ?? t('unknown')}
         </span>
       </div>
       {planet && (
@@ -87,7 +89,7 @@ function ConvHeader({ planet, onBack }: { planet: PlanetData | null; onBack: () 
           className="ml-auto text-xs"
           style={{ color: color, opacity: 0.7 }}
         >
-          View planet
+          {t('viewPlanet')}
         </Link>
       )}
     </div>
@@ -101,6 +103,7 @@ interface Props {
 }
 
 export default function ConversationPage({ params }: Props) {
+  const t = useTranslations('messagesPage')
   const { id }     = use(params)
   const router     = useRouter()
   const bottomRef  = useRef<HTMLDivElement>(null)
@@ -254,7 +257,7 @@ export default function ConversationPage({ params }: Props) {
             className="text-center text-xs italic mt-8"
             style={{ color: 'var(--ghost)', opacity: 0.45 }}
           >
-            Send the first signal...
+            {t('sendFirstSignal')}
           </p>
         )}
 
@@ -265,7 +268,7 @@ export default function ConversationPage({ params }: Props) {
       <SignalComposer
         onSend={handleSend}
         accentColor={accentColor}
-        placeholder={`Transmit to ${otherPlanet?.name ?? 'unknown'}...`}
+        placeholder={t('transmitTo', { name: otherPlanet?.name ?? t('unknown') })}
       />
     </div>
   )

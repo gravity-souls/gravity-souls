@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import SavedPlanetCard from '@/components/social/SavedPlanetCard'
@@ -31,6 +32,8 @@ function buildSavedList(): SavedPlanet[] {
 // --- SavedPage ----------------------------------------------------------------
 
 export default function SavedPage() {
+  const t = useTranslations('savedPage')
+  const tCommon = useTranslations('common')
   const [role, setRole]   = useState<'explorer' | 'resonator' | null>(null)
   const [items, setItems] = useState<{ saved: SavedPlanet; planet: PlanetProfile }[]>([])
 
@@ -67,10 +70,10 @@ export default function SavedPage() {
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-5xl mx-auto">
         <SectionHeader
-          eyebrow="Star Chart"
+          eyebrow={t('eyebrow')}
           level={1}
-          title="Saved"
-          subtitle="Planets you've marked in your personal chart. A map of worlds that resonated."
+          title={t('title')}
+          subtitle={t('subtitle')}
         />
 
         {items.length === 0 && (
@@ -86,14 +89,14 @@ export default function SavedPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                Your star chart is empty
+                {t('emptyTitle')}
               </p>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-                When you find a planet worth returning to, save it here.
+                {t('emptySubtitle')}
               </p>
             </div>
             <GlowButton href="/stream" variant="secondary" className="text-sm px-5 py-2">
-              Explore the stream
+              {tCommon('exploreStream')}
             </GlowButton>
           </div>
         )}
@@ -101,7 +104,7 @@ export default function SavedPage() {
         {items.length > 0 && (
           <>
             <p className="mt-2 text-[11px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-              {items.length} planet{items.length === 1 ? '' : 's'} charted
+              {t('charted', { count: items.length })}
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

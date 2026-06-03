@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function PlanetPicker({ selectedPlanet, onSelect, className = '' }: Props) {
+  const t = useTranslations('common')
   const [internalTexture, setInternalTexture] = useState(PRESET_PLANETS[0]?.baseTexture ?? '')
   const selectedTexture = selectedPlanet?.baseTexture ?? internalTexture
 
@@ -20,7 +22,7 @@ export default function PlanetPicker({ selectedPlanet, onSelect, className = '' 
   }
 
   return (
-    <div role="radiogroup" aria-label="Planet texture" className={`grid grid-cols-2 gap-3 md:grid-cols-4 ${className}`}>
+    <div role="radiogroup" aria-label={t('planetTexture')} className={`grid grid-cols-2 gap-3 md:grid-cols-4 ${className}`}>
       {PRESET_PLANETS.map((planet) => {
         const selected = planet.baseTexture === selectedTexture
 

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
 
 interface LevelToastState {
@@ -14,6 +15,7 @@ function isLevelUpPayload(value: unknown): value is { leveledUp: true; xpEvent?:
 }
 
 export default function LevelUpToast() {
+  const t = useTranslations('common')
   const [toast, setToast] = useState<LevelToastState | null>(null)
 
   const dismiss = useCallback(() => {
@@ -64,7 +66,7 @@ export default function LevelUpToast() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          aria-label="Dismiss level up"
+          aria-label={t('dismissLevelUp')}
         >
           <motion.div
             className="flex max-w-sm flex-col items-center rounded-lg border border-white/10 p-8 text-center"
@@ -83,10 +85,10 @@ export default function LevelUpToast() {
             >
               {toast.level}
             </motion.div>
-            <p className="text-[11px] uppercase tracking-[0.26em]" style={{ color: 'var(--ghost)' }}>Level up</p>
+            <p className="text-[11px] uppercase tracking-[0.26em]" style={{ color: 'var(--ghost)' }}>{t('levelUp')}</p>
             <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{toast.levelName}</h2>
             <p className="mt-3 text-sm" style={{ color: 'var(--ink)' }}>
-              {toast.level === 5 ? '✦ You have reached Singularity' : '✦ New planet customizations unlocked!'}
+              {toast.level === 5 ? t('singularityReached') : t('customizationsUnlocked')}
             </p>
           </motion.div>
         </motion.button>

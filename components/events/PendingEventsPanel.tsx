@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { GalaxyEventSummary } from '@/types/event'
 
 interface PendingEventsPanelProps {
@@ -10,6 +11,8 @@ interface PendingEventsPanelProps {
 }
 
 export default function PendingEventsPanel({ galaxyId, enabled = true, onReviewed }: PendingEventsPanelProps) {
+  const t = useTranslations('galaxies')
+  const tCommon = useTranslations('common')
   const [events, setEvents] = useState<GalaxyEventSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
@@ -53,13 +56,13 @@ export default function PendingEventsPanel({ galaxyId, enabled = true, onReviewe
   if (!enabled) return null
 
   if (loading) {
-    return <p className="text-sm" style={{ color: 'var(--ghost)' }}>Loading pending proposals...</p>
+    return <p className="text-sm" style={{ color: 'var(--ghost)' }}>{tCommon('loading')}</p>
   }
 
   if (events.length === 0) {
     return (
       <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-        <p className="text-sm" style={{ color: 'var(--ghost)' }}>No pending proposals. The orbit is clear.</p>
+        <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('noPendingEvents')}</p>
       </div>
     )
   }
@@ -77,10 +80,10 @@ export default function PendingEventsPanel({ galaxyId, enabled = true, onReviewe
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={() => review(event.id, 'APPROVED')} disabled={reviewingId === event.id} className="rounded-xl px-3 py-2 text-xs font-semibold" style={{ color: '#bbf7d0', background: 'rgba(34,197,94,0.13)', border: '1px solid rgba(74,222,128,0.35)' }}>
-                Approve
+                {t('approve')}
               </button>
               <button type="button" onClick={() => rejectingId === event.id ? review(event.id, 'REJECTED') : setRejectingId(event.id)} disabled={reviewingId === event.id} className="rounded-xl px-3 py-2 text-xs font-semibold" style={{ color: '#fecaca', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(248,113,113,0.32)' }}>
-                Reject
+                {t('reject')}
               </button>
             </div>
           </div>
@@ -90,7 +93,7 @@ export default function PendingEventsPanel({ galaxyId, enabled = true, onReviewe
               onChange={(changeEvent) => setReasons((prev) => ({ ...prev, [event.id]: changeEvent.target.value }))}
               rows={2}
               className="mt-3 w-full resize-none rounded-xl px-3 py-2 text-sm outline-none"
-              placeholder="Optional rejection reason"
+              placeholder={t('optionalRejectionReason')}
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }}
             />
           )}

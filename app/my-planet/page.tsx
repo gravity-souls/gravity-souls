@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -159,6 +160,9 @@ function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string): Act
 // --- Page --------------------------------------------------------------------
 
 export default function MyPlanetPage() {
+  const tHome = useTranslations('home')
+  const tMyPlanet = useTranslations('myPlanet')
+  const tNav = useTranslations('nav')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -344,11 +348,11 @@ export default function MyPlanetPage() {
           <div className="relative z-10 animate-fade-up">
             <EmptyState
               symbol="◌"
-              title="Your planet has not formed yet"
-              subtitle="Create your universe first  -  your planet emerges from the same expression. It maps your cognitive style, emotional frequency, and resonance field."
+              title={tMyPlanet('unformedTitle')}
+              subtitle={tMyPlanet('unformedSubtitle')}
               action={
                 <GlowButton href="/create-planet" variant="primary" className="px-8 py-4 text-sm">
-                  Begin the formation
+                  {tMyPlanet('beginFormation')}
                 </GlowButton>
               }
               size="lg"
@@ -448,7 +452,7 @@ export default function MyPlanetPage() {
             {/* Identity column */}
             <div className="flex-1 flex flex-col gap-5 min-w-0 text-center md:text-left pt-2 md:pt-6">
               <p className="text-xs tracking-[0.25em] uppercase font-medium" style={{ color: visual.coreColor, opacity: 0.75 }}>
-                Your Planet
+                {tMyPlanet('yourPlanet')}
               </p>
 
               <div className="flex justify-center md:justify-start">
@@ -477,7 +481,7 @@ export default function MyPlanetPage() {
               {planet.coreThemes.length > 0 && (
                 <div>
                   <span className="text-[10px] uppercase tracking-widest mr-3" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-                    Core Themes
+                    {tMyPlanet('coreThemes')}
                   </span>
                   <div className="inline-flex flex-wrap gap-1.5 mt-1">
                     {planet.coreThemes.map((theme) => (
@@ -493,7 +497,7 @@ export default function MyPlanetPage() {
                   className="text-[10px] uppercase tracking-widest mr-2"
                   style={{ color: 'var(--ghost)', opacity: 0.5, lineHeight: '24px' }}
                 >
-                  Mood Drift
+                  {tMyPlanet('moodDrift')}
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                   style={{ background: `${visual.coreColor}14`, border: `1px solid ${visual.coreColor}28`, color: visual.coreColor }}>
@@ -514,10 +518,10 @@ export default function MyPlanetPage() {
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 <GlowButton href="/settings/planet" variant="primary" className="px-5 py-2.5 text-sm">
-                  Tune atmosphere ⚙
+                  {tHome('tuneAtmosphere')} ⚙
                 </GlowButton>
                 <GlowButton href="/sbti?next=/my-planet" variant="ghost" className="px-5 py-2.5 text-sm">
-                  ◇ Soul scan
+                  ◇ {tHome('soulScan')}
                 </GlowButton>
               </div>
             </div>
@@ -538,8 +542,8 @@ export default function MyPlanetPage() {
             style={{ color: 'var(--foreground)', background: 'rgba(255,255,255,0.04)' }}
             aria-expanded={customizerOpen}
           >
-            ✦ Customize your planet
-            {customizerOpen && <span className="text-xs" style={{ color: 'var(--ghost)' }}>Open</span>}
+            ✦ {tMyPlanet('customizeYourPlanet')}
+            {customizerOpen && <span className="text-xs" style={{ color: 'var(--ghost)' }}>{tHome('open')}</span>}
           </button>
         </div>
 
@@ -575,7 +579,7 @@ export default function MyPlanetPage() {
           {/* -- Resonance Overview (radar chart) -- */}
           <OrbitCard glowColor={visual.coreColor} className="lg:col-span-3 p-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--foreground)' }}>
-              Resonance Overview
+              {tHome('resonanceOverview')}
             </h3>
             <ResonanceRadar
               dimensions={radarDimensions}
@@ -585,34 +589,36 @@ export default function MyPlanetPage() {
           </OrbitCard>
 
           {/* -- Resonant Matches (carousel) -- */}
-          <OrbitCard glowColor={visual.accentColor} className="lg:col-span-6 p-5">
-            <ResonantMatchesCarousel matches={matchEntries} />
-            <div className="mt-5 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>Match Report</p>
-                <p className="mt-1 text-sm" style={{ color: 'var(--ink)' }}>
-                  Signal Score: {matchReportSummary.signalScore} · {matchReportSummary.linkedPlanets} planets in orbit
-                </p>
+          <div id="match-report" className="lg:col-span-6 scroll-mt-24">
+            <OrbitCard glowColor={visual.accentColor} className="p-5">
+              <ResonantMatchesCarousel matches={matchEntries} />
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>{tMyPlanet('matchReport')}</p>
+                  <p className="mt-1 text-sm" style={{ color: 'var(--ink)' }}>
+                    {tMyPlanet('signalScore')}: {matchReportSummary.signalScore} · {tMyPlanet('planetsInConstellation', { count: matchReportSummary.linkedPlanets })}
+                  </p>
+                </div>
+                <Link href={`/universe/demo?focus=${currentFocusUserId}`} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
+                  {tNav('universeView')}
+                </Link>
               </div>
-              <Link href={`/universe/demo?focus=${currentFocusUserId}`} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
-                Universe View
-              </Link>
-            </div>
-          </OrbitCard>
+            </OrbitCard>
+          </div>
 
           {/* -- Upcoming Events -- */}
           <OrbitCard glowColor="#a78bfa" className="lg:col-span-3 p-0 overflow-hidden">
             <div className="flex items-center justify-between gap-3 p-4 pb-0">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--foreground)' }}>
-                  Upcoming Events
+                  {tHome('upcomingActivity')}
                 </h3>
                 {upcomingEvents.length > 0 && (
-                  <p className="mt-1 text-[10px]" style={{ color: 'var(--ghost)' }}>Next {upcomingEvents.length}</p>
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--ghost)' }}>{tMyPlanet('nextEvents', { count: upcomingEvents.length })}</p>
                 )}
               </div>
               <Link href="/galaxies/events?status=upcoming" className="rounded-full px-3 py-1.5 text-[10px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>
-                View all
+                {tHome('viewAll')}
               </Link>
             </div>
             {upcomingEvents.length > 0 ? (
@@ -624,8 +630,8 @@ export default function MyPlanetPage() {
             ) : (
               <div className="px-4 pb-4">
                 <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>No upcoming event</p>
-                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>Join a galaxy or RSVP to an approved event to see it here.</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{tMyPlanet('noUpcomingEvent')}</p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>{tMyPlanet('noUpcomingEventHint')}</p>
                 </div>
               </div>
             )}
@@ -645,18 +651,18 @@ export default function MyPlanetPage() {
         <OrbitCard glowColor={visual.accentColor} className="mt-4 p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>Stream archive</p>
-              <h2 className="mt-1 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>My Posts</h2>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>{tMyPlanet('streamArchive')}</p>
+              <h2 className="mt-1 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{tMyPlanet('myPosts')}</h2>
             </div>
             <button type="button" onClick={() => setCreatePostOpen(true)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ color: '#fff', background: 'rgba(124,58,237,0.76)', border: '1px solid rgba(167,139,250,0.38)' }}>
-              Create your first post
+              {tMyPlanet('createFirstPost')}
             </button>
           </div>
           <PostGrid
             authorId={planet.userId}
             refreshKey={postRefreshKey}
             prependPost={createdPost}
-            emptyMessage="You haven't sent any signals yet."
+            emptyMessage={tMyPlanet('noPostsYet')}
             onPostOpen={setSelectedPost}
           />
         </OrbitCard>

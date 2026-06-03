@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { PlanetDraft } from '@/types/creation'
 import type { PlanetProfile } from '@/types/planet'
 import { INITIAL_DRAFT } from '@/types/creation'
@@ -32,17 +33,12 @@ function canProceed(step: number, draft: PlanetDraft): boolean {
 
 // --- Step heading metadata ----------------------------------------------------
 
-const STEP_META = [
-  { eyebrow: 'Step 1 of 5', hint: 'Choose a climate to continue' },
-  { eyebrow: 'Step 2 of 5', hint: 'Select at least one theme and a habitat pattern' },
-  { eyebrow: 'Step 3 of 5', hint: 'Choose a communication style to continue' },
-  { eyebrow: 'Step 4 of 5', hint: 'All optional  -  skip if you prefer' },
-  { eyebrow: 'Step 5 of 5', hint: 'Optional  -  your orbit forms from your planet regardless' },
-]
+const STEP_HINT_KEYS = ['step1Hint', 'step2Hint', 'step3Hint', 'step4Hint', 'step5Hint'] as const
 
 // --- Page ---------------------------------------------------------------------
 
 export default function CreatePlanetPage() {
+  const t = useTranslations('createPlanet')
   const [mounted,  setMounted]   = useState(false)
   const [userId,   setUserId]    = useState('')
   const [step,     setStep]      = useState<1 | 2 | 3 | 4 | 5>(1)
@@ -147,7 +143,7 @@ export default function CreatePlanetPage() {
     return <PlanetAwakeningState planet={finished} />
   }
 
-  const meta = STEP_META[step - 1]
+  const hintKey = STEP_HINT_KEYS[step - 1]
   const ready = canProceed(step, draft)
 
   return (
@@ -180,14 +176,14 @@ export default function CreatePlanetPage() {
           className="text-xs transition-opacity hover:opacity-80"
           style={{ color: 'var(--ghost)', textDecoration: 'none' }}
         >
-          ← Cancel
+          {t('cancel')}
         </Link>
 
         <span
           className="text-[10px] uppercase tracking-[0.25em] font-medium"
           style={{ color: 'var(--star)', opacity: 0.6 }}
         >
-          Planet formation
+          {t('formation')}
         </span>
 
         {/* Skip to stream (only on cultural + gravity steps) */}
@@ -198,7 +194,7 @@ export default function CreatePlanetPage() {
             className="text-xs transition-opacity hover:opacity-80"
             style={{ color: 'var(--ghost)', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            {step === 5 ? 'Finish →' : 'Skip →'}
+            {step === 5 ? t('finish') : t('skip')}
           </button>
         )}
         {step < 4 && <div className="w-16" />}
@@ -215,7 +211,7 @@ export default function CreatePlanetPage() {
 
           {/* Eyebrow */}
           <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-            {meta.eyebrow}
+            {t('stepEyebrow', { step, total: 5 })}
           </p>
 
           {/* Step content */}
@@ -265,14 +261,14 @@ export default function CreatePlanetPage() {
                     className="text-xs font-medium tracking-wide"
                     style={{ color: 'var(--ink)' }}
                   >
-                    Name your planet
+                    {t('namePlanet')}
                   </label>
                   <input
                     id="planet-name"
                     type="text"
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
-                    placeholder={previewPlanet?.name ?? 'Enter a name...'}
+                    placeholder={previewPlanet?.name ?? t('namePlaceholder')}
                     maxLength={40}
                     className="w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={{
@@ -282,7 +278,7 @@ export default function CreatePlanetPage() {
                     }}
                   />
                   <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
-                    Leave blank to use the generated name
+                    {t('generatedNameHint')}
                   </p>
                 </div>
 
@@ -309,7 +305,7 @@ export default function CreatePlanetPage() {
                   color: 'var(--ghost)',
                 }}
               >
-                Back
+                {t('back')}
               </button>
             )}
             <GlowButton
@@ -319,14 +315,14 @@ export default function CreatePlanetPage() {
               fullWidth={step === 1}
               className="flex-1 py-3 text-sm"
             >
-              {saving ? 'Saving...' : step === 5 ? 'Awaken my planet' : 'Continue \u2192'}
+              {saving ? t('saving') : step === 5 ? t('awakenPlanet') : t('continue')}
             </GlowButton>
           </div>
 
           {/* Hint if not ready */}
           {!ready && (
             <p className="text-[11px] text-center lg:text-left" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-              {meta.hint}
+              {t(hintKey)}
             </p>
           )}
         </div>
@@ -354,7 +350,7 @@ export default function CreatePlanetPage() {
               fullWidth
               className="py-3.5 text-sm"
             >
-              {saving ? 'Saving...' : step === 5 ? 'Awaken my planet' : 'Continue \u2192'}
+              {saving ? t('saving') : step === 5 ? t('awakenPlanet') : t('continue')}
             </GlowButton>
 
             {step > 1 && (
@@ -369,13 +365,13 @@ export default function CreatePlanetPage() {
                   cursor: 'pointer',
                 }}
               >
-                ← Back
+                {t('back')}
               </button>
             )}
 
             {!ready && (
               <p className="text-[10px] text-center" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-                {meta.hint}
+                {t(hintKey)}
               </p>
             )}
           </div>

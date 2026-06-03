@@ -1,6 +1,7 @@
 'use client'
 
 import type { Notification } from '@prisma/client'
+import { useTranslations } from 'next-intl'
 import {
   Bell,
   CalendarClock,
@@ -63,6 +64,7 @@ function IconForType({ type }: { type: SerializedNotification['type'] }) {
 }
 
 export default function NotificationItem({ notification, onSelect, onDelete }: Props) {
+  const tA11y = useTranslations('a11y')
   return (
     <li className="group grid grid-cols-[minmax(0,1fr)_28px] gap-0 hover:bg-white/6">
       <button
@@ -87,7 +89,7 @@ export default function NotificationItem({ notification, onSelect, onDelete }: P
               {notification.title}
             </span>
             {!notification.read && (
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-label="Unread" />
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-label={tA11y('unread')} />
             )}
           </span>
           <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-white/56">
@@ -101,7 +103,7 @@ export default function NotificationItem({ notification, onSelect, onDelete }: P
 
       <button
         type="button"
-        aria-label="Delete notification"
+        aria-label={tA11y('deleteNotification')}
         onClick={() => onDelete(notification.id)}
         className="mr-3 mt-3 flex h-7 w-7 items-center justify-center rounded-lg text-white/30 opacity-0 transition hover:bg-white/7 hover:text-white/70 group-hover:opacity-100 focus:opacity-100"
       >

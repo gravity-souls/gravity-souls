@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { PlanetProfile } from '@/types/planet'
 
 // --- Planet depth / completion --------------------------------------------
@@ -21,10 +24,11 @@ function computeDepthScore(planet: PlanetProfile): number {
 }
 
 function DepthMeter({ score, coreColor }: { score: number; coreColor: string }) {
+  const t = useTranslations('planetActions')
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span style={{ color: 'var(--ink)', opacity: 0.55 }}>Planet depth</span>
+        <span style={{ color: 'var(--ink)', opacity: 0.55 }}>{t('planetDepth')}</span>
         <span style={{ color: coreColor, fontWeight: 600 }}>{score}%</span>
       </div>
       <div
@@ -117,6 +121,7 @@ interface Props {
 }
 
 export default function SelfPlanetActions({ planet }: Props) {
+  const t = useTranslations('planetActions')
   const depthScore = computeDepthScore(planet)
   const { coreColor } = planet.visual
 
@@ -136,29 +141,29 @@ export default function SelfPlanetActions({ planet }: Props) {
         <ActionItem
           href="/create-universe"
           symbol="◎"
-          label="Edit planet"
-          description="Re-express yourself. Recalibrate your orbit frequency."
+          label={t('editPlanet')}
+          description={t('editPlanetDesc')}
           accent={coreColor}
         />
         <ActionItem
           href="/settings/planet"
           symbol="◈"
-          label="Tune atmosphere"
-          description="Adjust communication style, location, and languages."
+          label={t('tuneAtmosphere')}
+          description={t('tuneAtmosphereDesc')}
           accent="#a78bfa"
         />
         <ActionItem
           href="/sbti?next=/my-planet"
           symbol="◇"
-          label={planet.sbtiType ? 'Retake soul scan' : 'Take soul scan'}
-          description={planet.sbtiType ? 'Re-run SBTI and update your archetype badge.' : 'Map your archetype and attach it to your planet.'}
+          label={planet.sbtiType ? t('retakeSoulScan') : t('takeSoulScan')}
+          description={planet.sbtiType ? t('retakeSoulScanDesc') : t('takeSoulScanDesc')}
           accent="#fb923c"
         />
         <ActionItem
           href="/resonance"
           symbol="⊛"
-          label="Open resonance"
-          description="See which planets have entered your orbit today."
+          label={t('openResonance')}
+          description={t('openResonanceDesc')}
           accent="#34d399"
         />
       </div>
@@ -166,7 +171,7 @@ export default function SelfPlanetActions({ planet }: Props) {
       {/* Completion nudge */}
       {depthScore < 80 && (
         <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.65 }}>
-          Add location, languages, cultural taste, or an SBTI scan to deepen your planet&apos;s resonance field.
+          {t('completionNudge')}
         </p>
       )}
     </div>

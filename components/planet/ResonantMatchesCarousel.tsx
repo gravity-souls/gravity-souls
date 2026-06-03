@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Telescope } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
@@ -24,6 +25,7 @@ interface Props {
  * personality traits, and compatibility percentage.
  */
 export default function ResonantMatchesCarousel({ matches, className = '' }: Props) {
+  const tA11y = useTranslations('a11y')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState(0)
   const perPage = 6
@@ -155,8 +157,8 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
               </Link>
               <Link
                 href={`/universe/demo?focus=${focusUserId}`}
-                title="View in Universe"
-                aria-label="View in Universe"
+                title={tA11y('viewInUniverse')}
+                aria-label={tA11y('viewInUniverse')}
                 className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-105"
                 style={{ color, background: 'rgba(2,6,23,0.78)', border: `1px solid ${color}44`, textDecoration: 'none' }}
               >

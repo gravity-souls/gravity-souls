@@ -1,5 +1,6 @@
 import type { Lifestyle } from '@/types/planet'
 import { THEME_OPTIONS, LIFESTYLE_OPTIONS } from '@/types/creation'
+import { useTranslations } from 'next-intl'
 
 // --- Step2InterestEcology -----------------------------------------------------
 // Theme multi-select (up to 5) + lifestyle choice.
@@ -20,6 +21,8 @@ export default function Step2InterestEcology({
   onThemesChange,
   onLifestyleChange,
 }: Props) {
+  const t = useTranslations('creationSteps')
+
   function toggleTheme(key: string) {
     if (selectedThemes.includes(key)) {
       onThemesChange(selectedThemes.filter((t) => t !== key))
@@ -32,11 +35,10 @@ export default function Step2InterestEcology({
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-          Choose what shapes your surface
+          {t('surfaceTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          Select up to {MAX_THEMES} themes that feel like yours. These become the terrain bands of
-          your planet  -  the ecology others sense when they enter your orbit.
+          {t('surfaceSubtitle', { count: MAX_THEMES })}
         </p>
       </div>
 
@@ -44,7 +46,7 @@ export default function Step2InterestEcology({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-            Core themes
+            {t('coreThemes')}
           </span>
           <span className="text-[10px] tabular-nums" style={{ color: 'var(--ghost)', opacity: 0.5 }}>
             {selectedThemes.length} / {MAX_THEMES}
@@ -95,7 +97,7 @@ export default function Step2InterestEcology({
       {/* Lifestyle picker */}
       <div className="flex flex-col gap-2">
         <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-          Habitat pattern
+          {t('habitatPattern')}
         </span>
         <div className="grid grid-cols-2 gap-2">
           {LIFESTYLE_OPTIONS.map((opt) => {
