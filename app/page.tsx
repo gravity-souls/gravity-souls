@@ -563,7 +563,7 @@ export default function UniversePage() {
           <section className="px-4 pb-6 sm:px-6">
             <div className="mx-auto max-w-7xl">
               <Link
-                href="/universe/demo"
+                href="/resonance"
                 className="block rounded-2xl px-5 py-4 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
                 style={{ color: 'var(--star)', background: 'rgba(18,14,52,0.64)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}
               >

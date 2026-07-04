@@ -9,7 +9,6 @@ import CosmicBackground from '@/components/fx/CosmicBackground'
 import StarfieldCanvas from '@/components/fx/StarfieldCanvas'
 import AuthSyncProvider from '@/components/layout/AuthSyncProvider'
 import LevelUpToast from '@/components/ui/LevelUpToast'
-import { LanguageProvider } from '@/contexts/language-context'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -36,23 +35,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${geist.variable} ${locale === 'zh' ? notoSansSC.className : ''} h-full`}>
       <body className="cosmic-bg min-h-full text-foreground antialiased overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
-          <LanguageProvider>
-            <AuthSyncProvider>
-              <CosmicBackground />
-              <StarfieldCanvas />
-              <Topbar />
-              <LevelUpToast />
-              {/* pt = nav height so content clears the fixed header */}
-              <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
-              <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-                Planet textures by{' '}
-                <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer" className="underline">
-                  Solar System Scope
-                </a>{' '}
-                (CC BY 4.0)
-              </footer>
-            </AuthSyncProvider>
-          </LanguageProvider>
+          <AuthSyncProvider>
+            <CosmicBackground />
+            <StarfieldCanvas />
+            <Topbar />
+            <LevelUpToast />
+            {/* pt = nav height so content clears the fixed header */}
+            <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
+            <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
+              Planet textures by{' '}
+              <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer" className="underline">
+                Solar System Scope
+              </a>{' '}
+              (CC BY 4.0)
+            </footer>
+          </AuthSyncProvider>
         </NextIntlClientProvider>
       </body>
     </html>

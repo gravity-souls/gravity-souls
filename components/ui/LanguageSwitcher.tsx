@@ -54,20 +54,25 @@ export default function LanguageSwitcher({ variant = 'desktop' }: { variant?: Va
     writeLocaleCookie(language)
     setSaving(language)
 
+    let saved = false
     try {
-      await fetch('/api/user/language', {
+      const res = await fetch('/api/user/language', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language }),
       })
+      saved = res.ok
     } catch {
-      // Guests still keep the cookie fallback.
+      // Network error — cookie fallback still applied above.
     } finally {
       setSaving(null)
       setOpen(false)
+      router.refresh()
+    }
+
+    if (saved) {
       setToastVisible(true)
       window.setTimeout(() => setToastVisible(false), 1800)
-      router.refresh()
     }
   }
 

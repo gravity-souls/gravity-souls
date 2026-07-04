@@ -380,7 +380,6 @@ export default function MyPlanetPage() {
     if (p.coreThemes[0]) traits.push(p.coreThemes[0])
     return { planet: p, score, traits }
   })
-  const currentFocusUserId = (planet as PlanetProfile & { userId?: string }).userId ?? planet.id
   const matchReportSummary = universeSummary ?? {
     signalScore: Math.min(100, Math.floor((xpSummary?.xp ?? 0) / 20)),
     linkedPlanets: otherPlanets.length,
@@ -599,8 +598,8 @@ export default function MyPlanetPage() {
                     {tMyPlanet('signalScore')}: {matchReportSummary.signalScore} · {tMyPlanet('planetsInConstellation', { count: matchReportSummary.linkedPlanets })}
                   </p>
                 </div>
-                <Link href={`/universe/demo?focus=${currentFocusUserId}`} className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
-                  {tNav('universeView')}
+                <Link href="/resonance" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
+                  {tNav('resonance')}
                 </Link>
               </div>
             </OrbitCard>

@@ -28,7 +28,7 @@ export async function GET() {
     select: { language: true },
   })
 
-  const language = isLocale(user?.language) ? user.language : defaultLocale
+  const language = (user && isLocale(user.language)) ? user.language : defaultLocale
   await setLocaleCookie(language)
 
   return NextResponse.json({ language })

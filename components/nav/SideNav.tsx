@@ -15,7 +15,6 @@ import {
   Home,
   Orbit,
   Settings,
-  Telescope,
   Waves,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -165,7 +164,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   const levelDotColor = LEVEL_DOT_COLORS[currentUserLevel]
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
   const galaxiesActive = isRouteActive(pathname, '/galaxies')
-  const myPlanetActive = isRouteActive(pathname, '/my-planet') || isRouteActive(pathname, '/universe/demo')
+  const myPlanetActive = isRouteActive(pathname, '/my-planet')
   const showGalaxiesSubItems = !collapsed && (galaxiesActive || galaxiesExpanded)
   const showMyPlanetSubItems = !collapsed && myPlanetActive
 
@@ -264,7 +263,6 @@ export default function SideNav({ collapsed, onToggle }: Props) {
             <SubMenu open={showMyPlanetSubItems}>
               <SubLink href="/settings/planet" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/settings/planet')} Icon={Orbit} />
               <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
-              <SubLink href="/universe/demo" label={tNav('universeView')} active={isRouteActive(pathname, '/universe/demo')} Icon={Telescope} />
             </SubMenu>
           </div>
 

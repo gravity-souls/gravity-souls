@@ -1,10 +1,5 @@
-import { Suspense } from 'react'
-import UniverseExplorationDeck from '@/components/universe/UniverseExplorationDeck'
+import { redirect } from 'next/navigation'
 
 export default function UniverseDemoPage() {
-  return (
-    <Suspense fallback={null}>
-      <UniverseExplorationDeck />
-    </Suspense>
-  )
+  redirect('/resonance')
 }

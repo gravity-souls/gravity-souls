@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Telescope } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetProfile } from '@/types/planet'
@@ -85,7 +84,6 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
       >
         {matches.map(({ planet, score, traits }) => {
           const color = planet.visual?.coreColor ?? '#a78bfa'
-          const focusUserId = (planet as PlanetProfile & { userId?: string }).userId ?? planet.id
           return (
             <div
               key={planet.id}
@@ -154,15 +152,6 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
                     compatible
                   </p>
                 </div>
-              </Link>
-              <Link
-                href={`/universe/demo?focus=${focusUserId}`}
-                title={tA11y('viewInUniverse')}
-                aria-label={tA11y('viewInUniverse')}
-                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-105"
-                style={{ color, background: 'rgba(2,6,23,0.78)', border: `1px solid ${color}44`, textDecoration: 'none' }}
-              >
-                <Telescope size={14} aria-hidden="true" />
               </Link>
             </div>
           )

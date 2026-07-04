@@ -40,7 +40,7 @@ export default function CreateUniversePage() {
     savePlanetToDb(planet)
 
     setTimeout(() => setStep('mapping'), 900)
-    setTimeout(() => router.push('/universe/demo'), 2200)
+    setTimeout(() => router.push('/resonance'), 2200)
   }
 
   const isSubmitting = step !== 'idle'
