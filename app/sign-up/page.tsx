@@ -7,6 +7,11 @@ import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import LegalFooter from "@/components/auth/LegalFooter";
+
+// Phase 1: planet visual is determined during /onboarding — re-enable once onboarding-complete API is wired
+const PLANET_PICKER_ENABLED = false
 
 export default function SignUpPage() {
   return (
@@ -64,9 +69,9 @@ function SignUpForm() {
         console.error("Failed to save planet texture config:", e);
       }
 
-      const raw = searchParams.get('next') || '/create-universe';
+      const raw = searchParams.get('next') || '/onboarding';
       // Only allow relative paths to prevent open-redirect
-      const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/create-universe';
+      const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/onboarding';
       router.push(next);
       router.refresh();
     } catch {
@@ -85,7 +90,9 @@ function SignUpForm() {
         {tAuth("signUpSubtitle")}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <SocialAuthButtons />
+
+      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("name")}
@@ -147,14 +154,16 @@ function SignUpForm() {
           />
         </div>
 
-        <div className="space-y-3 pt-2">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-              {tAuth("planetTexture")}
-            </span>
+        {PLANET_PICKER_ENABLED && (
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                {tAuth("planetTexture")}
+              </span>
+            </div>
+            <PlanetPicker selectedPlanet={selectedPlanet} onSelect={setSelectedPlanet} />
           </div>
-          <PlanetPicker selectedPlanet={selectedPlanet} onSelect={setSelectedPlanet} />
-        </div>
+        )}
 
         {error && (
           <p className="text-sm" style={{ color: "#f87171" }}>
@@ -181,6 +190,9 @@ function SignUpForm() {
           {tAuth("signIn")}
         </Link>
       </p>
+      <div className="mt-4">
+        <LegalFooter />
+      </div>
     </main>
   );
 }

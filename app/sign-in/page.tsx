@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import LegalFooter from "@/components/auth/LegalFooter";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -53,7 +55,9 @@ export default function SignInPage() {
         {tAuth("signInSubtitle")}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <SocialAuthButtons />
+
+      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("email")}
@@ -119,6 +123,9 @@ export default function SignInPage() {
           {tAuth("signUp")}
         </Link>
       </p>
+      <div className="mt-4">
+        <LegalFooter />
+      </div>
     </main>
   );
 }

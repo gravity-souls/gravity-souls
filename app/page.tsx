@@ -408,7 +408,7 @@ export default function UniversePage() {
                       <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tHome('planetMissing')}</span>
                       <button
                         type="button"
-                        onClick={() => router.push('/create-planet')}
+                        onClick={() => router.push('/onboarding')}
                         className="text-sm font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer text-left sm:text-right"
                         style={{ color: 'var(--star)' }}
                       >
@@ -422,7 +422,7 @@ export default function UniversePage() {
                       <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tHome('planetMissing')}</span>
                       <button
                         type="button"
-                        onClick={() => router.push('/sign-up?next=/create-planet')}
+                        onClick={() => router.push('/onboarding')}
                         className="text-sm font-medium transition-colors duration-200 bg-transparent border-none cursor-pointer text-left sm:text-right"
                         style={{ color: 'var(--star)' }}
                       >
@@ -703,7 +703,7 @@ export default function UniversePage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <GlowButton onClick={() => router.push('/sign-up?next=/create-planet')} variant="primary" className="px-8 py-3">
+                  <GlowButton onClick={() => router.push('/onboarding')} variant="primary" className="px-8 py-3">
                     {tHome('beginFormation')}
                   </GlowButton>
                   <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
@@ -731,7 +731,7 @@ export default function UniversePage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <GlowButton onClick={() => router.push('/create-planet')} variant="primary" className="px-8 py-3">
+                  <GlowButton onClick={() => router.push('/onboarding')} variant="primary" className="px-8 py-3">
                     {tHome('beginFormation')}
                   </GlowButton>
                   <GlowButton href="/stream" variant="ghost" className="px-8 py-3">
