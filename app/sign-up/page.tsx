@@ -52,21 +52,55 @@ function SignUpForm() {
         return;
       }
 
+      const fromOnboarding = searchParams.get('from') === 'onboarding';
+
       try {
         await fetch("/api/user/language", { cache: "no-store" });
-        await fetch("/api/user/planet-config", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            baseTexture: selectedPlanet.baseTexture,
-            tintColor: selectedPlanet.tintColor,
-            atmosphereColor: selectedPlanet.atmosphereColor,
-            hasRing: selectedPlanet.hasRing,
-            ringColor: selectedPlanet.ringColor,
-          }),
-        });
+        // Skip legacy planet-config write for onboarding-origin users:
+        // planet visual is set by /api/onboarding/complete via buildPlanetFromDraft.
+        if (!fromOnboarding) {
+          await fetch("/api/user/planet-config", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              baseTexture: selectedPlanet.baseTexture,
+              tintColor: selectedPlanet.tintColor,
+              atmosphereColor: selectedPlanet.atmosphereColor,
+              hasRing: selectedPlanet.hasRing,
+              ringColor: selectedPlanet.ringColor,
+            }),
+          });
+        }
       } catch (e) {
-        console.error("Failed to save planet texture config:", e);
+        console.error("Failed to save config:", e);
+      }
+
+      if (fromOnboarding) {
+        const isReady = sessionStorage.getItem('gs_onboarding_ready') === 'true';
+        const draftRaw = sessionStorage.getItem('gs_onboarding_draft');
+        if (isReady && draftRaw) {
+          try {
+            const draft = JSON.parse(draftRaw);
+            const res = await fetch('/api/onboarding/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draft }),
+            });
+            if (res.ok) {
+              sessionStorage.removeItem('gs_onboarding_draft');
+              sessionStorage.removeItem('gs_onboarding_step');
+              sessionStorage.removeItem('gs_onboarding_ready');
+              router.push('/resonance');
+              return;
+            }
+          } catch (e) {
+            console.error('Onboarding complete failed:', e);
+          }
+        }
+        // Handoff failed or draft missing — return to onboarding so user can retry.
+        // Draft is kept in sessionStorage to preserve calibration progress.
+        router.push('/onboarding');
+        return;
       }
 
       const raw = searchParams.get('next') || '/onboarding';

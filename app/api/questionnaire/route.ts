@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
-// Save or update questionnaire result
+// Append a new questionnaire result. QuestionnaireResult is an append-only
+// history table — all reads use findFirst + orderBy createdAt desc (latest wins).
 export async function POST(request: Request) {
   let session;
   try {
@@ -14,20 +15,9 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { answers, mood, style, lifestyle, abstractAxis, introspectiveAxis } = body;
 
-  const result = await prisma.questionnaireResult.upsert({
-    where: {
-      id: body.id ?? "",
-    },
-    create: {
+  const result = await prisma.questionnaireResult.create({
+    data: {
       userId: session.user.id,
-      answers: answers ?? {},
-      mood,
-      style,
-      lifestyle,
-      abstractAxis: abstractAxis ?? 50,
-      introspectiveAxis: introspectiveAxis ?? 50,
-    },
-    update: {
       answers: answers ?? {},
       mood,
       style,

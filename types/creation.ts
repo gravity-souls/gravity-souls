@@ -1,5 +1,17 @@
 import type { CommunicationStyle, Lifestyle } from '@/types/planet'
 
+// --- Resonance answers --------------------------------------------------------
+// 5 resonance calibration questions answered before the reveal.
+// Stored in QuestionnaireResult.answers (Prisma Json field).
+
+export interface ResonanceAnswers {
+  emotionalProcessing?: 'alone' | 'together' | 'creating' | 'moving'
+  leadWith?:            'curiosity' | 'warmth' | 'ideas' | 'silence'
+  connectionSeeking?:   'deep-slow' | 'playful' | 'intellectual' | 'soulful'
+  solitudeNeed?:        'daily' | 'weekly' | 'rarely' | 'social'
+  lifeChapter?:         'building' | 'exploring' | 'healing' | 'waiting'
+}
+
 // --- Planet draft -------------------------------------------------------------
 // Structured state collected across the 5 onboarding steps.
 // Converted to PlanetProfile by lib/planet-builder.ts.
@@ -34,6 +46,10 @@ export interface PlanetDraft {
   matchPreference?: 'similar' | 'complementary' | 'mixed'
   /** Slugs from CONNECTION_TYPES */
   connectionTypes: string[]
+
+  // -- Resonance questions ------------------------------------------------------
+  /** Answers to the 5 resonance questions; stored in QuestionnaireResult.answers */
+  resonanceAnswers?: ResonanceAnswers
 }
 
 // --- Initial empty draft -----------------------------------------------------
@@ -52,6 +68,7 @@ export const INITIAL_DRAFT: PlanetDraft = {
   culturalTags:       [],
   matchPreference:    undefined,
   connectionTypes:    [],
+  resonanceAnswers:   {},
 }
 
 // --- Climate options ----------------------------------------------------------

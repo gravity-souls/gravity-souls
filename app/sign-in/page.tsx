@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
@@ -9,7 +9,16 @@ import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import LegalFooter from "@/components/auth/LegalFooter";
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
 
@@ -36,6 +45,35 @@ export default function SignInPage() {
       }
 
       await fetch("/api/user/language", { cache: "no-store" }).catch(() => null);
+
+      const fromOnboarding = searchParams.get('from') === 'onboarding';
+      if (fromOnboarding) {
+        const isReady = sessionStorage.getItem('gs_onboarding_ready') === 'true';
+        const draftRaw = sessionStorage.getItem('gs_onboarding_draft');
+        if (isReady && draftRaw) {
+          try {
+            const draft = JSON.parse(draftRaw);
+            const res = await fetch('/api/onboarding/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ draft }),
+            });
+            if (res.ok) {
+              sessionStorage.removeItem('gs_onboarding_draft');
+              sessionStorage.removeItem('gs_onboarding_step');
+              sessionStorage.removeItem('gs_onboarding_ready');
+              router.push('/resonance');
+              return;
+            }
+          } catch (e) {
+            console.error('Onboarding complete failed:', e);
+          }
+        }
+        // Handoff failed or draft missing — return to onboarding so user can retry.
+        // Draft is kept in sessionStorage to preserve calibration progress.
+        router.push('/onboarding');
+        return;
+      }
 
       router.push("/stream");
       router.refresh();
