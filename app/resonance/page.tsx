@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -8,7 +9,6 @@ import ResonanceOrbitSystem from '@/components/resonance/ResonanceOrbitSystem'
 import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
 import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
-import { getPlanetProfile, getUserRole } from '@/lib/user'
 import { buildResonanceSession } from '@/lib/match'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
@@ -84,6 +84,7 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
 // --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
+  const router = useRouter()
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
   const [mounted, setMounted]     = useState(false)
@@ -95,48 +96,76 @@ export default function ResonancePage() {
   useEffect(() => {
     let cancelled = false
 
-    Promise.resolve().then(() => {
+    async function load() {
+      setMounted(true)
+
+      let res: Response
+      try {
+        res = await fetch('/api/my-planet')
+      } catch {
+        return
+      }
+
       if (cancelled) return
 
-      setMounted(true)
-      const r = getUserRole()
-      const p = getPlanetProfile()
-      setRole(r)
-      setMyPlanet(p)
+      if (res.status === 401) { router.replace('/sign-in?next=/resonance'); return }
+      if (res.status === 404) { router.replace('/onboarding'); return }
+      if (!res.ok) return
 
-      if (p) {
-        // Fetch real planets for resonance session
-        fetch('/api/planets')
-          .then((res) => (res.ok ? res.json() : []))
-          .then((data: Record<string, unknown>[]) => {
-            if (cancelled) return
-            const planets = data.map((d) => ({
-              id: d.id as string,
-              name: (d.name as string) || 'Unknown',
-              avatarSymbol: (d.avatarSymbol as string) || '?',
-              tagline: (d.tagline as string) ?? undefined,
-              role: 'resonator' as const,
-              mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
-              style: (d.style as PlanetProfile['style']) ?? 'minimal',
-              lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-              coreThemes: (d.coreThemes as string[]) ?? [],
-              contentFragments: (d.contentFragments as string[]) ?? [],
-              visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
-              cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
-              emotionalBars: [],
-              createdAt: (d.createdAt as string) ?? new Date().toISOString(),
-              userId: (d.userId as string) ?? '',
-            } as PlanetProfile))
-            if (planets.length > 0) {
-              setSession(buildResonanceSession(p, planets))
-            }
-          })
-          .catch(() => { /* no session */ })
+      const data = await res.json() as Record<string, unknown>
+      const p: PlanetProfile = {
+        id: data.id as string,
+        name: (data.name as string) || 'Unknown',
+        avatarSymbol: (data.avatarSymbol as string) || '?',
+        tagline: (data.tagline as string) ?? undefined,
+        role: 'resonator',
+        mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+        style: (data.style as PlanetProfile['style']) ?? 'minimal',
+        lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+        coreThemes: (data.coreThemes as string[]) ?? [],
+        contentFragments: (data.contentFragments as string[]) ?? [],
+        visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+        cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
+        emotionalBars: [],
+        createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+        userId: (data.userId as string) ?? '',
       }
-    })
 
+      setMyPlanet(p)
+      setRole('resonator')
+
+      // Fetch other planets for resonance session
+      fetch('/api/planets')
+        .then((r) => (r.ok ? r.json() : []))
+        .then((planetData: Record<string, unknown>[]) => {
+          if (cancelled) return
+          const planets = planetData.map((d) => ({
+            id: d.id as string,
+            name: (d.name as string) || 'Unknown',
+            avatarSymbol: (d.avatarSymbol as string) || '?',
+            tagline: (d.tagline as string) ?? undefined,
+            role: 'resonator' as const,
+            mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
+            style: (d.style as PlanetProfile['style']) ?? 'minimal',
+            lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+            coreThemes: (d.coreThemes as string[]) ?? [],
+            contentFragments: (d.contentFragments as string[]) ?? [],
+            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+            cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
+            emotionalBars: [],
+            createdAt: (d.createdAt as string) ?? new Date().toISOString(),
+            userId: (d.userId as string) ?? '',
+          } as PlanetProfile))
+          if (planets.length > 0) {
+            setSession(buildResonanceSession(p, planets))
+          }
+        })
+        .catch(() => { /* no session */ })
+    }
+
+    load()
     return () => { cancelled = true }
-  }, [])
+  }, [router])
 
   if (!mounted) return null
 

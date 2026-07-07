@@ -75,7 +75,9 @@ function SignInForm() {
         return;
       }
 
-      router.push("/stream");
+      const raw = searchParams.get('next')
+      const next = raw?.startsWith('/') && !raw.startsWith('//') ? raw : '/stream'
+      router.push(next)
       router.refresh();
     } catch {
       setError(tCommon("error"));

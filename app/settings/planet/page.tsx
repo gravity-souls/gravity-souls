@@ -18,7 +18,7 @@ import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
 import { PLANET_TEXTURE_OPTIONS, resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
-import { getPlanetProfile, savePlanetProfile, getOrCreateUserId } from '@/lib/user'
+import { getPlanetProfile, savePlanetProfile } from '@/lib/user'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -153,7 +153,6 @@ export default function PlanetSettingsPage() {
   const tLanguage = useTranslations('language')
   const { data: session, refetch: refetchSession } = authClient.useSession()
   const [mounted,   setMounted]   = useState(false)
-  const [userId,    setUserId]    = useState('')
   const [draft,     setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
   const [accountName, setAccountName] = useState('')
   const [planetName, setPlanetName] = useState('')
@@ -169,8 +168,6 @@ export default function PlanetSettingsPage() {
       if (cancelled) return
 
       setMounted(true)
-      const id = getOrCreateUserId()
-      setUserId(id)
 
       // Try loading from API first, fall back to localStorage
       Promise.all([
@@ -227,8 +224,8 @@ export default function PlanetSettingsPage() {
   }, [router, session?.user?.name])
 
   const previewPlanet = useMemo(
-    () => (userId ? buildPlanetFromDraft(draft, userId) : null),
-    [draft, userId],
+    () => (session?.user?.id ? buildPlanetFromDraft(draft, session.user.id) : null),
+    [draft, session?.user?.id],
   )
 
   const previewPlanetConfig = useMemo(
@@ -250,7 +247,7 @@ export default function PlanetSettingsPage() {
   }
 
   async function handleSave() {
-    if (!userId || !previewPlanet) return
+    if (!previewPlanet) return
     const nextAccountName = accountName.trim()
     const nextPlanetName = planetName.trim()
 

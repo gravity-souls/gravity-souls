@@ -113,11 +113,6 @@ export function useAuthSync() {
           if (!localStorage.getItem(SYNC_DONE_KEY)) {
             localStorage.setItem(SYNC_DONE_KEY, new Date().toISOString())
           }
-
-          // Reload so pages see the restored data
-          if ((!planet && data.planet) || (!sbti && data.profile?.sbtiType)) {
-            window.location.reload()
-          }
         } catch {
           // Fetch failed  -  will retry on next page load
         }

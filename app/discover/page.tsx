@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import GlowButton from '@/components/ui/GlowButton'
@@ -12,8 +13,6 @@ import EmptyState from '@/components/ui/EmptyState'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetProfile } from '@/types/planet'
 import { getResonanceMatches } from '@/lib/match'
-import { buildPlanetFromDraft } from '@/lib/planet-builder'
-import { getPlanetProfile, getOrCreateUserId } from '@/lib/user'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 
 // --- Helper: convert DB planet to PlanetProfile for matching engine ----------
@@ -123,6 +122,7 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
 // --- Page --------------------------------------------------------------------
 
 export default function DiscoverPage() {
+  const router = useRouter()
   const t = useTranslations('discover')
   const tAuth = useTranslations('auth')
   const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
@@ -132,24 +132,25 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     async function load() {
-      // Load my planet first (from API or localStorage)
+      // Load my planet from DB
       let mine: PlanetProfile | null = null
       try {
         const res = await fetch('/api/my-planet')
         if (res.ok) {
-          const data = await res.json()
-          mine = dbPlanetToProfile(data)
+          mine = dbPlanetToProfile(await res.json())
+        } else if (res.status === 401) {
+          router.replace('/sign-in?next=/discover')
+          return
+        } else if (res.status === 404) {
+          router.replace('/onboarding')
+          return
         }
-      } catch { /* ignore */ }
+      } catch {
+        setError(t('loadError'))
+        setLoading(false)
+        return
+      }
 
-      if (!mine) {
-        mine = getPlanetProfile()
-      }
-      if (!mine) {
-        const uid = getOrCreateUserId()
-        const { INITIAL_DRAFT } = await import('@/types/creation')
-        mine = buildPlanetFromDraft(INITIAL_DRAFT, uid)
-      }
       setMyPlanet(mine)
 
       // Load other planets from DB
@@ -160,7 +161,8 @@ export default function DiscoverPage() {
           const planets = (data as Record<string, unknown>[]).map(dbPlanetToProfile)
           setOtherPlanets(planets)
         } else if (res.status === 401) {
-          setError(t('signInRequired'))
+          router.replace('/sign-in?next=/discover')
+          return
         }
       } catch {
         setError(t('loadError'))
@@ -170,7 +172,7 @@ export default function DiscoverPage() {
     }
 
     load()
-  }, [t])
+  }, [router, t])
 
   // Score and sort planets by resonance
   const scored = myPlanet
