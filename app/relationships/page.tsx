@@ -10,7 +10,6 @@ import RelationshipCard from '@/components/social/RelationshipCard'
 import RelationshipStateBadge from '@/components/social/RelationshipStateBadge'
 import type { Relationship, RelationshipStatus } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
-import { getUserRole } from '@/lib/user'
 import { mockRelationships } from '@/lib/mock-relationships'
 import { getPlanetById } from '@/lib/mock-planets'
 
@@ -53,17 +52,19 @@ function RelationshipGroup({
 export default function RelationshipsPage() {
   const t = useTranslations('relationshipsPage')
   const tCommon = useTranslations('common')
-  const [role, setRole] = useState<'explorer' | 'resonator' | null>(null)
+  const [hasPlanet, setHasPlanet] = useState<boolean | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    Promise.resolve().then(() => {
-      if (!cancelled) setRole(getUserRole())
+    fetch('/api/my-planet').then(res => {
+      if (!cancelled) setHasPlanet(res.ok)
+    }).catch(() => {
+      if (!cancelled) setHasPlanet(false)
     })
     return () => { cancelled = true }
   }, [])
 
-  if (role === null) return null
+  if (hasPlanet === null) return null
 
   const MY_PLANET_ID = 'p-aelion'
 
@@ -91,7 +92,7 @@ export default function RelationshipsPage() {
           subtitle={t('subtitle')}
         />
 
-        {role === 'explorer' && (
+        {hasPlanet === false && (
           <EmptyState
             symbol="◌"
             title={t('requiresPlanetTitle')}
@@ -101,7 +102,7 @@ export default function RelationshipsPage() {
           />
         )}
 
-        {role === 'resonator' && !hasAny && (
+        {hasPlanet === true && !hasAny && (
           <EmptyState
             symbol="◍"
             title={t('emptyTitle')}
@@ -111,7 +112,7 @@ export default function RelationshipsPage() {
           />
         )}
 
-        {role === 'resonator' && hasAny && (
+        {hasPlanet === true && hasAny && (
           <div className="mt-8 flex flex-col gap-8">
             {grouped.map(({ status, items }) => (
               <RelationshipGroup key={status} status={status} items={items} />

@@ -22,7 +22,7 @@ import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetById } from '@/lib/mock-planets'
-import { getPlanetProfile, getUserRole } from '@/lib/user'
+import { getPlanetProfile } from '@/lib/user'
 import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
@@ -306,7 +306,6 @@ function PlanetPageInner() {
 
       if (!p) return
 
-      const role     = getUserRole()
       const myPlanet = getPlanetProfile()
       setViewerPlanet(myPlanet)
 
@@ -326,7 +325,7 @@ function PlanetPageInner() {
 
       if (myPlanetId === id) {
         setViewerRole('self')
-      } else if (role === 'resonator' || myPlanetId) {
+      } else if (myPlanetId) {
         setViewerRole('resonator')
         const vp = myPlanet ?? (myPlanetId ? dbPlanetToProfile(myData!) : null)
         if (vp) {

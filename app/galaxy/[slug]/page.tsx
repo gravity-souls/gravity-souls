@@ -11,7 +11,6 @@ import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import LockedLayer from '@/components/ui/LockedLayer'
 import { getGalaxyBySlug, getRelatedGalaxies, getGalaxyPreviews, resolveGalaxySlug } from '@/lib/mock-galaxies'
 import { getPlanetById } from '@/lib/mock-planets'
-import { getUserRole } from '@/lib/user'
 import type { PlanetProfile } from '@/types/planet'
 
 interface CommunityRow {
@@ -324,11 +323,12 @@ export default function GalaxyPage({ params }: Props) {
   const [discussionReplyDraft, setDiscussionReplyDraft] = useState('')
   const [discussionReplyOverrides, setDiscussionReplyOverrides] = useState<Record<string, DiscussionReply[]>>({})
 
-  // getUserRole reads localStorage  -  must run client-side only
   useEffect(() => {
     let cancelled = false
-    Promise.resolve().then(() => {
-      if (!cancelled) setUserRole(getUserRole())
+    fetch('/api/my-planet').then(res => {
+      if (!cancelled) setUserRole(res.ok ? 'resonator' : 'explorer')
+    }).catch(() => {
+      if (!cancelled) setUserRole('explorer')
     })
     return () => { cancelled = true }
   }, [])

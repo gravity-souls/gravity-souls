@@ -8,7 +8,6 @@ import SavedPlanetCard from '@/components/social/SavedPlanetCard'
 import GlowButton from '@/components/ui/GlowButton'
 import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
-import { getUserRole } from '@/lib/user'
 import { getSavedPlanetIds } from '@/lib/social-storage'
 import { mockSavedPlanets } from '@/lib/mock-relationships'
 import { getPlanetById } from '@/lib/mock-planets'
@@ -34,17 +33,24 @@ function buildSavedList(): SavedPlanet[] {
 export default function SavedPage() {
   const t = useTranslations('savedPage')
   const tCommon = useTranslations('common')
-  const [role, setRole]   = useState<'explorer' | 'resonator' | null>(null)
+  const [hasPlanet, setHasPlanet] = useState<boolean | null>(null)
   const [items, setItems] = useState<{ saved: SavedPlanet; planet: PlanetProfile }[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/my-planet').then(res => {
+      if (!cancelled) setHasPlanet(res.ok)
+    }).catch(() => {
+      if (!cancelled) setHasPlanet(false)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
 
     Promise.resolve().then(() => {
       if (cancelled) return
-
-      const userRole = getUserRole()
-      setRole(userRole)
 
       const savedList = buildSavedList()
       const resolved = savedList
@@ -64,7 +70,7 @@ export default function SavedPage() {
     setItems((prev) => prev.filter((x) => x.planet.id !== planetId))
   }
 
-  if (role === null) return null
+  if (hasPlanet === null) return null
 
   return (
     <AppShell>
@@ -113,7 +119,7 @@ export default function SavedPage() {
                   key={planet.id}
                   saved={saved}
                   planet={planet}
-                  isResonator={role === 'resonator'}
+                  isResonator={hasPlanet === true}
                   onUnsave={handleUnsave}
                 />
               ))}

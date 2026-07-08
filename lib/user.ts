@@ -131,19 +131,6 @@ export function getPlanetProfile(): PlanetProfile | null {
   }
 }
 
-// --- Role detection -----------------------------------------------------------
-
-/** Returns 'resonator' if the user has saved a planet, 'explorer' otherwise */
-export function getUserRole(): 'explorer' | 'resonator' {
-  try {
-    const userId = getOrCreateUserId()
-    const hasPlanet = !!localStorage.getItem(planetStorageKey(userId))
-    return hasPlanet ? 'resonator' : 'explorer'
-  } catch {
-    return 'explorer'
-  }
-}
-
 // --- Planet builder -----------------------------------------------------------
 
 const MOOD_TO_PLANET_MOOD: Record<string, Mood> = {
