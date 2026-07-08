@@ -18,7 +18,6 @@ import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
 import { PLANET_TEXTURE_OPTIONS, resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
-import { getPlanetProfile, savePlanetProfile } from '@/lib/user'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -176,29 +175,23 @@ export default function PlanetSettingsPage() {
       ])
         .then(([dbPlanet, meData]) => {
           if (cancelled) return
-          let planet: PlanetProfile | null = null
-          if (dbPlanet) {
-            // Merge profile fields from /api/me into the planet data
-            const merged = { ...dbPlanet }
-            if (meData?.profile) {
-              merged.location = meData.profile.location ?? undefined
-              merged.languages = meData.profile.languages ?? []
-              merged.culturalTags = meData.profile.culturalTags ?? []
-              merged.travelCities = meData.profile.travelCities ?? []
-              merged.musicTaste = meData.profile.musicTaste ?? []
-              merged.bookTaste = meData.profile.bookTaste ?? []
-              merged.filmTaste = meData.profile.filmTaste ?? []
-              merged.communicationStyle = meData.profile.communicationStyle ?? undefined
-              merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
-            }
-            planet = buildPlanetFromApiData(merged)
-          } else {
-            planet = getPlanetProfile()
-          }
-          if (!planet) {
-            router.replace('/create-planet')
+          if (!dbPlanet) {
+            router.replace('/onboarding')
             return
           }
+          const merged = { ...dbPlanet }
+          if (meData?.profile) {
+            merged.location = meData.profile.location ?? undefined
+            merged.languages = meData.profile.languages ?? []
+            merged.culturalTags = meData.profile.culturalTags ?? []
+            merged.travelCities = meData.profile.travelCities ?? []
+            merged.musicTaste = meData.profile.musicTaste ?? []
+            merged.bookTaste = meData.profile.bookTaste ?? []
+            merged.filmTaste = meData.profile.filmTaste ?? []
+            merged.communicationStyle = meData.profile.communicationStyle ?? undefined
+            merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
+          }
+          const planet = buildPlanetFromApiData(merged)
           setAccountName(meData?.user?.name ?? session?.user?.name ?? '')
           setPlanetName(planet.name)
           const converted = planetProfileToDraft(planet)
@@ -207,16 +200,7 @@ export default function PlanetSettingsPage() {
         })
         .catch(() => {
           if (cancelled) return
-          const planet = getPlanetProfile()
-          if (!planet) {
-            router.replace('/create-planet')
-            return
-          }
-          setAccountName(session?.user?.name ?? '')
-          setPlanetName(planet.name)
-          const converted = planetProfileToDraft(planet)
-          setDraft(converted)
-          setAccentColor(planet.visual.coreColor)
+          router.replace('/onboarding')
         })
     })
 
@@ -263,10 +247,6 @@ export default function PlanetSettingsPage() {
 
     setSaving(true)
     setError('')
-
-    // Always keep localStorage in sync
-    const savedPlanet = { ...previewPlanet, name: nextPlanetName }
-    savePlanetProfile(savedPlanet)
 
     try {
       const accountResult = await authClient.updateUser({ name: nextAccountName })

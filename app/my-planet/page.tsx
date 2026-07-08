@@ -24,7 +24,6 @@ import CreatePostModal from '@/components/stream/CreatePostModal'
 import PostDetail from '@/components/stream/PostDetail'
 import PostGrid from '@/components/stream/PostGrid'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
-import { getPlanetProfile, getSbtiResult } from '@/lib/user'
 import { getResonanceMatches } from '@/lib/match'
 import { MOCK_GALAXIES } from '@/lib/mock-galaxies'
 import { mockPlanets } from '@/lib/mock-planets'
@@ -237,15 +236,6 @@ export default function MyPlanetPage() {
         }
       } catch {
         // API failed - fall back to localStorage
-      }
-
-      // 2. Fallback to localStorage if API didn't return a planet
-      if (!p) {
-        p = getPlanetProfile()
-        const sbti = getSbtiResult()
-        if (p && !p.sbtiType && sbti) {
-          p = { ...p, sbtiType: sbti.typeCode, sbtiCn: sbti.typeCn, sbtiPattern: sbti.patternString }
-        }
       }
 
       if (p) {

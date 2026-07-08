@@ -16,7 +16,6 @@ import PostDetail from '@/components/stream/PostDetail'
 import UniverseSearch from '@/components/universe/UniverseSearch'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
-import { getUserRole } from '@/lib/user'
 import { authClient } from '@/lib/auth-client'
 import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
@@ -130,22 +129,10 @@ export default function UniversePage() {
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
-  const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
   const [upcomingEvent, setUpcomingEvent] = useState<GalaxyEventSummary | null>(null)
   const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
   const [selectedStreamPost, setSelectedStreamPost] = useState<StreamPost | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    Promise.resolve().then(() => {
-      if (cancelled) return
-      setUserRole(getUserRole())
-    })
-
-    return () => { cancelled = true }
-  }, [])
 
   // Check if logged-in user has an active planet via API
   useEffect(() => {
@@ -773,7 +760,7 @@ export default function UniversePage() {
         planet={selectedPlanet}
         open={!!selectedPlanet}
         onClose={() => setSelectedPlanet(null)}
-        userRole={userRole}
+        userRole={hasActivePlanet === true ? 'resonator' : 'explorer'}
       />
       <EventDetail
         event={selectedEvent}

@@ -75,10 +75,21 @@ function SignInForm() {
         return;
       }
 
+      // Priority 2: honour ?next if present and safe
       const raw = searchParams.get('next')
-      const next = raw?.startsWith('/') && !raw.startsWith('//') ? raw : '/stream'
-      router.push(next)
-      router.refresh();
+      if (raw?.startsWith('/') && !raw.startsWith('//')) {
+        router.push(raw)
+        router.refresh()
+        return
+      }
+
+      // Priority 3: route based on DB planet state
+      try {
+        const res = await fetch('/api/my-planet')
+        router.push(res.ok ? '/resonance' : '/onboarding')
+      } catch {
+        router.push('/onboarding')
+      }
     } catch {
       setError(tCommon("error"));
     } finally {
