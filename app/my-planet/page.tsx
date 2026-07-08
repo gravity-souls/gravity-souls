@@ -174,6 +174,11 @@ export default function MyPlanetPage() {
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
   const [postRefreshKey, setPostRefreshKey] = useState(0)
   const [customizerOpen, setCustomizerOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameInput, setRenameInput] = useState('')
+  const [taglineInput, setTaglineInput] = useState('')
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const [renameSaving, setRenameSaving] = useState(false)
   const hydrated = useHydrated()
   const isDesktop = useIsDesktop()
   const [loading, setLoading]     = useState(true)
@@ -389,6 +394,60 @@ export default function MyPlanetPage() {
   const recommendedGalaxies = getRecommendedGalaxies()
   const sharedMoments = getSharedPostsForPlanets(matchPool, 3)
 
+  function handleRenameEnter() {
+    setRenameInput(planet!.name)
+    setTaglineInput(planet!.tagline ?? '')
+    setRenameError(null)
+    setRenaming(true)
+  }
+
+  function handleRenameCancel() {
+    setRenaming(false)
+    setRenameError(null)
+    setRenameInput(planet!.name)
+    setTaglineInput(planet!.tagline ?? '')
+  }
+
+  async function handleRenameSave() {
+    const trimmedName = renameInput.trim()
+    const trimmedTagline = taglineInput.trim()
+
+    if (!trimmedName) {
+      setRenameError('Planet name cannot be empty')
+      return
+    }
+    if (trimmedName.length > 60) {
+      setRenameError('Name must be 60 characters or fewer')
+      return
+    }
+    if (trimmedTagline.length > 100) {
+      setRenameError('Tagline must be 100 characters or fewer')
+      return
+    }
+
+    setRenameError(null)
+    setRenameSaving(true)
+    try {
+      const res = await fetch('/api/my-planet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedName, tagline: trimmedTagline }),
+      })
+      if (res.ok) {
+        setPlanet(prev => prev ? { ...prev, name: trimmedName, tagline: trimmedTagline || undefined } : prev)
+        setRenameInput(trimmedName)
+        setTaglineInput(trimmedTagline)
+        setRenaming(false)
+      } else {
+        setRenameError("Couldn't save. Try again.")
+      }
+    } catch {
+      setRenameError("Couldn't save. Try again.")
+    } finally {
+      setRenameSaving(false)
+    }
+  }
+
   function handleCustomizerSaved(planetConfig: PlanetConfig) {
     setStoredUser((user) => ({ planetConfig, userLevel: user?.userLevel ?? currentUser.userLevel }))
     setCustomizerOpen(false)
@@ -448,22 +507,119 @@ export default function MyPlanetPage() {
                 <LevelBadge level={xpSummary?.userLevel ?? currentUser.userLevel} size="md" />
               </div>
 
-              <h1
-                className="text-4xl sm:text-5xl font-bold leading-tight"
-                style={{
-                  background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                {planet.name}
-              </h1>
+              {renaming ? (
+                <div className="flex flex-col gap-3 w-full max-w-md mx-auto md:mx-0">
+                  <input
+                    type="text"
+                    value={renameInput}
+                    onChange={e => setRenameInput(e.target.value)}
+                    disabled={renameSaving}
+                    maxLength={70}
+                    autoFocus
+                    aria-label="Planet name"
+                    className="w-full bg-transparent text-2xl font-bold focus:outline-none"
+                    style={{
+                      color: 'var(--foreground)',
+                      borderBottom: `1px solid ${visual.coreColor}80`,
+                      paddingBottom: '4px',
+                      opacity: renameSaving ? 0.5 : 1,
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={taglineInput}
+                    onChange={e => setTaglineInput(e.target.value)}
+                    disabled={renameSaving}
+                    maxLength={110}
+                    placeholder="Add a tagline…"
+                    aria-label="Planet tagline"
+                    className="w-full bg-transparent text-sm italic focus:outline-none"
+                    style={{
+                      color: 'var(--ink)',
+                      borderBottom: '1px solid rgba(255,255,255,0.12)',
+                      paddingBottom: '4px',
+                      opacity: renameSaving ? 0.5 : 0.8,
+                    }}
+                  />
+                  {renameError && (
+                    <p className="text-xs" style={{ color: '#f87171' }}>{renameError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRenameSave}
+                      disabled={renameSaving}
+                      className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
+                      style={{
+                        background: `${visual.coreColor}22`,
+                        border: `1px solid ${visual.coreColor}45`,
+                        color: visual.coreColor,
+                        opacity: renameSaving ? 0.5 : 1,
+                        cursor: renameSaving ? 'default' : 'pointer',
+                      }}
+                    >
+                      {renameSaving ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRenameCancel}
+                      disabled={renameSaving}
+                      className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-opacity"
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        color: 'var(--ghost)',
+                        opacity: renameSaving ? 0.5 : 1,
+                        cursor: renameSaving ? 'default' : 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1 justify-center md:justify-start">
+                    <h1
+                      className="text-4xl sm:text-5xl font-bold leading-tight"
+                      style={{
+                        background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}
+                    >
+                      {planet.name}
+                    </h1>
+                    <button
+                      type="button"
+                      onClick={handleRenameEnter}
+                      aria-label="Rename planet"
+                      style={{
+                        padding: '10px',
+                        margin: '-10px -10px -10px 0',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--ghost)',
+                        opacity: 0.45,
+                        lineHeight: 1,
+                        flexShrink: 0,
+                        fontSize: '16px',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0.45' }}
+                    >
+                      ✎
+                    </button>
+                  </div>
 
-              {planet.tagline && (
-                <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
-                  {planet.tagline}
-                </p>
+                  {planet.tagline && (
+                    <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
+                      {planet.tagline}
+                    </p>
+                  )}
+                </>
               )}
 
               {/* Core themes */}

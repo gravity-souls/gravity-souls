@@ -135,13 +135,9 @@ export const MOCK_GALAXIES: Galaxy[] = [
   },
 ]
 
-export const COMMUNITY_GALAXY_SLUG_ALIASES: Record<string, string> = {
-  'deep-thinkers': 'slow-thinkers',
-  'creative-nebula': 'image-makers',
-  'nomadic-stars': 'threshold-states',
-  'tech-forge': 'signal-noise',
-  'quiet-orbits': 'warm-frequency',
-}
+// DB community slugs now match canonical galaxy slugs after Phase 8 migration.
+// This alias map is intentionally empty — kept in place pending cleanup of resolveGalaxySlug call sites.
+export const COMMUNITY_GALAXY_SLUG_ALIASES: Record<string, string> = {}
 
 // --- Helpers ----------------------------------------------------------------
 
