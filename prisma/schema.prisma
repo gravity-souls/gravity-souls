@@ -55,6 +55,7 @@ model user {
   postLikes    PostLike[]
   postComments PostComment[]
   postCommentLikes PostCommentLike[]
+  savedPlanets     SavedPlanet[]
 }
 
 enum NotificationType {
@@ -220,6 +221,7 @@ model Planet {
 
   matchesA       Match[]  @relation("planetMatchA")
   matchesB       Match[]  @relation("planetMatchB")
+  savedBy        SavedPlanet[]
 
   @@map("planet")
 }
@@ -554,4 +556,18 @@ model DirectMessage {
 
   @@index([conversationId, createdAt])
   @@map("direct_message")
+}
+
+model SavedPlanet {
+  id       String   @id @default(cuid())
+  userId   String
+  planetId String
+  savedAt  DateTime @default(now())
+  label    String?
+  user     user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planet   Planet   @relation(fields: [planetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, planetId])
+  @@index([userId, savedAt(sort: Desc)])
+  @@map("saved_planet")
 }

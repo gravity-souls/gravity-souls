@@ -130,6 +130,7 @@ export default function UniversePage() {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
+  const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
   const [upcomingEvent, setUpcomingEvent] = useState<GalaxyEventSummary | null>(null)
   const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
   const [selectedStreamPost, setSelectedStreamPost] = useState<StreamPost | null>(null)
@@ -155,6 +156,31 @@ export default function UniversePage() {
       })
       .catch(() => {
         if (!cancelled) setHasActivePlanet(false)
+      })
+    return () => { cancelled = true }
+  }, [session, sessionPending])
+
+  // Fetch saved planet IDs for PlanetPreviewDrawer tri-state
+  useEffect(() => {
+    if (sessionPending) return
+    if (!session?.user) {
+      let cancelled = false
+      Promise.resolve().then(() => {
+        if (!cancelled) setSavedPlanetIds(new Set())
+      })
+      return () => { cancelled = true }
+    }
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (!cancelled) setSavedPlanetIds(null)
+    })
+    fetch('/api/saved-planets')
+      .then(res => res.ok ? res.json() : { savedPlanets: [] })
+      .then(({ savedPlanets }: { savedPlanets: { planetId: string }[] }) => {
+        if (!cancelled) setSavedPlanetIds(new Set(savedPlanets.map(s => s.planetId)))
+      })
+      .catch(() => {
+        if (!cancelled) setSavedPlanetIds(new Set())
       })
     return () => { cancelled = true }
   }, [session, sessionPending])
@@ -761,6 +787,7 @@ export default function UniversePage() {
         open={!!selectedPlanet}
         onClose={() => setSelectedPlanet(null)}
         userRole={hasActivePlanet === true ? 'resonator' : 'explorer'}
+        savedPlanetIds={savedPlanetIds}
       />
       <EventDetail
         event={selectedEvent}

@@ -305,6 +305,7 @@ export default function GalaxyPage({ params }: Props) {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<DiscussionTopic | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
+  const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
   const [community, setCommunity] = useState<CommunityRow | null>(null)
   const [communityJoined, setCommunityJoined] = useState(false)
   const [joiningCommunity, setJoiningCommunity] = useState(false)
@@ -330,6 +331,19 @@ export default function GalaxyPage({ params }: Props) {
     }).catch(() => {
       if (!cancelled) setUserRole('explorer')
     })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/saved-planets')
+      .then(res => res.ok ? res.json() : { savedPlanets: [] })
+      .then(({ savedPlanets }: { savedPlanets: { planetId: string }[] }) => {
+        if (!cancelled) setSavedPlanetIds(new Set(savedPlanets.map(s => s.planetId)))
+      })
+      .catch(() => {
+        if (!cancelled) setSavedPlanetIds(new Set())
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -1522,6 +1536,7 @@ export default function GalaxyPage({ params }: Props) {
         open={!!selectedPlanet}
         onClose={() => setSelectedPlanet(null)}
         userRole={userRole}
+        savedPlanetIds={savedPlanetIds}
       />
     </>
   )

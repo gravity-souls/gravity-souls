@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
-import { unsavePlanetId } from '@/lib/social-storage'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
 
@@ -21,10 +20,18 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
   const [removing, setRemoving] = useState(false)
   const { coreColor, accentColor } = planet.visual
 
-  function handleUnsave() {
+  async function handleUnsave() {
     setRemoving(true)
-    unsavePlanetId(planet.id)
-    setTimeout(() => onUnsave(planet.id), 300)
+    try {
+      const res = await fetch(`/api/saved-planets/${planet.id}`, { method: 'DELETE' })
+      if (res.status === 204) {
+        setTimeout(() => onUnsave(planet.id), 300)
+      } else {
+        setRemoving(false)
+      }
+    } catch {
+      setRemoving(false)
+    }
   }
 
   return (

@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
-import { isSaved, savePlanetId } from '@/lib/social-storage'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
@@ -17,6 +16,13 @@ interface Props {
   open:     boolean
   onClose:  () => void
   userRole?: 'explorer' | 'resonator'
+  /**
+   * Set of planet IDs the current user has already saved.
+   * - null  = parent is still fetching the saved list (show loading state)
+   * - undefined = prop not provided (treat as loaded empty — show "Save Planet")
+   * - Set<string> = loaded; derive saved state per planet
+   */
+  savedPlanetIds?: Set<string> | null
 }
 
 /**
@@ -27,7 +33,7 @@ interface Props {
  *
  * Renders as a fixed right-side panel on desktop, bottom sheet on mobile.
  */
-export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 'explorer' }: Props) {
+export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 'explorer', savedPlanetIds }: Props) {
   const t = useTranslations('planetPage')
   const isResonator = userRole === 'resonator'
 
@@ -84,7 +90,14 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
           overflowY:  'auto',
         }}
       >
-        {planet && <DrawerContent planet={planet} isResonator={isResonator} onClose={onClose} />}
+        {planet && (
+          <DrawerContent
+            planet={planet}
+            isResonator={isResonator}
+            onClose={onClose}
+            savedPlanetIds={savedPlanetIds}
+          />
+        )}
       </div>
     </>
   )
@@ -96,10 +109,12 @@ function DrawerContent({
   planet,
   isResonator,
   onClose,
+  savedPlanetIds,
 }: {
-  planet:       PlanetProfile
-  isResonator:  boolean
-  onClose:      () => void
+  planet:          PlanetProfile
+  isResonator:     boolean
+  onClose:         () => void
+  savedPlanetIds?: Set<string> | null
 }) {
   const t = useTranslations('planetPage')
   const router = useRouter()
@@ -116,16 +131,47 @@ function DrawerContent({
     rotationSpeed: 0.018,
     cloudOpacity: 0,
   }
-  const [saved, setSaved] = useState(false)
+
+  // savedPlanetIds: null = parent loading, undefined = prop not provided (treat as empty), Set = loaded
+  const deriveState = (ids: Set<string> | null | undefined): boolean | undefined => {
+    if (ids === null) return undefined       // loading → show ···
+    if (ids === undefined) return false      // prop not provided → treat as unsaved
+    return ids.has(planet.id)
+  }
+
+  const [savedState, setSavedState] = useState<boolean | undefined>(() => deriveState(savedPlanetIds))
+  const [authPrompt, setAuthPrompt] = useState(false)
   const [sending, setSending] = useState(false)
 
+  // Update when planet changes or parent finishes loading
   useEffect(() => {
-    setSaved(isSaved(planet.id))
-  }, [planet.id])
+    setSavedState(deriveState(savedPlanetIds))
+    setAuthPrompt(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planet.id, savedPlanetIds])
 
-  function handleSave() {
-    savePlanetId(planet.id)
-    setSaved(true)
+  async function handleSave() {
+    setSavedState(true)   // optimistic
+    setAuthPrompt(false)
+    try {
+      const res = await fetch('/api/saved-planets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planetId: planet.id }),
+      })
+      if (res.status === 401) {
+        setSavedState(false)
+        setAuthPrompt(true)
+        return
+      }
+      if (!res.ok) {
+        // 404 = mock planet; other errors — silently revert
+        setSavedState(false)
+      }
+      // 200: optimistic confirmed
+    } catch {
+      setSavedState(false)
+    }
   }
 
   async function handleSendBeam() {
@@ -334,7 +380,7 @@ function DrawerContent({
           >
             {/* Skeleton bars behind the lock */}
             <div className="p-4 flex flex-col gap-2.5">
-              {[60, 45, 80, 30].map((w, i) => (
+              {[60, 45, 80, 30].map((_w, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-16 h-2 rounded" style={{ background: 'var(--surface-3)' }} />
                   <div className="flex-1 h-1 rounded-full" style={{ background: 'var(--surface-3)' }} />
@@ -373,19 +419,21 @@ function DrawerContent({
         {/* Resonator-only actions */}
         {isResonator ? (
           <div className="flex gap-2">
+            {/* Save button — tri-state */}
             <button
               type="button"
               className="flex-1 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
               style={{
-                color:      saved ? coreColor : 'var(--ink)',
-                background: saved ? `${coreColor}14` : 'var(--surface)',
-                border:     saved ? `1px solid ${coreColor}32` : '1px solid var(--border-soft)',
-                cursor:     saved ? 'default' : 'pointer',
+                color:      savedState ? coreColor : 'var(--ink)',
+                background: savedState ? `${coreColor}14` : 'var(--surface)',
+                border:     savedState ? `1px solid ${coreColor}32` : '1px solid var(--border-soft)',
+                cursor:     savedState !== false ? 'default' : 'pointer',
+                opacity:    savedState === undefined ? 0.5 : 1,
               }}
               onClick={handleSave}
-              disabled={saved}
+              disabled={savedState !== false}
             >
-              {saved ? t('saved') : t('savePlanet')}
+              {savedState === undefined ? '···' : savedState ? t('saved') : t('savePlanet')}
             </button>
             <button
               type="button"
@@ -406,6 +454,16 @@ function DrawerContent({
         ) : (
           <p className="text-center text-xs" style={{ color: 'var(--ghost)' }}>
             {t('createToConnect')}
+          </p>
+        )}
+
+        {/* Auth prompt — shown when save fails with 401 */}
+        {authPrompt && (
+          <p className="text-center text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>
+            <Link href="/sign-in" style={{ color: 'var(--star)', textDecoration: 'underline' }}>
+              Sign in
+            </Link>
+            {' '}to save planets to your star chart.
           </p>
         )}
       </div>
