@@ -154,7 +154,7 @@ function FogVeil({
           {message}
         </p>
       </div>
-      <GlowButton href="/create-planet" variant="primary" className="relative px-6 py-2.5 text-sm">
+      <GlowButton href="/onboarding" variant="primary" className="relative px-6 py-2.5 text-sm">
         {t('beginFormation')}
       </GlowButton>
     </div>
@@ -431,7 +431,7 @@ function PlanetPageInner() {
                 <LockedLayer
                   reason={t('cognitiveLocked')}
                   ctaLabel={t('beginFormation')}
-                  ctaHref="/create-planet"
+                  ctaHref="/onboarding"
                 >
                   <CognitiveStyleModule planet={planet} />
                 </LockedLayer>
@@ -446,7 +446,7 @@ function PlanetPageInner() {
                 <LockedLayer
                   reason={t('emotionalLocked')}
                   ctaLabel={t('createPlanet')}
-                  ctaHref="/create-planet"
+                  ctaHref="/onboarding"
                 >
                   <EmotionalFrequencyModule planet={planet} />
                 </LockedLayer>
@@ -513,7 +513,7 @@ function PlanetPageInner() {
                   <LockedLayer
                     reason={t('culturalLocked')}
                     ctaLabel={t('beginFormation')}
-                    ctaHref="/create-planet"
+                    ctaHref="/onboarding"
                   >
                     <CulturalCoordinates
                       culturalTags={planet.culturalTags}
@@ -540,7 +540,7 @@ function PlanetPageInner() {
                   locked={!isResonator && !isSelf}
                   lockReason={t('deeperLocked')}
                   lockCtaLabel={t('beginFormation')}
-                  lockCtaHref="/create-planet"
+                  lockCtaHref="/onboarding"
                   accentColor={visual.coreColor}
                 >
                   <ExplorationTracePanel

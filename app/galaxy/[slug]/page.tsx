@@ -844,7 +844,7 @@ export default function GalaxyPage({ params }: Props) {
                   </button>
                 ) : (
                   <Link
-                    href="/create-planet"
+                    href="/onboarding"
                     className="block px-5 py-2.5 rounded-xl text-sm font-medium tracking-wide text-center w-full sm:w-auto"
                     style={{
                       color:      'var(--ghost)',
@@ -994,7 +994,7 @@ export default function GalaxyPage({ params }: Props) {
                       <LockedLayer
                         reason="Create your planet to join discussions and see the full community"
                         ctaLabel="Begin formation"
-                        ctaHref="/create-planet"
+                        ctaHref="/onboarding"
                       >
                         <div className="flex flex-col gap-2">
                           {discussions.slice(0, 2).map((topic, i) => (

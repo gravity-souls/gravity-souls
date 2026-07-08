@@ -96,7 +96,7 @@ export default function RelationshipsPage() {
             symbol="◌"
             title={t('requiresPlanetTitle')}
             subtitle={t('requiresPlanetSubtitle')}
-            action={<GlowButton href="/create-planet" variant="primary">{t('awakenPlanet')}</GlowButton>}
+            action={<GlowButton href="/onboarding" variant="primary">{t('awakenPlanet')}</GlowButton>}
             className="mt-8"
           />
         )}

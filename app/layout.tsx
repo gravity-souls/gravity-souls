@@ -7,7 +7,6 @@ import './globals.css'
 import Topbar from '@/components/layout/Topbar'
 import CosmicBackground from '@/components/fx/CosmicBackground'
 import StarfieldCanvas from '@/components/fx/StarfieldCanvas'
-import AuthSyncProvider from '@/components/layout/AuthSyncProvider'
 import LevelUpToast from '@/components/ui/LevelUpToast'
 
 const geist = Geist({
@@ -35,8 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${geist.variable} ${locale === 'zh' ? notoSansSC.className : ''} h-full`}>
       <body className="cosmic-bg min-h-full text-foreground antialiased overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
-          <AuthSyncProvider>
-            <CosmicBackground />
+          <CosmicBackground />
             <StarfieldCanvas />
             <Topbar />
             <LevelUpToast />
@@ -49,7 +47,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </a>{' '}
               (CC BY 4.0)
             </footer>
-          </AuthSyncProvider>
         </NextIntlClientProvider>
       </body>
     </html>

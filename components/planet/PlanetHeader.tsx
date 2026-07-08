@@ -35,7 +35,7 @@ function ExplorerActions() {
   const t = useTranslations('planetPage')
   return (
     <Link
-      href="/create-planet"
+      href="/onboarding"
       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
       style={{
         background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(99,102,241,0.1))',

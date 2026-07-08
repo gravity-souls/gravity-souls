@@ -34,7 +34,7 @@ function ExplorerActions() {
     >
       <span style={{ color: 'var(--ghost)' }}>{t('explorerSignalRequired')}</span>
       <Link
-        href="/create-planet"
+        href="/onboarding"
         className="font-medium whitespace-nowrap transition-colors duration-150"
         style={{ color: 'var(--star)', textDecoration: 'none' }}
       >

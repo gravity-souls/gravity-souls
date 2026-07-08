@@ -98,7 +98,7 @@ interface Props {
  *     locked={viewerRole === 'explorer'}
  *     lockReason="Only resonators can enter this orbit"
  *     lockCtaLabel="Create your planet"
- *     lockCtaHref="/create-planet"
+ *     lockCtaHref="/onboarding"
  *     accentColor={planet.visual.coreColor}
  *   >
  *     <CulturalOrbitContent />
@@ -110,7 +110,7 @@ export default function ProfileLayerSection({
   locked = false,
   lockReason = 'Create your planet to unlock deeper resonance',
   lockCtaLabel = 'Begin formation',
-  lockCtaHref = '/create-planet',
+  lockCtaHref = '/onboarding',
   accentColor,
   className = '',
 }: Props) {

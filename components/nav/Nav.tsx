@@ -144,7 +144,7 @@ export default function Nav() {
 
         {/* Create Planet  -  visible on all screen sizes, abbreviated on mobile */}
         <Link
-          href="/create-planet"
+          href="/onboarding"
           className="ml-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-medium tracking-wide transition-all duration-200"
           style={{
             color: 'var(--foreground)',

@@ -328,7 +328,7 @@ function DrawerContent({
           <LockedLayer
             reason={t('fullProfileLocked')}
             ctaLabel={t('begin')}
-            ctaHref="/create-planet"
+            ctaHref="/onboarding"
             blur={false}
             className="rounded-xl"
           >

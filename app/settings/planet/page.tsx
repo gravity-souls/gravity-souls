@@ -168,7 +168,7 @@ export default function PlanetSettingsPage() {
 
       setMounted(true)
 
-      // Try loading from API first, fall back to localStorage
+      // Load from API — DB is the sole source of truth
       Promise.all([
         fetch('/api/my-planet').then((r) => (r.ok ? r.json() : null)),
         fetch('/api/me').then((r) => (r.ok ? r.json() : null)),

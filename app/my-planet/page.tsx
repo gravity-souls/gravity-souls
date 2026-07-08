@@ -235,7 +235,7 @@ export default function MyPlanetPage() {
           userLevel = numberValue(meData?.user?.userLevel, 1)
         }
       } catch {
-        // API failed - fall back to localStorage
+        // API failed — planet will be null, empty state shown
       }
 
       if (p) {
@@ -341,7 +341,7 @@ export default function MyPlanetPage() {
               title={tMyPlanet('unformedTitle')}
               subtitle={tMyPlanet('unformedSubtitle')}
               action={
-                <GlowButton href="/create-planet" variant="primary" className="px-8 py-4 text-sm">
+                <GlowButton href="/onboarding" variant="primary" className="px-8 py-4 text-sm">
                   {tMyPlanet('beginFormation')}
                 </GlowButton>
               }

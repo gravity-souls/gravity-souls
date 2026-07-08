@@ -5,25 +5,12 @@ import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceSty
 
 const USER_ID_KEY = 'gravitysoul_user_id'
 
-export function sbtiStorageKey(userId: string): string {
-  return `gravitysoul_sbti_${userId}`
-}
-
 export function universeStorageKey(userId: string): string {
   return `gravitysoul_universe_${userId}`
 }
 
 export function planetStorageKey(userId: string): string {
   return `gravitysoul_planet_${userId}`
-}
-
-export interface StoredSbtiResult {
-  typeCode: string
-  typeCn: string
-  patternString: string
-  scores: Record<string, 'L' | 'M' | 'H'>
-  confidencePercent: number
-  completedAt: string
 }
 
 // --- Pseudo-auth --------------------------------------------------------------
@@ -120,11 +107,6 @@ export function buildUniverseFromInput(
 
 // --- Persistence --------------------------------------------------------------
 
-export function saveUserUniverse(universe: StoredUniverse): void {
-  const userId = getOrCreateUserId()
-  localStorage.setItem(universeStorageKey(userId), JSON.stringify(universe))
-}
-
 export function getUserUniverse(): StoredUniverse | null {
   try {
     const userId = getOrCreateUserId()
@@ -138,33 +120,12 @@ export function getUserUniverse(): StoredUniverse | null {
 
 // --- Planet persistence -------------------------------------------------------
 
-export function savePlanetProfile(planet: PlanetProfile): void {
-  const userId = getOrCreateUserId()
-  localStorage.setItem(planetStorageKey(userId), JSON.stringify(planet))
-}
-
 export function getPlanetProfile(): PlanetProfile | null {
   try {
     const userId = getOrCreateUserId()
     const raw = localStorage.getItem(planetStorageKey(userId))
     if (!raw) return null
     return JSON.parse(raw) as PlanetProfile
-  } catch {
-    return null
-  }
-}
-
-export function saveSbtiResult(result: StoredSbtiResult): void {
-  const userId = getOrCreateUserId()
-  localStorage.setItem(sbtiStorageKey(userId), JSON.stringify(result))
-}
-
-export function getSbtiResult(): StoredSbtiResult | null {
-  try {
-    const userId = getOrCreateUserId()
-    const raw = localStorage.getItem(sbtiStorageKey(userId))
-    if (!raw) return null
-    return JSON.parse(raw) as StoredSbtiResult
   } catch {
     return null
   }

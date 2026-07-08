@@ -90,7 +90,7 @@ export default function ResonanceEmptyState() {
         </p>
       </div>
 
-      <GlowButton href="/create-planet" variant="primary" className="px-8 py-3.5 text-sm">
+      <GlowButton href="/onboarding" variant="primary" className="px-8 py-3.5 text-sm">
         {t('beginFormation')}
       </GlowButton>
 
