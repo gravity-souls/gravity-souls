@@ -22,7 +22,6 @@ import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getPlanetById } from '@/lib/mock-planets'
-import { getPlanetProfile } from '@/lib/user'
 import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
@@ -306,20 +305,16 @@ function PlanetPageInner() {
 
       if (!p) return
 
-      const myPlanet = getPlanetProfile()
-      setViewerPlanet(myPlanet)
-
-      // Also try fetching my planet from API for self-detection
-      let myPlanetId: string | null = myPlanet?.id ?? null
-      let myData: Record<string, unknown> | null = null
+      // Fetch my planet from API for self-detection and resonance calculation
+      let myPlanetId: string | null = null
+      let myViewerPlanet: PlanetProfile | null = null
       try {
         const myRes = await fetch('/api/my-planet')
         if (myRes.ok) {
-          myData = await myRes.json()
-          myPlanetId = myData!.id as string
-          if (!myPlanet) {
-            setViewerPlanet(dbPlanetToProfile(myData!))
-          }
+          const myData = await myRes.json() as Record<string, unknown>
+          myPlanetId = myData.id as string
+          myViewerPlanet = dbPlanetToProfile(myData)
+          setViewerPlanet(myViewerPlanet)
         }
       } catch { /* ignore */ }
 
@@ -327,9 +322,8 @@ function PlanetPageInner() {
         setViewerRole('self')
       } else if (myPlanetId) {
         setViewerRole('resonator')
-        const vp = myPlanet ?? (myPlanetId ? dbPlanetToProfile(myData!) : null)
-        if (vp) {
-          const matches = getResonanceMatches(vp, [p], 1)
+        if (myViewerPlanet) {
+          const matches = getResonanceMatches(myViewerPlanet, [p], 1)
           if (matches.length > 0) setMyMatch(matches[0])
         }
       } else {

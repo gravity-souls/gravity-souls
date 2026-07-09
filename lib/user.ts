@@ -9,10 +9,6 @@ export function universeStorageKey(userId: string): string {
   return `gravitysoul_universe_${userId}`
 }
 
-export function planetStorageKey(userId: string): string {
-  return `gravitysoul_planet_${userId}`
-}
-
 // --- Pseudo-auth --------------------------------------------------------------
 
 export function getOrCreateUserId(): string {
@@ -113,19 +109,6 @@ export function getUserUniverse(): StoredUniverse | null {
     const raw = localStorage.getItem(universeStorageKey(userId))
     if (!raw) return null
     return JSON.parse(raw) as StoredUniverse
-  } catch {
-    return null
-  }
-}
-
-// --- Planet persistence -------------------------------------------------------
-
-export function getPlanetProfile(): PlanetProfile | null {
-  try {
-    const userId = getOrCreateUserId()
-    const raw = localStorage.getItem(planetStorageKey(userId))
-    if (!raw) return null
-    return JSON.parse(raw) as PlanetProfile
   } catch {
     return null
   }
