@@ -9,5 +9,11 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: process.env.SERVER_URL ? [process.env.SERVER_URL] : [],
   emailAndPassword: { enabled: true },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
   plugins: [nextCookies()],
 });

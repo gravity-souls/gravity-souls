@@ -11,13 +11,15 @@ export default function SocialAuthButtons({
   onWeChat,
   disabled = false,
 }: Props) {
-  const btnStyle = {
-    background: 'var(--surface)',
-    border: '1px solid var(--border-mid)',
-    color: 'var(--ink)',
-    opacity: disabled ? 0.4 : 1,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-  } as React.CSSProperties
+  function buttonStyle(isDisabled: boolean): React.CSSProperties {
+    return {
+      background: 'var(--surface)',
+      border: '1px solid var(--border-mid)',
+      color: 'var(--ink)',
+      opacity: isDisabled ? 0.4 : 1,
+      cursor: isDisabled ? 'not-allowed' : 'pointer',
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -27,7 +29,7 @@ export default function SocialAuthButtons({
           onClick={onGoogle}
           disabled={disabled}
           className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
-          style={btnStyle}
+          style={buttonStyle(disabled)}
           aria-label="Continue with Google"
         >
           <GoogleIcon />
@@ -37,9 +39,9 @@ export default function SocialAuthButtons({
         <button
           type="button"
           onClick={onApple}
-          disabled={disabled}
+          disabled={disabled || !onApple}
           className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
-          style={btnStyle}
+          style={buttonStyle(disabled || !onApple)}
           aria-label="Continue with Apple"
         >
           <AppleIcon />
@@ -49,9 +51,9 @@ export default function SocialAuthButtons({
         <button
           type="button"
           onClick={onWeChat}
-          disabled={disabled}
+          disabled={disabled || !onWeChat}
           className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
-          style={btnStyle}
+          style={buttonStyle(disabled || !onWeChat)}
           aria-label="Continue with WeChat"
         >
           <WeChatIcon />
