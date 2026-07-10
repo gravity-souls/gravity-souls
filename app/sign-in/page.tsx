@@ -75,6 +75,7 @@ function SignInForm() {
               sessionStorage.removeItem('gs_onboarding_step');
               sessionStorage.removeItem('gs_onboarding_ready');
               router.push('/resonance');
+              router.refresh()
               return;
             }
           } catch (e) {
@@ -84,6 +85,7 @@ function SignInForm() {
         // Handoff failed or draft missing — return to onboarding so user can retry.
         // Draft is kept in sessionStorage to preserve calibration progress.
         router.push('/onboarding');
+        router.refresh()
         return;
       }
 
@@ -99,8 +101,10 @@ function SignInForm() {
       try {
         const res = await fetch('/api/my-planet')
         router.push(res.ok ? '/resonance' : '/onboarding')
+        router.refresh()
       } catch {
         router.push('/onboarding')
+        router.refresh()
       }
     } catch {
       setError(tCommon("error"));
