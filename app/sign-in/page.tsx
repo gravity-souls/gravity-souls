@@ -21,6 +21,9 @@ function SignInForm() {
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
 
+  const rawNext = searchParams.get('next') ?? ''
+  const nextDest = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : ''
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -180,7 +183,11 @@ function SignInForm() {
 
       <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
         {tAuth("noAccount")}{" "}
-        <Link href="/sign-up" className="underline" style={{ color: "var(--star)" }}>
+        <Link
+          href={nextDest ? `/sign-up?next=${encodeURIComponent(nextDest)}` : '/sign-up'}
+          className="underline"
+          style={{ color: "var(--star)" }}
+        >
           {tAuth("signUp")}
         </Link>
       </p>
