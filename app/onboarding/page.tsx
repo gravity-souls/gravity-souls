@@ -13,7 +13,8 @@ import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
 import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereStyle'
 import GlowButton from '@/components/ui/GlowButton'
-import type { Lifestyle, CommunicationStyle } from '@/types/planet'
+import PlanetAwakeningState from '@/components/creation/PlanetAwakeningState'
+import type { PlanetProfile, Lifestyle, CommunicationStyle } from '@/types/planet'
 import type { ResonanceAnswers } from '@/types/creation'
 
 // Step indices: 0 = intro, 1–3 = creation steps, 4 = resonance questions, 5 = reveal
@@ -88,6 +89,7 @@ export default function OnboardingPage() {
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [saving, setSaving] = useState(false)
   const [revealError, setRevealError] = useState('')
+  const [awakeningPlanet, setAwakeningPlanet] = useState<PlanetProfile | null>(null)
 
   const previewPlanet = useMemo(() => buildPlanetFromDraft(draft, 'preview'), [draft])
 
@@ -127,8 +129,9 @@ export default function OnboardingPage() {
           body: JSON.stringify({ draft }),
         })
         if (res.ok) {
+          const savedPlanet = previewPlanet // capture before draft clears
           clear()
-          router.push('/resonance')
+          setAwakeningPlanet(savedPlanet)
         } else {
           setRevealError('Something went wrong. Please try again.')
         }
@@ -145,6 +148,11 @@ export default function OnboardingPage() {
   function handleSignInFromReveal() {
     markReady()
     router.push('/sign-in?from=onboarding')
+  }
+
+  // -- Awakening reveal (after authenticated save) ------------------------------
+  if (awakeningPlanet) {
+    return <PlanetAwakeningState planet={awakeningPlanet} />
   }
 
   // -- Intro (step 0) -----------------------------------------------------------
