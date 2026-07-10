@@ -10,6 +10,8 @@ import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
 import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
 import FirstSessionHint from '@/components/resonance/FirstSessionHint'
+import FirstMatchCTA from '@/components/resonance/FirstMatchCTA'
+import { getHintDismissed, dismissHint } from '@/lib/hints-preferences'
 import { buildResonanceSession } from '@/lib/match'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
@@ -93,6 +95,7 @@ export default function ResonancePage() {
   const [myPlanet, setMyPlanet]   = useState<PlanetProfile | null>(null)
   const [session, setSession]     = useState<ResonanceSession | null>(null)
   const [activeId, setActiveId]   = useState<string | null>(null)
+  const [firstMatchDone, setFirstMatchDone] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -167,6 +170,10 @@ export default function ResonancePage() {
     load()
     return () => { cancelled = true }
   }, [router])
+
+  useEffect(() => {
+    setFirstMatchDone(getHintDismissed('resonance-first-match-viewed'))
+  }, [])
 
   if (!mounted) return null
 
@@ -247,7 +254,18 @@ export default function ResonancePage() {
 
         {/* Session stats */}
         <SessionStats session={session} />
-        <FirstSessionHint />
+        {firstMatchDone && <FirstSessionHint />}
+        {!firstMatchDone && session.matches.length > 0 && (
+          <FirstMatchCTA
+            topMatch={session.matches[0]}
+            activeId={activeId}
+            onReveal={() => setActiveId(session.matches[0].planetId)}
+            onComplete={() => {
+              dismissHint('resonance-first-session')
+              setFirstMatchDone(true)
+            }}
+          />
+        )}
 
         {/* Main layout: orbit system + drawer */}
         <div className="mt-8 flex flex-col lg:flex-row gap-6 items-start">
