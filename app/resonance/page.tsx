@@ -9,6 +9,7 @@ import ResonanceOrbitSystem from '@/components/resonance/ResonanceOrbitSystem'
 import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
 import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
+import FirstSessionHint from '@/components/resonance/FirstSessionHint'
 import { buildResonanceSession } from '@/lib/match'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
@@ -246,6 +247,7 @@ export default function ResonancePage() {
 
         {/* Session stats */}
         <SessionStats session={session} />
+        <FirstSessionHint />
 
         {/* Main layout: orbit system + drawer */}
         <div className="mt-8 flex flex-col lg:flex-row gap-6 items-start">
