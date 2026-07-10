@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -87,7 +86,6 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
 // --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
-  const router = useRouter()
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
   const [mounted, setMounted]     = useState(false)
@@ -112,8 +110,8 @@ export default function ResonancePage() {
 
       if (cancelled) return
 
-      if (res.status === 401) { router.replace('/sign-in?next=/resonance'); return }
-      if (res.status === 404) { router.replace('/onboarding'); return }
+      if (res.status === 401) { window.location.href = '/sign-in?next=/resonance'; return }
+      if (res.status === 404) { window.location.href = '/onboarding'; return }
       if (!res.ok) return
 
       const data = await res.json() as Record<string, unknown>
@@ -169,7 +167,7 @@ export default function ResonancePage() {
 
     load()
     return () => { cancelled = true }
-  }, [router])
+  }, [])
 
   useEffect(() => {
     setFirstMatchDone(getHintDismissed('resonance-first-match-viewed'))

@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import { scrypt, randomBytes, createHmac } from 'node:crypto'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { E2E, AUTH_DIR, AUTH_WP, AUTH_NP, ALL_TEST_USER_IDS } from './test-ids'
+import { E2E, JOURNEY, AUTH_DIR, AUTH_WP, AUTH_NP, AUTH_SO, ALL_TEST_USER_IDS } from './test-ids'
 
 // Replicates @better-auth/utils/password hashPassword exactly.
 // Parameters sourced from node_modules/@better-auth/utils/dist/password.node.mjs
@@ -177,9 +177,73 @@ export default async function globalSetup() {
     })
     // No session or planet — this user signs in via the form during test 7
 
+    // ── sign-out user (Journey 4) ─────────────────────────────────────────────
+    await prisma.user.upsert({
+      where: { id: E2E.signOut.userId },
+      create: {
+        id: E2E.signOut.userId,
+        name: 'E2E Sign Out',
+        email: E2E.signOut.email,
+        emailVerified: true,
+      },
+      update: {},
+    })
+    await prisma.account.upsert({
+      where: { id: E2E.signOut.accountId },
+      create: {
+        id: E2E.signOut.accountId,
+        accountId: E2E.signOut.userId,
+        providerId: 'credential',
+        userId: E2E.signOut.userId,
+        password: pwHash,
+      },
+      update: { password: pwHash },
+    })
+    await prisma.session.create({
+      data: {
+        id: E2E.signOut.sessionId,
+        token: E2E.signOut.token,
+        expiresAt,
+        userId: E2E.signOut.userId,
+      },
+    })
+    // Ensure exactly one active planet for the sign-out user
+    await prisma.planet.updateMany({
+      where: { userId: E2E.signOut.userId, active: true },
+      data: { active: false },
+    })
+    await prisma.planet.create({
+      data: {
+        userId: E2E.signOut.userId,
+        name: E2E.signOut.planetName,
+        avatarSymbol: '◎',
+        role: 'resonator',
+        mood: 'calm',
+        style: 'minimal',
+        lifestyle: 'solitary',
+        coreThemes: ['depth', 'stillness'],
+        contentFragments: [],
+        visual: {
+          coreColor: '#818cf8',
+          accentColor: '#a5b4fc',
+          ringStyle: 'none',
+          surfaceStyle: 'smooth',
+          satelliteCount: 0,
+          size: 'md',
+        },
+        abstractAxis: 60,
+        introspectiveAxis: 65,
+        active: true,
+      },
+    })
+
+    // ── Journey 1 clean-up: delete any leftover sign-up user from prior runs ──
+    await prisma.user.deleteMany({ where: { email: JOURNEY.signUp.email } })
+
     // ── Write Playwright storage-state files ──────────────────────────────────
     fs.writeFileSync(AUTH_WP, makeStorageState(E2E.withPlanet.token))
     fs.writeFileSync(AUTH_NP, makeStorageState(E2E.noPlanet.token))
+    fs.writeFileSync(AUTH_SO, makeStorageState(E2E.signOut.token))
 
     console.log('[e2e setup] Test users ready. Auth state files written.')
   } finally {

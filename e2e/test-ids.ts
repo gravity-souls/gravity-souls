@@ -31,18 +31,44 @@ export const E2E = {
   // User used for the onboarding sign-in handoff test (test 7).
   // Has no planet so /api/onboarding/complete creates one fresh.
   handoff: {
-    userId:   'gs_e2e_user_ho',
-    email:    'gs_e2e_ho@test.local',
-    password: 'TestPassword123!',
+    userId:    'gs_e2e_user_ho',
+    email:     'gs_e2e_ho@test.local',
+    password:  'TestPassword123!',
     accountId: 'gs_e2e_account_ho',
+  },
+
+  // Dedicated user for Journey 4 (sign-out / sign-back-in).
+  // Has a planet so /resonance renders correctly before sign-out.
+  // Signing out deletes only this session — no other test is affected.
+  signOut: {
+    userId:     'gs_e2e_user_so',
+    email:      'gs_e2e_so@test.local',
+    password:   'TestPassword123!',
+    accountId:  'gs_e2e_account_so',
+    sessionId:  'gs_e2e_session_so',
+    token:      'gs_e2e_tok_sign_out_journey4_abc',
+    planetName: 'Signout Planet',
   },
 } as const
 
-export const AUTH_DIR    = path.join(__dirname, '.auth')
-export const AUTH_WP     = path.join(AUTH_DIR, 'with-planet.json')
-export const AUTH_NP     = path.join(AUTH_DIR, 'no-planet.json')
+// Journey 1 new-user: no pre-existing account.
+// global-setup deletes any leftover record so each run starts clean.
+export const JOURNEY = {
+  signUp: {
+    name:     'E2E Journey New User',
+    email:    'gs_journey_signup@journey.test.local',
+    password: 'JourneyPass123!',
+  },
+} as const
+
+export const AUTH_DIR = path.join(__dirname, '.auth')
+export const AUTH_WP  = path.join(AUTH_DIR, 'with-planet.json')
+export const AUTH_NP  = path.join(AUTH_DIR, 'no-planet.json')
+export const AUTH_SO  = path.join(AUTH_DIR, 'sign-out.json')
+
 export const ALL_TEST_USER_IDS = [
   E2E.withPlanet.userId,
   E2E.noPlanet.userId,
   E2E.handoff.userId,
+  E2E.signOut.userId,
 ]

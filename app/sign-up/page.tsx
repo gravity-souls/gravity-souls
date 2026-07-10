@@ -26,6 +26,11 @@ function SignUpForm() {
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
 
+  // Validated post-auth destination — mirrors the ?next= convention used by /sign-in.
+  // Computed once so it can be used in both handleSubmit and the sign-in cross-link.
+  const rawNext = searchParams.get('next') ?? ''
+  const nextDest = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : ''
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,7 +106,7 @@ function SignUpForm() {
               sessionStorage.removeItem('gs_onboarding_draft');
               sessionStorage.removeItem('gs_onboarding_step');
               sessionStorage.removeItem('gs_onboarding_ready');
-              window.location.href = '/resonance'
+              window.location.href = nextDest || '/resonance'
               return;
             }
           } catch (e) {
@@ -114,10 +119,7 @@ function SignUpForm() {
         return;
       }
 
-      const raw = searchParams.get('next') || '/onboarding';
-      // Only allow relative paths to prevent open-redirect
-      const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/onboarding';
-      window.location.href = next
+      window.location.href = nextDest || '/onboarding'
     } catch {
       setError(tCommon("error"));
     } finally {
@@ -230,7 +232,11 @@ function SignUpForm() {
 
       <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
         {tAuth("hasAccount")}{" "}
-        <Link href="/sign-in" className="underline" style={{ color: "var(--star)" }}>
+        <Link
+          href={nextDest ? `/sign-in?next=${encodeURIComponent(nextDest)}` : '/sign-in'}
+          className="underline"
+          style={{ color: "var(--star)" }}
+        >
           {tAuth("signIn")}
         </Link>
       </p>
