@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
@@ -17,7 +17,6 @@ export default function SignInPage() {
 }
 
 function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -74,8 +73,7 @@ function SignInForm() {
               sessionStorage.removeItem('gs_onboarding_draft');
               sessionStorage.removeItem('gs_onboarding_step');
               sessionStorage.removeItem('gs_onboarding_ready');
-              router.push('/resonance');
-              router.refresh()
+              window.location.href = '/resonance'
               return;
             }
           } catch (e) {
@@ -84,27 +82,23 @@ function SignInForm() {
         }
         // Handoff failed or draft missing — return to onboarding so user can retry.
         // Draft is kept in sessionStorage to preserve calibration progress.
-        router.push('/onboarding');
-        router.refresh()
+        window.location.href = '/onboarding'
         return;
       }
 
       // Priority 2: honour ?next if present and safe
       const raw = searchParams.get('next')
       if (raw?.startsWith('/') && !raw.startsWith('//')) {
-        router.push(raw)
-        router.refresh()
+        window.location.href = raw
         return
       }
 
       // Priority 3: route based on DB planet state
       try {
         const res = await fetch('/api/my-planet')
-        router.push(res.ok ? '/resonance' : '/onboarding')
-        router.refresh()
+        window.location.href = res.ok ? '/resonance' : '/onboarding'
       } catch {
-        router.push('/onboarding')
-        router.refresh()
+        window.location.href = '/onboarding'
       }
     } catch {
       setError(tCommon("error"));

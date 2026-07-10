@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
@@ -22,7 +22,6 @@ export default function SignUpPage() {
 }
 
 function SignUpForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
@@ -102,7 +101,7 @@ function SignUpForm() {
               sessionStorage.removeItem('gs_onboarding_draft');
               sessionStorage.removeItem('gs_onboarding_step');
               sessionStorage.removeItem('gs_onboarding_ready');
-              router.push('/resonance');
+              window.location.href = '/resonance'
               return;
             }
           } catch (e) {
@@ -111,15 +110,14 @@ function SignUpForm() {
         }
         // Handoff failed or draft missing — return to onboarding so user can retry.
         // Draft is kept in sessionStorage to preserve calibration progress.
-        router.push('/onboarding');
+        window.location.href = '/onboarding'
         return;
       }
 
       const raw = searchParams.get('next') || '/onboarding';
       // Only allow relative paths to prevent open-redirect
       const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/onboarding';
-      router.push(next);
-      router.refresh();
+      window.location.href = next
     } catch {
       setError(tCommon("error"));
     } finally {

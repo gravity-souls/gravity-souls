@@ -1,17 +1,16 @@
 'use client'
 
 import { Suspense, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 function SocialLandingInner() {
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     async function route() {
       // 1. One possible error surface from Better Auth OAuth failure
       if (searchParams.get('error')) {
-        router.replace('/sign-in?authError=1')
+        window.location.href = '/sign-in?authError=1'
         return
       }
 
@@ -30,7 +29,7 @@ function SocialLandingInner() {
             sessionStorage.removeItem('gs_onboarding_draft')
             sessionStorage.removeItem('gs_onboarding_step')
             sessionStorage.removeItem('gs_onboarding_ready')
-            router.replace('/resonance')
+            window.location.href = '/resonance'
             return
           }
           // non-200: fall through to main routing
@@ -42,14 +41,14 @@ function SocialLandingInner() {
       // 3. Main routing: returning user → /resonance, new user → /onboarding
       try {
         const res = await fetch('/api/my-planet')
-        router.replace(res.ok ? '/resonance' : '/onboarding')
+        window.location.href = res.ok ? '/resonance' : '/onboarding'
       } catch {
-        router.replace('/onboarding')
+        window.location.href = '/onboarding'
       }
     }
 
     route()
-  }, [router, searchParams])
+  }, [searchParams])
 
   return (
     <main
