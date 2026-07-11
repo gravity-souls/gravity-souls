@@ -260,6 +260,7 @@ export default function ResonancePage() {
         {!firstMatchDone && session.matches.length > 0 && (
           <FirstMatchCTA
             topMatch={session.matches[0]}
+            planet={planetById[session.matches[0].planetId]}
             activeId={activeId}
             onReveal={() => setActiveId(session.matches[0].planetId)}
             onComplete={() => {

@@ -21,7 +21,6 @@ import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeClou
 import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
-import { getPlanetById } from '@/lib/mock-planets'
 import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
@@ -295,10 +294,6 @@ function PlanetPageInner() {
           p = dbPlanetToProfile(data)
         }
       } catch { /* ignore */ }
-
-      if (!p) {
-        p = getPlanetById(id) ?? null
-      }
 
       setPlanet(p)
       setLoading(false)

@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import SignalComposer from '@/components/social/SignalComposer'
-import { getConversation, getMessages } from '@/lib/mock-conversations'
-import { getPlanetById } from '@/lib/mock-planets'
-
 // --- Types ---
 
 interface MsgData {
@@ -113,7 +110,6 @@ export default function ConversationPage({ params }: Props) {
   const [myUserId, setMyUserId]       = useState('')
   const [loading, setLoading]         = useState(true)
   const [sending, setSending]         = useState(false)
-  const [demoConversation, setDemoConversation] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -122,23 +118,6 @@ export default function ConversationPage({ params }: Props) {
       try {
         const res = await fetch(`/api/conversations/${id}`)
         if (!res.ok) {
-          const mockConv = getConversation(id)
-          const mockPlanet = getPlanetById(id)
-          if (mockConv && mockPlanet) {
-            if (cancelled) return
-            setMessages(getMessages(id))
-            setOtherPlanet({
-              id: mockPlanet.id,
-              name: mockPlanet.name,
-              avatarSymbol: mockPlanet.avatarSymbol,
-              visual: mockPlanet.visual,
-            })
-            setMyUserId('p-aelion')
-            setDemoConversation(true)
-            setLoading(false)
-            return
-          }
-
           router.replace('/messages')
           return
         }
@@ -146,7 +125,6 @@ export default function ConversationPage({ params }: Props) {
         if (cancelled) return
         setMessages(data.messages)
         setOtherPlanet(data.otherPlanet)
-        setDemoConversation(false)
 
         // Get my user ID from /api/me
         const meRes = await fetch('/api/me')
@@ -156,23 +134,6 @@ export default function ConversationPage({ params }: Props) {
           setMyUserId(meData.user.id)
         }
       } catch {
-        const mockConv = getConversation(id)
-        const mockPlanet = getPlanetById(id)
-        if (mockConv && mockPlanet) {
-          if (cancelled) return
-          setMessages(getMessages(id))
-          setOtherPlanet({
-            id: mockPlanet.id,
-            name: mockPlanet.name,
-            avatarSymbol: mockPlanet.avatarSymbol,
-            visual: mockPlanet.visual,
-          })
-          setMyUserId('p-aelion')
-          setDemoConversation(true)
-          setLoading(false)
-          return
-        }
-
         router.replace('/messages')
         return
       }
@@ -201,11 +162,6 @@ export default function ConversationPage({ params }: Props) {
       sentAt: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, tempMsg])
-
-    if (demoConversation) {
-      setSending(false)
-      return
-    }
 
     try {
       const res = await fetch(`/api/conversations/${id}`, {

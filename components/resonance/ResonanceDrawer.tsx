@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
@@ -58,6 +58,17 @@ interface Props {
 export default function ResonanceDrawer({ match, onClose, planetById }: Props) {
   const t = useTranslations('resonance')
   const open = match !== null
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  // Restore focus to the triggering element on close so focus never
+  // remains inside an aria-hidden subtree.
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement
+    } else {
+      previousFocusRef.current?.focus()
+    }
+  }, [open])
 
   // Escape key to close
   useEffect(() => {

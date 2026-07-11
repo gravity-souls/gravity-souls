@@ -9,9 +9,6 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
-import { getConversation } from '@/lib/mock-conversations'
-import { getPlanetById } from '@/lib/mock-planets'
-
 // --- Types for API response ---
 
 interface ConvPlanet {
@@ -164,23 +161,11 @@ function MessagesInner() {
           if (cancelled) return
 
           if (!planetRes.ok) {
-            const demoPlanet = getPlanetById(targetPlanetId)
-            if (demoPlanet && getConversation(demoPlanet.id)) {
-              router.replace(`/messages/${demoPlanet.id}`)
-              return
-            }
-
-            setOpenError(demoPlanet
-              ? {
-                  message: t('demoInboxMissing', { name: demoPlanet.name }),
-                  actionHref: `/planet/${demoPlanet.id}`,
-                  actionLabel: t('viewDemoPlanet'),
-                }
-              : {
-                  message: t('planetMissing'),
-                  actionHref: '/discover',
-                  actionLabel: t('explorePlanets'),
-                })
+            setOpenError({
+              message: t('planetMissing'),
+              actionHref: '/discover',
+              actionLabel: t('explorePlanets'),
+            })
             setLoading(false)
             return
           }

@@ -1,21 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getPlanetById } from '@/lib/mock-planets'
 import { orbitColorHex } from '@/lib/match'
 import { getHintDismissed, dismissHint } from '@/lib/hints-preferences'
 import type { OrbitMatch } from '@/types/match'
+import type { PlanetProfile } from '@/types/planet'
 
 const HINT_KEY = 'resonance-first-match-viewed'
 
 interface Props {
-  topMatch: OrbitMatch
-  activeId: string | null
-  onReveal: () => void
+  topMatch:  OrbitMatch
+  planet?:   PlanetProfile
+  activeId:  string | null
+  onReveal:  () => void
   onComplete?: () => void
 }
 
-export default function FirstMatchCTA({ topMatch, activeId, onReveal, onComplete }: Props) {
+export default function FirstMatchCTA({ topMatch, planet, activeId, onReveal, onComplete }: Props) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -33,12 +34,9 @@ export default function FirstMatchCTA({ topMatch, activeId, onReveal, onComplete
   if (!visible) return null
 
   const color = orbitColorHex(topMatch.orbitColor)
-  // getPlanetById only resolves mock-data planets; real DB planets return undefined.
-  // Render the CTA in either case — fall back to generic labels when name is unavailable.
-  const planet = getPlanetById(topMatch.planetId)
-  const displayName = planet?.name ?? null
+  const displayName   = planet?.name ?? null
   const displaySymbol = planet?.avatarSymbol ?? '◎'
-  const symbolColor = planet?.visual.coreColor ?? color
+  const symbolColor   = planet?.visual.coreColor ?? color
 
   return (
     <div
