@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
-import { getPlanetById } from '@/lib/mock-planets'
 import { orbitColorHex } from '@/lib/match'
 import GlowButton from '@/components/ui/GlowButton'
 import MatchDimensionBars from '@/components/resonance/MatchDimensionBars'
@@ -51,11 +50,12 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
 // --- ResonanceDrawer ----------------------------------------------------------
 
 interface Props {
-  match:    OrbitMatch | null
-  onClose:  () => void
+  match:      OrbitMatch | null
+  onClose:    () => void
+  planetById: Record<string, PlanetProfile>
 }
 
-export default function ResonanceDrawer({ match, onClose }: Props) {
+export default function ResonanceDrawer({ match, onClose, planetById }: Props) {
   const t = useTranslations('resonance')
   const open = match !== null
 
@@ -67,7 +67,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  const planet: PlanetProfile | undefined = match ? getPlanetById(match.planetId) : undefined
+  const planet: PlanetProfile | undefined = match ? planetById[match.planetId] : undefined
   const color  = match ? orbitColorHex(match.orbitColor) : '#a78bfa'
 
   return (
@@ -99,6 +99,7 @@ export default function ResonanceDrawer({ match, onClose }: Props) {
         } as React.CSSProperties}
         role="dialog"
         aria-modal="true"
+        aria-hidden={!open}
       >
         {planet && match ? (
           <DrawerContent planet={planet} match={match} color={color} onClose={onClose} />

@@ -92,6 +92,7 @@ export default function ResonancePage() {
   const [role, setRole]           = useState<'explorer' | 'resonator'>('explorer')
   const [myPlanet, setMyPlanet]   = useState<PlanetProfile | null>(null)
   const [session, setSession]     = useState<ResonanceSession | null>(null)
+  const [planetById, setPlanetById] = useState<Record<string, PlanetProfile>>({})
   const [activeId, setActiveId]   = useState<string | null>(null)
   const [firstMatchDone, setFirstMatchDone] = useState(false)
 
@@ -160,6 +161,9 @@ export default function ResonancePage() {
           } as PlanetProfile))
           if (planets.length > 0) {
             setSession(buildResonanceSession(p, planets))
+            const byId: Record<string, PlanetProfile> = {}
+            for (const pl of planets) byId[pl.id] = pl
+            setPlanetById(byId)
           }
         })
         .catch(() => { /* no session */ })
@@ -304,6 +308,7 @@ export default function ResonancePage() {
                 activeId={activeId}
                 onSelect={setActiveId}
                 size={480}
+                planetById={planetById}
               />
             </div>
 
@@ -314,6 +319,7 @@ export default function ResonancePage() {
           <ResonanceDrawer
             match={activeMatch}
             onClose={() => setActiveId(null)}
+            planetById={planetById}
           />
         </div>
 

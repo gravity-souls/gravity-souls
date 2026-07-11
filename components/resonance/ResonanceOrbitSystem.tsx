@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
-import { getPlanetById } from '@/lib/mock-planets'
 import { orbitColorHex } from '@/lib/match'
 import ResonancePlanetNode from '@/components/resonance/ResonancePlanetNode'
 
@@ -51,6 +50,7 @@ interface Props {
   matches:       OrbitMatch[]
   activeId:      string | null
   onSelect:      (id: string | null) => void
+  planetById:    Record<string, PlanetProfile>
   /** Canvas size in px (square) */
   size?:         number
 }
@@ -60,6 +60,7 @@ export default function ResonanceOrbitSystem({
   matches,
   activeId,
   onSelect,
+  planetById,
   size = 520,
 }: Props) {
   const tHome = useTranslations('home')
@@ -72,12 +73,12 @@ export default function ResonanceOrbitSystem({
 
   const nodes = useMemo(() =>
     matches.map((match, i) => {
-      const planet = getPlanetById(match.planetId)
+      const planet = planetById[match.planetId]
       const angle  = angles[i]
       const pos    = polarToCartesian(cx, cy, orbitR, angle)
       return { match, planet, angle, pos }
     }),
-    [matches, angles, cx, cy, orbitR],
+    [matches, angles, cx, cy, orbitR, planetById],
   )
 
   return (

@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 
 export function SignOutButton() {
-  const router = useRouter();
   const tNav = useTranslations("nav");
   const tCommon = useTranslations("common");
   const [loading, setLoading] = useState(false);
@@ -16,8 +14,7 @@ export function SignOutButton() {
 
     try {
       await authClient.signOut();
-      router.push("/sign-in");
-      router.refresh();
+      window.location.href = "/sign-in";
     } finally {
       setLoading(false);
     }
