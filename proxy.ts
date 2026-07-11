@@ -4,7 +4,8 @@ import type { NextRequest } from 'next/server'
 const SESSION_COOKIE = 'better-auth.session_token'
 
 export function proxy(request: NextRequest) {
-  if (!request.cookies.has(SESSION_COOKIE)) {
+  const hasSession = request.cookies.has(SESSION_COOKIE) || request.cookies.has(`__Secure-${SESSION_COOKIE}`)
+  if (!hasSession) {
     const signIn = new URL('/sign-in', request.url)
     signIn.searchParams.set('next', request.nextUrl.pathname)
     return NextResponse.redirect(signIn)
