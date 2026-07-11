@@ -17,7 +17,10 @@
 import { test, expect } from '@playwright/test'
 import { AUTH_WP, AUTH_NP } from './test-ids'
 
-const HINT_KEY  = 'gs_hint_dismissed_resonance-first-session'
+const HINT_KEY = 'gs_hint_dismissed_resonance-first-session'
+// Phase 14 CTA suppresses Phase 13 hint until the user completes it.
+// Pre-set this key so FirstMatchCTA is already dismissed and FirstSessionHint renders.
+const P14_KEY  = 'gs_hint_dismissed_resonance-first-match-viewed'
 const HINT_TEXT = 'Your orbit is live'
 
 // ── 1. Hint visible for first-time resonator visit ────────────────────────────
@@ -25,8 +28,13 @@ const HINT_TEXT = 'Your orbit is live'
 test.describe('first-session hint — first visit', () => {
   test.use({ storageState: AUTH_WP })
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/resonance', { waitUntil: 'domcontentloaded' })
+    await page.evaluate((key) => localStorage.setItem(key, '1'), P14_KEY)
+  })
+
   test('hint strip is visible when localStorage key is absent', async ({ page }) => {
-    // Default AUTH_WP storage has no localStorage entries — hint should appear
+    // Phase 14 key pre-set in beforeEach; Phase 13 key absent — hint should appear
     await page.goto('/resonance', { waitUntil: 'networkidle' })
     const hint = page.getByRole('status')
     await expect(hint).toBeVisible({ timeout: 6000 })
@@ -39,6 +47,11 @@ test.describe('first-session hint — first visit', () => {
 
 test.describe('first-session hint — dismissal', () => {
   test.use({ storageState: AUTH_WP })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/resonance', { waitUntil: 'domcontentloaded' })
+    await page.evaluate((key) => localStorage.setItem(key, '1'), P14_KEY)
+  })
 
   test('clicking "Got it" hides the hint', async ({ page }) => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
