@@ -19,15 +19,11 @@ import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel
 import EventDetail from '@/components/events/EventDetail'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
-import SharedMomentsFeed from '@/components/planet/SharedMomentsFeed'
 import CreatePostModal from '@/components/stream/CreatePostModal'
 import PostDetail from '@/components/stream/PostDetail'
 import PostGrid from '@/components/stream/PostGrid'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getResonanceMatches } from '@/lib/match'
-import { MOCK_GALAXIES } from '@/lib/mock-galaxies'
-import { mockPlanets } from '@/lib/mock-planets'
-import { getSharedPostsForPlanets } from '@/lib/mock-posts'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
@@ -120,19 +116,10 @@ const CATEGORY_LABELS: Record<EventCategory, string> = {
   OTHER: 'Other',
 }
 
-function getRecommendedGalaxies(): GalaxyPreview[] {
-  return MOCK_GALAXIES.slice(0, 3).map((g) => ({
-    id: g.id,
-    slug: g.slug,
-    name: g.name,
-    symbol: g.symbol,
-    tagline: g.tagline,
-    keywords: g.keywords,
-    mood: g.mood,
-    memberCount: g.memberCount,
-    maturity: g.maturity,
-    accentColor: g.accentColor,
-  }))
+interface CommunityRaw {
+  id: string; slug: string; name: string; symbol: string
+  tagline: string | null; keywords: string[]; mood: string
+  accentColor: string; maturity: string; memberCount: number
 }
 
 function fallbackResonanceScore(id: string): number {
@@ -169,6 +156,7 @@ export default function MyPlanetPage() {
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
+  const [communities, setCommunities] = useState<GalaxyPreview[]>([])
   const [createPostOpen, setCreatePostOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState<StreamPost | null>(null)
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
@@ -311,6 +299,27 @@ export default function MyPlanetPage() {
         } catch {
           // Fallback: empty resonances
         }
+
+        try {
+          const commRes = await fetch('/api/communities')
+          if (commRes.ok) {
+            const commData = (await commRes.json()) as CommunityRaw[]
+            setCommunities(commData.slice(0, 3).map((c) => ({
+              id: c.id,
+              slug: c.slug,
+              name: c.name,
+              symbol: c.symbol,
+              tagline: c.tagline ?? undefined,
+              keywords: c.keywords,
+              mood: c.mood as GalaxyPreview['mood'],
+              memberCount: c.memberCount,
+              maturity: c.maturity as GalaxyPreview['maturity'],
+              accentColor: c.accentColor,
+            })))
+          }
+        } catch {
+          // communities stays empty
+        }
       }
 
       setLoading(false)
@@ -364,8 +373,7 @@ export default function MyPlanetPage() {
   const globeSize = isDesktop ? 300 : 200
 
   // --- Derived data for dashboard sections ---
-  // Resonant match cards (from DB planets or mock fallback)
-  const matchPool = otherPlanets.length > 0 ? otherPlanets : mockPlanets
+  const matchPool = otherPlanets
   const matchEntries = matchPool.slice(0, 6).map((p) => {
     const matches = getResonanceMatches(planet, [p], 1)
     const score = matches[0]?.strength ?? fallbackResonanceScore(p.id)
@@ -390,9 +398,6 @@ export default function MyPlanetPage() {
     { label: 'Adventurous', value: Math.min(100, 100 - planet.cognitiveAxes.introspective + 15) },
   ]
   const balance = Math.round(radarDimensions.reduce((sum, d) => sum + d.value, 0) / radarDimensions.length)
-
-  const recommendedGalaxies = getRecommendedGalaxies()
-  const sharedMoments = getSharedPostsForPlanets(matchPool, 3)
 
   function handleRenameEnter() {
     setRenameInput(planet!.name)
@@ -787,7 +792,7 @@ export default function MyPlanetPage() {
             RECOMMENDED COMMUNITIES
             ================================================================ */}
         <OrbitCard glowColor={visual.coreColor} className="mt-4 p-5">
-          <RecommendedCommunities galaxies={recommendedGalaxies} />
+          <RecommendedCommunities galaxies={communities} />
         </OrbitCard>
 
         {/* ================================================================
@@ -811,37 +816,6 @@ export default function MyPlanetPage() {
             onPostOpen={setSelectedPost}
           />
         </OrbitCard>
-
-        {/* ================================================================
-            SHARED MOMENTS + FOOTER IDENTITY
-            ================================================================ */}
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-          {/* Inspirational quote */}
-          <div
-            className="lg:col-span-2 flex flex-col items-center justify-center p-5 rounded-2xl"
-            style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center mb-3"
-              style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)' }}>
-              <span style={{ color: 'var(--star)', fontSize: 14 }}>◎</span>
-            </div>
-            <p className="text-[11px] text-center italic leading-relaxed" style={{ color: 'var(--ghost)' }}>
-              You are not lost.<br />
-              You are becoming.
-            </p>
-          </div>
-
-          {/* Shared Moments feed */}
-          <div className="lg:col-span-10">
-            <OrbitCard glowColor={visual.accentColor} className="p-5">
-              <SharedMomentsFeed moments={sharedMoments} />
-            </OrbitCard>
-          </div>
-        </div>
 
         {/* ================================================================
             BOTTOM IDENTITY BAR
