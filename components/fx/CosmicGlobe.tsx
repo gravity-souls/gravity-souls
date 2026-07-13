@@ -193,9 +193,15 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     // Intent gate: require ~0.3 s of continuous hover before wheel activates (unless
     // already in focus state) to prevent incidental page-scroll gestures from
     // triggering depth changes.
+    // preventDefault is called only after the gate passes — so during the gate
+    // the event falls through to the page normally (no deadened interval where
+    // scroll is blocked but the demo is not yet responding). Once the demo is
+    // actively consuming wheel input, it claims ownership and blocks page scroll.
+    // When reducedMotion is on, no preventDefault is ever called.
     const onWheel = (e: WheelEvent) => {
       if (reducedMotion) return
       if (hoverFrames < 18 && scrollAcc < 0.5) return
+      e.preventDefault()
       let delta = e.deltaY
       if (e.deltaMode === 1) delta *= 40
       if (e.deltaMode === 2) delta *= 800
@@ -208,7 +214,8 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     mount.addEventListener('pointercancel', onPointerCancel, { passive: true })
     mount.addEventListener('pointerdown',   onPointerDown,   { passive: true })
     mount.addEventListener('pointerup',     onPointerUp,     { passive: true })
-    mount.addEventListener('wheel',         onWheel,         { passive: true })
+    // Non-passive: required to call e.preventDefault() once the demo owns the gesture.
+    mount.addEventListener('wheel',         onWheel,         { passive: false })
     disposables.push({
       dispose: () => {
         mount.removeEventListener('pointerenter',  onPointerEnter)
