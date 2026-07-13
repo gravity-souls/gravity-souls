@@ -7,8 +7,6 @@ export interface CosmicGlobeProps {
   style?: React.CSSProperties
 }
 
-// ── Texture factories — browser-only ─────────────────────────────────────────
-
 function makeParticleTex(): HTMLCanvasElement {
   const c = document.createElement('canvas')
   c.width = c.height = 64
@@ -37,8 +35,6 @@ function makeBloomTex(): HTMLCanvasElement {
   return c
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null)
 
@@ -51,7 +47,7 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     let ownedCanvas: HTMLCanvasElement | null = null
     const disposables: { dispose(): void }[] = []
 
-    // ── Pointer interaction state ─────────────────────────────────────────────
+    // ── Pointer state ─────────────────────────────────────────────────────────
     let mouseNX      = 0
     let mouseNY      = 0
     let mouseActive  = false
@@ -66,18 +62,32 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     let smoothBloomLift = 0
 
     // ── Scroll-depth state ────────────────────────────────────────────────────
-    // scrollAcc: depth dial.  negative → expand, positive → focus / traverse.
-    // Decays toward 0 when the pointer leaves; holds while pointer is present.
     let scrollAcc            = 0
     let focusSmooth          = 0
     let expandSmooth         = 0
-    let traverseSmooth       = 0   // particle shell-parting and inner pull
-    let cameraTraverseSmooth = 0   // faster lerp — camera leads particles
+    let traverseSmooth       = 0
+    let cameraTraverseSmooth = 0
 
-    // hoverFrames counts consecutive animation frames the pointer has been inside.
-    // Used to gate wheel events: the user must have genuinely hovered for ~0.3 s
-    // before wheel events contribute to traversal, preventing incidental page-scroll
-    // gestures from triggering depth states when the pointer passes over the component.
+    // shellSpread is separate from traverseSmooth so the ring can close faster
+    // than the camera retreats on exit — "shell sealing behind you" feeling.
+    let shellSpread = 0
+
+    // presenceSmooth builds slowly while hovering, creating a subtle bloom lift
+    // and "invitation" feeling before any scroll input.
+    let presenceSmooth = 0
+
+    // Touch swipe momentum: EMA velocity preserved after pointer lift.
+    let touchVelocity = 0
+
+    // Long press state
+    let holdStart  = 0
+    // bloomPulse = 1.0 on long press fire; decays over ~14 frames as visual confirmation.
+    let bloomPulse = 0
+
+    // Integrated sphere rotation — allows variable speed without discontinuities.
+    let sphereRotY = 0
+
+    // Wheel intent gate
     let hoverFrames = 0
 
     const SCROLL_SENS = 0.003
@@ -93,7 +103,10 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
 
     const onMotionChange = (e: MediaQueryListEvent) => {
       reducedMotion = e.matches
-      if (reducedMotion) { mouseNX = 0; mouseNY = 0; mouseActive = false; scrollAcc = 0 }
+      if (reducedMotion) {
+        mouseNX = 0; mouseNY = 0; mouseActive = false
+        scrollAcc = 0; touchVelocity = 0; bloomPulse = 0
+      }
     }
     if (typeof motionMQ.addEventListener === 'function') {
       motionMQ.addEventListener('change', onMotionChange)
@@ -117,8 +130,9 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     const onPointerEnter = (e: PointerEvent) => {
       if (reducedMotion) return
       readCoords(e)
-      lastPointerY = e.clientY
-      mouseActive  = true
+      lastPointerY  = e.clientY
+      touchVelocity = 0   // clear momentum when a new contact starts
+      mouseActive   = true
     }
 
     const onPointerMove = (e: PointerEvent) => {
@@ -126,13 +140,16 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       readCoords(e)
 
       if (e.pointerType === 'touch') {
-        const dy = lastPointerY - e.clientY  // positive = swipe up = deeper
-        if (Math.abs(dy) > 1) {              // ignore sub-pixel jitter
-          scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + dy * TOUCH_SENS))
-        }
-        if (Math.abs(dy) > 8 && longPressTimer !== null) {
-          clearTimeout(longPressTimer)
-          longPressTimer = null
+        const dy = lastPointerY - e.clientY   // positive = swipe up = deeper
+        if (Math.abs(dy) > 1) {
+          const delta = dy * TOUCH_SENS
+          scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + delta))
+          // EMA of per-event deltas — smoothed velocity for momentum after lift.
+          touchVelocity = touchVelocity * 0.70 + delta * 0.30
+          if (Math.abs(dy) > 8 && longPressTimer !== null) {
+            clearTimeout(longPressTimer)
+            longPressTimer = null
+          }
         }
       }
       lastPointerY = e.clientY
@@ -146,31 +163,36 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     const onPointerLeave = () => {
       mouseNX = 0; mouseNY = 0; mouseActive = false
       clearLongPress()
+      // touchVelocity preserved — becomes momentum in animate()
     }
 
-    // pointercancel fires when a touch is interrupted by a system gesture or call.
+    // pointercancel = gesture interrupted by system (call, home swipe).
+    // No momentum: the gesture did not complete intentionally.
     const onPointerCancel = () => {
       mouseNX = 0; mouseNY = 0; mouseActive = false
+      touchVelocity = 0
       clearLongPress()
     }
 
-    // 650 ms touch hold without significant movement → expand state.
     const onPointerDown = (e: PointerEvent) => {
       if (reducedMotion || e.pointerType !== 'touch') return
+      holdStart      = performance.now()
       longPressTimer = setTimeout(() => {
-        scrollAcc      = Math.max(SCROLL_MIN, scrollAcc - 1.0)
+        scrollAcc  = Math.max(SCROLL_MIN, scrollAcc - 1.0)
+        bloomPulse = 1.0   // bloom flash confirms the action
         longPressTimer = null
       }, 650)
     }
 
-    const onPointerUp = () => { clearLongPress() }
+    const onPointerUp = () => {
+      clearLongPress()
+      // touchVelocity preserved — becomes momentum
+    }
 
-    // Wheel drives the depth dial on desktop.  passive:true — page scroll is
-    // not blocked, which is correct when the component is embedded in a longer page.
-    // Intent gate: require ~0.3 s of continuous hover before wheel activates,
-    // unless the dial is already in focus state (scrollAcc > 0.5). This stops
-    // incidental page-scroll trackpad gestures from triggering depth states when
-    // the pointer drifts over the component.
+    // Wheel drives the depth dial on desktop. passive:true — page scroll is not blocked.
+    // Intent gate: require ~0.3 s of continuous hover before wheel activates (unless
+    // already in focus state) to prevent incidental page-scroll gestures from
+    // triggering depth changes.
     const onWheel = (e: WheelEvent) => {
       if (reducedMotion) return
       if (hoverFrames < 18 && scrollAcc < 0.5) return
@@ -208,7 +230,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
 
       const m = mount!
 
-      // ── Canvas + renderer ─────────────────────────────────────────────────
       const canvas = document.createElement('canvas')
       canvas.style.display = 'block'
       ownedCanvas = canvas
@@ -225,7 +246,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       renderer.setClearColor(0x040A18, 1)
       disposables.push(renderer)
 
-      // ── Scene + camera ────────────────────────────────────────────────────
       const scene  = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(55, m.clientWidth / m.clientHeight, 0.01, 60)
       camera.position.z = 3.5
@@ -242,11 +262,10 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       ro.observe(m)
       disposables.push({ dispose: () => ro.disconnect() })
 
-      // ── Particle texture ──────────────────────────────────────────────────
       const particleTex = new THREE.CanvasTexture(makeParticleTex())
       disposables.push(particleTex)
 
-      // ── Particle positions ────────────────────────────────────────────────
+      // ── Particle geometry ─────────────────────────────────────────────────
       const N_SURFACE    = 7_000
       const N_EQUATORIAL = 2_500
       const N_INNER      = 1_500
@@ -257,7 +276,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       const livePos  = new Float32Array(N_TOTAL * 3)
       const colors   = new Float32Array(N_TOTAL * 3)
 
-      // ── Globe positions ───────────────────────────────────────────────────
       let p = 0
 
       for (let i = 0; i < N_SURFACE; i++) {
@@ -297,7 +315,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         p += 3
       }
 
-      // ── Torus target positions ────────────────────────────────────────────
       const R_main = 0.70, r_tube = 0.28, squish = 0.78
       let q = 0
 
@@ -337,7 +354,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
 
       livePos.set(globePos)
 
-      // ── Geometry ──────────────────────────────────────────────────────────
       const sphereGeo = new THREE.BufferGeometry()
       const posAttr   = new THREE.BufferAttribute(livePos, 3)
       posAttr.usage   = THREE.DynamicDrawUsage
@@ -360,10 +376,8 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       sphere.rotation.x = 0.20
       scene.add(sphere)
 
-      // ── Bloom sprite ──────────────────────────────────────────────────────
       const bloomTex = new THREE.CanvasTexture(makeBloomTex())
       disposables.push(bloomTex)
-
       const bloomMat = new THREE.SpriteMaterial({
         map:         bloomTex,
         blending:    THREE.AdditiveBlending,
@@ -372,12 +386,10 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         opacity:     0.50,
       })
       disposables.push(bloomMat)
-
       const bloom = new THREE.Sprite(bloomMat)
       bloom.scale.setScalar(1.85)
       scene.add(bloom)
 
-      // ── Starfield ─────────────────────────────────────────────────────────
       const N_STARS = 280
       const starPos = new Float32Array(N_STARS * 3)
       for (let i = 0; i < N_STARS; i++) {
@@ -391,7 +403,6 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       const starGeo = new THREE.BufferGeometry()
       starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3))
       disposables.push(starGeo)
-
       const starMat = new THREE.PointsMaterial({
         size:            0.09,
         color:           new THREE.Color('#BDD4F0'),
@@ -403,17 +414,14 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       disposables.push(starMat)
       scene.add(new THREE.Points(starGeo, starMat))
 
-      // ── Timer ─────────────────────────────────────────────────────────────
       const timer = new THREE.Timer()
       timer.connect(document)
       disposables.push({ dispose: () => timer.disconnect() })
 
-      // ── Animation constants ───────────────────────────────────────────────
       const MORPH_PERIOD = 30
       const MAX_YAW      = 6 * Math.PI / 180
       const MAX_PITCH    = 3 * Math.PI / 180
 
-      // Byte-index boundaries for the three particle groups in the flat array.
       const EQ_START    = N_SURFACE * 3
       const INNER_START = (N_SURFACE + N_EQUATORIAL) * 3
 
@@ -423,33 +431,73 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         rafId = requestAnimationFrame(animate)
 
         timer.update(timestamp)
-        const t = timer.getElapsed()
+        const t  = timer.getElapsed()
+        const dt = Math.max(Math.min(timer.getDelta(), 0.05), 0.001)
 
-        // ── Hover dwell counter ───────────────────────────────────────────
-        // Increments while pointer is inside; resets to 0 on leave so each
-        // new hover must dwell before the wheel intent gate opens.
+        // ── Hover dwell ───────────────────────────────────────────────────
         if (mouseActive) hoverFrames = Math.min(hoverFrames + 1, 120)
         else             hoverFrames = 0
 
-        // ── Scroll-depth state machine ────────────────────────────────────
-        if (!mouseActive) scrollAcc += (0 - scrollAcc) * 0.030
+        // ── Presence ──────────────────────────────────────────────────────
+        // Builds over ~2 s while hovering; decays in ~1.5 s on leave.
+        // Provides a gentle "surface invitation" before any scroll input.
+        presenceSmooth += ((mouseActive ? 1 : 0) - presenceSmooth) * (mouseActive ? 0.008 : 0.010)
 
+        // ── Long press bloom pulse ────────────────────────────────────────
+        bloomPulse = Math.max(0, bloomPulse - 0.07)   // decays in ~14 frames
+
+        // Hold tension: 0→1 over the 650 ms window.
+        const holdTension = longPressTimer !== null
+          ? Math.min(1, (performance.now() - holdStart) / 650)
+          : 0
+
+        // ── Scroll / momentum state ───────────────────────────────────────
+        if (!mouseActive) {
+          // Apply touch momentum then decay it (friction ~12 %/frame).
+          if (Math.abs(touchVelocity) > 0.0002) {
+            scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + touchVelocity))
+            touchVelocity *= 0.88
+          } else {
+            touchVelocity = 0
+          }
+          // Standard decay toward surface when pointer absent.
+          scrollAcc += (0 - scrollAcc) * 0.028
+        } else {
+          // Drain residual momentum while actively touching.
+          touchVelocity *= 0.60
+        }
+
+        // ── Depth targets ─────────────────────────────────────────────────
         const focusTarget    = Math.max(0, Math.min(1, (scrollAcc  - 0.5) / 1.0))
         const expandTarget   = Math.max(0, Math.min(1, (-scrollAcc - 0.5) / 1.0))
         const traverseTarget = Math.max(0, Math.min(1, (scrollAcc  - 1.5) / 1.0))
 
-        focusSmooth          += (focusTarget    - focusSmooth)          * 0.040
-        expandSmooth         += (expandTarget   - expandSmooth)         * 0.040
-        // Particles trail the camera slightly — the viewer enters the shell
-        // before the opening fully forms, creating a genuine crossing moment.
-        traverseSmooth       += (traverseTarget - traverseSmooth)       * 0.025
-        cameraTraverseSmooth += (traverseTarget - cameraTraverseSmooth) * 0.042
+        focusSmooth  += (focusTarget  - focusSmooth)  * 0.040
+        expandSmooth += (expandTarget - expandSmooth) * 0.040
 
-        // Camera: z=3.5 → z=1.2 at full traversal.
-        // Stopping at z=1.2 keeps all particles ≥ 0.2 units from the camera,
-        // preventing near-plane clipping and oversized sizeAttenuation blowup
-        // on near-polar particles that the XY spread cannot reach.
+        // Asymmetric traversal: entry rushes forward, exit lingers.
+        // Entry — viewer accelerates inward through the shell.
+        // Exit  — reluctant release; the passage closes slowly.
+        traverseSmooth += (traverseTarget - traverseSmooth) *
+          (traverseTarget > traverseSmooth ? 0.032 : 0.020)
+
+        // Camera leads particles on entry, also retreats more slowly on exit.
+        cameraTraverseSmooth += (traverseTarget - cameraTraverseSmooth) *
+          (traverseTarget > cameraTraverseSmooth ? 0.055 : 0.030)
+
+        // Shell ring: opens with particles on entry; snaps back faster on exit
+        // so the ring seals while the camera is still retreating.
+        shellSpread += (traverseTarget - shellSpread) *
+          (traverseTarget > shellSpread ? 0.032 : 0.055)
+
+        // Camera z: 3.5 → 1.2 at full traversal (0.2 units outside shell surface).
         camera.position.z = 3.5 - cameraTraverseSmooth * 2.3
+
+        // ── Inner arrival ─────────────────────────────────────────────────
+        // A low-frequency luminosity pulse activates once past 50 % traversal —
+        // the "heartbeat" of the inner space. 0.88 rad/s ≈ one cycle per 7 s.
+        const arrivalDepth = Math.max(0, (traverseSmooth - 0.5) * 2)
+        const innerPulse   = arrivalDepth * 0.07 * Math.sin(t * 0.88)
 
         // ── Parallax ─────────────────────────────────────────────────────
         smoothYaw   += (mouseNX *  MAX_YAW   - smoothYaw)   * 0.025
@@ -464,51 +512,39 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         // ── Per-group position modifiers ──────────────────────────────────
         const globalRadialScale = 1 - focusSmooth * 0.18 + expandSmooth * 0.28
 
-        // Surface group: radial scale + shell opening during traversal.
-        //
-        // Shell opening spreads particles outward from the z-axis (the camera's
-        // approach axis) rather than using a facing-angle bias on local pz.
-        // The z-axis spread is rotation-independent: it produces the same
-        // portal-ring silhouette regardless of where sphere.rotation.y is in
-        // its 30-second cycle, so the shell crossing always looks consistent.
-        //
-        // Near-polar particles (rXY < 0.08) cannot spread laterally without
-        // becoming a dense point; they retreat slightly along local -Z instead,
-        // which increases their camera distance and reduces apparent billboard size.
-        // (Local z ≈ world z for the brief duration of a typical traversal
-        // gesture — the sphere rotation moves ~23° over a few seconds, which
-        // is close enough for a soft perceptual effect.)
+        // Surface: radial scale + shell opening via shellSpread (not traverseSmooth),
+        // so the ring can close faster than the camera retreats on exit.
+        // XY spread from the z-axis is rotation-independent: correct at any
+        // rotation angle throughout the 30-second morph cycle.
         for (let i = 0; i < EQ_START; i += 3) {
           livePos[i]     *= globalRadialScale
           livePos[i + 1] *= globalRadialScale
           livePos[i + 2] *= globalRadialScale
 
-          if (traverseSmooth > 0.001) {
+          if (shellSpread > 0.001) {
             const px  = livePos[i]
             const py  = livePos[i + 1]
             const rXY = Math.sqrt(px * px + py * py)
 
             if (rXY > 0.08) {
-              // Spread laterally away from the viewing axis — the ring opens.
-              const spread = traverseSmooth * 0.50
+              const spread = shellSpread * 0.50
               livePos[i]     += (px / rXY) * spread
               livePos[i + 1] += (py / rXY) * spread
             } else {
               // Near-polar: retreat along local -Z to increase camera distance.
-              livePos[i + 2] -= traverseSmooth * 0.15
+              livePos[i + 2] -= shellSpread * 0.15
             }
           }
         }
 
-        // Equatorial group: radial scale only.
+        // Equatorial: radial scale only.
         for (let i = EQ_START; i < INNER_START; i += 3) {
           livePos[i]     *= globalRadialScale
           livePos[i + 1] *= globalRadialScale
           livePos[i + 2] *= globalRadialScale
         }
 
-        // Inner group: radial scale + extra inward pull during traversal.
-        // The core contracts as the viewer approaches — denser, more magnetic.
+        // Inner: radial scale + inward pull (core contracts as viewer approaches).
         const innerScale = globalRadialScale * (1 - traverseSmooth * 0.22)
         for (let i = INNER_START; i < N_TOTAL * 3; i += 3) {
           livePos[i]     *= innerScale
@@ -545,7 +581,11 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         posAttr.needsUpdate = true
 
         // ── Motion ───────────────────────────────────────────────────────
-        sphere.rotation.y = t * 0.079 + smoothYaw
+        // Rotation speed eases down during expand (globe breathes out, slows).
+        // Integrated via dt to avoid discontinuities when speed changes.
+        const rotSpeed = 0.079 - 0.020 * expandSmooth
+        sphereRotY += rotSpeed * dt
+        sphere.rotation.y = sphereRotY + smoothYaw
         sphere.rotation.x = 0.20 + smoothPitch
         const breath = 1 + 0.025 * Math.sin(t * 0.44)
         sphere.scale.setScalar(breath)
@@ -557,27 +597,42 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
 
         bloom.scale.setScalar(
           (1.85 + 0.60 * morphFactor)
-          * (1 + 0.18 * smoothBloomLift)
-          * (1 - 0.10 * focusSmooth + 0.18 * expandSmooth + 0.55 * traverseSmooth)
+          * (1 + 0.18 * smoothBloomLift
+               + presenceSmooth * 0.12    // gentle ambient lift from hover presence
+               + holdTension    * 0.08    // subtle build-up during 650 ms hold
+               + bloomPulse     * 0.30)   // confirmation flash on long press fire
+          * (1 - 0.10 * focusSmooth + 0.18 * expandSmooth + 0.80 * traverseSmooth)
           * breath
         )
-        bloomMat.opacity = Math.min(
-          1.0,
-          0.50 + 0.30 * morphFactor + 0.15 * smoothBloomLift
-          + 0.22 * focusSmooth - 0.08 * expandSmooth + 0.38 * traverseSmooth
+        bloomMat.opacity = Math.min(1.0,
+          0.50 + 0.30 * morphFactor
+          + 0.15 * smoothBloomLift
+          + 0.07 * presenceSmooth
+          + holdTension * 0.06
+          + bloomPulse  * 0.20
+          + 0.22 * focusSmooth
+          - 0.08 * expandSmooth
+          + 0.42 * traverseSmooth
         )
 
+        // Starfield: slightly brighter during expand (universe breathes in).
+        starMat.opacity = Math.min(0.90, 0.72 + 0.18 * expandSmooth)
+
         // ── Color ─────────────────────────────────────────────────────────
+        // Traversal hue shifts toward indigo (−0.025), saturation up (+0.10),
+        // lightness rises (+0.18) with an inner-pulse layer (+0.07 at full depth).
         const hueBase = 0.570 + 0.048 * Math.sin(t * 0.14) - 0.018 * morphFactor
         sphereMat.color.setHSL(
-          hueBase - 0.020 * focusSmooth + 0.015 * expandSmooth - 0.010 * traverseSmooth,
-          0.88 + 0.10 * focusSmooth - 0.06 * expandSmooth + 0.06 * traverseSmooth,
-          0.60 + 0.06 * focusSmooth + 0.10 * traverseSmooth,
+          hueBase - 0.020 * focusSmooth + 0.015 * expandSmooth - 0.025 * traverseSmooth,
+          0.88 + 0.10 * focusSmooth - 0.06 * expandSmooth + 0.10 * traverseSmooth,
+          Math.max(0.01, Math.min(0.99,
+            0.60 + 0.06 * focusSmooth + 0.18 * traverseSmooth + innerPulse
+          )),
         )
 
         // ── Particle size ─────────────────────────────────────────────────
-        // No traversal modifier — sizeAttenuation already enlarges nearby
-        // particles; adding a multiplier would amplify near-camera artifacts.
+        // No traversal modifier: sizeAttenuation already enlarges near particles;
+        // adding a multiplier during traversal amplifies near-camera artifacts.
         sphereMat.size = 0.016 * (1 - 0.22 * focusSmooth + 0.30 * expandSmooth)
 
         renderer.render(scene, camera)
