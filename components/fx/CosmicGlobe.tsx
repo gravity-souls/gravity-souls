@@ -350,6 +350,9 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       disposables.push({ dispose: () => ro.disconnect() })
 
       const particleTex = new THREE.CanvasTexture(makeParticleTex())
+      // Canvas 2D draws in sRGB; mark explicitly so Three.js applies the correct
+      // sRGB→linear conversion when sampling the texture in the shader.
+      particleTex.colorSpace = THREE.SRGBColorSpace
       disposables.push(particleTex)
 
       // ── Particle geometry ─────────────────────────────────────────────────
@@ -464,6 +467,9 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       scene.add(sphere)
 
       const bloomTex = new THREE.CanvasTexture(makeBloomTex())
+      // Same sRGB fix: the gradient's intermediate RGB tones (210,235,255 etc.)
+      // are sRGB-encoded and must be linearised before additive composition.
+      bloomTex.colorSpace = THREE.SRGBColorSpace
       disposables.push(bloomTex)
       const bloomMat = new THREE.SpriteMaterial({
         map:         bloomTex,
@@ -706,14 +712,18 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         starMat.opacity = Math.min(0.90, 0.72 + 0.18 * expandSmooth)
 
         // ── Color ─────────────────────────────────────────────────────────
-        // Traversal hue shifts toward indigo (−0.025), saturation up (+0.10),
-        // lightness rises (+0.18) with an inner-pulse layer (+0.07 at full depth).
-        const hueBase = 0.570 + 0.048 * Math.sin(t * 0.14) - 0.018 * morphFactor
+        // Hue is narrowed to oscillate within ≈ [0.530, 0.600] (191°–216°),
+        // keeping particles firmly in the azure-blue band on any display gamut.
+        // Saturation base is reduced from 0.88 → 0.76: still visibly blue but
+        // with a smaller gap between per-channel clip points, which is the root
+        // cause of warm accumulation artifacts under additive blending on P3
+        // displays where the sRGB→P3 mapping amplifies small channel differences.
+        const hueBase = 0.568 + 0.022 * Math.sin(t * 0.14) - 0.006 * morphFactor
         sphereMat.color.setHSL(
-          hueBase - 0.020 * focusSmooth + 0.015 * expandSmooth - 0.025 * traverseSmooth,
-          0.88 + 0.10 * focusSmooth - 0.06 * expandSmooth + 0.10 * traverseSmooth,
-          Math.max(0.01, Math.min(0.99,
-            0.60 + 0.06 * focusSmooth + 0.18 * traverseSmooth + innerPulse
+          hueBase - 0.012 * focusSmooth + 0.008 * expandSmooth - 0.014 * traverseSmooth,
+          0.76 + 0.05 * focusSmooth - 0.04 * expandSmooth + 0.05 * traverseSmooth,
+          Math.max(0.01, Math.min(0.93,
+            0.60 + 0.06 * focusSmooth + 0.16 * traverseSmooth + innerPulse
           )),
         )
 
