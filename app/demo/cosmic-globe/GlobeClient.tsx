@@ -32,7 +32,7 @@ export default function GlobeClient() {
           userSelect:    'none',
         }}
       >
-        Cosmic Globe · Phase 1
+        Cosmic Globe · Phase 4 &nbsp;·&nbsp; scroll · swipe · hold
       </p>
     </div>
   )
