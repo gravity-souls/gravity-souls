@@ -97,6 +97,31 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
 
     let longPressTimer: ReturnType<typeof setTimeout> | null = null
 
+    // ── iOS defensive state ───────────────────────────────────────────────────
+    // activeTouchCount tracks concurrent touch contacts. >1 = accidental second
+    // finger — skip depth updates and abort long press to prevent corruption.
+    let activeTouchCount = 0
+
+    // staleTimer fires 3 s after the last touch event if mouseActive is still
+    // true, resetting state in case iOS silently dropped a pointerup (app switch,
+    // incoming call, etc.). Armed only for touch — never for mouse hover.
+    let staleTimer: ReturnType<typeof setTimeout> | null = null
+
+    const clearStaleTimer = () => {
+      if (staleTimer) { clearTimeout(staleTimer); staleTimer = null }
+    }
+
+    const armStaleTimer = () => {
+      clearStaleTimer()
+      staleTimer = setTimeout(() => {
+        staleTimer = null
+        if (!mouseActive) return
+        mouseNX = 0; mouseNY = 0; mouseActive = false
+        touchVelocity = 0; activeTouchCount = 0; hoverFrames = 0
+        clearLongPress()
+      }, 3_000)
+    }
+
     // ── Reduced-motion ────────────────────────────────────────────────────────
     const motionMQ    = window.matchMedia('(prefers-reduced-motion: reduce)')
     let reducedMotion = motionMQ.matches
@@ -106,6 +131,8 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       if (reducedMotion) {
         mouseNX = 0; mouseNY = 0; mouseActive = false
         scrollAcc = 0; touchVelocity = 0; bloomPulse = 0
+        activeTouchCount = 0
+        clearStaleTimer()
       }
     }
     if (typeof motionMQ.addEventListener === 'function') {
@@ -131,27 +158,37 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       if (reducedMotion) return
       readCoords(e)
       lastPointerY  = e.clientY
-      touchVelocity = 0   // clear momentum when a new contact starts
+      touchVelocity = 0
       mouseActive   = true
+      if (e.pointerType === 'touch') armStaleTimer()
     }
 
     const onPointerMove = (e: PointerEvent) => {
       if (reducedMotion) return
+
+      // Multi-touch: secondary finger moving — keep the element active for visual
+      // feedback but skip coord and depth updates to avoid corruption.
+      if (e.pointerType === 'touch' && activeTouchCount > 1) {
+        mouseActive = true
+        return
+      }
+
       readCoords(e)
 
       if (e.pointerType === 'touch') {
-        const dy = lastPointerY - e.clientY   // positive = swipe up = deeper
+        const dy = lastPointerY - e.clientY
         if (Math.abs(dy) > 1) {
           const delta = dy * TOUCH_SENS
           scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + delta))
-          // EMA of per-event deltas — smoothed velocity for momentum after lift.
           touchVelocity = touchVelocity * 0.70 + delta * 0.30
           if (Math.abs(dy) > 8 && longPressTimer !== null) {
             clearTimeout(longPressTimer)
             longPressTimer = null
           }
         }
+        armStaleTimer()
       }
+
       lastPointerY = e.clientY
       mouseActive  = true
     }
@@ -160,44 +197,85 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       if (longPressTimer !== null) { clearTimeout(longPressTimer); longPressTimer = null }
     }
 
-    const onPointerLeave = () => {
+    const onPointerLeave = (e: PointerEvent) => {
       mouseNX = 0; mouseNY = 0; mouseActive = false
       clearLongPress()
+      clearStaleTimer()
+      if (e.pointerType === 'touch') activeTouchCount = 0
       // touchVelocity preserved — becomes momentum in animate()
     }
 
-    // pointercancel = gesture interrupted by system (call, home swipe).
+    // pointercancel = gesture interrupted by system (call, home swipe, second finger).
     // No momentum: the gesture did not complete intentionally.
-    const onPointerCancel = () => {
+    const onPointerCancel = (e: PointerEvent) => {
       mouseNX = 0; mouseNY = 0; mouseActive = false
       touchVelocity = 0
+      if (e.pointerType === 'touch') activeTouchCount = 0
       clearLongPress()
+      clearStaleTimer()
     }
 
     const onPointerDown = (e: PointerEvent) => {
       if (reducedMotion || e.pointerType !== 'touch') return
+      // Stale-state recovery: a prior touch's pointerup may have been silently
+      // dropped by iOS; activeTouchCount is 0 but mouseActive could still be true.
+      if (activeTouchCount === 0 && mouseActive) {
+        touchVelocity = 0
+        clearLongPress()
+      }
+      activeTouchCount++
+      if (activeTouchCount > 1) {
+        // Second finger: abort long press and depth swipe.
+        clearLongPress()
+        touchVelocity = 0
+        return
+      }
       holdStart      = performance.now()
       longPressTimer = setTimeout(() => {
         scrollAcc  = Math.max(SCROLL_MIN, scrollAcc - 1.0)
-        bloomPulse = 1.0   // bloom flash confirms the action
+        bloomPulse = 1.0
         longPressTimer = null
       }, 650)
     }
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        const prev       = activeTouchCount
+        activeTouchCount = Math.max(0, activeTouchCount - 1)
+        // Multi-touch back to single: reset lastPointerY to prevent a delta jump
+        // on the remaining finger's next move event.
+        if (prev > 1 && activeTouchCount === 1) {
+          lastPointerY  = e.clientY
+          touchVelocity = 0
+        }
+      }
       clearLongPress()
+      clearStaleTimer()
       // touchVelocity preserved — becomes momentum
     }
 
-    // Wheel drives the depth dial on desktop. passive:true — page scroll is not blocked.
-    // Intent gate: require ~0.3 s of continuous hover before wheel activates (unless
-    // already in focus state) to prevent incidental page-scroll gestures from
-    // triggering depth changes.
-    // preventDefault is called only after the gate passes — so during the gate
-    // the event falls through to the page normally (no deadened interval where
-    // scroll is blocked but the demo is not yet responding). Once the demo is
-    // actively consuming wheel input, it claims ownership and blocks page scroll.
-    // When reducedMotion is on, no preventDefault is ever called.
+    // contextmenu: fired on long-press on some iOS configs and on desktop right-click.
+    // Suppress it so a stray context menu does not leave event state inconsistent.
+    const onContextMenu = (e: Event) => { e.preventDefault() }
+
+    // visibilitychange: iOS drops pointer events when the app is backgrounded (incoming
+    // call, app switch, Control Centre swipe). Reset all touch state so the next
+    // foreground session starts clean.
+    const onVisibilityChange = () => {
+      if (!document.hidden) return
+      mouseNX = 0; mouseNY = 0; mouseActive = false
+      touchVelocity = 0; activeTouchCount = 0; hoverFrames = 0
+      clearLongPress()
+      clearStaleTimer()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    disposables.push({ dispose: () => document.removeEventListener('visibilitychange', onVisibilityChange) })
+
+    // iOS: suppress the "Save Image / Open Link" action sheet on long press.
+    // webkitTouchCallout: none lets the 650 ms long-press timer fire without iOS
+    // cancelling it via pointercancel first. Not in React's CSSProperties so imperative.
+    ;(mount.style as CSSStyleDeclaration & { webkitTouchCallout: string }).webkitTouchCallout = 'none'
+
     const onWheel = (e: WheelEvent) => {
       if (reducedMotion) return
       if (hoverFrames < 18 && scrollAcc < 0.5) return
@@ -214,6 +292,7 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     mount.addEventListener('pointercancel', onPointerCancel, { passive: true })
     mount.addEventListener('pointerdown',   onPointerDown,   { passive: true })
     mount.addEventListener('pointerup',     onPointerUp,     { passive: true })
+    mount.addEventListener('contextmenu',   onContextMenu)
     // Non-passive: required to call e.preventDefault() once the demo owns the gesture.
     mount.addEventListener('wheel',         onWheel,         { passive: false })
     disposables.push({
@@ -224,6 +303,7 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
         mount.removeEventListener('pointercancel', onPointerCancel)
         mount.removeEventListener('pointerdown',   onPointerDown)
         mount.removeEventListener('pointerup',     onPointerUp)
+        mount.removeEventListener('contextmenu',   onContextMenu)
         mount.removeEventListener('wheel',         onWheel)
         clearLongPress()
       },
@@ -655,6 +735,7 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
     return () => {
       stopped = true
       cancelAnimationFrame(rafId)
+      clearStaleTimer()
       disposables.forEach((d) => d.dispose())
       ownedCanvas?.remove()
     }

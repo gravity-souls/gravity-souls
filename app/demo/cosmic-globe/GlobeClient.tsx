@@ -6,11 +6,14 @@ export default function GlobeClient() {
   return (
     <div
       style={{
-        width:      '100dvw',
-        height:     '100dvh',
-        background: '#040A18',
-        position:   'relative',
-        overflow:   'hidden',
+        width:            '100dvw',
+        height:           '100dvh',
+        background:       '#040A18',
+        position:         'relative',
+        overflow:         'hidden',
+        touchAction:      'none',
+        userSelect:       'none',
+        WebkitUserSelect: 'none',
       }}
     >
       <CosmicGlobe style={{ width: '100%', height: '100%' }} />
