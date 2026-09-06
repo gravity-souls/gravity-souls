@@ -1,20 +1,29 @@
 import Link from 'next/link'
-import type { Relationship } from '@/types/social'
-import type { PlanetProfile } from '@/types/planet'
-import RelationshipStateBadge from '@/components/social/RelationshipStateBadge'
+import RelationshipStateBadge, { type FollowState } from '@/components/social/RelationshipStateBadge'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
 
-// --- RelationshipCard ---------------------------------------------------------
-
-interface Props {
-  relationship: Relationship
-  planet:       PlanetProfile
+interface PlanetSummary {
+  id: string
+  name: string
+  avatarSymbol: string
+  tagline: string | null
+  visual: unknown
 }
 
-export default function RelationshipCard({ relationship, planet }: Props) {
-  const { coreColor, accentColor } = planet.visual
-  const lastAt = relationship.lastInteractionAt ?? relationship.updatedAt
+interface Props {
+  status:   FollowState
+  since:    string
+  planet:   PlanetSummary
+  onUnfollow?: () => void
+  onFollowBack?: () => void
+  busy?: boolean
+}
+
+export default function RelationshipCard({ status, since, planet, onUnfollow, onFollowBack, busy }: Props) {
+  const visual = (planet.visual ?? {}) as { coreColor?: string; accentColor?: string }
+  const coreColor = visual.coreColor ?? '#a78bfa'
+  const accentColor = visual.accentColor ?? '#c4b5fd'
 
   return (
     <div
@@ -25,7 +34,6 @@ export default function RelationshipCard({ relationship, planet }: Props) {
         transition: 'border-color 0.2s, background 0.2s',
       }}
     >
-      {/* Planet orb */}
       <Link
         href={`/planet/${planet.id}`}
         className="shrink-0 flex items-center justify-center rounded-full transition-transform group-hover:scale-105"
@@ -41,7 +49,6 @@ export default function RelationshipCard({ relationship, planet }: Props) {
         {planet.avatarSymbol}
       </Link>
 
-      {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
@@ -51,7 +58,7 @@ export default function RelationshipCard({ relationship, planet }: Props) {
           >
             {planet.name}
           </Link>
-          <RelationshipStateBadge status={relationship.status} compact />
+          <RelationshipStateBadge status={status} compact />
         </div>
 
         {planet.tagline && (
@@ -61,14 +68,13 @@ export default function RelationshipCard({ relationship, planet }: Props) {
         )}
 
         <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.45 }}>
-          {relationship.status === 'signal' ? 'Signal sent' : 'Last interaction'}&nbsp;
-          {relativeTime(lastAt)}
+          {status === 'follows-you' ? 'Started following you' : 'Following since'}&nbsp;
+          {relativeTime(since)}
         </p>
       </div>
 
-      {/* Actions */}
       <div className="shrink-0 flex flex-col gap-1.5">
-        {(relationship.status === 'resonant' || relationship.status === 'orbit') && (
+        {status === 'mutual' && (
           <GlowButton
             href={`/messages?to=${encodeURIComponent(planet.id)}`}
             variant="secondary"
@@ -77,13 +83,26 @@ export default function RelationshipCard({ relationship, planet }: Props) {
             Message
           </GlowButton>
         )}
-        <GlowButton
-          href={`/planet/${planet.id}`}
-          variant="ghost"
-          className="text-[11px] px-3 py-1.5"
-        >
-          View
-        </GlowButton>
+        {status === 'follows-you' && onFollowBack && (
+          <GlowButton
+            onClick={onFollowBack}
+            disabled={busy}
+            variant="secondary"
+            className="text-[11px] px-3 py-1.5"
+          >
+            Follow back
+          </GlowButton>
+        )}
+        {status !== 'follows-you' && onUnfollow && (
+          <GlowButton
+            onClick={onUnfollow}
+            disabled={busy}
+            variant="ghost"
+            className="text-[11px] px-3 py-1.5"
+          >
+            Unfollow
+          </GlowButton>
+        )}
       </div>
     </div>
   )

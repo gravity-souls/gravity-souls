@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { orbitColorHex } from '@/lib/match'
-import { getHintDismissed, dismissHint } from '@/lib/hints-preferences'
+import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 
@@ -11,27 +10,12 @@ const HINT_KEY = 'resonance-first-match-viewed'
 interface Props {
   topMatch:  OrbitMatch
   planet?:   PlanetProfile
-  activeId:  string | null
   onReveal:  () => void
-  onComplete?: () => void
 }
 
-export default function FirstMatchCTA({ topMatch, planet, activeId, onReveal, onComplete }: Props) {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!getHintDismissed(HINT_KEY)) setVisible(true)
-  }, [])
-
-  useEffect(() => {
-    if (activeId !== null && visible) {
-      dismissHint(HINT_KEY)
-      setVisible(false)
-      onComplete?.()
-    }
-  }, [activeId, visible, onComplete])
-
-  if (!visible) return null
+export default function FirstMatchCTA({ topMatch, planet, onReveal }: Props) {
+  const dismissed = useHintDismissed(HINT_KEY)
+  if (dismissed) return null
 
   const color = orbitColorHex(topMatch.orbitColor)
   const displayName   = planet?.name ?? null

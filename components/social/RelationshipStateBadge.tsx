@@ -1,23 +1,18 @@
-import type { RelationshipStatus } from '@/types/social'
+export type FollowState = 'following' | 'mutual' | 'follows-you'
 
-// --- Status configuration -----------------------------------------------------
-
-const STATUS_CONFIG: Record<RelationshipStatus, {
+const STATUS_CONFIG: Record<FollowState, {
   symbol:  string
   label:   string
   color:   string
   pulse?:  boolean
 }> = {
-  signal:   { symbol: '◌', label: 'First signal',  color: 'rgba(167,139,250,0.55)' },
-  orbit:    { symbol: '○', label: 'In orbit',       color: '#60a5fa' },
-  resonant: { symbol: '◉', label: 'Resonant',       color: '#a78bfa', pulse: true },
-  aligned:  { symbol: '⊙', label: 'Aligned',        color: '#fbbf24', pulse: true },
+  following:   { symbol: '◌', label: 'Following',   color: 'rgba(167,139,250,0.55)' },
+  'follows-you': { symbol: '○', label: 'Follows you', color: '#60a5fa' },
+  mutual:      { symbol: '◉', label: 'Mutual',       color: '#a78bfa', pulse: true },
 }
 
-// --- RelationshipStateBadge ---------------------------------------------------
-
 interface Props {
-  status:   RelationshipStatus
+  status:   FollowState
   compact?: boolean  // just dot + label, no background pill
 }
 

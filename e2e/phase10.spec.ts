@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { TEST_BASE_URL } from './environment'
 import { AUTH_WP, AUTH_NP } from './test-ids'
 
 // ── 1. Button states on /sign-in ──────────────────────────────────────────────
@@ -28,10 +29,10 @@ test.describe('sign-in button states', () => {
     await expect(btn).toBeEnabled()
   })
 
-  test('Apple button is disabled on /sign-in', async ({ page }) => {
+  test('Apple button is enabled on /sign-in', async ({ page }) => {
     await page.goto('/sign-in', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeDisabled()
+    await expect(btn).toBeEnabled()
   })
 
   test('WeChat button is disabled on /sign-in', async ({ page }) => {
@@ -52,10 +53,10 @@ test.describe('sign-up button states', () => {
     await expect(btn).toBeEnabled()
   })
 
-  test('Apple button is disabled on /sign-up', async ({ page }) => {
+  test('Apple button is enabled on /sign-up', async ({ page }) => {
     await page.goto('/sign-up', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeDisabled()
+    await expect(btn).toBeEnabled()
   })
 
   test('WeChat button is disabled on /sign-up', async ({ page }) => {
@@ -107,7 +108,7 @@ test.describe('Google OAuth URL correctness', () => {
   test('client_id is clean and redirect_uri is localhost callback', async ({ request }) => {
     const res = await request.post('/api/auth/sign-in/social', {
       data: { provider: 'google', callbackURL: '/auth/social-landing' },
-      headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:3000' },
+      headers: { 'Content-Type': 'application/json', 'Origin': TEST_BASE_URL },
     })
     expect(res.ok()).toBeTruthy()
     const body = await res.json()
@@ -123,6 +124,6 @@ test.describe('Google OAuth URL correctness', () => {
     expect(clientId).toMatch(/\.apps\.googleusercontent\.com$/)
 
     // redirect_uri must point to Better Auth's callback handler
-    expect(redirectUri).toBe('http://localhost:3000/api/auth/callback/google')
+    expect(redirectUri).toBe(`${TEST_BASE_URL}/api/auth/callback/google`)
   })
 })

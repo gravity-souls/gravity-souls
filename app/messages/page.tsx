@@ -205,8 +205,9 @@ function MessagesInner() {
             return
           }
 
+          const errorBody = await res.json().catch(() => null) as { error?: string } | null
           setOpenError({
-            message: t('openSignalError'),
+            message: (res.status === 403 && errorBody?.error) ? errorBody.error : t('openSignalError'),
             actionHref: '/discover',
             actionLabel: t('explorePlanets'),
           })

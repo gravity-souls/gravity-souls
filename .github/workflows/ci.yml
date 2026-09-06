@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Loopback-only, explicit `_test` suffix — required by lib/database-safety.ts.
+  # Never point this at a real deployment database.
+  TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/gravity_souls_test
+  DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/gravity_souls_test
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/gravity_souls_test
+  AUTH_SECRET: ci-isolated-secret-never-use-for-real-accounts
+  BETTER_AUTH_URL: http://localhost:3200
+  NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3200
+  SERVER_URL: http://localhost:3200
+  # These test providers only exercise URL generation, never real OAuth accounts.
+  GOOGLE_CLIENT_ID: gravity-ci.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET: ci-google-secret
+  APPLE_CLIENT_ID: com.gravitysouls.ci
+  APPLE_CLIENT_SECRET: ci-apple-secret
+  BLOB_READ_WRITE_TOKEN: ""
+
+jobs:
+  lint-typecheck-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npx prisma validate
+      - run: npm test
+
+  database-suite:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gravity_souls_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run db:deploy
+      - run: npm run test:models
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:db
+
+  demo-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

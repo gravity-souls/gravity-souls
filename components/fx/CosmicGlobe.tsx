@@ -1,10 +1,18 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
+import { createMotionLoop } from '@/lib/motion-loop'
 
+export type GlobeStep = 0 | 1 | 2
+export type GlobeStatus = 'loading' | 'ready' | 'unavailable'
 export interface CosmicGlobeProps {
+  step?: GlobeStep
+  paused?: boolean
+  allowMotion?: boolean
+  resetKey?: number
+  onStatusChange?: (status: GlobeStatus) => void
   className?: string
-  style?: React.CSSProperties
+  style?: CSSProperties
 }
 
 function makeParticleTex(): HTMLCanvasElement {
@@ -35,320 +43,89 @@ function makeBloomTex(): HTMLCanvasElement {
   return c
 }
 
-export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
+export default function CosmicGlobe({ step = 0, paused = false, allowMotion = false, resetKey = 0, onStatusChange, className, style }: CosmicGlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null)
+  const controls = useRef({ step, paused, allowMotion, resetKey, onStatusChange })
+  const loopRef = useRef<ReturnType<typeof createMotionLoop> | null>(null)
+  const contextAvailable = useRef(true)
+
+  useEffect(() => {
+    const reset = controls.current.resetKey !== resetKey
+    controls.current = { step, paused, allowMotion, resetKey, onStatusChange }
+    if (reset) loopRef.current?.reset()
+    loopRef.current?.setPaused(paused || !contextAvailable.current)
+    loopRef.current?.setMotionOverride(allowMotion)
+    loopRef.current?.invalidate()
+  }, [step, paused, allowMotion, resetKey, onStatusChange])
 
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
-
-    let stopped     = false
-    let rafId       = 0
-    let ownedCanvas: HTMLCanvasElement | null = null
+    let stopped = false
+    let contextLost = false
+    let canvas: HTMLCanvasElement | null = null
+    let pointerX = 0
+    let pointerY = 0
+    let dragging = false
     const disposables: { dispose(): void }[] = []
+    const report = (status: GlobeStatus) => { if (!stopped) controls.current.onStatusChange?.(status) }
 
-    // ── Pointer state ─────────────────────────────────────────────────────────
-    let mouseNX      = 0
-    let mouseNY      = 0
-    let mouseActive  = false
-    let lastPointerY = 0
-
-    let smoothYaw       = 0
-    let smoothPitch     = 0
-    let disturbX        = 0
-    let disturbY        = 0
-    let disturbZ        = 0
-    let disturbAmp      = 0
-    let smoothBloomLift = 0
-
-    // ── Scroll-depth state ────────────────────────────────────────────────────
-    let scrollAcc            = 0
-    let focusSmooth          = 0
-    let expandSmooth         = 0
-    let traverseSmooth       = 0
-    let cameraTraverseSmooth = 0
-
-    // shellSpread is separate from traverseSmooth so the ring can close faster
-    // than the camera retreats on exit — "shell sealing behind you" feeling.
-    let shellSpread = 0
-
-    // presenceSmooth builds slowly while hovering, creating a subtle bloom lift
-    // and "invitation" feeling before any scroll input.
-    let presenceSmooth = 0
-
-    // Touch swipe momentum: EMA velocity preserved after pointer lift.
-    let touchVelocity = 0
-
-    // Long press state
-    let holdStart  = 0
-    // bloomPulse = 1.0 on long press fire; decays over ~14 frames as visual confirmation.
-    let bloomPulse = 0
-
-    // Integrated sphere rotation — allows variable speed without discontinuities.
-    let sphereRotY = 0
-
-    // Wheel intent gate
-    let hoverFrames = 0
-
-    const SCROLL_SENS = 0.003
-    const TOUCH_SENS  = 0.012
-    const SCROLL_MAX  =  2.5
-    const SCROLL_MIN  = -1.5
-
-    let longPressTimer: ReturnType<typeof setTimeout> | null = null
-
-    // ── iOS defensive state ───────────────────────────────────────────────────
-    // activeTouchCount tracks concurrent touch contacts. >1 = accidental second
-    // finger — skip depth updates and abort long press to prevent corruption.
-    let activeTouchCount = 0
-
-    // staleTimer fires 3 s after the last touch event if mouseActive is still
-    // true, resetting state in case iOS silently dropped a pointerup (app switch,
-    // incoming call, etc.). Armed only for touch — never for mouse hover.
-    let staleTimer: ReturnType<typeof setTimeout> | null = null
-
-    const clearStaleTimer = () => {
-      if (staleTimer) { clearTimeout(staleTimer); staleTimer = null }
+    function clearPointer() { pointerX = 0; pointerY = 0; dragging = false }
+    function move(event: PointerEvent) {
+      if (event.pointerType !== 'mouse' && !dragging) return
+      const bounds = mount!.getBoundingClientRect()
+      pointerX = ((event.clientX - bounds.left) / Math.max(bounds.width, 1) - 0.5) * 2
+      pointerY = ((event.clientY - bounds.top) / Math.max(bounds.height, 1) - 0.5) * 2
     }
-
-    const armStaleTimer = () => {
-      clearStaleTimer()
-      staleTimer = setTimeout(() => {
-        staleTimer = null
-        if (!mouseActive) return
-        mouseNX = 0; mouseNY = 0; mouseActive = false
-        touchVelocity = 0; activeTouchCount = 0; hoverFrames = 0
-        clearLongPress()
-      }, 3_000)
-    }
-
-    // ── Reduced-motion ────────────────────────────────────────────────────────
-    const motionMQ    = window.matchMedia('(prefers-reduced-motion: reduce)')
-    let reducedMotion = motionMQ.matches
-
-    const onMotionChange = (e: MediaQueryListEvent) => {
-      reducedMotion = e.matches
-      if (reducedMotion) {
-        mouseNX = 0; mouseNY = 0; mouseActive = false
-        scrollAcc = 0; touchVelocity = 0; bloomPulse = 0
-        activeTouchCount = 0
-        clearStaleTimer()
-      }
-    }
-    if (typeof motionMQ.addEventListener === 'function') {
-      motionMQ.addEventListener('change', onMotionChange)
-      disposables.push({ dispose: () => motionMQ.removeEventListener('change', onMotionChange) })
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(motionMQ as any).addListener(onMotionChange)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      disposables.push({ dispose: () => (motionMQ as any).removeListener(onMotionChange) })
-    }
-
-    // ── Event handlers ────────────────────────────────────────────────────────
-
-    const readCoords = (e: PointerEvent) => {
-      const rect = mount.getBoundingClientRect()
-      if (rect.width === 0 || rect.height === 0) return
-      mouseNX = ((e.clientX - rect.left) / rect.width)  * 2 - 1
-      mouseNY = 1 - ((e.clientY - rect.top)  / rect.height) * 2
-    }
-
-    const onPointerEnter = (e: PointerEvent) => {
-      if (reducedMotion) return
-      readCoords(e)
-      lastPointerY  = e.clientY
-      touchVelocity = 0
-      mouseActive   = true
-      if (e.pointerType === 'touch') armStaleTimer()
-    }
-
-    const onPointerMove = (e: PointerEvent) => {
-      if (reducedMotion) return
-
-      // Multi-touch: secondary finger moving — keep the element active for visual
-      // feedback but skip coord and depth updates to avoid corruption.
-      if (e.pointerType === 'touch' && activeTouchCount > 1) {
-        mouseActive = true
-        return
-      }
-
-      readCoords(e)
-
-      if (e.pointerType === 'touch') {
-        const dy = lastPointerY - e.clientY
-        if (Math.abs(dy) > 1) {
-          const delta = dy * TOUCH_SENS
-          scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + delta))
-          touchVelocity = touchVelocity * 0.70 + delta * 0.30
-          if (Math.abs(dy) > 8 && longPressTimer !== null) {
-            clearTimeout(longPressTimer)
-            longPressTimer = null
-          }
-        }
-        armStaleTimer()
-      }
-
-      lastPointerY = e.clientY
-      mouseActive  = true
-    }
-
-    const clearLongPress = () => {
-      if (longPressTimer !== null) { clearTimeout(longPressTimer); longPressTimer = null }
-    }
-
-    const onPointerLeave = (e: PointerEvent) => {
-      mouseNX = 0; mouseNY = 0; mouseActive = false
-      clearLongPress()
-      clearStaleTimer()
-      if (e.pointerType === 'touch') activeTouchCount = 0
-      // touchVelocity preserved — becomes momentum in animate()
-    }
-
-    // pointercancel = gesture interrupted by system (call, home swipe, second finger).
-    // No momentum: the gesture did not complete intentionally.
-    const onPointerCancel = (e: PointerEvent) => {
-      mouseNX = 0; mouseNY = 0; mouseActive = false
-      touchVelocity = 0
-      if (e.pointerType === 'touch') activeTouchCount = 0
-      clearLongPress()
-      clearStaleTimer()
-    }
-
-    const onPointerDown = (e: PointerEvent) => {
-      if (reducedMotion || e.pointerType !== 'touch') return
-      // Stale-state recovery: a prior touch's pointerup may have been silently
-      // dropped by iOS; activeTouchCount is 0 but mouseActive could still be true.
-      if (activeTouchCount === 0 && mouseActive) {
-        touchVelocity = 0
-        clearLongPress()
-      }
-      activeTouchCount++
-      if (activeTouchCount > 1) {
-        // Second finger: abort long press and depth swipe.
-        clearLongPress()
-        touchVelocity = 0
-        return
-      }
-      holdStart      = performance.now()
-      longPressTimer = setTimeout(() => {
-        scrollAcc  = Math.max(SCROLL_MIN, scrollAcc - 1.0)
-        bloomPulse = 1.0
-        longPressTimer = null
-      }, 650)
-    }
-
-    const onPointerUp = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') {
-        const prev       = activeTouchCount
-        activeTouchCount = Math.max(0, activeTouchCount - 1)
-        // Multi-touch back to single: reset lastPointerY to prevent a delta jump
-        // on the remaining finger's next move event.
-        if (prev > 1 && activeTouchCount === 1) {
-          lastPointerY  = e.clientY
-          touchVelocity = 0
-        }
-      }
-      clearLongPress()
-      clearStaleTimer()
-      // touchVelocity preserved — becomes momentum
-    }
-
-    // contextmenu: fired on long-press on some iOS configs and on desktop right-click.
-    // Suppress it so a stray context menu does not leave event state inconsistent.
-    const onContextMenu = (e: Event) => { e.preventDefault() }
-
-    // visibilitychange: iOS drops pointer events when the app is backgrounded (incoming
-    // call, app switch, Control Centre swipe). Reset all touch state so the next
-    // foreground session starts clean.
-    const onVisibilityChange = () => {
-      if (!document.hidden) return
-      mouseNX = 0; mouseNY = 0; mouseActive = false
-      touchVelocity = 0; activeTouchCount = 0; hoverFrames = 0
-      clearLongPress()
-      clearStaleTimer()
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    disposables.push({ dispose: () => document.removeEventListener('visibilitychange', onVisibilityChange) })
-
-    // iOS: suppress the "Save Image / Open Link" action sheet on long press.
-    // webkitTouchCallout: none lets the 650 ms long-press timer fire without iOS
-    // cancelling it via pointercancel first. Not in React's CSSProperties so imperative.
-    ;(mount.style as CSSStyleDeclaration & { webkitTouchCallout: string }).webkitTouchCallout = 'none'
-
-    const onWheel = (e: WheelEvent) => {
-      if (reducedMotion) return
-      if (hoverFrames < 18 && scrollAcc < 0.5) return
-      e.preventDefault()
-      let delta = e.deltaY
-      if (e.deltaMode === 1) delta *= 40
-      if (e.deltaMode === 2) delta *= 800
-      scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + delta * SCROLL_SENS))
-    }
-
-    mount.addEventListener('pointerenter',  onPointerEnter,  { passive: true })
-    mount.addEventListener('pointermove',   onPointerMove,   { passive: true })
-    mount.addEventListener('pointerleave',  onPointerLeave,  { passive: true })
-    mount.addEventListener('pointercancel', onPointerCancel, { passive: true })
-    mount.addEventListener('pointerdown',   onPointerDown,   { passive: true })
-    mount.addEventListener('pointerup',     onPointerUp,     { passive: true })
-    mount.addEventListener('contextmenu',   onContextMenu)
-    // Non-passive: required to call e.preventDefault() once the demo owns the gesture.
-    mount.addEventListener('wheel',         onWheel,         { passive: false })
-    disposables.push({
-      dispose: () => {
-        mount.removeEventListener('pointerenter',  onPointerEnter)
-        mount.removeEventListener('pointermove',   onPointerMove)
-        mount.removeEventListener('pointerleave',  onPointerLeave)
-        mount.removeEventListener('pointercancel', onPointerCancel)
-        mount.removeEventListener('pointerdown',   onPointerDown)
-        mount.removeEventListener('pointerup',     onPointerUp)
-        mount.removeEventListener('contextmenu',   onContextMenu)
-        mount.removeEventListener('wheel',         onWheel)
-        clearLongPress()
-      },
-    })
-
-    // ── Three.js init ─────────────────────────────────────────────────────────
+    function down(event: PointerEvent) { if (event.isPrimary) { dragging = true; move(event) } }
+    function visibility() { if (document.hidden) clearPointer() }
+    mount.addEventListener('pointermove', move, { passive: true })
+    mount.addEventListener('pointerdown', down, { passive: true })
+    mount.addEventListener('pointerup', clearPointer)
+    mount.addEventListener('pointercancel', clearPointer)
+    mount.addEventListener('pointerleave', clearPointer)
+    document.addEventListener('visibilitychange', visibility)
+    disposables.push({ dispose() {
+      mount!.removeEventListener('pointermove', move)
+      mount!.removeEventListener('pointerdown', down)
+      mount!.removeEventListener('pointerup', clearPointer)
+      mount!.removeEventListener('pointercancel', clearPointer)
+      mount!.removeEventListener('pointerleave', clearPointer)
+      document.removeEventListener('visibilitychange', visibility)
+    } })
 
     async function init() {
       const THREE = await import('three')
       if (stopped) return
-
       const m = mount!
-
-      const canvas = document.createElement('canvas')
+      const narrow = window.matchMedia('(max-width: 767px)').matches
+      canvas = document.createElement('canvas')
       canvas.style.display = 'block'
-      ownedCanvas = canvas
+      canvas.setAttribute('aria-hidden', 'true')
       m.appendChild(canvas)
-
-      let renderer: import('three').WebGLRenderer
-      try {
-        renderer = new THREE.WebGLRenderer({ canvas, antialias: false, stencil: false })
-      } catch (e) {
-        console.error('[CosmicGlobe] renderer failed:', e)
-        canvas.remove(); ownedCanvas = null; return
-      }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      renderer.setClearColor(0x040A18, 1)
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, stencil: false, alpha: true })
+      renderer.setClearColor(0x040a18, 0)
       disposables.push(renderer)
-
-      const scene  = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(55, m.clientWidth / m.clientHeight, 0.01, 60)
-      camera.position.z = 3.5
-
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 60)
       function resize() {
-        const w = m.clientWidth, h = m.clientHeight
-        if (w === 0 || h === 0) return
-        renderer.setSize(w, h)
-        camera.aspect = w / h
+        const width = m.clientWidth, height = m.clientHeight
+        if (!width || !height) return
+        const small = window.matchMedia('(max-width: 767px)').matches
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1 : 1.5))
+        renderer.setSize(width, height)
+        camera.aspect = width / height
+        // Fit the expanded silhouette along the limiting axis, including portrait screens.
+        const verticalFov = camera.fov * Math.PI / 180
+        const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect)
+        camera.position.z = 1.65 / Math.sin(Math.min(verticalFov, horizontalFov) / 2)
         camera.updateProjectionMatrix()
+        loopRef.current?.invalidate()
       }
       resize()
-      const ro = new ResizeObserver(resize)
-      ro.observe(m)
-      disposables.push({ dispose: () => ro.disconnect() })
-
+      const observer = new ResizeObserver(resize)
+      observer.observe(m)
+      disposables.push({ dispose: () => observer.disconnect() })
       const particleTex = new THREE.CanvasTexture(makeParticleTex())
       // Canvas 2D draws in sRGB; mark explicitly so Three.js applies the correct
       // sRGB→linear conversion when sampling the texture in the shader.
@@ -356,9 +133,9 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       disposables.push(particleTex)
 
       // ── Particle geometry ─────────────────────────────────────────────────
-      const N_SURFACE    = 7_000
-      const N_EQUATORIAL = 2_500
-      const N_INNER      = 1_500
+      const N_SURFACE    = narrow ? 3_500 : 7_000
+      const N_EQUATORIAL = narrow ? 1_250 : 2_500
+      const N_INNER      = narrow ? 750 : 1_500
       const N_TOTAL      = N_SURFACE + N_EQUATORIAL + N_INNER
 
       const globePos = new Float32Array(N_TOTAL * 3)
@@ -483,7 +260,7 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       bloom.scale.setScalar(1.85)
       scene.add(bloom)
 
-      const N_STARS = 280
+      const N_STARS = narrow ? 140 : 280
       const starPos = new Float32Array(N_STARS * 3)
       for (let i = 0; i < N_STARS; i++) {
         const phi   = Math.acos(1 - 2 * Math.random())
@@ -507,255 +284,106 @@ export default function CosmicGlobe({ className, style }: CosmicGlobeProps) {
       disposables.push(starMat)
       scene.add(new THREE.Points(starGeo, starMat))
 
-      const timer = new THREE.Timer()
-      timer.connect(document)
-      disposables.push({ dispose: () => timer.disconnect() })
 
-      const MORPH_PERIOD = 30
-      const MAX_YAW      = 6 * Math.PI / 180
-      const MAX_PITCH    = 3 * Math.PI / 180
+      const ringGeometry = new THREE.BufferGeometry().setFromPoints(
+        Array.from({ length: 128 }, (_, i) => {
+          const angle = i / 128 * Math.PI * 2
+          return new THREE.Vector3(Math.cos(angle) * 0.7, 0, Math.sin(angle) * 0.7)
+        }),
+      )
+      const ringMaterial = new THREE.LineBasicMaterial({ color: '#8fd5ff', transparent: true, opacity: 0 })
+      const ring = new THREE.LineLoop(ringGeometry, ringMaterial)
+      scene.add(ring)
+      disposables.push(ringGeometry, ringMaterial)
+      let morph = controls.current.step === 2 ? 1 : 0
+      let expansion = controls.current.step === 1 ? 0.3 : 0
+      let yaw = 0
+      let pitch = 0
+      let previousReset = controls.current.resetKey
+      let previousStep = controls.current.step
+      let ready = false
 
-      const EQ_START    = N_SURFACE * 3
-      const INNER_START = (N_SURFACE + N_EQUATORIAL) * 3
-
-      // ── Animation loop ────────────────────────────────────────────────────
-      function animate(timestamp: number) {
-        if (stopped) return
-        rafId = requestAnimationFrame(animate)
-
-        timer.update(timestamp)
-        const t  = timer.getElapsed()
-        const dt = Math.max(Math.min(timer.getDelta(), 0.05), 0.001)
-
-        // ── Hover dwell ───────────────────────────────────────────────────
-        if (mouseActive) hoverFrames = Math.min(hoverFrames + 1, 120)
-        else             hoverFrames = 0
-
-        // ── Presence ──────────────────────────────────────────────────────
-        // Builds over ~2 s while hovering; decays in ~1.5 s on leave.
-        // Provides a gentle "surface invitation" before any scroll input.
-        presenceSmooth += ((mouseActive ? 1 : 0) - presenceSmooth) * (mouseActive ? 0.008 : 0.010)
-
-        // ── Long press bloom pulse ────────────────────────────────────────
-        bloomPulse = Math.max(0, bloomPulse - 0.07)   // decays in ~14 frames
-
-        // Hold tension: 0→1 over the 650 ms window.
-        const holdTension = longPressTimer !== null
-          ? Math.min(1, (performance.now() - holdStart) / 650)
-          : 0
-
-        // ── Scroll / momentum state ───────────────────────────────────────
-        if (!mouseActive) {
-          // Apply touch momentum then decay it (friction ~12 %/frame).
-          if (Math.abs(touchVelocity) > 0.0002) {
-            scrollAcc = Math.max(SCROLL_MIN, Math.min(SCROLL_MAX, scrollAcc + touchVelocity))
-            touchVelocity *= 0.88
-          } else {
-            touchVelocity = 0
-          }
-          // Standard decay toward surface when pointer absent.
-          scrollAcc += (0 - scrollAcc) * 0.028
-        } else {
-          // Drain residual momentum while actively touching.
-          touchVelocity *= 0.60
-        }
-
-        // ── Depth targets ─────────────────────────────────────────────────
-        const focusTarget    = Math.max(0, Math.min(1, (scrollAcc  - 0.5) / 1.0))
-        const expandTarget   = Math.max(0, Math.min(1, (-scrollAcc - 0.5) / 1.0))
-        const traverseTarget = Math.max(0, Math.min(1, (scrollAcc  - 1.5) / 1.0))
-
-        focusSmooth  += (focusTarget  - focusSmooth)  * 0.040
-        expandSmooth += (expandTarget - expandSmooth) * 0.040
-
-        // Asymmetric traversal: entry rushes forward, exit lingers.
-        // Entry — viewer accelerates inward through the shell.
-        // Exit  — reluctant release; the passage closes slowly.
-        traverseSmooth += (traverseTarget - traverseSmooth) *
-          (traverseTarget > traverseSmooth ? 0.032 : 0.020)
-
-        // Camera leads particles on entry, also retreats more slowly on exit.
-        cameraTraverseSmooth += (traverseTarget - cameraTraverseSmooth) *
-          (traverseTarget > cameraTraverseSmooth ? 0.055 : 0.030)
-
-        // Shell ring: opens with particles on entry; snaps back faster on exit
-        // so the ring seals while the camera is still retreating.
-        shellSpread += (traverseTarget - shellSpread) *
-          (traverseTarget > shellSpread ? 0.032 : 0.055)
-
-        // Camera z: 3.5 → 1.2 at full traversal (0.2 units outside shell surface).
-        camera.position.z = 3.5 - cameraTraverseSmooth * 2.3
-
-        // ── Inner arrival ─────────────────────────────────────────────────
-        // A low-frequency luminosity pulse activates once past 50 % traversal —
-        // the "heartbeat" of the inner space. 0.88 rad/s ≈ one cycle per 7 s.
-        const arrivalDepth = Math.max(0, (traverseSmooth - 0.5) * 2)
-        const innerPulse   = arrivalDepth * 0.07 * Math.sin(t * 0.88)
-
-        // ── Parallax ─────────────────────────────────────────────────────
-        smoothYaw   += (mouseNX *  MAX_YAW   - smoothYaw)   * 0.025
-        smoothPitch += (-mouseNY * MAX_PITCH - smoothPitch) * 0.025
-
-        // ── Globe ↔ torus morph ───────────────────────────────────────────
-        const morphFactor = 0.5 - 0.5 * Math.cos((t / MORPH_PERIOD) * Math.PI * 2)
-        for (let i = 0; i < N_TOTAL * 3; i++) {
-          livePos[i] = globePos[i] + (torusPos[i] - globePos[i]) * morphFactor
-        }
-
-        // ── Per-group position modifiers ──────────────────────────────────
-        const globalRadialScale = 1 - focusSmooth * 0.18 + expandSmooth * 0.28
-
-        // Surface: radial scale + shell opening via shellSpread (not traverseSmooth),
-        // so the ring can close faster than the camera retreats on exit.
-        // XY spread from the z-axis is rotation-independent: correct at any
-        // rotation angle throughout the 30-second morph cycle.
-        for (let i = 0; i < EQ_START; i += 3) {
-          livePos[i]     *= globalRadialScale
-          livePos[i + 1] *= globalRadialScale
-          livePos[i + 2] *= globalRadialScale
-
-          if (shellSpread > 0.001) {
-            const px  = livePos[i]
-            const py  = livePos[i + 1]
-            const rXY = Math.sqrt(px * px + py * py)
-
-            if (rXY > 0.08) {
-              const spread = shellSpread * 0.50
-              livePos[i]     += (px / rXY) * spread
-              livePos[i + 1] += (py / rXY) * spread
-            } else {
-              // Near-polar: retreat along local -Z to increase camera distance.
-              livePos[i + 2] -= shellSpread * 0.15
-            }
-          }
-        }
-
-        // Equatorial: radial scale only.
-        for (let i = EQ_START; i < INNER_START; i += 3) {
-          livePos[i]     *= globalRadialScale
-          livePos[i + 1] *= globalRadialScale
-          livePos[i + 2] *= globalRadialScale
-        }
-
-        // Inner: radial scale + inward pull (core contracts as viewer approaches).
-        const innerScale = globalRadialScale * (1 - traverseSmooth * 0.22)
-        for (let i = INNER_START; i < N_TOTAL * 3; i += 3) {
-          livePos[i]     *= innerScale
-          livePos[i + 1] *= innerScale
-          livePos[i + 2] *= innerScale
-        }
-
-        // ── Outer-shell disturbance (pointer ripple) ──────────────────────
-        const ndx = mouseNX
-        const ndy = mouseNY
-        const ndz = Math.sqrt(Math.max(0, 1 - ndx * ndx - ndy * ndy))
-        disturbX += (ndx - disturbX) * 0.035
-        disturbY += (ndy - disturbY) * 0.035
-        disturbZ += (ndz - disturbZ) * 0.035
-        disturbAmp += ((mouseActive ? 0.045 : 0) - disturbAmp) * 0.030
-
-        if (disturbAmp > 0.0005) {
-          for (let i = 0; i < EQ_START; i += 3) {
-            const px = livePos[i], py = livePos[i + 1], pz = livePos[i + 2]
-            const lenSq = px * px + py * py + pz * pz
-            if (lenSq < 0.01) continue
-            const invLen = 1 / Math.sqrt(lenSq)
-            const dot    = (px * disturbX + py * disturbY + pz * disturbZ) * invLen
-            const effect = Math.max(0, (dot - 0.55) / 0.45)
-            if (effect > 0) {
-              const push = disturbAmp * effect
-              livePos[i]     += px * invLen * push
-              livePos[i + 1] += py * invLen * push
-              livePos[i + 2] += pz * invLen * push
-            }
-          }
-        }
-
-        posAttr.needsUpdate = true
-
-        // ── Motion ───────────────────────────────────────────────────────
-        // Rotation speed eases down during expand (globe breathes out, slows).
-        // Integrated via dt to avoid discontinuities when speed changes.
-        const rotSpeed = 0.079 - 0.020 * expandSmooth
-        sphereRotY += rotSpeed * dt
-        sphere.rotation.y = sphereRotY + smoothYaw
-        sphere.rotation.x = 0.20 + smoothPitch
-        const breath = 1 + 0.025 * Math.sin(t * 0.44)
-        sphere.scale.setScalar(breath)
-
-        // ── Bloom ─────────────────────────────────────────────────────────
-        const cursorDist      = Math.sqrt(mouseNX * mouseNX + mouseNY * mouseNY)
-        const targetBloomLift = mouseActive ? Math.max(0, 1 - cursorDist / 0.35) : 0
-        smoothBloomLift += (targetBloomLift - smoothBloomLift) * 0.040
-
-        bloom.scale.setScalar(
-          (1.85 + 0.60 * morphFactor)
-          * (1 + 0.18 * smoothBloomLift
-               + presenceSmooth * 0.12    // gentle ambient lift from hover presence
-               + holdTension    * 0.08    // subtle build-up during 650 ms hold
-               + bloomPulse     * 0.30)   // confirmation flash on long press fire
-          * (1 - 0.10 * focusSmooth + 0.18 * expandSmooth + 0.80 * traverseSmooth)
-          * breath
-        )
-        bloomMat.opacity = Math.min(1.0,
-          0.50 + 0.30 * morphFactor
-          + 0.15 * smoothBloomLift
-          + 0.07 * presenceSmooth
-          + holdTension * 0.06
-          + bloomPulse  * 0.20
-          + 0.22 * focusSmooth
-          - 0.08 * expandSmooth
-          + 0.42 * traverseSmooth
-        )
-
-        // Starfield: slightly brighter during expand (universe breathes in).
-        starMat.opacity = Math.min(0.90, 0.72 + 0.18 * expandSmooth)
-
-        // ── Color ─────────────────────────────────────────────────────────
-        // Hue is narrowed to oscillate within ≈ [0.530, 0.600] (191°–216°),
-        // keeping particles firmly in the azure-blue band on any display gamut.
-        // Saturation base is reduced from 0.88 → 0.76: still visibly blue but
-        // with a smaller gap between per-channel clip points, which is the root
-        // cause of warm accumulation artifacts under additive blending on P3
-        // displays where the sRGB→P3 mapping amplifies small channel differences.
-        const hueBase = 0.568 + 0.022 * Math.sin(t * 0.14) - 0.006 * morphFactor
-        sphereMat.color.setHSL(
-          hueBase - 0.012 * focusSmooth + 0.008 * expandSmooth - 0.014 * traverseSmooth,
-          0.76 + 0.05 * focusSmooth - 0.04 * expandSmooth + 0.05 * traverseSmooth,
-          Math.max(0.01, Math.min(0.93,
-            0.60 + 0.06 * focusSmooth + 0.16 * traverseSmooth + innerPulse
-          )),
-        )
-
-        // ── Particle size ─────────────────────────────────────────────────
-        // No traversal modifier: sizeAttenuation already enlarges near particles;
-        // adding a multiplier during traversal amplifies near-camera artifacts.
-        sphereMat.size = 0.016 * (1 - 0.22 * focusSmooth + 0.30 * expandSmooth)
-
-        renderer.render(scene, camera)
+      function lost(event: Event) {
+        event.preventDefault()
+        contextLost = true
+        contextAvailable.current = false
+        loopRef.current?.setPaused(true)
+        report('unavailable')
       }
+      function restored() {
+        contextLost = false
+        contextAvailable.current = true
+        ready = false
+        resize()
+        loopRef.current?.setPaused(controls.current.paused)
+      }
+      canvas.addEventListener('webglcontextlost', lost)
+      canvas.addEventListener('webglcontextrestored', restored)
+      const ownedCanvas = canvas
+      disposables.push({ dispose() {
+        ownedCanvas.removeEventListener('webglcontextlost', lost)
+        ownedCanvas.removeEventListener('webglcontextrestored', restored)
+      } })
 
-      rafId = requestAnimationFrame(animate)
+      const loop = createMotionLoop(m, ({ time, delta, animate }) => {
+        if (contextLost) return
+        // Ambient motion never advances the story. Each step keeps its own shape range.
+        const cycle = 0.5 - 0.5 * Math.cos(time * Math.PI / 7)
+        const targetMorph = controls.current.step === 2 ? 1 : cycle * (controls.current.step === 0 ? 0.85 : 0.35)
+        const targetExpansion = controls.current.step === 1 ? 0.3 + cycle * 0.1 : 0
+        const reset = previousReset !== controls.current.resetKey
+        const stepChanged = previousStep !== controls.current.step
+        previousStep = controls.current.step
+        previousReset = controls.current.resetKey
+        if (reset) { clearPointer(); yaw = 0; pitch = 0 }
+        const ease = reset || (!animate && stepChanged) ? 1 : animate ? 1 - Math.exp(-4 * delta) : 0
+        morph += (targetMorph - morph) * ease
+        expansion += (targetExpansion - expansion) * ease
+        yaw += ((animate ? pointerX * 0.1 : 0) - yaw) * ease
+        pitch += ((animate ? pointerY * 0.06 : 0) - pitch) * ease
+        const breath = 1 + 0.06 * Math.sin(time * 0.8)
+        for (let i = 0; i < N_TOTAL * 3; i++) {
+          livePos[i] = (globePos[i] + (torusPos[i] - globePos[i]) * morph) * (1 + expansion)
+        }
+        posAttr.needsUpdate = true
+        sphere.rotation.set(0.2 + morph * 0.55 + pitch, time * 0.16 + yaw, 0)
+        sphere.scale.setScalar(breath)
+        sphereMat.color.setHSL(0.568, 0.76, 0.66)
+        sphereMat.size = narrow ? 0.024 : 0.018
+        ring.rotation.copy(sphere.rotation)
+        ringMaterial.opacity = morph * 0.3
+        bloom.scale.setScalar((1.85 + expansion + morph * 0.5) * breath)
+        bloomMat.opacity = 0.5 + morph * 0.15
+        try {
+          renderer.render(scene, camera)
+          if (!ready) { ready = true; report('ready') }
+        } catch {
+          contextLost = true
+          contextAvailable.current = false
+          loopRef.current?.setPaused(true)
+          report('unavailable')
+        }
+      })
+      loopRef.current = loop
+      loop.setPaused(controls.current.paused)
+      loop.setMotionOverride(controls.current.allowMotion)
+      disposables.push(loop)
     }
 
-    void init().catch((err: unknown) => {
-      if (!stopped) console.error('[CosmicGlobe] init failed:', err)
+    void init().catch(() => {
+      canvas?.remove()
+      report('unavailable')
+      disposables.forEach((resource) => resource.dispose())
+      disposables.length = 0
     })
 
     return () => {
       stopped = true
-      cancelAnimationFrame(rafId)
-      clearStaleTimer()
-      disposables.forEach((d) => d.dispose())
-      ownedCanvas?.remove()
+      loopRef.current = null
+      disposables.forEach((resource) => resource.dispose())
+      canvas?.remove()
     }
   }, [])
 
-  return (
-    <div
-      ref={mountRef}
-      className={className}
-      style={{ width: '100%', height: '100%', ...style }}
-    />
-  )
+  return <div ref={mountRef} className={className} style={{ width: '100%', height: '100%', touchAction: 'pan-y pinch-zoom', ...style }} />
 }

@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import { scrypt, randomBytes, createHmac } from 'node:crypto'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { testDatabaseUrl } from '../lib/database-safety'
 import { E2E, JOURNEY, AUTH_DIR, AUTH_WP, AUTH_NP, AUTH_SO, ALL_TEST_USER_IDS } from './test-ids'
 
 // Replicates @better-auth/utils/password hashPassword exactly.
@@ -52,7 +53,7 @@ function makeStorageState(token: string): string {
 }
 
 export default async function globalSetup() {
-  const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL! })
+  const adapter = new PrismaPg({ connectionString: testDatabaseUrl() })
   const prisma = new PrismaClient({ adapter })
 
   try {

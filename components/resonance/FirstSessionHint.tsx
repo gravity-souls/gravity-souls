@@ -1,23 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { getHintDismissed, dismissHint } from '@/lib/hints-preferences'
+import { dismissHint } from '@/lib/hints-preferences'
+
+import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 
 const HINT_KEY = 'resonance-first-session'
 
 export default function FirstSessionHint() {
-  const [visible, setVisible] = useState(false)
+  const dismissed = useHintDismissed(HINT_KEY)
+  if (dismissed) return null
 
-  useEffect(() => {
-    if (!getHintDismissed(HINT_KEY)) setVisible(true)
-  }, [])
-
-  function handleDismiss() {
-    dismissHint(HINT_KEY)
-    setVisible(false)
-  }
-
-  if (!visible) return null
+  function handleDismiss() { dismissHint(HINT_KEY) }
 
   return (
     <div

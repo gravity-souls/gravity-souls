@@ -13,10 +13,16 @@ export function proxy(request: NextRequest) {
   return NextResponse.next()
 }
 
+// /messages, /onboarding, and /galaxy/[slug] are deliberately excluded here —
+// each already has its own tested, graceful client-side handling for a
+// signed-out visitor (a "Sign in required" state, an explore-then-sign-up
+// handoff, and public content, respectively). A hard proxy redirect would
+// override that intentional UX. See e2e/phase18.spec.ts, e2e/phase3.spec.ts,
+// and e2e/beta-safety.spec.ts.
 export const config = {
   matcher: [
     '/resonance',
-    '/my-planet',
+    '/my-planet/:path*',
     '/discover',
     '/stream',
     '/settings/:path*',
@@ -24,8 +30,8 @@ export const config = {
     '/saved',
     '/universe/:path*',
     '/posts',
-    '/conversations',
     '/notifications',
     '/communities',
+    '/my-universe',
   ],
 }

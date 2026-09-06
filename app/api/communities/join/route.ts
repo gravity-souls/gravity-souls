@@ -1,78 +1,34 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
-import { grantXP } from "@/lib/grantXP";
+import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/session'
+import { grantXP } from '@/lib/grantXP'
+import { readJson, safeApiError } from '@/lib/api-input'
+import { joinSchema } from '@/lib/input-schemas'
 
-// POST /api/communities/join - join a community (idempotent)
 export async function POST(request: Request) {
-  let session;
   try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
+    const session = await requireUser()
+    const input = await readJson(request, joinSchema)
+    if (!input.ok) return input.response
+    const { communityId } = input.data
+    const userId = session.user.id
+    const community = await prisma.community.findUnique({ where: { id: communityId }, select: { id: true } })
+    if (!community) return Response.json({ error: 'Community not found' }, { status: 404 })
+
+    // Unique membership + skipDuplicates makes concurrent joins idempotent.
+    // Ownership is never assigned by joining, even for ownerless communities.
+    const result = await prisma.communityMembership.createMany({
+      data: [{ userId, communityId, role: 'MEMBER' }],
+      skipDuplicates: true,
+    })
+    const membership = await prisma.communityMembership.findUniqueOrThrow({
+      where: { userId_communityId: { userId, communityId } },
+    })
+    const xpEvent = result.count ? await grantXP(userId, 'GALAXY_JOINED').catch(() => {
+      console.error('Community join reward could not be recorded')
+      return null
+    }) : null
+    return Response.json({ joined: true, membership, xpEvent, leveledUp: xpEvent?.leveledUp ?? false })
+  } catch (error) {
+    return safeApiError(error)
   }
-
-  const body = await request.json();
-  const { communityId } = body;
-
-  if (!communityId || typeof communityId !== "string") {
-    return NextResponse.json({ error: "communityId is required" }, { status: 400 });
-  }
-
-  const userId = session.user.id;
-
-  // Verify community exists
-  const community = await prisma.community.findUnique({
-    where: { id: communityId },
-  });
-
-  if (!community) {
-    return NextResponse.json({ error: "Community not found" }, { status: 404 });
-  }
-
-  const existingMembership = await prisma.communityMembership.findUnique({
-    where: { userId_communityId: { userId, communityId } },
-  });
-
-  const existingAdmin = await prisma.communityMembership.findFirst({
-    where: { communityId, role: "ADMIN" },
-    select: { id: true },
-  });
-
-  const shouldBootstrapAdmin = !community.creatorId && !existingAdmin;
-
-  if (existingMembership) {
-    if (shouldBootstrapAdmin && existingMembership.role !== "ADMIN") {
-      const [membership] = await prisma.$transaction([
-        prisma.communityMembership.update({
-          where: { id: existingMembership.id },
-          data: { role: "ADMIN" },
-        }),
-        prisma.community.update({
-          where: { id: communityId },
-          data: { creatorId: userId },
-        }),
-      ]);
-
-      return NextResponse.json({ joined: true, membership, xpEvent: null, leveledUp: false });
-    }
-
-    return NextResponse.json({ joined: true, membership: existingMembership, xpEvent: null, leveledUp: false });
-  }
-
-  const [membership] = shouldBootstrapAdmin
-    ? await prisma.$transaction([
-        prisma.communityMembership.create({
-          data: { userId, communityId, role: "ADMIN" },
-        }),
-        prisma.community.update({
-          where: { id: communityId },
-          data: { creatorId: userId },
-        }),
-      ])
-    : [await prisma.communityMembership.create({ data: { userId, communityId } })];
-
-  const xpEvent = await grantXP(userId, "GALAXY_JOINED");
-
-  return NextResponse.json({ joined: true, membership, xpEvent, leveledUp: xpEvent.leveledUp });
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { createMotionLoop, type MotionFrame } from '@/lib/motion-loop'
 
 // --- Star definition ----------------------------------------------------------
 
@@ -53,8 +54,13 @@ function makeStar(w: number, h: number): Star {
 
 // --- Component ----------------------------------------------------------------
 
-export default function StarfieldCanvas() {
+export default function StarfieldCanvas({ paused = false }: { paused?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const loopRef = useRef<ReturnType<typeof createMotionLoop> | null>(null)
+
+  const pausedRef = useRef(paused)
+  useEffect(() => { pausedRef.current = paused; loopRef.current?.setPaused(paused) }, [paused])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -62,7 +68,6 @@ export default function StarfieldCanvas() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    let animId = 0
     let stars: Star[] = []
     let W = 0
     let H = 0
@@ -73,6 +78,7 @@ export default function StarfieldCanvas() {
       canvas!.width  = W
       canvas!.height = H
       stars = Array.from({ length: 190 }, () => makeStar(W, H))
+      loopRef.current?.invalidate()
     }
 
     function drawCross(x: number, y: number, size: number, color: string, opacity: number) {
@@ -102,7 +108,8 @@ export default function StarfieldCanvas() {
       ctx!.stroke()
     }
 
-    function tick(t: number) {
+    function tick({ time, delta, animate }: MotionFrame) {
+      const t = time * 1000
       ctx!.clearRect(0, 0, W, H)
 
       for (const s of stars) {
@@ -113,8 +120,10 @@ export default function StarfieldCanvas() {
         )
 
         // Slow drift
-        s.x += s.vx
-        s.y += s.vy
+        if (animate) {
+          s.x += s.vx * delta * 60
+          s.y += s.vy * delta * 60
+        }
 
         // Wrap
         if (s.y < -4) s.y = H + 4
@@ -147,15 +156,17 @@ export default function StarfieldCanvas() {
         }
       }
 
-      animId = requestAnimationFrame(tick)
     }
 
     resize()
     window.addEventListener('resize', resize)
-    animId = requestAnimationFrame(tick)
+    const loop = createMotionLoop(canvas, tick)
+    loopRef.current = loop
+    loop.setPaused(pausedRef.current)
 
     return () => {
-      cancelAnimationFrame(animId)
+      loop.dispose()
+      loopRef.current = null
       window.removeEventListener('resize', resize)
     }
   }, [])

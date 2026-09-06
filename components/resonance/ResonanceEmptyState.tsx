@@ -2,10 +2,19 @@ import GlowButton from '@/components/ui/GlowButton'
 import { useTranslations } from 'next-intl'
 
 // --- ResonanceEmptyState ------------------------------------------------------
-// Shown on /resonance when the viewer is an Explorer (no planet formed yet).
-// Teases the orbital system without full reveal.
+// Shown on /resonance either for an Explorer (no planet formed yet — the
+// default copy below) or, via props, for a Resonator whose planet exists but
+// has no matches yet (too few other visible planets so far). These are
+// different situations and must not share the "form your planet" copy.
 
-export default function ResonanceEmptyState() {
+interface Props {
+  title?: string
+  body?: string
+  ctaLabel?: string
+  ctaHref?: string
+}
+
+export default function ResonanceEmptyState({ title, body, ctaLabel, ctaHref }: Props) {
   const t = useTranslations('resonance')
   return (
     <div className="relative flex flex-col items-center justify-center gap-8 py-16 px-6">
@@ -83,15 +92,15 @@ export default function ResonanceEmptyState() {
       {/* Copy */}
       <div className="flex flex-col items-center gap-3 text-center max-w-xs">
         <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-          {t('emptyTitle')}
+          {title ?? t('emptyTitle')}
         </h2>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-          {t('emptyBody')}
+          {body ?? t('emptyBody')}
         </p>
       </div>
 
-      <GlowButton href="/onboarding" variant="primary" className="px-8 py-3.5 text-sm">
-        {t('beginFormation')}
+      <GlowButton href={ctaHref ?? '/onboarding'} variant="primary" className="px-8 py-3.5 text-sm">
+        {ctaLabel ?? t('beginFormation')}
       </GlowButton>
 
     </div>

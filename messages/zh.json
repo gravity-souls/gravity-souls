@@ -75,7 +75,8 @@
     "nebulaContemplative": "孤独 / 内省",
     "nebulaTechnical": "构建 / 系统",
     "nebulaEmotional": "情感 / 温暖",
-    "nebulaWandering": "流浪 / 边界"
+    "nebulaWandering": "流浪 / 边界",
+    "exploreExperience": "探索体验"
   },
   "galaxyPage": {
     "galaxy": "星系",
@@ -112,7 +113,16 @@
     "joinToReplyHint": "加入这个星系后即可回复讨论。",
     "joinToReply": "加入后回复",
     "closeThread": "关闭讨论",
-    "closeDiscussionPreview": "关闭讨论预览"
+    "closeDiscussionPreview": "关闭讨论预览",
+    "communityUnavailable": "该社区暂时无法访问，请重试。",
+    "postsUnavailable": "无法加载社区动态。",
+    "discussionsUnavailable": "无法加载讨论。",
+    "joinFailed": "无法加入该社区，请重试。",
+    "loadingCommunity": "正在加载社区…",
+    "loadingDiscussions": "正在加载讨论…",
+    "noDiscussions": "暂无讨论。",
+    "retryLoad": "重试",
+    "publicPostNotice": "任何人都可以阅读这些动态，包括未注册的访客。"
   },
   "resonance": {
     "todaysOrbit": "今日轨道",
@@ -143,6 +153,8 @@
     "desktopDetailHint": "在桌面端打开以查看完整共鸣详情",
     "emptyTitle": "你的轨道还是空的",
     "emptyBody": "每天都会有五颗星球与你的星球产生共鸣。先形成你的星球，然后场域会开始对齐。",
+    "noMatchesTitle": "暂时还没有共鸣",
+    "noMatchesBody": "你的星球已经形成，正在等待。随着更多星球加入，或你的引力发生变化，新的匹配会逐渐出现——请稍后再来看看。",
     "beginFormation": "开始形成",
     "selectPlanetDetail": "选择一颗星球查看它的共鸣。",
     "suggestedOrbit": "建议轨道",
@@ -413,7 +425,9 @@
     "unknown": "未知",
     "viewPlanet": "查看星球",
     "sendFirstSignal": "发送第一道信号...",
-    "transmitTo": "传输给 {name}..."
+    "transmitTo": "传输给 {name}...",
+    "deliveryUnconfirmed": "无法确认消息是否送达。草稿已保留，请先检查对话再重试。",
+    "sendingMessage": "正在发送…"
   },
   "postsPage": {
     "eyebrow": "社交轨道",
@@ -607,6 +621,24 @@
     "awakenPlanet": "唤醒我的星球",
     "emptyTitle": "还没有连接",
     "emptySubtitle": "访问一颗星球并发送第一道信号，开始形成轨道。"
+  },
+  "safety": {
+    "privacyTitle": "隐私",
+    "privacyDescription": "选择谁可以看到你的星球。",
+    "visibilityMembers": "成员可见 — 任何已登录成员都能看到你的星球",
+    "visibilityPrivate": "私密 — 只有互相关注的人才能看到",
+    "visibilitySaved": "已保存",
+    "follow": "关注",
+    "unfollow": "取消关注",
+    "moreActions": "更多操作",
+    "report": "举报",
+    "block": "屏蔽",
+    "blockConfirm": "屏蔽这颗星球？对方将无法再联系你，现有的关注关系也会被移除。",
+    "reportPrompt": "告诉我们发生了什么。举报会被审核，且不会显示给被举报的星球。",
+    "reportPlaceholder": "发生了什么？",
+    "cancel": "取消",
+    "submitReport": "提交举报",
+    "reportSent": "举报已发送，谢谢。"
   },
   "createPlanet": {
     "formation": "星球形成",
@@ -814,5 +846,48 @@
   },
   "sidebar": {
     "tagline": "你没有迷失，你正在成为。"
+  },
+  "cosmicDemo": {
+    "eyebrow": "与志趣相投的人更近一点",
+    "title": "一个世界，",
+    "titleAccent": "从你开始。",
+    "intro": "兴趣汇成星球，共同的时刻化为联结。来这里探索吧。",
+    "home": "Gravity Souls 首页",
+    "signIn": "登录",
+    "continueToUniverse": "继续",
+    "openPlanet": "打开我的星球",
+    "visualLabel": "互动蓝色星球",
+    "introLabel": "探索 Gravity Souls",
+    "illustration": "联结的视觉演绎",
+    "stepsLabel": "探索体验",
+    "stepCount": "第 {current} 步，共 {total} 步",
+    "previous": "上一步",
+    "next": "下一步",
+    "pause": "暂停",
+    "play": "播放",
+    "reset": "重置",
+    "create": "创建我的星球",
+    "note": "从真实的自己开始。",
+    "fallback": "更安静的画面。你仍然可以探索每一步。",
+    "footer": "每一次联结，都有一个起点。",
+    "backHome": "返回首页",
+    "steps": {
+      "0": {
+        "label": "你的星球",
+        "title": "为真实的自己留一片空间。",
+        "body": "将你的兴趣、个性和日常好奇心汇聚起来，形成一颗属于你的星球。"
+      },
+      "1": {
+        "label": "你的同伴",
+        "title": "让共同的兴趣拉近距离。",
+        "body": "发现志趣相投的人，探索他们的星球，按照自己的节奏开启对话。"
+      },
+      "2": {
+        "label": "你的社区",
+        "title": "找到你的归属。",
+        "body": "星系让拥有共同兴趣的人相聚。加入社区，交流想法，发现一起参与的活动。"
+      }
+    },
+    "motionPreference": "动画默认遵循设备设置。选择播放即可在此页面启用动画。"
   }
 }

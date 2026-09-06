@@ -157,8 +157,8 @@ export default function DiscoverPage() {
       try {
         const res = await fetch('/api/planets')
         if (res.ok) {
-          const data = await res.json()
-          const planets = (data as Record<string, unknown>[]).map(dbPlanetToProfile)
+          const data = await res.json() as { planets: Record<string, unknown>[] }
+          const planets = data.planets.map(dbPlanetToProfile)
           setOtherPlanets(planets)
         } else if (res.status === 401) {
           router.replace('/sign-in?next=/discover')

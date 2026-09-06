@@ -110,6 +110,7 @@ export default function ConversationPage({ params }: Props) {
   const [myUserId, setMyUserId]       = useState('')
   const [loading, setLoading]         = useState(true)
   const [sending, setSending]         = useState(false)
+  const [sendError, setSendError]     = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -150,18 +151,9 @@ export default function ConversationPage({ params }: Props) {
   }, [messages])
 
   async function handleSend(content: string) {
-    if (sending) return
+    if (sending) return false
     setSending(true)
-
-    // Optimistic update
-    const tempMsg: MsgData = {
-      id: `temp-${Date.now()}`,
-      fromId: myUserId,
-      content,
-      type: 'text',
-      sentAt: new Date().toISOString(),
-    }
-    setMessages((prev) => [...prev, tempMsg])
+    setSendError('')
 
     try {
       const res = await fetch(`/api/conversations/${id}`, {
@@ -169,12 +161,16 @@ export default function ConversationPage({ params }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       })
-      if (res.ok) {
-        const real = await res.json()
-        setMessages((prev) => prev.map((m) => (m.id === tempMsg.id ? real : m)))
-      }
-    } catch { /* ignore */ }
-    setSending(false)
+      if (!res.ok) throw new Error('delivery-unconfirmed')
+      const real = await res.json() as MsgData
+      setMessages((prev) => [...prev, real])
+      return true
+    } catch {
+      setSendError(t('deliveryUnconfirmed'))
+      return false
+    } finally {
+      setSending(false)
+    }
   }
 
   if (loading) {
@@ -221,6 +217,8 @@ export default function ConversationPage({ params }: Props) {
       </div>
 
       {/* Composer */}
+      {sendError && <p role="alert" className="px-4 py-2 text-sm text-red-300">{sendError}</p>}
+      {sending && <p role="status" className="px-4 py-2 text-sm">{t('sendingMessage')}</p>}
       <SignalComposer
         onSend={handleSend}
         accentColor={accentColor}

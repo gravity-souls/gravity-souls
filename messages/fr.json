@@ -75,7 +75,8 @@
     "nebulaContemplative": "Solitude / Introspection",
     "nebulaTechnical": "Construction / Systèmes",
     "nebulaEmotional": "Émotion / Chaleur",
-    "nebulaWandering": "Errance / Frontières"
+    "nebulaWandering": "Errance / Frontières",
+    "exploreExperience": "Explorer l’expérience"
   },
   "galaxyPage": {
     "galaxy": "Galaxie",
@@ -112,7 +113,16 @@
     "joinToReplyHint": "Rejoignez cette galaxie pour répondre aux discussions.",
     "joinToReply": "Rejoindre pour répondre",
     "closeThread": "Fermer le fil",
-    "closeDiscussionPreview": "Fermer l'aperçu de discussion"
+    "closeDiscussionPreview": "Fermer l'aperçu de discussion",
+    "communityUnavailable": "Cette communauté est indisponible pour le moment. Veuillez réessayer.",
+    "postsUnavailable": "Impossible de charger les publications de la communauté.",
+    "discussionsUnavailable": "Impossible de charger les discussions.",
+    "joinFailed": "Impossible de rejoindre cette communauté. Veuillez réessayer.",
+    "loadingCommunity": "Chargement de la communauté…",
+    "loadingDiscussions": "Chargement des discussions…",
+    "noDiscussions": "Aucune discussion pour le moment.",
+    "retryLoad": "Réessayer",
+    "publicPostNotice": "Ces publications sont accessibles à tous, même sans compte."
   },
   "resonance": {
     "todaysOrbit": "Orbite du jour",
@@ -143,6 +153,8 @@
     "desktopDetailHint": "Ouvrez sur desktop pour voir le détail complet de résonance",
     "emptyTitle": "Votre orbite est vide",
     "emptyBody": "Chaque jour, cinq planètes entrent en résonance avec la vôtre. Formez d'abord votre planète - puis le champ s'aligne.",
+    "noMatchesTitle": "Pas encore de résonance",
+    "noMatchesBody": "Votre planète est formée et vous attend. De nouvelles correspondances apparaîtront à mesure que d'autres planètes rejoignent l'univers, ou que votre gravité évolue - revenez bientôt.",
     "beginFormation": "Commencer la formation",
     "selectPlanetDetail": "Sélectionnez une planète pour voir sa résonance.",
     "suggestedOrbit": "Orbite suggérée",
@@ -413,7 +425,9 @@
     "unknown": "Inconnu",
     "viewPlanet": "Voir la planète",
     "sendFirstSignal": "Envoyez le premier signal...",
-    "transmitTo": "Transmettre à {name}..."
+    "transmitTo": "Transmettre à {name}...",
+    "deliveryUnconfirmed": "L’envoi n’a pas pu être confirmé. Votre brouillon est conservé. Vérifiez la conversation avant de réessayer.",
+    "sendingMessage": "Envoi…"
   },
   "postsPage": {
     "eyebrow": "Orbite sociale",
@@ -607,6 +621,24 @@
     "awakenPlanet": "Éveiller ma planète",
     "emptyTitle": "Aucune connexion pour le moment",
     "emptySubtitle": "Visitez une planète et envoyez un premier signal pour commencer à former une orbite."
+  },
+  "safety": {
+    "privacyTitle": "Confidentialité",
+    "privacyDescription": "Choisissez qui peut voir votre planète.",
+    "visibilityMembers": "Membres — tout membre connecté peut voir votre planète",
+    "visibilityPrivate": "Privé — seules les personnes que vous suivez mutuellement peuvent la voir",
+    "visibilitySaved": "Enregistré",
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "moreActions": "Plus d'actions",
+    "report": "Signaler",
+    "block": "Bloquer",
+    "blockConfirm": "Bloquer cette planète ? Elle ne pourra plus vous contacter, et toute connexion existante sera supprimée.",
+    "reportPrompt": "Dites-nous ce qui s'est passé. Les signalements sont examinés et ne sont jamais montrés à la planète signalée.",
+    "reportPlaceholder": "Que s'est-il passé ?",
+    "cancel": "Annuler",
+    "submitReport": "Envoyer le signalement",
+    "reportSent": "Signalement envoyé. Merci."
   },
   "createPlanet": {
     "formation": "Formation de planète",
@@ -814,5 +846,48 @@
   },
   "sidebar": {
     "tagline": "Vous n'êtes pas perdu. Vous devenez."
+  },
+  "cosmicDemo": {
+    "eyebrow": "Un peu plus près des autres",
+    "title": "Un monde qui commence",
+    "titleAccent": "avec vous.",
+    "intro": "Vos intérêts deviennent une planète. Les moments partagés créent des liens. Venez explorer.",
+    "home": "Accueil Gravity Souls",
+    "signIn": "Se connecter",
+    "continueToUniverse": "Continuer",
+    "openPlanet": "Ouvrir ma planète",
+    "visualLabel": "Globe bleu interactif",
+    "introLabel": "Découvrir Gravity Souls",
+    "illustration": "Une illustration du lien",
+    "stepsLabel": "Explorer l’expérience",
+    "stepCount": "Étape {current} sur {total}",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pause": "Pause",
+    "play": "Reprendre",
+    "reset": "Réinitialiser",
+    "create": "Créer ma planète",
+    "note": "Commencez par ce qui vous ressemble.",
+    "fallback": "Une vue plus calme. Chaque étape reste accessible.",
+    "footer": "Chaque lien commence quelque part.",
+    "backHome": "Retour à l’accueil",
+    "steps": {
+      "0": {
+        "label": "Votre planète",
+        "title": "Faites place à qui vous êtes.",
+        "body": "Rassemblez vos intérêts, votre personnalité et vos petites curiosités dans une planète qui vous ressemble."
+      },
+      "1": {
+        "label": "Vos rencontres",
+        "title": "Rapprochez-vous grâce à vos affinités.",
+        "body": "Découvrez des personnes qui partagent vos intérêts. Explorez leurs planètes et engagez la conversation à votre rythme."
+      },
+      "2": {
+        "label": "Vos communautés",
+        "title": "Trouvez votre place.",
+        "body": "Les galaxies réunissent des personnes autour de passions communes. Rejoignez une communauté, échangez et découvrez des activités."
+      }
+    },
+    "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici."
   }
 }

@@ -274,7 +274,8 @@ export default function MyPlanetPage() {
         try {
           const planetsRes = await fetch('/api/planets')
           if (planetsRes.ok) {
-            const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map((data: Record<string, unknown>) => {
+            const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
+            const allPlanets = planetRows.map((data: Record<string, unknown>) => {
               const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
               return {
                 id: data.id as string,

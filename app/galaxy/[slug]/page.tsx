@@ -68,7 +68,7 @@ interface ApiCommunityPost {
 }
 
 interface DiscussionTopic {
-  id?: string
+  id: string
   title: string
   replies: number
   heat: number
@@ -88,42 +88,6 @@ interface ApiCommunityDiscussion {
   heat: number
   replies: number
   replyItems?: ApiCommunityReply[]
-}
-
-const DEFAULT_COMMUNITY_POSTS: Partial<Record<string, CommunityPost[]>> = {
-  'slow-thinkers': [
-    { id: 'slow-post-1', authorName: 'Aelion-42', content: 'What book changed how slowly you allow yourself to think?', createdAt: '2026-04-30T07:20:00Z', likes: 18, replies: 2, replyItems: [
-      { id: 'slow-reply-1', authorName: 'Sorvae-88', content: 'A book that made me pause between paragraphs instead of racing to the end.', createdAt: '2026-04-30T08:10:00Z' },
-      { id: 'slow-reply-2', authorName: 'Noctaris', content: 'Second reads are where the hidden architecture appears.', createdAt: '2026-04-30T08:42:00Z' },
-    ] },
-    { id: 'slow-post-2', authorName: 'Sorvae-88', content: 'Stillness is a practice. Today I am trying not to interrupt my own thoughts.', createdAt: '2026-04-29T19:10:00Z', likes: 24, replies: 2, replyItems: [
-      { id: 'slow-reply-3', authorName: 'Aelion-42', content: 'This is exactly the discipline I keep forgetting is a discipline.', createdAt: '2026-04-29T20:08:00Z' },
-      { id: 'slow-reply-4', authorName: 'Lumira-33', content: 'Sometimes the first quiet minute is the hardest one.', createdAt: '2026-04-29T21:16:00Z' },
-    ] },
-  ],
-  'signal-noise': [
-    { id: 'signal-post-1', authorName: 'Kindus-17', content: 'Tiny build log: the simplest version was the one that survived contact with reality.', createdAt: '2026-04-30T09:40:00Z', likes: 31, replies: 3, replyItems: [
-      { id: 'signal-reply-1', authorName: 'Novaxis', content: 'The version with fewer moving parts is usually the one future-you can still debug.', createdAt: '2026-04-30T10:02:00Z' },
-      { id: 'signal-reply-2', authorName: 'Spirax', content: 'Tiny build logs are underrated. They show the actual shape of decisions.', createdAt: '2026-04-30T10:44:00Z' },
-      { id: 'signal-reply-3', authorName: 'Kindus-17', content: '@Spirax yes, the log became more useful than the feature list.', createdAt: '2026-04-30T11:12:00Z' },
-    ] },
-    { id: 'signal-post-2', authorName: 'Novaxis', content: 'What is your boring stack that keeps paying rent?', createdAt: '2026-04-28T16:00:00Z', likes: 27, replies: 2, replyItems: [
-      { id: 'signal-reply-4', authorName: 'Kindus-17', content: 'Postgres, queues, server-rendered pages, and tests that cover the flows people actually use.', createdAt: '2026-04-28T17:20:00Z' },
-      { id: 'signal-reply-5', authorName: 'Aelion-42', content: 'Anything boring enough that the team can explain it under pressure.', createdAt: '2026-04-28T18:05:00Z' },
-    ] },
-  ],
-  'warm-frequency': [
-    { id: 'warm-post-1', authorName: 'Orbalin', content: 'A small kindness I received today changed the texture of the whole afternoon.', createdAt: '2026-04-30T10:05:00Z', likes: 44, replies: 2, replyItems: [
-      { id: 'warm-reply-1', authorName: 'Elarith', content: 'Those tiny gestures stay in the room long after the moment ends.', createdAt: '2026-04-30T10:32:00Z' },
-      { id: 'warm-reply-2', authorName: 'Calenvix', content: 'I love when a day changes because someone noticed something small.', createdAt: '2026-04-30T11:00:00Z' },
-    ] },
-  ],
-  'threshold-states': [
-    { id: 'threshold-post-1', authorName: 'Lumira-33', content: 'Home felt less like a place today and more like a rhythm I briefly remembered.', createdAt: '2026-04-29T11:35:00Z', likes: 38, replies: 2, replyItems: [
-      { id: 'threshold-reply-1', authorName: 'Driftan', content: 'That rhythm thing is real. Some cities have it, some people carry it.', createdAt: '2026-04-29T12:20:00Z' },
-      { id: 'threshold-reply-2', authorName: 'Sorvae-88', content: 'Home as tempo, not coordinates. That lands.', createdAt: '2026-04-29T13:05:00Z' },
-    ] },
-  ],
 }
 
 function apiReplyToCommunityReply(reply: ApiCommunityReply): CommunityReply {
@@ -160,133 +124,6 @@ function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTop
   }
 }
 
-// --- Mock discussion topics per galaxy ---------------------------------------
-
-const DISCUSSION_TOPICS: Partial<Record<string, DiscussionTopic[]>> = {
-  'slow-thinkers': [
-    { title: 'What does "thinking slowly" actually mean to you?',    replies: 24, heat: 0.8 },
-    { title: 'Books that reward a second read more than the first',   replies: 31, heat: 0.9 },
-    { title: '深夜写作 vs 清晨写作  -  which surfaces different thoughts?', replies: 18, heat: 0.6 },
-    { title: 'The courage to sit with uncertainty instead of resolving it', replies: 12, heat: 0.4 },
-  ],
-  'signal-noise': [
-    { title: 'What\'s your "boring" tech stack that actually works?', replies: 42, heat: 0.9 },
-    { title: 'Software craft vs software speed  -  a false dichotomy?', replies: 55, heat: 1.0 },
-    { title: 'When does a side project become an obsession?',         replies: 29, heat: 0.7 },
-    { title: 'The aesthetics of well-named variables',                replies: 16, heat: 0.5 },
-  ],
-  'dusk-archives': [
-    { title: 'A book that felt like it was written specifically for you', replies: 48, heat: 1.0 },
-    { title: 'Films that only make sense after you\'ve lived more',   replies: 33, heat: 0.8 },
-    { title: '被遗忘的音乐  -  share something no one talks about',        replies: 22, heat: 0.6 },
-    { title: 'The sentence that stopped you and wouldn\'t let you continue', replies: 19, heat: 0.5 },
-  ],
-  'warm-frequency': [
-    { title: 'Small acts of care that meant more than intended',      replies: 38, heat: 0.9 },
-    { title: 'What makes a conversation feel genuinely safe?',        replies: 27, heat: 0.7 },
-    { title: '如何在城市中建立真实的连接',                                 replies: 45, heat: 1.0 },
-    { title: 'Mutual aid stories  -  help you gave or received',        replies: 21, heat: 0.6 },
-  ],
-  'image-makers': [
-    { title: 'The composition that made you rethink everything',      replies: 36, heat: 0.8 },
-    { title: 'Tools vs intent  -  does your equipment shape your vision?', replies: 44, heat: 0.9 },
-    { title: '摄影是记录还是创造？',                                       replies: 29, heat: 0.7 },
-    { title: 'A photo that works for reasons you can\'t explain',     replies: 17, heat: 0.5 },
-  ],
-  'threshold-states': [
-    { title: 'The city you left that still lives inside you',         replies: 52, heat: 1.0 },
-    { title: 'What does "home" mean when you\'ve lived in 4 countries?', replies: 41, heat: 0.9 },
-    { title: 'Third culture identity  -  the parts you keep, the parts you lose', replies: 34, heat: 0.8 },
-    { title: '流浪者的孤独  -  does movement become avoidance?',            replies: 23, heat: 0.6 },
-  ],
-  'body-clocks': [
-    { title: 'Movement practices that changed your thinking',         replies: 31, heat: 0.7 },
-    { title: 'Sleep is a skill  -  what actually helped you',           replies: 47, heat: 1.0 },
-    { title: 'The difference between training and performing',        replies: 22, heat: 0.6 },
-    { title: '身体的智慧  -  moments your body knew before your mind did', replies: 28, heat: 0.7 },
-  ],
-  'late-night-economics': [
-    { title: 'The economic model no one taught you that explains everything', replies: 58, heat: 1.0 },
-    { title: 'Housing as a political choice, not just a market',      replies: 44, heat: 0.9 },
-    { title: '城市如何塑造我们的欲望',                                     replies: 33, heat: 0.8 },
-    { title: 'When did "hustle culture" stop working for you?',       replies: 26, heat: 0.6 },
-  ],
-}
-
-const DISCUSSION_REPLY_SAMPLES: Partial<Record<string, DiscussionReply[]>> = {
-  'signal-noise:What\'s your "boring" tech stack that actually works?': [
-    { id: 'disc-signal-1', authorName: 'Kindus-17', content: 'Postgres, a small queue, server-rendered pages, and boring logs. It sounds dull until something breaks and the fix is obvious.', createdAt: '2026-04-30T08:45:00Z' },
-    { id: 'disc-signal-2', authorName: 'Novaxis-3', content: 'I keep returning to relational data and plain HTTP. The less magical the stack, the easier it is to keep a product alive.', createdAt: '2026-04-30T09:08:00Z' },
-    { id: 'disc-signal-3', authorName: 'Spirax-14', content: 'My boring stack is whatever lets me delete code without fear. Usually that means fewer services than I first wanted.', createdAt: '2026-04-30T09:37:00Z' },
-  ],
-  'signal-noise:Software craft vs software speed  -  a false dichotomy?': [
-    { id: 'disc-signal-4', authorName: 'Novaxis-3', content: 'Speed without craft becomes rework. Craft without delivery becomes private art. The interesting part is the rhythm.', createdAt: '2026-04-30T07:20:00Z' },
-    { id: 'disc-signal-5', authorName: 'Kindus-17', content: 'The fastest teams I have seen had boring foundations and very sharp taste about what not to build.', createdAt: '2026-04-30T07:58:00Z' },
-  ],
-  'signal-noise:When does a side project become an obsession?': [
-    { id: 'disc-signal-6', authorName: 'Spirax-14', content: 'When the project starts asking questions about your life instead of just your code.', createdAt: '2026-04-29T22:12:00Z' },
-    { id: 'disc-signal-7', authorName: 'Aelion-42', content: 'For me, it is the moment I make a roadmap no one asked for.', createdAt: '2026-04-29T22:50:00Z' },
-  ],
-  'signal-noise:The aesthetics of well-named variables': [
-    { id: 'disc-signal-8', authorName: 'Kindus-17', content: 'A good variable name lowers the temperature of the whole function.', createdAt: '2026-04-29T18:05:00Z' },
-    { id: 'disc-signal-9', authorName: 'Novaxis-3', content: 'Names are architecture in miniature. They decide what future readers are allowed to notice.', createdAt: '2026-04-29T18:44:00Z' },
-  ],
-}
-
-const DISCUSSION_REPLY_FILLERS = [
-  'I keep coming back to this because the answer changes depending on the project and the people around it.',
-  'The strongest version of this idea is probably quieter than the one we usually argue about.',
-  'There is something useful in separating taste from habit here. They look similar from the outside.',
-  'I agree with the direction, but I think the constraint matters more than the tool choice.',
-  'This feels like one of those topics where the boring answer is the most honest one.',
-  'The pattern I notice is that good systems make the next decision less dramatic.',
-  'I would add that maintenance changes the meaning of almost every early design choice.',
-  'Sometimes the real question is what you can explain clearly after being away from it for a month.',
-  'This is why I like small examples. They reveal the philosophy faster than abstract rules.',
-  'The tension here is productive. Too much certainty would make the thread less useful.',
-] as const
-
-const DISCUSSION_REPLY_AUTHORS = [
-  'Aelion-42',
-  'Novaxis-3',
-  'Kindus-17',
-  'Spirax-14',
-  'Sorvae-88',
-  'Lumira-33',
-  'Orbalin',
-  'Calenvix',
-] as const
-
-function getDiscussionKey(slug: string, title: string) {
-  return `${slug}:${title}`
-}
-
-function getDiscussionReplies(slug: string, topic: DiscussionTopic): DiscussionReply[] {
-  const baseReplies = DISCUSSION_REPLY_SAMPLES[getDiscussionKey(slug, topic.title)] ?? [
-    { id: `${slug}-${topic.title}-reply-1`, authorName: 'Aelion-42', content: 'This thread is still unfolding. I like that the question leaves room for different answers.', createdAt: '2026-04-30T08:00:00Z' },
-    { id: `${slug}-${topic.title}-reply-2`, authorName: 'Sorvae-88', content: 'The strongest replies here are usually the ones that make the original question more precise.', createdAt: '2026-04-30T08:30:00Z' },
-  ]
-
-  if (baseReplies.length >= topic.replies) return baseReplies.slice(0, topic.replies)
-
-  const generatedReplies = Array.from({ length: topic.replies - baseReplies.length }, (_, index) => {
-    const number = baseReplies.length + index + 1
-    const filler = DISCUSSION_REPLY_FILLERS[index % DISCUSSION_REPLY_FILLERS.length]
-    const authorName = DISCUSSION_REPLY_AUTHORS[(index + topic.title.length) % DISCUSSION_REPLY_AUTHORS.length]
-    const hour = 9 + Math.floor(index / 3)
-    const minute = (index * 11) % 60
-
-    return {
-      id: `${slug}-${topic.title}-generated-${number}`,
-      authorName,
-      content: filler,
-      createdAt: `2026-04-30T${String(hour % 24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00Z`,
-    }
-  })
-
-  return [...baseReplies, ...generatedReplies]
-}
-
 // --- Page --------------------------------------------------------------------
 
 interface Props {
@@ -312,6 +149,12 @@ export default function GalaxyPage({ params }: Props) {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([])
   const [discussionTopics, setDiscussionTopics] = useState<DiscussionTopic[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
+  const [communityLoading, setCommunityLoading] = useState(true)
+  const [communityError, setCommunityError] = useState('')
+  const [postsError, setPostsError] = useState('')
+  const [discussionsError, setDiscussionsError] = useState('')
+  const [discussionsLoading, setDiscussionsLoading] = useState(true)
+  const [reload, setReload] = useState(0)
   const [posting, setPosting] = useState(false)
   const [postingDiscussionReply, setPostingDiscussionReply] = useState(false)
   const [postError, setPostError] = useState('')
@@ -350,81 +193,70 @@ export default function GalaxyPage({ params }: Props) {
   useEffect(() => {
     let cancelled = false
 
+    Promise.resolve().then(() => {
+      if (!cancelled) { setCommunityLoading(true); setCommunityError(''); setCommunity(null); setCommunityJoined(false) }
+    })
     fetch('/api/communities')
-      .then((res) => res.ok ? res.json() : [])
-      .then((rows: CommunityRow[]) => {
+      .then(async (res) => {
+        if (!res.ok) throw new Error('unavailable')
+        return res.json() as Promise<CommunityRow[]>
+      })
+      .then((rows) => {
         if (cancelled) return
         const match = rows.find((row) => resolveGalaxySlug(row.slug) === resolvedSlug)
         setCommunity(match ?? null)
         setCommunityJoined(match?.joined ?? false)
+        if (!match) setCommunityError(t('communityUnavailable'))
       })
-      .catch(() => {})
-
+      .catch(() => { if (!cancelled) setCommunityError(t('communityUnavailable')) })
+      .finally(() => { if (!cancelled) setCommunityLoading(false) })
     return () => { cancelled = true }
-  }, [resolvedSlug])
+  }, [resolvedSlug, reload, t])
 
   useEffect(() => {
     let cancelled = false
-    const defaults = DEFAULT_COMMUNITY_POSTS[resolvedSlug] ?? []
-
-    if (!community) {
-      Promise.resolve().then(() => {
-        if (cancelled) return
-        setCommunityPosts(defaults)
-        setPostsLoading(false)
-      })
-      return () => { cancelled = true }
-    }
-
-    setPostsLoading(true)
-    setPostError('')
-
+    Promise.resolve().then(() => {
+      if (!cancelled) { setCommunityPosts([]); setPostsError(''); setPostsLoading(!!community) }
+    })
+    if (!community) return () => { cancelled = true }
     fetch(`/api/communities/${community.id}/posts`)
-      .then((res) => res.ok ? res.json() : { posts: [] })
-      .then((data: { joined?: boolean; posts?: ApiCommunityPost[] }) => {
+      .then(async (res) => {
+        if (!res.ok) throw new Error('unavailable')
+        return res.json() as Promise<{ joined?: boolean; posts: ApiCommunityPost[] }>
+      })
+      .then((data) => {
         if (cancelled) return
         if (typeof data.joined === 'boolean') setCommunityJoined(data.joined)
-        const apiPosts = (data.posts ?? []).map(apiPostToCommunityPost)
-        setCommunityPosts(apiPosts.length > 0 ? apiPosts : defaults)
+        setCommunityPosts(data.posts.map(apiPostToCommunityPost))
       })
-      .catch(() => {
-        if (!cancelled) setCommunityPosts(defaults)
-      })
-      .finally(() => {
-        if (!cancelled) setPostsLoading(false)
-      })
-
+      .catch(() => { if (!cancelled) setPostsError(t('postsUnavailable')) })
+      .finally(() => { if (!cancelled) setPostsLoading(false) })
     return () => { cancelled = true }
-  }, [community, resolvedSlug])
+  }, [community, t])
 
   useEffect(() => {
     let cancelled = false
-    const defaults = DISCUSSION_TOPICS[resolvedSlug] ?? []
-
-    if (!community) {
-      Promise.resolve().then(() => {
-        if (!cancelled) setDiscussionTopics(defaults)
-      })
-      return () => { cancelled = true }
-    }
-
+    Promise.resolve().then(() => {
+      if (!cancelled) {
+        setDiscussionTopics([]); setDiscussionsError(''); setDiscussionsLoading(!!community)
+        setSelectedTopic(null); setDiscussionReplyOverrides({})
+      }
+    })
+    if (!community) return () => { cancelled = true }
     fetch(`/api/communities/${community.id}/discussions`)
-      .then((res) => res.ok ? res.json() : { discussions: [] })
-      .then((data: { discussions?: ApiCommunityDiscussion[] }) => {
-        if (cancelled) return
-        const apiDiscussions = (data.discussions ?? []).map(apiDiscussionToTopic)
-        setDiscussionTopics(apiDiscussions.length > 0 ? apiDiscussions : defaults)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('unavailable')
+        return res.json() as Promise<{ discussions: ApiCommunityDiscussion[] }>
       })
-      .catch(() => {
-        if (!cancelled) setDiscussionTopics(defaults)
-      })
-
+      .then((data) => { if (!cancelled) setDiscussionTopics(data.discussions.map(apiDiscussionToTopic)) })
+      .catch(() => { if (!cancelled) setDiscussionsError(t('discussionsUnavailable')) })
+      .finally(() => { if (!cancelled) setDiscussionsLoading(false) })
     return () => { cancelled = true }
-  }, [community, resolvedSlug])
+  }, [community, t])
 
   async function handleJoinCommunity() {
     if (!community) {
-      router.push('/communities')
+      setPostError(t('communityUnavailable'))
       return
     }
 
@@ -442,6 +274,9 @@ export default function GalaxyPage({ params }: Props) {
       }
 
       if (res.ok) setCommunityJoined(true)
+      else setPostError(t('joinFailed'))
+    } catch {
+      setPostError(t('joinFailed'))
     } finally {
       setJoiningCommunity(false)
     }
@@ -452,7 +287,7 @@ export default function GalaxyPage({ params }: Props) {
     if (!content || !communityJoined) return
 
     if (!community) {
-      setPostError('This community is not connected to the database yet.')
+      setPostError(t('communityUnavailable'))
       return
     }
 
@@ -482,17 +317,13 @@ export default function GalaxyPage({ params }: Props) {
       }
 
       const data = await res.json() as { post: ApiCommunityPost }
-      setCommunityPosts((prev) => [apiPostToCommunityPost(data.post), ...prev.filter((post) => !DEFAULT_COMMUNITY_POSTS[resolvedSlug]?.some((defaultPost) => defaultPost.id === post.id))])
+      setCommunityPosts((prev) => [apiPostToCommunityPost(data.post), ...prev])
       setPostDraft('')
     } catch {
       setPostError('Your post could not be published yet.')
     } finally {
       setPosting(false)
     }
-  }
-
-  function isFallbackCommunityPost(postId: string) {
-    return (DEFAULT_COMMUNITY_POSTS[resolvedSlug] ?? []).some((post) => post.id === postId)
   }
 
   function updateCommunityPost(postId: string, updater: (post: CommunityPost) => CommunityPost) {
@@ -507,17 +338,7 @@ export default function GalaxyPage({ params }: Props) {
 
     setPostError('')
 
-    if (!community || isFallbackCommunityPost(post.id)) {
-      updateCommunityPost(post.id, (current) => {
-        const likedByMe = !current.likedByMe
-        return {
-          ...current,
-          likedByMe,
-          likes: Math.max(0, current.likes + (likedByMe ? 1 : -1)),
-        }
-      })
-      return
-    }
+    if (!community) { setPostError(t('communityUnavailable')); return }
 
     setLikingPostId(post.id)
     try {
@@ -559,22 +380,7 @@ export default function GalaxyPage({ params }: Props) {
 
     setPostError('')
 
-    if (!community || isFallbackCommunityPost(post.id)) {
-      const reply: CommunityReply = {
-        id: `local-reply-${post.id}-${Date.now()}`,
-        authorName: 'You',
-        content,
-        createdAt: new Date().toISOString(),
-      }
-      updateCommunityPost(post.id, (current) => ({
-        ...current,
-        replies: current.replies + 1,
-        replyItems: [...current.replyItems, reply],
-      }))
-      setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }))
-      setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
-      return
-    }
+    if (!community) { setPostError(t('communityUnavailable')); return }
 
     setReplyingPostId(post.id)
     try {
@@ -625,7 +431,7 @@ export default function GalaxyPage({ params }: Props) {
 
     setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
 
-    if (!community || isFallbackCommunityPost(post.id) || post.replyItems.length >= post.replies) return
+    if (!community || post.replyItems.length >= post.replies) return
 
     setLoadingRepliesPostId(post.id)
     setPostError('')
@@ -658,8 +464,8 @@ export default function GalaxyPage({ params }: Props) {
     const content = discussionReplyDraft.trim()
     if (!selectedTopic || !content) return
 
-    const key = getDiscussionKey(resolvedSlug, selectedTopic.title)
-    const currentReplies = discussionReplyOverrides[key] ?? selectedTopic.replyItems ?? getDiscussionReplies(resolvedSlug, selectedTopic)
+    const key = selectedTopic.id
+    const currentReplies = discussionReplyOverrides[key] ?? selectedTopic.replyItems ?? []
 
     if (community && selectedTopic.id) {
       setPostingDiscussionReply(true)
@@ -702,15 +508,7 @@ export default function GalaxyPage({ params }: Props) {
       return
     }
 
-    const reply: DiscussionReply = {
-      id: `discussion-reply-${Date.now()}`,
-      authorName: 'You',
-      content,
-      createdAt: new Date().toISOString(),
-    }
-    setDiscussionReplyOverrides((prev) => ({ ...prev, [key]: [...currentReplies, reply] }))
-    setSelectedTopic((current) => current ? { ...current, replies: current.replies + 1 } : current)
-    setDiscussionReplyDraft('')
+    setPostError(t('communityUnavailable'))
   }
 
   const memberPlanets = galaxy.activePlanetIds
@@ -722,11 +520,11 @@ export default function GalaxyPage({ params }: Props) {
     relatedGalaxies.some((r) => r.id === g.id)
   )
 
-  const discussions = discussionTopics.length > 0 ? discussionTopics : (DISCUSSION_TOPICS[resolvedSlug] ?? [])
+  const discussions = discussionTopics
   const { accentColor } = galaxy
   const isGalaxyAdmin = community?.isAdmin ?? false
   const selectedDiscussionReplies = selectedTopic
-    ? discussionReplyOverrides[getDiscussionKey(resolvedSlug, selectedTopic.title)] ?? selectedTopic.replyItems ?? getDiscussionReplies(resolvedSlug, selectedTopic)
+    ? discussionReplyOverrides[selectedTopic.id] ?? selectedTopic.replyItems ?? []
     : []
 
   return (
@@ -850,7 +648,7 @@ export default function GalaxyPage({ params }: Props) {
                       cursor:     'pointer',
                     }}
                     onClick={handleJoinCommunity}
-                    disabled={joiningCommunity}
+                    disabled={joiningCommunity || communityLoading || !community}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${accentColor}30` }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
                   >
@@ -873,6 +671,13 @@ export default function GalaxyPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {(communityLoading || communityError || postError) && (
+            <div className="px-4 py-3 max-w-5xl mx-auto" role={communityError || postError ? 'alert' : 'status'}>
+              <p className="text-sm">{communityLoading ? t('loadingCommunity') : communityError || postError}</p>
+              {communityError && <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
+            </div>
+          )}
 
           {/* -- Main content ----------------------------------------------- */}
           <div className="px-4 sm:px-6 max-w-5xl mx-auto">
@@ -957,6 +762,15 @@ export default function GalaxyPage({ params }: Props) {
                 </section>
 
                 {/* Discussions */}
+                {(communityLoading || discussionsLoading || discussionsError || discussions.length === 0) && (
+                  <section aria-label={t('recentDiscussions')}>
+                    <p className="text-data-label mb-4">{t('recentDiscussions')}</p>
+                    <p role={discussionsError ? 'alert' : 'status'} className="text-sm">
+                      {communityLoading || discussionsLoading ? t('loadingDiscussions') : discussionsError || t('noDiscussions')}
+                    </p>
+                    {discussionsError && <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
+                  </section>
+                )}
                 {discussions.length > 0 && (
                   <section>
                     <p className="text-data-label mb-4">{t('recentDiscussions')}</p>
@@ -1058,7 +872,7 @@ export default function GalaxyPage({ params }: Props) {
                         />
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <span className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.65 }}>
-                            Visible in this community on this browser.
+                            {t('publicPostNotice')}
                           </span>
                           <button
                             type="button"
@@ -1076,11 +890,6 @@ export default function GalaxyPage({ params }: Props) {
                             {posting ? 'Posting...' : 'Post'}
                           </button>
                         </div>
-                        {postError && (
-                          <p className="text-xs" style={{ color: '#fca5a5' }}>
-                            {postError}
-                          </p>
-                        )}
                       </div>
                     ) : (
                       <div
@@ -1098,7 +907,7 @@ export default function GalaxyPage({ params }: Props) {
                         <button
                           type="button"
                           onClick={handleJoinCommunity}
-                          disabled={joiningCommunity}
+                          disabled={joiningCommunity || communityLoading || !community}
                           className="px-4 py-2 rounded-xl text-xs font-medium shrink-0 w-full sm:w-auto"
                           style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                         >
@@ -1107,7 +916,9 @@ export default function GalaxyPage({ params }: Props) {
                       </div>
                     )}
 
-                    {postsLoading ? (
+                    {postsError ? (
+                      <div role="alert"><p>{postsError}</p><button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button></div>
+                    ) : communityLoading || postsLoading ? (
                       <p className="text-sm py-4" style={{ color: 'var(--ghost)' }}>
                         Loading community posts...
                       </p>
@@ -1506,7 +1317,7 @@ export default function GalaxyPage({ params }: Props) {
                   <button
                     type="button"
                     onClick={handleJoinCommunity}
-                    disabled={joiningCommunity}
+                    disabled={joiningCommunity || communityLoading || !community}
                     className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                     style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                   >

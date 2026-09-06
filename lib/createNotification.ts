@@ -74,4 +74,10 @@ export const NotificationTemplates = {
     body: `${commenterName} replied to you`,
     actionUrl,
   }),
+  newFollower: (followerName: string, actionUrl: string) => ({
+    type: NotificationType.NEW_FOLLOWER,
+    title: 'A new planet is following yours',
+    body: `${followerName} started following you`,
+    actionUrl,
+  }),
 }

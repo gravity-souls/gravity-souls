@@ -92,6 +92,76 @@ function SaveToast({ visible }: { visible: boolean }) {
   )
 }
 
+// --- Privacy: who can see this planet -----------------------------------------
+// Self-contained: reads/writes Profile.visibility independently of the
+// PlanetDraft pipeline above, which does not model this field.
+
+type Visibility = 'MEMBERS' | 'PRIVATE'
+
+function PrivacySection() {
+  const t = useTranslations('safety')
+  const [visibility, setVisibility] = useState<Visibility | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { profile?: { visibility?: Visibility } } | null) => {
+        if (!cancelled) setVisibility(data?.profile?.visibility ?? 'MEMBERS')
+      })
+      .catch(() => { if (!cancelled) setVisibility('MEMBERS') })
+    return () => { cancelled = true }
+  }, [])
+
+  async function choose(next: Visibility) {
+    if (next === visibility || saving) return
+    setSaving(true)
+    setSaved(false)
+    try {
+      const res = await fetch('/api/my-planet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visibility: next }),
+      })
+      if (res.ok) {
+        setVisibility(next)
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (visibility === null) return null
+
+  return (
+    <SectionCard title={t('privacyTitle')} description={t('privacyDescription')} color="#60a5fa">
+      <div className="flex flex-col gap-2">
+        {(['MEMBERS', 'PRIVATE'] as const).map((option) => (
+          <button
+            key={option}
+            onClick={() => choose(option)}
+            disabled={saving}
+            className="text-left px-4 py-3 rounded-xl text-sm transition-all"
+            style={{
+              background: visibility === option ? 'rgba(96,165,250,0.14)' : 'rgba(255,255,255,0.02)',
+              border: visibility === option ? '1px solid rgba(96,165,250,0.4)' : '1px solid var(--border-soft)',
+              color: 'var(--foreground)',
+              opacity: saving ? 0.6 : 1,
+            }}
+          >
+            {option === 'MEMBERS' ? t('visibilityMembers') : t('visibilityPrivate')}
+          </button>
+        ))}
+        {saved && <span className="text-[10px]" style={{ color: '#34d399' }}>{t('visibilitySaved')}</span>}
+      </div>
+    </SectionCard>
+  )
+}
+
 // --- Convert DB planet data to PlanetProfile for the draft system ----------
 
 function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
@@ -501,6 +571,8 @@ export default function PlanetSettingsPage() {
                 onConnectionTypesChange={(v) => update('connectionTypes', v)}
               />
             </SectionCard>
+
+            <PrivacySection />
 
             {/* Save button (bottom of form, mobile) */}
             <div className="lg:hidden">

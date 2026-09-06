@@ -329,7 +329,8 @@ function PlanetPageInner() {
       try {
         const planetsRes = await fetch('/api/planets')
         if (planetsRes.ok) {
-          const allPlanets = (await planetsRes.json() as Record<string, unknown>[]).map(dbPlanetToProfile)
+          const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
+          const allPlanets = planetRows.map(dbPlanetToProfile)
           const reso = getResonanceMatches(p, allPlanets, 4)
           setResonances(reso)
         }

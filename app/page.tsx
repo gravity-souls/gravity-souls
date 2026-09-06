@@ -17,7 +17,7 @@ import UniverseSearch from '@/components/universe/UniverseSearch'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
-import { getPlanetById, mockPlanets } from '@/lib/mock-planets'
+import { getPlanetById } from '@/lib/mock-planets'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
@@ -271,7 +271,7 @@ export default function UniversePage() {
         setNearbyPlanets(buildPositionedPlanets(data))
       })
       .catch(() => {
-        if (!cancelled) setNearbyPlanets(mockPlanets)
+        if (!cancelled) setNearbyPlanets([])
       })
       .finally(() => { if (!cancelled) setNearbyLoading(false) })
     return () => { cancelled = true }
@@ -338,7 +338,7 @@ export default function UniversePage() {
       .finally(() => setJoiningSlug(null))
   }, [session, communities, router])
 
-  const featuredPlanet = nearbyPlanets[0] ?? mockPlanets[0]
+  const featuredPlanet = nearbyPlanets[0]
   const activeCommunityCount = galaxies.length || NEBULA_ZONES.length
   const homepageStats = [
     { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length || POSITIONED_PLANET_IDS.length) },
@@ -386,6 +386,8 @@ export default function UniversePage() {
                   </p>
                 </div>
               </div>
+
+              <Link href="/demo/cosmic-globe" className="text-sm text-sky-200 underline underline-offset-4">{tHome('exploreExperience')} →</Link>
 
               <UniverseSearch onPlanetSelect={setSelectedPlanet} />
 

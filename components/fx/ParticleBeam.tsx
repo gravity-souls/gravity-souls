@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+
+import { useClientReady, useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,20 +80,11 @@ export default function ParticleBeam({
   const dimsRef      = useRef({ width: 0, height: 0 })
   const playingRef   = useRef(playing)
 
-  const [mounted,       setMounted]       = useState(false)
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const mounted = useClientReady()
+  const reducedMotion = useReducedMotionPreference()
 
   // Keep playingRef in sync without restarting the animation loop.
   useEffect(() => { playingRef.current = playing }, [playing])
-
-  useEffect(() => {
-    setMounted(true)
-    const mq     = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReducedMotion(mq.matches)
-    const handle = (e: MediaQueryListEvent) => setReducedMotion(e.matches)
-    mq.addEventListener('change', handle)
-    return () => mq.removeEventListener('change', handle)
-  }, [])
 
   // ResizeObserver: keep canvas size and DPR transform current.
   useEffect(() => {

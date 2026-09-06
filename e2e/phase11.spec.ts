@@ -14,6 +14,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { TEST_BASE_URL } from './environment'
 
 // ── 1. Button states on /sign-in ──────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ test.describe('Apple OAuth URL correctness', () => {
   test('client_id, redirect_uri, response_type, response_mode, scope are correct', async ({ request }) => {
     const res = await request.post('/api/auth/sign-in/social', {
       data: { provider: 'apple', callbackURL: '/auth/social-landing' },
-      headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:3000' },
+      headers: { 'Content-Type': 'application/json', 'Origin': TEST_BASE_URL },
     })
     expect(res.ok()).toBeTruthy()
     const body = await res.json()
@@ -73,7 +74,7 @@ test.describe('Apple OAuth URL correctness', () => {
     expect(clientId).not.toContain('*')
     expect(clientId.length).toBeGreaterThan(0)
 
-    expect(url.searchParams.get('redirect_uri')).toBe('http://localhost:3000/api/auth/callback/apple')
+    expect(url.searchParams.get('redirect_uri')).toBe(`${TEST_BASE_URL}/api/auth/callback/apple`)
 
     const responseType = url.searchParams.get('response_type') ?? ''
     expect(responseType).toContain('code')

@@ -8,9 +8,10 @@
 import "dotenv/config";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { testDatabaseUrl } from '../lib/database-safety';
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DIRECT_URL!,
+  connectionString: testDatabaseUrl(),
 });
 const prisma = new PrismaClient({ adapter });
 

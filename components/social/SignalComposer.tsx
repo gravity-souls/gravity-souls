@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 // Sticky bottom composer for the conversation detail page.
 
 interface Props {
-  onSend:       (content: string) => void
+  onSend:       (content: string) => Promise<boolean>
   disabled?:    boolean
   placeholder?: string
   accentColor?: string
@@ -22,15 +22,14 @@ export default function SignalComposer({
   const tA11y = useTranslations('a11y')
   const [value, setValue] = useState('')
 
-  function handleSend() {
+  async function handleSend() {
     const trimmed = value.trim()
     if (!trimmed || disabled) return
-    onSend(trimmed)
-    setValue('')
+    if (await onSend(trimmed)) setValue('')
   }
 
   function handleKey(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
       e.preventDefault()
       handleSend()
     }
@@ -61,6 +60,7 @@ export default function SignalComposer({
           placeholder={placeholder}
           aria-label={placeholder}
           rows={1}
+          maxLength={2000}
           disabled={disabled}
           className="flex-1 bg-transparent text-sm outline-none resize-none leading-relaxed"
           style={{

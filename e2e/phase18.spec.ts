@@ -66,6 +66,6 @@ test.describe('messages — unauthenticated', () => {
     await page.goto('/messages', { waitUntil: 'networkidle' })
 
     await expect(page.getByText('Sign in required')).toBeVisible({ timeout: 8000 })
-    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
+    await expect(page.getByRole('main').getByRole('link', { name: 'Sign in' })).toBeVisible()
   })
 })

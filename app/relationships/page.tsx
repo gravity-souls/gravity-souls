@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -8,51 +8,39 @@ import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import RelationshipCard from '@/components/social/RelationshipCard'
 import RelationshipStateBadge from '@/components/social/RelationshipStateBadge'
-import type { Relationship, RelationshipStatus } from '@/types/social'
-import type { PlanetProfile } from '@/types/planet'
-import { mockRelationships } from '@/lib/mock-relationships'
-import { getPlanetById } from '@/lib/mock-planets'
 
-// --- Status display order -----------------------------------------------------
-
-const STATUS_ORDER: RelationshipStatus[] = ['aligned', 'resonant', 'orbit', 'signal']
-
-// --- Group section ------------------------------------------------------------
-
-function RelationshipGroup({
-  status,
-  items,
-}: {
-  status: RelationshipStatus
-  items: { rel: Relationship; planet: PlanetProfile }[]
-}) {
-  if (items.length === 0) return null
-
-  return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <RelationshipStateBadge status={status} />
-        <div className="flex-1 h-px" style={{ background: 'rgba(167,139,250,0.08)' }} />
-        <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-          {items.length}
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {items.map(({ rel, planet }) => (
-          <RelationshipCard key={rel.id} relationship={rel} planet={planet} />
-        ))}
-      </div>
-    </section>
-  )
+interface PlanetSummary {
+  id: string
+  name: string
+  avatarSymbol: string
+  tagline: string | null
+  visual: unknown
 }
 
-// --- RelationshipsPage --------------------------------------------------------
+interface FollowRow {
+  userId: string
+  since: string
+  planet: PlanetSummary | null
+}
+
+interface FollowsResponse {
+  following: FollowRow[]
+  followers: FollowRow[]
+}
 
 export default function RelationshipsPage() {
   const t = useTranslations('relationshipsPage')
   const tCommon = useTranslations('common')
   const [hasPlanet, setHasPlanet] = useState<boolean | null>(null)
+  const [data, setData] = useState<FollowsResponse | null>(null)
+  const [busyUserId, setBusyUserId] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    fetch('/api/follows')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: FollowsResponse | null) => setData(json))
+      .catch(() => setData(null))
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -64,23 +52,42 @@ export default function RelationshipsPage() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (hasPlanet) load()
+  }, [hasPlanet, load])
+
+  async function unfollow(userId: string) {
+    setBusyUserId(userId)
+    try {
+      await fetch(`/api/follows/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+      load()
+    } finally {
+      setBusyUserId(null)
+    }
+  }
+
+  async function followBack(userId: string) {
+    setBusyUserId(userId)
+    try {
+      await fetch('/api/follows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      load()
+    } finally {
+      setBusyUserId(null)
+    }
+  }
+
   if (hasPlanet === null) return null
 
-  const MY_PLANET_ID = 'p-aelion'
+  const followingIds = new Set((data?.following ?? []).map((f) => f.userId))
+  const mutual = (data?.following ?? []).filter((f) => (data?.followers ?? []).some((g) => g.userId === f.userId))
+  const followingOnly = (data?.following ?? []).filter((f) => !(data?.followers ?? []).some((g) => g.userId === f.userId))
+  const followersOnly = (data?.followers ?? []).filter((f) => !followingIds.has(f.userId))
 
-  const grouped = STATUS_ORDER.map((status) => {
-    const items = mockRelationships
-      .filter((rel) => rel.status === status)
-      .map((rel) => {
-        const otherId = rel.planetAId === MY_PLANET_ID ? rel.planetBId : rel.planetAId
-        const planet  = getPlanetById(otherId)
-        return planet ? { rel, planet } : null
-      })
-      .filter((x): x is { rel: Relationship; planet: PlanetProfile } => x !== null)
-    return { status, items }
-  })
-
-  const hasAny = grouped.some((g) => g.items.length > 0)
+  const hasAny = mutual.length + followingOnly.length + followersOnly.length > 0
 
   return (
     <AppShell>
@@ -114,9 +121,50 @@ export default function RelationshipsPage() {
 
         {hasPlanet === true && hasAny && (
           <div className="mt-8 flex flex-col gap-8">
-            {grouped.map(({ status, items }) => (
-              <RelationshipGroup key={status} status={status} items={items} />
-            ))}
+            {mutual.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <RelationshipStateBadge status="mutual" />
+                  <div className="flex-1 h-px" style={{ background: 'rgba(167,139,250,0.08)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>{mutual.length}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {mutual.map((f) => f.planet && (
+                    <RelationshipCard key={f.userId} status="mutual" since={f.since} planet={f.planet} onUnfollow={() => unfollow(f.userId)} busy={busyUserId === f.userId} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {followingOnly.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <RelationshipStateBadge status="following" />
+                  <div className="flex-1 h-px" style={{ background: 'rgba(167,139,250,0.08)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>{followingOnly.length}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {followingOnly.map((f) => f.planet && (
+                    <RelationshipCard key={f.userId} status="following" since={f.since} planet={f.planet} onUnfollow={() => unfollow(f.userId)} busy={busyUserId === f.userId} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {followersOnly.length > 0 && (
+              <section className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <RelationshipStateBadge status="follows-you" />
+                  <div className="flex-1 h-px" style={{ background: 'rgba(167,139,250,0.08)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>{followersOnly.length}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {followersOnly.map((f) => f.planet && (
+                    <RelationshipCard key={f.userId} status="follows-you" since={f.since} planet={f.planet} onFollowBack={() => followBack(f.userId)} busy={busyUserId === f.userId} />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import GlowButton from '@/components/ui/GlowButton'
+import SafetyMenu from '@/components/social/SafetyMenu'
 import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
@@ -48,7 +49,7 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
   const t = useTranslations('planetPage')
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <GlowButton
         href={`/messages?to=${encodeURIComponent(planet.id)}`}
         variant="primary"
@@ -63,6 +64,7 @@ function ResonatorActions({ planet }: { planet: PlanetProfile }) {
       >
         {t('saveOrbit')}
       </GlowButton>
+      {planet.userId && <SafetyMenu targetUserId={planet.userId} />}
     </div>
   )
 }

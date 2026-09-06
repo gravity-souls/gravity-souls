@@ -56,6 +56,12 @@ model user {
   postComments PostComment[]
   postCommentLikes PostCommentLike[]
   savedPlanets     SavedPlanet[]
+  following        Follow[] @relation("FollowFollower")
+  followers        Follow[] @relation("FollowFollowing")
+  blocksMade       Block[]  @relation("BlockBlocker")
+  blocksReceived   Block[]  @relation("BlockBlocked")
+  reportsFiled     Report[] @relation("ReportReporter")
+  reportsReceived  Report[] @relation("ReportTargetUser")
 }
 
 enum NotificationType {
@@ -67,6 +73,7 @@ enum NotificationType {
   LEVEL_UP
   NEW_MATCH
   COMMENT_RECEIVED
+  NEW_FOLLOWER
 }
 
 model Notification {
@@ -141,6 +148,11 @@ model Verification {
 
 // ─── Business models ────────────────────────────────────────────
 
+enum ProfileVisibility {
+  MEMBERS
+  PRIVATE
+}
+
 model Profile {
   id                 String   @id @default(cuid())
   userId             String   @unique
@@ -159,6 +171,7 @@ model Profile {
   communicationStyle String?
   matchPreference    String?  @default("mixed")
   activeStatus       String   @default("active")
+  visibility         ProfileVisibility @default(MEMBERS)
 
   // SBTI
   sbtiType           String?
@@ -570,4 +583,96 @@ model SavedPlanet {
   @@unique([userId, planetId])
   @@index([userId, savedAt(sort: Desc)])
   @@map("saved_planet")
+}
+
+// --- Relationships & safety ----------------------------------------------------
+// v1 relationship model: one-way follow (approved). Edges belong to users, not
+// planets, so they survive a planet being recreated. Only the follower may
+// create or delete their own outgoing edge. A follow never overrides visibility.
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  user @relation("FollowFollower",  fields: [followerId],  references: [id], onDelete: Cascade)
+  following user @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([followerId, createdAt])
+  @@map("follow")
+}
+
+// Symmetric hard block (approved). Blocking prevents new contact in both
+// directions and removes existing follows transactionally. Never disclosed
+// to the blocked user. Enforced server-side in lib/visibility.ts, never by
+// client-side filtering.
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker user @relation("BlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked user @relation("BlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("block")
+}
+
+enum ReportTargetType {
+  USER
+  PLANET
+  POST
+  POST_COMMENT
+  COMMUNITY_POST
+  COMMUNITY_DISCUSSION_REPLY
+  DIRECT_MESSAGE
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  ACTIONED
+  DISMISSED
+}
+
+model Report {
+  id           String           @id @default(cuid())
+  reporterId   String
+  targetType   ReportTargetType
+  targetId     String
+  targetUserId String?
+  reason       String
+  details      String?
+  status       ReportStatus     @default(OPEN)
+  createdAt    DateTime         @default(now())
+  reviewedAt   DateTime?
+
+  reporter   user  @relation("ReportReporter",   fields: [reporterId],   references: [id], onDelete: Cascade)
+  targetUser user? @relation("ReportTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("report")
+}
+
+// Fixed-window counter backing lib/rate-limit.ts. Durable (survives across
+// serverless instances) unlike an in-memory counter. bucketKey encodes the
+// action + actor, e.g. "conversations:post:<userId>".
+
+model RateLimitBucket {
+  id          String   @id @default(cuid())
+  bucketKey   String   @unique
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@index([windowStart])
+  @@map("rate_limit_bucket")
 }

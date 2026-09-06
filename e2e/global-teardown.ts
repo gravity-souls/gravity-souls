@@ -2,10 +2,11 @@ import 'dotenv/config'
 import fs from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { testDatabaseUrl } from '../lib/database-safety'
 import { ALL_TEST_USER_IDS, JOURNEY, AUTH_WP, AUTH_NP, AUTH_SO } from './test-ids'
 
 export default async function globalTeardown() {
-  const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL! })
+  const adapter = new PrismaPg({ connectionString: testDatabaseUrl() })
   const prisma = new PrismaClient({ adapter })
 
   try {

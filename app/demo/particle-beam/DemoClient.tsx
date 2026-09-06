@@ -81,8 +81,6 @@ export default function DemoClient() {
   }, [])
 
   useEffect(() => {
-    setPlaying(true)
-
     if (preset === 'orbit') return
 
     if (preset === 'signal') {
@@ -110,6 +108,7 @@ export default function DemoClient() {
   }, [preset, tick])
 
   function selectPreset(key: PresetKey) {
+    setPlaying(true)
     setPreset(key)
     setTick((n) => n + 1)
   }

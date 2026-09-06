@@ -4,10 +4,7 @@ import { Noto_Sans_SC } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import './globals.css'
-import Topbar from '@/components/layout/Topbar'
-import CosmicBackground from '@/components/fx/CosmicBackground'
-import StarfieldCanvas from '@/components/fx/StarfieldCanvas'
-import LevelUpToast from '@/components/ui/LevelUpToast'
+import RouteShell from '@/components/layout/RouteShell'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -34,19 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`${geist.variable} ${locale === 'zh' ? notoSansSC.className : ''} h-full`}>
       <body className="cosmic-bg min-h-full text-foreground antialiased overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
-          <CosmicBackground />
-            <StarfieldCanvas />
-            <Topbar />
-            <LevelUpToast />
-            {/* pt = nav height so content clears the fixed header */}
-            <main className="relative z-10" style={{ paddingTop: 'var(--nav-h)' }}>{children}</main>
-            <footer className="relative z-10 text-center py-4 text-[10px] tracking-wide" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-              Planet textures by{' '}
-              <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer" className="underline">
-                Solar System Scope
-              </a>{' '}
-              (CC BY 4.0)
-            </footer>
+          <RouteShell>{children}</RouteShell>
         </NextIntlClientProvider>
       </body>
     </html>

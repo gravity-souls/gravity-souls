@@ -75,7 +75,8 @@
     "nebulaContemplative": "Solitude / Introspection",
     "nebulaTechnical": "Building / Systems",
     "nebulaEmotional": "Feeling / Warmth",
-    "nebulaWandering": "Wandering / Edges"
+    "nebulaWandering": "Wandering / Edges",
+    "exploreExperience": "Explore the experience"
   },
   "galaxyPage": {
     "galaxy": "Galaxy",
@@ -112,7 +113,16 @@
     "joinToReplyHint": "Join this galaxy to reply to discussions.",
     "joinToReply": "Join to reply",
     "closeThread": "Close thread",
-    "closeDiscussionPreview": "Close discussion preview"
+    "closeDiscussionPreview": "Close discussion preview",
+    "communityUnavailable": "This community is unavailable right now. Please try again.",
+    "postsUnavailable": "Community posts could not be loaded.",
+    "discussionsUnavailable": "Discussions could not be loaded.",
+    "joinFailed": "We could not join this community. Please try again.",
+    "loadingCommunity": "Loading community…",
+    "loadingDiscussions": "Loading discussions…",
+    "noDiscussions": "No discussions yet.",
+    "retryLoad": "Try again",
+    "publicPostNotice": "These posts can be read by anyone, including people without an account."
   },
   "resonance": {
     "todaysOrbit": "Today's Orbit",
@@ -144,6 +154,8 @@
     "emptyTitle": "Your orbit is empty",
     "emptyBody": "Five planets are drawn into resonance with yours each day. Form your planet first - then the field aligns.",
     "beginFormation": "Begin formation",
+    "noMatchesTitle": "No resonance yet",
+    "noMatchesBody": "Your planet is formed and waiting. New matches appear as more planets join, or as your gravity shifts — check back soon.",
     "selectPlanetDetail": "Select a planet to see its resonance.",
     "suggestedOrbit": "Suggested orbit",
     "relationships": {
@@ -413,7 +425,9 @@
     "unknown": "Unknown",
     "viewPlanet": "View planet",
     "sendFirstSignal": "Send the first signal...",
-    "transmitTo": "Transmit to {name}..."
+    "transmitTo": "Transmit to {name}...",
+    "deliveryUnconfirmed": "Delivery could not be confirmed. Your draft is kept. Check the conversation before trying again.",
+    "sendingMessage": "Sending…"
   },
   "postsPage": {
     "eyebrow": "Social orbit",
@@ -607,6 +621,24 @@
     "awakenPlanet": "Awaken my planet",
     "emptyTitle": "No connections yet",
     "emptySubtitle": "Visit a planet and send a first signal to begin forming an orbit."
+  },
+  "safety": {
+    "privacyTitle": "Privacy",
+    "privacyDescription": "Choose who can see your planet.",
+    "visibilityMembers": "Members — any signed-in member can see your planet",
+    "visibilityPrivate": "Private — only people you follow each other with can see it",
+    "visibilitySaved": "Saved",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "moreActions": "More actions",
+    "report": "Report",
+    "block": "Block",
+    "blockConfirm": "Block this planet? They will no longer be able to contact you, and any existing connection will be removed.",
+    "reportPrompt": "Tell us what happened. Reports are reviewed and are never shown to the reported planet.",
+    "reportPlaceholder": "What happened?",
+    "cancel": "Cancel",
+    "submitReport": "Submit report",
+    "reportSent": "Report sent. Thank you."
   },
   "createPlanet": {
     "formation": "Planet formation",
@@ -814,5 +846,48 @@
   },
   "sidebar": {
     "tagline": "You are not lost. You are becoming."
+  },
+  "cosmicDemo": {
+    "eyebrow": "A little closer to your people",
+    "title": "A world that starts",
+    "titleAccent": "with you.",
+    "intro": "Your interests become a planet. Shared moments become connections. Take a look around.",
+    "home": "Gravity Souls home",
+    "signIn": "Sign in",
+    "continueToUniverse": "Continue",
+    "openPlanet": "Open my planet",
+    "visualLabel": "Interactive blue globe",
+    "introLabel": "Discover Gravity Souls",
+    "illustration": "An illustration of connection",
+    "stepsLabel": "Explore the experience",
+    "stepCount": "Step {current} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "pause": "Pause",
+    "play": "Play",
+    "reset": "Reset",
+    "create": "Create my planet",
+    "note": "Start with what makes you, you.",
+    "fallback": "A quieter view. You can still explore every step.",
+    "footer": "Every connection starts somewhere.",
+    "backHome": "Back to home",
+    "steps": {
+      "0": {
+        "label": "Your planet",
+        "title": "Make space for who you are.",
+        "body": "Bring your interests, personality, and everyday curiosities together in a planet that feels like you."
+      },
+      "1": {
+        "label": "Your people",
+        "title": "Let shared interests draw you closer.",
+        "body": "Discover people with something in common. Explore their planets and start a conversation at your own pace."
+      },
+      "2": {
+        "label": "Your community",
+        "title": "Find a place to belong.",
+        "body": "Galaxies bring people together around shared interests. Join a community, exchange ideas, and discover activities."
+      }
+    },
+    "motionPreference": "Motion follows your device settings. Select Play to enable it here."
   }
 }

@@ -1,8 +1,9 @@
 import { EventCategory, EventStatus, PrismaClient, Prisma } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { seedDatabaseUrl } from '../lib/database-safety';
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DIRECT_URL!,
+  connectionString: seedDatabaseUrl(),
 });
 const prisma = new PrismaClient({ adapter });
 
@@ -329,13 +330,13 @@ async function main() {
   for (const communitySeed of communities) {
     const community = await prisma.community.upsert({
       where: { slug: communitySeed.slug },
-      update: { ...communitySeed, creatorId: SEED_USER_ID },
+      update: {},
       create: { ...communitySeed, creatorId: SEED_USER_ID },
     });
 
     communityBySlug.set(community.slug, { id: community.id, name: community.name });
 
-    await prisma.communityMembership.upsert({
+    if (community.creatorId === SEED_USER_ID) await prisma.communityMembership.upsert({
       where: { userId_communityId: { userId: SEED_USER_ID, communityId: community.id } },
       update: { role: "ADMIN" },
       create: { userId: SEED_USER_ID, communityId: community.id, role: "ADMIN" },

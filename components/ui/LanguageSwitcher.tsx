@@ -6,7 +6,7 @@ import { Check, Globe2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { isLocale, type Locale } from '@/lib/i18n-locales'
 
-type Variant = 'desktop' | 'mobile'
+type Variant = 'desktop' | 'mobile' | 'compact'
 
 const LANGUAGES: { code: Locale; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -18,7 +18,7 @@ function writeLocaleCookie(language: Locale) {
   document.cookie = `locale=${language}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
 }
 
-export default function LanguageSwitcher({ variant = 'desktop' }: { variant?: Variant }) {
+export default function LanguageSwitcher({ variant = 'desktop', persistToAccount = true }: { variant?: Variant; persistToAccount?: boolean }) {
   const router = useRouter()
   const locale = useLocale()
   const t = useTranslations('language')
@@ -52,6 +52,11 @@ export default function LanguageSwitcher({ variant = 'desktop' }: { variant?: Va
 
   async function selectLanguage(language: Locale) {
     writeLocaleCookie(language)
+    if (!persistToAccount) {
+      setOpen(false)
+      router.refresh()
+      return
+    }
     setSaving(language)
 
     let saved = false
@@ -119,7 +124,7 @@ export default function LanguageSwitcher({ variant = 'desktop' }: { variant?: Va
   }
 
   return (
-    <div className="relative hidden md:block" ref={panelRef}>
+    <div className={variant === 'compact' ? 'relative' : 'relative hidden md:block'} ref={panelRef}>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}

@@ -162,17 +162,16 @@ test.describe('Journey 4 — sign-out / sign-back-in', () => {
     expect(new URL(page.url()).pathname, 'Expected to start on /resonance').toBe('/resonance')
 
     // Sign out via the Better Auth API endpoint (deletes session from DB)
-    await page.evaluate(() =>
-      fetch('/api/auth/sign-out', {
+    const signOutStatus = await page.evaluate(async () =>
+      (await fetch('/api/auth/sign-out', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-      })
+        body: '{}',
+      })).status
     )
-    // Explicitly clear cookies: Playwright's headless fetch may not propagate
-    // the server's Set-Cookie: Max-Age=0 response to the browser cookie jar
-    // before the next navigation. This is equivalent to what a real browser does.
-    await page.context().clearCookies()
+    expect(signOutStatus).toBe(200)
+    expect(await page.evaluate(async () => (await fetch('/api/auth/get-session')).json())).toBeNull()
 
     // Navigate to a protected route — proxy must now redirect to /sign-in?next=/resonance
     await page.goto('/resonance', { waitUntil: 'commit' })

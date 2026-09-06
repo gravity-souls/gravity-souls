@@ -1,0 +1,71 @@
+.page { min-height: 100dvh; color: #e4edf7; background: #040a18; background-image: radial-gradient(ellipse at 30% 47%, #0c1b33 0%, transparent 57%); font-family: var(--font-geist-sans), sans-serif; }
+.page a, .page button { -webkit-tap-highlight-color: transparent; }
+.page button, .page a { touch-action: manipulation; }
+.page :is(button, a):focus-visible { outline: 2px solid #a7ddff; outline-offset: 5px; }
+.header { height: 88px; margin: 0 5%; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #a0c6ef14; position: relative; z-index: 5; }
+.brand { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; letter-spacing: -.025em; text-decoration: none; }
+.brandMark { display: grid; place-content: center; position: relative; border: 1px solid #82bdeb55; width: 32px; height: 32px; border-radius: 50%; color: #c3e6ff; font-size: 23px; font-weight: 400; }
+.brandMark span { position: absolute; right: 4px; top: -3px; }
+.headerActions { display: flex; gap: 24px; align-items: center; }
+.signIn { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #c1d1e3; text-decoration: none; }
+.experience { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; min-height: calc(100dvh - 154px); padding: 36px 5% 40px; gap: 6%; }
+.visual { min-width: 0; position: relative; }
+.coordinates { display: flex; justify-content: space-between; color: #7d9dbd; letter-spacing: .18em; font-size: 10px; padding: 0 8%; }
+.stage { height: clamp(350px, 49vw, 610px); position: relative; }
+.renderer { position: absolute; inset: 0; }
+.orbit { position: absolute; inset: 12% 7%; border: 1px solid #96c5f012; border-radius: 50%; pointer-events: none; }
+.visualFooter { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 8%; }
+.visualCaption { color: #809bb6; text-transform: uppercase; letter-spacing: .16em; font-size: 9px; }
+.motionControls { display: flex; gap: 12px; }
+.motionControls button { display: flex; gap: 6px; align-items: center; font-size: 11px; color: #a9c0d6; min-height: 44px; cursor: pointer; background: transparent; border: 0; }
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; }
+.fallback > div { width: 55%; aspect-ratio: 1; border-radius: 50%; border: 1px solid #8fceff66; background: radial-gradient(circle at 35% 30%, #4d87b777, #17375877 40%, #040a18 78%); box-shadow: 0 0 65px #65bcff22, inset -20px -20px 60px #020510; }
+.fallbackNotice { text-align: center; color: #acc4dc; font-size: 11px; padding: 4px 8%; }
+.story { max-width: 450px; }
+.eyebrow { display: flex; align-items: center; gap: 10px; color: #91bbd7; text-transform: uppercase; letter-spacing: .18em; font-size: 10px; margin-bottom: 20px; }
+.eyebrow > span { height: 5px; width: 5px; border-radius: 50%; background: #9bcde9; }
+.story h1 { font-size: clamp(36px, 3.8vw, 58px); line-height: 1.08; font-weight: 450; letter-spacing: -.055em; max-width: 440px; }
+.story h1 em { display: block; font-family: Georgia, serif; font-weight: 400; color: #a8d4f0; letter-spacing: -.04em; }
+.intro { font-size: 13px; line-height: 1.9; color: #9eafc4; margin-top: 20px; max-width: 370px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
+.steps button { display: flex; gap: 9px; align-items: center; padding: 12px 0; text-align: left; border: 0; border-top: 1px solid #4d627855; background: transparent; font-size: 11px; color: #94a6bb; cursor: pointer; }
+.steps button[aria-current] { color: #d3e9f9; border-color: #9bcbe9; }
+.stepNumber { font-size: 10px; color: #809ab3; }
+.chapter { margin-top: 23px; min-height: 130px; }
+.chapterNumber { color: #8bacc9; font-size: 9px; text-transform: uppercase; letter-spacing: .16em; }
+.chapter h2 { font-size: 23px; font-weight: 450; margin-top: 9px; letter-spacing: -.035em; }
+.chapter > p:last-child { font-size: 13px; line-height: 1.85; color: #a9b8c9; margin-top: 8px; max-width: 390px; }
+.chapterControls { display: flex; justify-content: space-between; margin: 10px 0 23px; }
+.chapterControls button { display: flex; align-items: center; gap: 10px; background: transparent; border: 0; color: #b1cce3; font-size: 11px; min-height: 44px; cursor: pointer; }
+.chapterControls button:disabled { opacity: .3; cursor: default; }
+.primary { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #07192b; font-size: 13px; font-weight: 600; padding: 16px 21px; border-radius: 6px; background: #c0e2f8; text-decoration: none; box-shadow: 0 4px 32px #85c8ef12; }
+.primary:hover { background: #d3eeff; }
+.note { color: #849db5; font-size: 10px; text-align: center; margin-top: 12px; }
+.footer { margin: 0 5%; min-height: 66px; display: flex; gap: 20px; align-items: center; justify-content: space-between; border-top: 1px solid #a0c6ef14; color: #829cb7; font-size: 10px; }
+.footer a { display: flex; gap: 8px; align-items: center; text-decoration: none; }
+@media (max-width: 767px) {
+  .header { height: 62px; margin: 0 6%; }
+  .headerActions { gap: 14px; }
+  .brand { font-size: 13px; gap: 8px; }
+  .brandMark { width: 27px; height: 27px; font-size: 20px; }
+  .experience { grid-template-columns: 1fr; gap: 22px; padding: 14px 7% 24px; min-height: 0; }
+  .stage { height: 195px; }
+  .coordinates { padding: 0 2%; font-size: 8px; }
+  .visualFooter { padding: 0 2%; }
+  .visualCaption { font-size: 8px; letter-spacing: .08em; }
+  .motionControls { gap: 14px; }
+  .motionControls button { font-size: 10px; }
+  .story { max-width: none; }
+  .eyebrow { margin-bottom: 10px; font-size: 8px; }
+  .story h1 { font-size: 35px; }
+  .intro { margin-top: 10px; font-size: 11px; line-height: 1.7; }
+  .steps { margin-top: 18px; gap: 10px; }
+  .steps button { font-size: 10px; padding: 10px 0; min-height: 44px; gap: 7px; }
+  .chapter { margin-top: 12px; min-height: 109px; }
+  .chapter h2 { margin-top: 5px; font-size: 21px; }
+  .chapter > p:last-child { font-size: 12px; line-height: 1.7; margin-top: 5px; }
+  .chapterControls { margin: 0 0 10px; }
+  .primary { padding: 14px 17px; }
+  .note { font-size: 9px; margin-top: 9px; }
+  .footer { margin: 0 7%; font-size: 9px; min-height: 54px; }
+}

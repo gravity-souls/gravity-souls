@@ -6,8 +6,6 @@ export async function requireLevel(
   request: Request,
   minLevel: number,
 ): Promise<{ authorized: boolean; userLevel: number }> {
-  if (EARLY_ACCESS) return { authorized: true, userLevel: 5 }
-
   const session = await auth.api.getSession({ headers: request.headers })
   if (!session) return { authorized: false, userLevel: 0 }
 
@@ -15,9 +13,13 @@ export async function requireLevel(
     where: { id: session.user.id },
     select: { userLevel: true },
   })
+  const userLevel = user?.userLevel ?? 0
 
+  // Early stage: still grant access below the gate, but report the real
+  // level rather than a fabricated one. Flip EARLY_ACCESS off once level
+  // gating should actually restrict access.
   return {
-    authorized: (user?.userLevel ?? 0) >= minLevel,
-    userLevel: user?.userLevel ?? 0,
+    authorized: EARLY_ACCESS || userLevel >= minLevel,
+    userLevel,
   }
 }

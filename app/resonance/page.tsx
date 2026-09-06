@@ -10,7 +10,8 @@ import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
 import FirstSessionHint from '@/components/resonance/FirstSessionHint'
 import FirstMatchCTA from '@/components/resonance/FirstMatchCTA'
-import { getHintDismissed, dismissHint } from '@/lib/hints-preferences'
+import { dismissHint } from '@/lib/hints-preferences'
+import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 import { buildResonanceSession } from '@/lib/match'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
@@ -88,13 +89,22 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
 export default function ResonancePage() {
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
+  const tCommon = useTranslations('common')
   const [mounted, setMounted]     = useState(false)
   const [role, setRole]           = useState<'explorer' | 'resonator'>('explorer')
   const [myPlanet, setMyPlanet]   = useState<PlanetProfile | null>(null)
   const [session, setSession]     = useState<ResonanceSession | null>(null)
   const [planetById, setPlanetById] = useState<Record<string, PlanetProfile>>({})
   const [activeId, setActiveId]   = useState<string | null>(null)
-  const [firstMatchDone, setFirstMatchDone] = useState(false)
+  const firstMatchDone = useHintDismissed('resonance-first-match-viewed')
+
+  function selectMatch(id: string | null) {
+    setActiveId(id)
+    if (id !== null && !firstMatchDone) {
+      dismissHint('resonance-first-match-viewed')
+      dismissHint('resonance-first-session')
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -139,8 +149,8 @@ export default function ResonancePage() {
 
       // Fetch other planets for resonance session
       fetch('/api/planets')
-        .then((r) => (r.ok ? r.json() : []))
-        .then((planetData: Record<string, unknown>[]) => {
+        .then((r) => (r.ok ? r.json() : { planets: [] }))
+        .then(({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
           if (cancelled) return
           const planets = planetData.map((d) => ({
             id: d.id as string,
@@ -173,10 +183,6 @@ export default function ResonancePage() {
     return () => { cancelled = true }
   }, [])
 
-  useEffect(() => {
-    setFirstMatchDone(getHintDismissed('resonance-first-match-viewed'))
-  }, [])
-
   if (!mounted) return null
 
   const activeMatch: OrbitMatch | null =
@@ -186,8 +192,11 @@ export default function ResonancePage() {
 
   const accentColor = myPlanet?.visual.coreColor ?? '#a78bfa'
 
-  // -- Explorer: no planet → empty state ------------------------------------
-  if (role === 'explorer' || !myPlanet || !session) {
+  // -- Explorer: no planet → empty state, or Resonator: planet formed but no
+  // matches yet. These are different situations and must show different copy
+  // — a formed planet must never be told to "begin formation" again.
+  const unformed = role === 'explorer' || !myPlanet
+  if (unformed || !session) {
     return (
       <AppShell>
         <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.07} double={false} />
@@ -217,7 +226,16 @@ export default function ResonancePage() {
             </p>
           </div>
 
-          <ResonanceEmptyState />
+          {unformed ? (
+            <ResonanceEmptyState />
+          ) : (
+            <ResonanceEmptyState
+              title={t('noMatchesTitle')}
+              body={t('noMatchesBody')}
+              ctaLabel={tCommon('exploreStream')}
+              ctaHref="/stream"
+            />
+          )}
         </div>
       </AppShell>
     )
@@ -261,12 +279,7 @@ export default function ResonancePage() {
           <FirstMatchCTA
             topMatch={session.matches[0]}
             planet={planetById[session.matches[0].planetId]}
-            activeId={activeId}
-            onReveal={() => setActiveId(session.matches[0].planetId)}
-            onComplete={() => {
-              dismissHint('resonance-first-session')
-              setFirstMatchDone(true)
-            }}
+            onReveal={() => selectMatch(session.matches[0].planetId)}
           />
         )}
 
@@ -307,7 +320,7 @@ export default function ResonancePage() {
                 sourcePlanet={myPlanet}
                 matches={session.matches}
                 activeId={activeId}
-                onSelect={setActiveId}
+                onSelect={selectMatch}
                 size={480}
                 planetById={planetById}
               />
