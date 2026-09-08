@@ -11,6 +11,7 @@
     "db:push": "node scripts/prisma-dev.mjs db push",
     "db:migrate": "node scripts/prisma-dev.mjs migrate dev",
     "db:seed": "prisma db seed",
+    "db:seed-galaxy-catalogue": "ts-node --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' scripts/seed-galaxy-catalogue.ts",
     "db:studio": "prisma studio",
     "test:e2e": "playwright test --config=playwright.demo.config.ts",
     "test:e2e:ui": "playwright test --config=playwright.demo.config.ts --ui",

@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { resolveGalaxySlug } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
 interface Props {
@@ -59,7 +58,6 @@ function CompactCard({
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
   joinLabel: string; joinedLabel: string; membersLabel: string
 }) {
-  const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
     width:      220,
     background: 'linear-gradient(160deg, rgba(18,14,52,0.82) 0%, rgba(6,4,20,0.90) 100%)',
@@ -157,7 +155,7 @@ function CompactCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${resolvedSlug}` }}
+        onClick={() => { window.location.href = `/galaxy/${slug}` }}
       >
         {cardBody}
 
@@ -193,7 +191,7 @@ function CompactCard({
   // Default: plain Link card (no join button)
   return (
     <Link
-      href={`/galaxy/${resolvedSlug}`}
+      href={`/galaxy/${slug}`}
       className="group relative flex-none flex flex-col gap-3 p-4 rounded-2xl overflow-hidden"
       style={cardStyle}
       onMouseEnter={handleMouseEnter}
@@ -215,7 +213,6 @@ function FullCard({
   joinLabel: string; joinedLabel: string; membersLabel: string
 }) {
   const t = useTranslations('galaxies')
-  const resolvedSlug = resolveGalaxySlug(slug)
   const cardStyle = {
     background: 'linear-gradient(160deg, rgba(18,14,52,0.80) 0%, rgba(6,4,20,0.90) 100%)',
     backdropFilter: 'blur(20px)',
@@ -337,7 +334,7 @@ function FullCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${resolvedSlug}` }}
+        onClick={() => { window.location.href = `/galaxy/${slug}` }}
       >
         {cardBody}
 
@@ -373,7 +370,7 @@ function FullCard({
   // Default: plain Link card
   return (
     <Link
-      href={`/galaxy/${resolvedSlug}`}
+      href={`/galaxy/${slug}`}
       className="group relative flex flex-col gap-4 p-6 rounded-2xl overflow-hidden"
       style={cardStyle}
       onMouseEnter={handleMouseEnter}

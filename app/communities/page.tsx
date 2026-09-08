@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import GlowButton from '@/components/ui/GlowButton'
-import { resolveGalaxySlug } from '@/lib/mock-galaxies'
 
 interface CommunityWithJoined {
   id: string
@@ -70,7 +69,7 @@ export default function CommunitiesPage() {
   }
 
   function openCommunity(slug: string) {
-    router.push(`/galaxy/${resolveGalaxySlug(slug)}`)
+    router.push(`/galaxy/${slug}`)
   }
 
   return (

@@ -1,20 +1,45 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getGalaxyBySlug } from '@/lib/mock-galaxies'
 
 // --- GalaxyMemberships -------------------------------------------------------
 // Renders the galaxy communities a planet belongs to.
-// Pass galaxyIds (slug array) from PlanetProfile.galaxyIds.
+// Pass galaxyIds (Community slugs) from PlanetProfile.galaxyIds.
+//
+// Resolves real Community rows via GET /api/communities (small catalogue —
+// client-side filtering is acceptable, see docs/adr/0001-galaxy-content-model.md).
+
+interface CommunityRow {
+  id: string
+  slug: string
+  name: string
+  symbol: string
+  keywords: string[]
+  accentColor: string
+  memberCount: number
+}
 
 interface Props {
   galaxyIds: string[]
 }
 
 export default function GalaxyMemberships({ galaxyIds }: Props) {
+  const [rows, setRows] = useState<CommunityRow[]>([])
+
+  useEffect(() => {
+    if (galaxyIds.length === 0) return
+    let cancelled = false
+    fetch('/api/communities')
+      .then((res) => (res.ok ? (res.json() as Promise<CommunityRow[]>) : []))
+      .then((data) => { if (!cancelled) setRows(data) })
+      .catch(() => { if (!cancelled) setRows([]) })
+    return () => { cancelled = true }
+  }, [galaxyIds])
+
   if (galaxyIds.length === 0) return null
 
-  const galaxies = galaxyIds
-    .map((slug) => getGalaxyBySlug(slug))
-    .filter(Boolean) as NonNullable<ReturnType<typeof getGalaxyBySlug>>[]
+  const galaxies = rows.filter((row) => galaxyIds.includes(row.slug))
 
   if (galaxies.length === 0) return null
 

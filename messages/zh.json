@@ -253,7 +253,8 @@
     "moodVibrant": "活跃",
     "found": "找到 {count} 个星系",
     "foundFor": "找到 {count} 个与“{query}”相关的星系",
-    "emptySubtitle": "试试其他关键词，或清除筛选。"
+    "emptySubtitle": "试试其他关键词，或清除筛选。",
+    "loadError": "无法加载星系"
   },
   "myPlanet": {
     "unformedTitle": "你的星球尚未成形",

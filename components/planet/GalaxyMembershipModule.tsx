@@ -1,5 +1,7 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getGalaxyBySlug } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
 // --- Galaxy chip ----------------------------------------------------------
@@ -50,6 +52,19 @@ function GalaxyChip({ galaxy }: { galaxy: GalaxyPreview }) {
 
 // --- GalaxyMembershipModule -----------------------------------------------
 
+interface CommunityRow {
+  id: string
+  slug: string
+  name: string
+  symbol: string
+  tagline: string | null
+  keywords: string[]
+  mood: string
+  memberCount: number
+  maturity: string
+  accentColor: string
+}
+
 interface Props {
   /** Array of galaxy slugs this planet has joined */
   galaxyIds?: string[]
@@ -59,9 +74,23 @@ interface Props {
 
 /**
  * GalaxyMembershipModule  -  compact grid of galaxy chips for communities this
- * planet has joined. Links to /galaxy/[slug].
+ * planet has joined. Links to /galaxy/[slug]. Resolves real Community rows via
+ * GET /api/communities (small catalogue — client-side filtering is acceptable,
+ * see docs/adr/0001-galaxy-content-model.md).
  */
 export default function GalaxyMembershipModule({ galaxyIds }: Props) {
+  const [rows, setRows] = useState<CommunityRow[]>([])
+
+  useEffect(() => {
+    if (!galaxyIds || galaxyIds.length === 0) return
+    let cancelled = false
+    fetch('/api/communities')
+      .then((res) => (res.ok ? (res.json() as Promise<CommunityRow[]>) : []))
+      .then((data) => { if (!cancelled) setRows(data) })
+      .catch(() => { if (!cancelled) setRows([]) })
+    return () => { cancelled = true }
+  }, [galaxyIds])
+
   if (!galaxyIds || galaxyIds.length === 0) {
     return (
       <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
@@ -70,31 +99,28 @@ export default function GalaxyMembershipModule({ galaxyIds }: Props) {
     )
   }
 
-  const galaxies = galaxyIds
-    .map((slug) => getGalaxyBySlug(slug))
-    .filter((g): g is NonNullable<typeof g> => g !== undefined)
+  const previews: GalaxyPreview[] = rows
+    .filter((row) => galaxyIds.includes(row.slug))
+    .map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      symbol: row.symbol,
+      tagline: row.tagline ?? undefined,
+      keywords: row.keywords,
+      mood: row.mood as GalaxyPreview['mood'],
+      memberCount: row.memberCount,
+      maturity: row.maturity as GalaxyPreview['maturity'],
+      accentColor: row.accentColor,
+    }))
 
-  if (galaxies.length === 0) {
+  if (previews.length === 0) {
     return (
       <p className="text-xs" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
         No galaxies found.
       </p>
     )
   }
-
-  // Build GalaxyPreview-compatible objects from the Galaxy type
-  const previews: GalaxyPreview[] = galaxies.map((g) => ({
-    id: g.id,
-    slug: g.slug,
-    name: g.name,
-    symbol: g.symbol,
-    tagline: g.tagline,
-    keywords: g.keywords,
-    mood: g.mood,
-    memberCount: g.memberCount,
-    maturity: g.maturity,
-    accentColor: g.accentColor,
-  }))
 
   return (
     <div className="flex flex-col gap-2">

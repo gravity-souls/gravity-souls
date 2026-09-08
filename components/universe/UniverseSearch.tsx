@@ -5,13 +5,24 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { mockPlanets } from '@/lib/mock-planets'
-import { searchGalaxies } from '@/lib/mock-galaxies'
 import type { PlanetProfile } from '@/types/planet'
-import type { Galaxy } from '@/types/galaxy'
 
 interface Props {
   onPlanetSelect?: (planet: PlanetProfile) => void
   placeholder?: string
+}
+
+// Shape returned by GET /api/communities — galaxy search resolves real
+// Community rows (see docs/adr/0001-galaxy-content-model.md), not mock data.
+interface CommunityRow {
+  id: string
+  slug: string
+  name: string
+  symbol: string
+  tagline: string | null
+  description: string | null
+  keywords: string[]
+  accentColor: string
 }
 
 // --- Quick keyword chips -----------------------------------------------------
@@ -36,11 +47,33 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
+  const [allGalaxies, setAllGalaxies] = useState<CommunityRow[]>([])
+
+  // Fetch the real community catalogue once on mount for galaxy search.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/communities')
+      .then((res) => (res.ok ? (res.json() as Promise<CommunityRow[]>) : []))
+      .then((rows) => { if (!cancelled) setAllGalaxies(rows) })
+      .catch(() => { if (!cancelled) setAllGalaxies([]) })
+    return () => { cancelled = true }
+  }, [])
+
   const trimmed = query.trim()
   const showDropdown = focused && trimmed.length >= 1
 
   // Search results
-  const matchedGalaxies: Galaxy[] = showDropdown ? searchGalaxies(trimmed).slice(0, 3) : []
+  const matchedGalaxies: CommunityRow[] = showDropdown
+    ? allGalaxies.filter((g) => {
+        const q = trimmed.toLowerCase()
+        return (
+          g.name.toLowerCase().includes(q) ||
+          g.keywords.some((k) => k.toLowerCase().includes(q)) ||
+          (g.tagline?.toLowerCase().includes(q) ?? false) ||
+          (g.description?.toLowerCase().includes(q) ?? false)
+        )
+      }).slice(0, 3)
+    : []
   const matchedPlanets: PlanetProfile[] = showDropdown
     ? mockPlanets.filter(
         (p) =>

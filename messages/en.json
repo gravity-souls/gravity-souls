@@ -253,7 +253,8 @@
     "moodVibrant": "Vibrant",
     "found": "{count} galaxies found",
     "foundFor": "{count} galaxies found for \"{query}\"",
-    "emptySubtitle": "Try a different keyword or clear the filter."
+    "emptySubtitle": "Try a different keyword or clear the filter.",
+    "loadError": "Failed to load galaxies"
   },
   "myPlanet": {
     "unformedTitle": "Your planet has not formed yet",

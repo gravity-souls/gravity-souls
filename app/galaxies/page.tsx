@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, Suspense } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -8,10 +8,37 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import GalaxyCard from '@/components/galaxy/GalaxyCard'
 import EmptyState from '@/components/ui/EmptyState'
 import GalaxiesLoading from '@/app/galaxies/loading'
-import { getGalaxyPreviews } from '@/lib/mock-galaxies'
 import type { GalaxyPreview } from '@/types/galaxy'
 
-const ALL_GALAXIES = getGalaxyPreviews()
+// Shape returned by GET /api/communities — the galaxy directory resolves
+// real Community rows (see docs/adr/0001-galaxy-content-model.md).
+interface CommunityRow {
+  id: string
+  slug: string
+  name: string
+  symbol: string
+  tagline: string | null
+  keywords: string[]
+  mood: string
+  memberCount: number
+  maturity: string
+  accentColor: string
+}
+
+function toGalaxyPreview(row: CommunityRow): GalaxyPreview {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    symbol: row.symbol,
+    tagline: row.tagline ?? undefined,
+    keywords: row.keywords,
+    mood: row.mood as GalaxyPreview['mood'],
+    memberCount: row.memberCount,
+    maturity: row.maturity as GalaxyPreview['maturity'],
+    accentColor: row.accentColor,
+  }
+}
 
 // --- Filter controls ---------------------------------------------------------
 
@@ -47,10 +74,33 @@ function GalaxiesInner() {
 
   const [query, setQuery] = useState(initialQ)
   const [moodFilter, setMoodFilter] = useState<MoodFilter>('all')
+  const [galaxies, setGalaxies] = useState<GalaxyPreview[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [reload, setReload] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.resolve().then(() => {
+      if (!cancelled) { setLoading(true); setError('') }
+    })
+    fetch('/api/communities')
+      .then(async (res) => {
+        if (!res.ok) throw new Error('unavailable')
+        return res.json() as Promise<CommunityRow[]>
+      })
+      .then((rows) => {
+        if (cancelled) return
+        setGalaxies(rows.map(toGalaxyPreview))
+      })
+      .catch(() => { if (!cancelled) setError(tGalaxies('loadError')) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [reload, tGalaxies])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return ALL_GALAXIES.filter((g) => {
+    return galaxies.filter((g) => {
       const matchesQuery =
         !q ||
         g.name.toLowerCase().includes(q) ||
@@ -59,7 +109,9 @@ function GalaxiesInner() {
       const matchesMood = moodFilter === 'all' || g.mood === moodFilter
       return matchesQuery && matchesMood
     })
-  }, [query, moodFilter])
+  }, [galaxies, query, moodFilter])
+
+  if (loading) return <GalaxiesLoading />
 
   return (
     <AppShell>
@@ -123,14 +175,31 @@ function GalaxiesInner() {
           </div>
         </div>
 
+        {/* Error banner */}
+        {error && (
+          <div className="mt-4" role="alert">
+            <p className="text-sm" style={{ color: '#f87171' }}>{error}</p>
+            <button
+              type="button"
+              onClick={() => setReload((v) => v + 1)}
+              className="mt-2 text-xs underline"
+              style={{ color: 'var(--ghost)' }}
+            >
+              {tCommon('retry')}
+            </button>
+          </div>
+        )}
+
         {/* Result count */}
-        <p className="mt-4 text-xs" style={{ color: 'var(--ghost)' }}>
-          {query ? tGalaxies('foundFor', { count: filtered.length, query }) : tGalaxies('found', { count: filtered.length })}
-        </p>
+        {!error && (
+          <p className="mt-4 text-xs" style={{ color: 'var(--ghost)' }}>
+            {query ? tGalaxies('foundFor', { count: filtered.length, query }) : tGalaxies('found', { count: filtered.length })}
+          </p>
+        )}
 
         {/* -- Galaxy grid ------------------------------------------------- */}
         <div className="mt-6">
-          {filtered.length === 0 ? (
+          {error ? null : filtered.length === 0 ? (
             <EmptyState
               symbol="◈"
               title={tCommon('noResults')}

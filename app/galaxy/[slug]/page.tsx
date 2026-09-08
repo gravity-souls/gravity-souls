@@ -9,16 +9,58 @@ import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import LockedLayer from '@/components/ui/LockedLayer'
-import { getGalaxyBySlug, getRelatedGalaxies, getGalaxyPreviews, resolveGalaxySlug } from '@/lib/mock-galaxies'
-import { getPlanetById } from '@/lib/mock-planets'
 import type { PlanetProfile } from '@/types/planet'
+import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
 
+// Shape returned by GET /api/communities — a galaxy resolves a real
+// Community row by its unique slug (see docs/adr/0001-galaxy-content-model.md).
+// There is no separate Galaxy table: memberCount and every other identity
+// field here are always derived from this response, never hand-authored.
 interface CommunityRow {
   id: string
   slug: string
   name: string
+  symbol: string
+  tagline: string | null
+  description: string | null
+  keywords: string[]
+  mood: string
+  accentColor: string
+  maturity: string
+  memberCount: number
   joined: boolean
   isAdmin?: boolean
+}
+
+function toGalaxy(row: CommunityRow): Galaxy {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    symbol: row.symbol,
+    tagline: row.tagline ?? undefined,
+    description: row.description ?? undefined,
+    keywords: row.keywords,
+    mood: row.mood as Galaxy['mood'],
+    memberCount: row.memberCount,
+    maturity: row.maturity as Galaxy['maturity'],
+    accentColor: row.accentColor,
+  }
+}
+
+function toGalaxyPreview(row: CommunityRow): GalaxyPreview {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    symbol: row.symbol,
+    tagline: row.tagline ?? undefined,
+    keywords: row.keywords,
+    mood: row.mood as GalaxyPreview['mood'],
+    memberCount: row.memberCount,
+    maturity: row.maturity as GalaxyPreview['maturity'],
+    accentColor: row.accentColor,
+  }
 }
 
 interface CommunityPost {
@@ -134,16 +176,14 @@ export default function GalaxyPage({ params }: Props) {
   const router = useRouter()
   const t = useTranslations('galaxyPage')
   const { slug } = use(params)
-  const resolvedSlug = resolveGalaxySlug(slug)
-  const galaxy = getGalaxyBySlug(slug)
-
-  if (!galaxy) notFound()
 
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<DiscussionTopic | null>(null)
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
   const [community, setCommunity] = useState<CommunityRow | null>(null)
+  const [allCommunities, setAllCommunities] = useState<CommunityRow[]>([])
+  const [slugMissing, setSlugMissing] = useState(false)
   const [communityJoined, setCommunityJoined] = useState(false)
   const [joiningCommunity, setJoiningCommunity] = useState(false)
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([])
@@ -194,7 +234,10 @@ export default function GalaxyPage({ params }: Props) {
     let cancelled = false
 
     Promise.resolve().then(() => {
-      if (!cancelled) { setCommunityLoading(true); setCommunityError(''); setCommunity(null); setCommunityJoined(false) }
+      if (!cancelled) {
+        setCommunityLoading(true); setCommunityError(''); setCommunity(null)
+        setCommunityJoined(false); setSlugMissing(false)
+      }
     })
     fetch('/api/communities')
       .then(async (res) => {
@@ -203,15 +246,24 @@ export default function GalaxyPage({ params }: Props) {
       })
       .then((rows) => {
         if (cancelled) return
-        const match = rows.find((row) => resolveGalaxySlug(row.slug) === resolvedSlug)
-        setCommunity(match ?? null)
-        setCommunityJoined(match?.joined ?? false)
-        if (!match) setCommunityError(t('communityUnavailable'))
+        setAllCommunities(rows)
+        const match = rows.find((row) => row.slug === slug)
+        if (!match) {
+          // The fetch succeeded and the catalogue plainly has no such slug —
+          // this is a real 404, not a transient error (see the notFound()
+          // gate below), which is exactly the bug this rewiring fixes: this
+          // page used to 404 off a static mock list while fetching real
+          // content from this same API for the rest of the page.
+          setSlugMissing(true)
+          return
+        }
+        setCommunity(match)
+        setCommunityJoined(match.joined)
       })
       .catch(() => { if (!cancelled) setCommunityError(t('communityUnavailable')) })
       .finally(() => { if (!cancelled) setCommunityLoading(false) })
     return () => { cancelled = true }
-  }, [resolvedSlug, reload, t])
+  }, [slug, reload, t])
 
   useEffect(() => {
     let cancelled = false
@@ -511,18 +563,44 @@ export default function GalaxyPage({ params }: Props) {
     setPostError(t('communityUnavailable'))
   }
 
-  const memberPlanets = galaxy.activePlanetIds
-    .map((id) => getPlanetById(id))
-    .filter((p): p is PlanetProfile => !!p)
+  // A real Community row confirmed absent for this slug — a genuine 404, not
+  // a transient fetch failure (see the community-fetch effect above).
+  if (!communityLoading && slugMissing) notFound()
 
-  const relatedGalaxies = getRelatedGalaxies(galaxy.keywords, resolvedSlug)
-  const relatedPreviews = getGalaxyPreviews().filter((g) =>
-    relatedGalaxies.some((r) => r.id === g.id)
-  )
+  if (!community) {
+    return (
+      <AppShell>
+        <div className="px-4 sm:px-6 py-16 max-w-5xl mx-auto" role={communityError ? 'alert' : 'status'}>
+          <p className="text-sm" style={{ color: 'var(--ghost)' }}>
+            {communityError || t('loadingCommunity')}
+          </p>
+          {communityError && (
+            <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">
+              {t('retryLoad')}
+            </button>
+          )}
+        </div>
+      </AppShell>
+    )
+  }
+
+  const galaxy = toGalaxy(community)
+
+  // No real per-galaxy "active planet" source exists yet (Community carries
+  // no such relation) — an empty state is correct here, not invented content.
+  const memberPlanets: PlanetProfile[] = []
+
+  const relatedPreviews = allCommunities
+    .filter((row) => row.id !== community.id)
+    .map((row) => ({ row, overlap: row.keywords.filter((k) => community.keywords.includes(k)).length }))
+    .filter(({ overlap }) => overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap)
+    .slice(0, 3)
+    .map(({ row }) => toGalaxyPreview(row))
 
   const discussions = discussionTopics
   const { accentColor } = galaxy
-  const isGalaxyAdmin = community?.isAdmin ?? false
+  const isGalaxyAdmin = community.isAdmin ?? false
   const selectedDiscussionReplies = selectedTopic
     ? discussionReplyOverrides[selectedTopic.id] ?? selectedTopic.replyItems ?? []
     : []
