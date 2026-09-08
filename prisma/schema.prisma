@@ -29,6 +29,12 @@ model user {
   lastActiveAt  DateTime? @updatedAt
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  // Tombstone marker for a self-deleted account (approved: immediate deletion,
+  // no grace period). Set once, in the same transaction that scrubs the row's
+  // PII and deletes the user's own private data. Content the user authored
+  // that others can see (DirectMessage, Post, CommunityPost, etc.) is left in
+  // place and displays under this now-scrubbed identity — see DELETE /api/me.
+  deletedAt     DateTime?
 
   sessions Session[]
   accounts Account[]

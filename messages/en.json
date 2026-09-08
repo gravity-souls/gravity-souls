@@ -641,6 +641,28 @@
     "submitReport": "Submit report",
     "reportSent": "Report sent. Thank you."
   },
+  "accountSettings": {
+    "title": "Account & data",
+    "subtitle": "Manage your personal data on GravitySouls.",
+    "exportTitle": "Download my data",
+    "exportDescription": "Get a copy of everything tied to your account — planets, posts, messages, and more — as a JSON file.",
+    "exportButton": "Download my data",
+    "exportButtonLoading": "Preparing your download…",
+    "exportFailed": "Could not prepare your export. Please try again.",
+    "deleteTitle": "Delete my account",
+    "deleteDescription": "This permanently deletes your session, credentials, profile, planets, questionnaire results, saved planets, follows, blocks, memberships, XP history, and notifications.",
+    "deleteWarningContent": "Content you shared that others can already see — direct messages you sent, posts, community posts and replies, discussion replies, and proposed events — stays visible to them, but is no longer attributed to you: it will show as “Deleted Planet” instead of your name.",
+    "deleteWarningIrreversible": "This cannot be undone. There is no recovery.",
+    "deleteExportFirst": "Consider downloading your data first — it cannot be retrieved after deletion.",
+    "deleteConfirmLabel": "Type DELETE to confirm",
+    "deleteConfirmPlaceholder": "DELETE",
+    "deleteButton": "Delete my account",
+    "deleteButtonWorking": "Deleting…",
+    "deleteFailed": "Could not delete your account. Please try again.",
+    "deleteSuccess": "Your account has been deleted. Signing you out…",
+    "backToPlanetSettings": "← Back to planet settings",
+    "linkFromPlanetSettings": "Account & data"
+  },
   "createPlanet": {
     "formation": "Planet formation",
     "cancel": "← Cancel",

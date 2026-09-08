@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -158,6 +159,26 @@ function PrivacySection() {
         ))}
         {saved && <span className="text-[10px]" style={{ color: '#34d399' }}>{t('visibilitySaved')}</span>}
       </div>
+    </SectionCard>
+  )
+}
+
+// --- Account & data (export / delete) entry point ---------------------------
+// The export/delete UI itself lives at /settings/account (a page of its own —
+// deletion needs real friction, not a quick inline action here).
+
+function AccountDataSection() {
+  const t = useTranslations('accountSettings')
+
+  return (
+    <SectionCard title={t('title')} description={t('subtitle')} color="#f87171">
+      <Link
+        href="/settings/account"
+        className="text-sm font-medium w-fit"
+        style={{ color: '#f87171' }}
+      >
+        {t('linkFromPlanetSettings')} →
+      </Link>
     </SectionCard>
   )
 }
@@ -573,6 +594,8 @@ export default function PlanetSettingsPage() {
             </SectionCard>
 
             <PrivacySection />
+
+            <AccountDataSection />
 
             {/* Save button (bottom of form, mobile) */}
             <div className="lg:hidden">

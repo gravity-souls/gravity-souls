@@ -641,6 +641,28 @@
     "submitReport": "Envoyer le signalement",
     "reportSent": "Signalement envoyé. Merci."
   },
+  "accountSettings": {
+    "title": "Compte et données",
+    "subtitle": "Gérez vos données personnelles sur GravitySouls.",
+    "exportTitle": "Télécharger mes données",
+    "exportDescription": "Obtenez une copie de tout ce qui est lié à votre compte — planètes, publications, messages, et plus — au format JSON.",
+    "exportButton": "Télécharger mes données",
+    "exportButtonLoading": "Préparation du téléchargement…",
+    "exportFailed": "Impossible de préparer votre export. Veuillez réessayer.",
+    "deleteTitle": "Supprimer mon compte",
+    "deleteDescription": "Cette action supprime définitivement votre session, vos identifiants, votre profil, vos planètes, vos résultats de questionnaire, vos planètes enregistrées, vos abonnements, vos blocages, vos adhésions, votre historique d'XP et vos notifications.",
+    "deleteWarningContent": "Le contenu que vous avez partagé et que d'autres peuvent déjà voir — messages directs envoyés, publications, publications et réponses de communauté, réponses de discussion, événements proposés — reste visible pour eux, mais ne vous sera plus attribué : il apparaîtra sous le nom « Deleted Planet » au lieu du vôtre.",
+    "deleteWarningIrreversible": "Cette action est irréversible. Aucune récupération n'est possible.",
+    "deleteExportFirst": "Pensez à télécharger vos données d'abord — elles ne pourront plus être récupérées après la suppression.",
+    "deleteConfirmLabel": "Tapez DELETE pour confirmer",
+    "deleteConfirmPlaceholder": "DELETE",
+    "deleteButton": "Supprimer mon compte",
+    "deleteButtonWorking": "Suppression…",
+    "deleteFailed": "Impossible de supprimer votre compte. Veuillez réessayer.",
+    "deleteSuccess": "Votre compte a été supprimé. Déconnexion en cours…",
+    "backToPlanetSettings": "← Retour aux paramètres de la planète",
+    "linkFromPlanetSettings": "Compte et données"
+  },
   "createPlanet": {
     "formation": "Formation de planète",
     "cancel": "← Annuler",

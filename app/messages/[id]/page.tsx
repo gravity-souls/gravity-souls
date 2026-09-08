@@ -51,7 +51,7 @@ function MessageBubble({ msg, isOwn, color }: { msg: MsgData; isOwn: boolean; co
 
 // --- Conversation header -----------------------------------------------------
 
-function ConvHeader({ planet, onBack }: { planet: PlanetData | null; onBack: () => void }) {
+function ConvHeader({ planet, fallbackName, onBack }: { planet: PlanetData | null; fallbackName: string; onBack: () => void }) {
   const t = useTranslations('messagesPage')
   const color = planet?.visual?.coreColor ?? '#a78bfa'
   return (
@@ -77,7 +77,7 @@ function ConvHeader({ planet, onBack }: { planet: PlanetData | null; onBack: () 
       </div>
       <div className="flex flex-col">
         <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-          {planet?.name ?? t('unknown')}
+          {planet?.name ?? fallbackName ?? t('unknown')}
         </span>
       </div>
       {planet && (
@@ -107,6 +107,10 @@ export default function ConversationPage({ params }: Props) {
 
   const [messages, setMessages]       = useState<MsgData[]>([])
   const [otherPlanet, setOtherPlanet] = useState<PlanetData | null>(null)
+  // Fallback display name when the other participant has no active planet —
+  // notably a self-deleted account, whose Planet[] rows are gone but whose
+  // (now tombstoned) user.name still resolves via the API's `otherUser`.
+  const [otherUserName, setOtherUserName] = useState('')
   const [myUserId, setMyUserId]       = useState('')
   const [loading, setLoading]         = useState(true)
   const [sending, setSending]         = useState(false)
@@ -126,6 +130,7 @@ export default function ConversationPage({ params }: Props) {
         if (cancelled) return
         setMessages(data.messages)
         setOtherPlanet(data.otherPlanet)
+        setOtherUserName(data.otherUser?.name ?? '')
 
         // Get my user ID from /api/me
         const meRes = await fetch('/api/me')
@@ -191,7 +196,7 @@ export default function ConversationPage({ params }: Props) {
       className="flex flex-col"
       style={{ minHeight: '100dvh', background: 'var(--background)' }}
     >
-      <ConvHeader planet={otherPlanet} onBack={() => router.push('/messages')} />
+      <ConvHeader planet={otherPlanet} fallbackName={otherUserName} onBack={() => router.push('/messages')} />
 
       {/* Message list */}
       <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-3">
@@ -222,7 +227,7 @@ export default function ConversationPage({ params }: Props) {
       <SignalComposer
         onSend={handleSend}
         accentColor={accentColor}
-        placeholder={t('transmitTo', { name: otherPlanet?.name ?? t('unknown') })}
+        placeholder={t('transmitTo', { name: otherPlanet?.name ?? otherUserName ?? t('unknown') })}
       />
     </div>
   )

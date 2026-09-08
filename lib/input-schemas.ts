@@ -93,3 +93,7 @@ export const eventSchema = z.object({
 export const eventStatusSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED']), rejectionReason: text(500).nullable().optional(),
 }).strict()
+
+// Defense-in-depth against an accidental/CSRF-triggered DELETE /api/me: the
+// client must send an explicit, literal confirmation, not just hit the route.
+export const deleteAccountSchema = z.object({ confirm: z.literal(true) }).strict()

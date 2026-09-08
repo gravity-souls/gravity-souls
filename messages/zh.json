@@ -641,6 +641,28 @@
     "submitReport": "提交举报",
     "reportSent": "举报已发送，谢谢。"
   },
+  "accountSettings": {
+    "title": "账户与数据",
+    "subtitle": "管理你在 GravitySouls 上的个人数据。",
+    "exportTitle": "下载我的数据",
+    "exportDescription": "获取与你账户相关的所有内容副本——星球、帖子、消息等——以 JSON 文件形式导出。",
+    "exportButton": "下载我的数据",
+    "exportButtonLoading": "正在准备下载…",
+    "exportFailed": "无法准备导出，请重试。",
+    "deleteTitle": "删除我的账户",
+    "deleteDescription": "此操作将永久删除你的会话、登录凭据、个人资料、星球、问卷结果、已保存的星球、关注关系、屏蔽记录、社群成员身份、经验值历史和通知。",
+    "deleteWarningContent": "你分享的、他人已经可以看到的内容——你发送的私信、帖子、社群帖子与回复、讨论回复、提议的活动——仍会保留并对他们可见，但不再显示为你的名字，而会显示为“Deleted Planet”。",
+    "deleteWarningIrreversible": "此操作无法撤销，且无法恢复。",
+    "deleteExportFirst": "建议先下载你的数据——删除后将无法找回。",
+    "deleteConfirmLabel": "输入 DELETE 以确认",
+    "deleteConfirmPlaceholder": "DELETE",
+    "deleteButton": "删除我的账户",
+    "deleteButtonWorking": "正在删除…",
+    "deleteFailed": "无法删除你的账户，请重试。",
+    "deleteSuccess": "你的账户已被删除，正在退出登录…",
+    "backToPlanetSettings": "← 返回星球设置",
+    "linkFromPlanetSettings": "账户与数据"
+  },
   "createPlanet": {
     "formation": "星球形成",
     "cancel": "← 取消",
