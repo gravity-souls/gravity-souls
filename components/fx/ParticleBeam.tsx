@@ -86,15 +86,20 @@ export default function ParticleBeam({
   // Keep playingRef in sync without restarting the animation loop.
   useEffect(() => { playingRef.current = playing }, [playing])
 
-  // ResizeObserver: keep canvas size and DPR transform current.
+  // ResizeObserver: keep canvas size and DPR transform current. Runs regardless
+  // of reduced-motion so the static frame below (drawn once, no animation) is
+  // still sized and drawn correctly rather than sitting at 0x0.
   useEffect(() => {
-    if (!mounted || reducedMotion) return
+    if (!mounted) return
     const canvas    = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
 
     function resize() {
-      const dpr           = Math.min(window.devicePixelRatio || 1, 2)
+      // Viewport-aware cap, matching CosmicGlobe.tsx's split (1 on narrow/mobile
+      // screens, 1.5 on desktop) rather than a flat devicePixelRatio-capped-at-2.
+      const narrow         = window.matchMedia('(max-width: 767px)').matches
+      const dpr            = Math.min(window.devicePixelRatio || 1, narrow ? 1 : 1.5)
       const { width, height } = container!.getBoundingClientRect()
       dimsRef.current     = { width, height }
       canvas!.width       = Math.round(width  * dpr)
@@ -109,7 +114,45 @@ export default function ParticleBeam({
     const ro = new ResizeObserver(resize)
     ro.observe(container)
     return () => ro.disconnect()
-  }, [mounted, reducedMotion])
+  }, [mounted])
+
+  // Reduced motion: render a single static frame (a few particles frozen along
+  // the arc) instead of nothing — "static first, no silent empty render."
+  useEffect(() => {
+    if (!mounted || !reducedMotion) return
+    const canvas = canvasRef.current
+    const container = containerRef.current
+    if (!canvas || !container) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    function draw() {
+      const { width, height } = dimsRef.current
+      if (!width || !height) return
+      ctx!.clearRect(0, 0, width, height)
+      const [cr, cg, cb] = hexToRgb(color)
+      const pr = Math.round(0.85 * 255 + 0.15 * cr)
+      const pg = Math.round(0.85 * 252 + 0.15 * cg)
+      const pb = Math.round(0.85 * 248 + 0.15 * cb)
+      ctx!.fillStyle = `rgb(${pr}, ${pg}, ${pb})`
+      const ctrl = arcControl(from, to, arcHeight)
+      const STATIC_POINTS = 7
+      for (let i = 0; i < STATIC_POINTS; i++) {
+        const t = (i + 0.5) / STATIC_POINTS
+        const pos = quadBezier(t * t, from, ctrl, to)
+        ctx!.globalAlpha = opacityAt(t)
+        ctx!.beginPath()
+        ctx!.arc(pos.x, pos.y, 0.7, 0, Math.PI * 2)
+        ctx!.fill()
+      }
+      ctx!.globalAlpha = 1
+    }
+
+    // The resize effect above runs first and populates dimsRef synchronously
+    // on mount, but guard with a rAF in case this effect fires before it.
+    const raf = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(raf)
+  }, [mounted, reducedMotion, from.x, from.y, to.x, to.y, color, arcHeight])
 
   // Animation loop. Restarts only when beam geometry or rendering props change.
   useEffect(() => {
@@ -136,13 +179,16 @@ export default function ParticleBeam({
     const perpY =  dx / len
 
     const particles: Particle[] = []
-    let rafId:    number
-    let lastTime = 0
-    let spawnAcc = 0
+    let rafId:      number
+    let lastTime   = 0
+    let spawnAcc   = 0
+    let isOnscreen = true
+    const io = new IntersectionObserver(([entry]) => { isOnscreen = entry.isIntersecting })
+    io.observe(container)
 
     function frame(now: number) {
       rafId = requestAnimationFrame(frame)
-      if (document.hidden) return
+      if (document.hidden || !isOnscreen) return
 
       // Skip the first frame entirely to avoid a capped-dt spike from lastTime === 0.
       const dt = lastTime === 0 ? 0 : Math.min((now - lastTime) / 1000, 0.05)
@@ -194,10 +240,13 @@ export default function ParticleBeam({
     }
 
     rafId = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(rafId)
+    return () => { cancelAnimationFrame(rafId); io.disconnect() }
   }, [mounted, reducedMotion, from.x, from.y, to.x, to.y, color, speed, density, arcHeight])
 
-  if (!mounted || reducedMotion) return null
+  // Reduced motion renders the static frame drawn above instead of nothing —
+  // this is a decorative/non-primary effect (only ever used on the fx demo
+  // page today), so no opt-in-to-animate control is offered here.
+  if (!mounted) return null
 
   return (
     <div

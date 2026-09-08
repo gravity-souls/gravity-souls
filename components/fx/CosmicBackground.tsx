@@ -27,11 +27,10 @@ export default function CosmicBackground() {
 
       {/* -- Layer 3: Secondary violet ring, offset left ----------------- */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 animate-nebula-breathe-reverse"
         style={{
           background:
             'radial-gradient(ellipse 55% 40% at 20% 15%, rgba(139,92,246,0.14) 0%, transparent 65%)',
-          animation: 'nebula-breathe 22s ease-in-out 4s infinite reverse',
         }}
       />
 

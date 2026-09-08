@@ -309,6 +309,20 @@ body {
   animation: nebula-breathe 18s ease-in-out infinite;
 }
 
+.animate-nebula-breathe-reverse {
+  animation: nebula-breathe 22s ease-in-out 4s infinite reverse;
+}
+
+/* CosmicBackground's two nebula-breathe layers are the only unconditional CSS
+   animation left running behind every page; freeze them for visitors who've
+   asked for no motion. Scoped to this animation only, not a global audit. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-nebula-breathe,
+  .animate-nebula-breathe-reverse {
+    animation: none;
+  }
+}
+
 .animate-spin-slow {
   animation: spin-slow 28s linear infinite;
 }

@@ -16,6 +16,11 @@ export default defineConfig({
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
     { name: 'mobile', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    // Real WebKit engine + iPhone viewport/touch/UA — 'mobile' above is
+    // still Chromium in a phone-sized window, not Safari's engine. This is
+    // the closest automated approximation of real iPhone Safari available;
+    // it is not a substitute for testing on physical Apple hardware.
+    { name: 'iphone-safari', use: { ...devices['iPhone 14'] } },
   ],
   webServer: {
     command: 'npm run start -- --port 3100',

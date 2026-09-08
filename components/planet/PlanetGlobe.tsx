@@ -1,11 +1,12 @@
 'use client'
 
-import { Component, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Component, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { BackSide, DoubleSide, type Mesh } from 'three'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
+import { useNarrowViewportPreference, useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 
 interface Props {
   planetConfig: PlanetConfig
@@ -58,6 +59,58 @@ function GlobeFallback({ planetConfig, size = 300 }: Props) {
       }}
     />
   )
+}
+
+// Drives the render loop while the Canvas uses frameloop="demand": as long as
+// `active` is true it keeps re-invalidating every frame (continuous rotation);
+// as soon as it's false the chain simply stops being re-armed, so R3F stops
+// rendering entirely instead of just freezing rotation in place. This is what
+// gives us both "pause when hidden/offscreen" and "static when reduced motion
+// is preferred" without touching the per-mesh useFrame callbacks below.
+function FrameDriver({ active }: { active: boolean }) {
+  const invalidate = useThree((state) => state.invalidate)
+
+  useFrame(() => {
+    if (active) invalidate()
+  })
+
+  // Kick the loop back on when it flips from inactive to active — otherwise
+  // there's no pending frame left to call invalidate() from.
+  useEffect(() => {
+    if (active) invalidate()
+  }, [active, invalidate])
+
+  return null
+}
+
+// iOS Safari (and others, under memory pressure) can drop the WebGL context
+// at any time without throwing — PlanetGlobeErrorBoundary can't catch this.
+// Mirrors CosmicGlobe.tsx's webglcontextlost/webglcontextrestored handling.
+function ContextLossWatcher({ onLost, onRestored }: { onLost: () => void; onRestored: () => void }) {
+  const gl = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
+
+  useEffect(() => {
+    const canvas = gl.domElement
+
+    function lost(event: Event) {
+      event.preventDefault()
+      onLost()
+    }
+    function restored() {
+      onRestored()
+      invalidate()
+    }
+
+    canvas.addEventListener('webglcontextlost', lost)
+    canvas.addEventListener('webglcontextrestored', restored)
+    return () => {
+      canvas.removeEventListener('webglcontextlost', lost)
+      canvas.removeEventListener('webglcontextrestored', restored)
+    }
+  }, [gl, invalidate, onLost, onRestored])
+
+  return null
 }
 
 function PlanetSphere({ planetConfig }: { planetConfig: PlanetConfig }) {
@@ -147,9 +200,23 @@ function PlanetRing({ planetConfig }: { planetConfig: PlanetConfig }) {
   )
 }
 
-function PlanetScene({ planetConfig, sceneScale }: { planetConfig: PlanetConfig; sceneScale: number }) {
+function PlanetScene({
+  planetConfig,
+  sceneScale,
+  active,
+  onContextLost,
+  onContextRestored,
+}: {
+  planetConfig: PlanetConfig
+  sceneScale: number
+  active: boolean
+  onContextLost: () => void
+  onContextRestored: () => void
+}) {
   return (
     <>
+      <ContextLossWatcher onLost={onContextLost} onRestored={onContextRestored} />
+      <FrameDriver active={active} />
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 2, 2]} intensity={1.8} />
       <directionalLight position={[-3, -1, -2]} intensity={0.3} color="#8844ff" />
@@ -166,6 +233,11 @@ function PlanetScene({ planetConfig, sceneScale }: { planetConfig: PlanetConfig;
 export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero' }: Props) {
   const [webGLAvailable, setWebGLAvailable] = useState<boolean | null>(null)
   const [checkedCustomTexture, setCheckedCustomTexture] = useState<{ source?: string; url?: string }>({})
+  const [contextLost, setContextLost] = useState(false)
+  const [onscreen, setOnscreen] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const reducedMotion = useReducedMotionPreference()
+  const narrowViewport = useNarrowViewportPreference()
   const customTextureUrl = planetConfig.customTextureUrl
   const availableCustomTextureUrl = customTextureUrl && !customTextureUrl.startsWith('/')
     ? customTextureUrl
@@ -174,6 +246,9 @@ export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero'
       : undefined
   const sceneScale = framing === 'avatar' ? 0.9 : 0.58
   const renderPlanetConfig = { ...planetConfig, customTextureUrl: availableCustomTextureUrl }
+
+  const handleContextLost = useCallback(() => setContextLost(true), [])
+  const handleContextRestored = useCallback(() => setContextLost(false), [])
 
   useEffect(() => {
     let cancelled = false
@@ -202,6 +277,27 @@ export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero'
     return () => { cancelled = true }
   }, [customTextureUrl])
 
+  // Pause the render loop when the globe scrolls offscreen or the tab is
+  // backgrounded — a page can mount many PlanetGlobe instances at once
+  // (e.g. discovery grids) and each would otherwise render every frame
+  // forever via R3F's default frameloop="always".
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    let intersecting = true
+    function update() { setOnscreen(intersecting && !document.hidden) }
+    const observer = new IntersectionObserver(([entry]) => {
+      intersecting = entry.isIntersecting
+      update()
+    })
+    observer.observe(el)
+    document.addEventListener('visibilitychange', update)
+    return () => {
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', update)
+    }
+  }, [])
+
   if (webGLAvailable === false) {
     return <PlanetAvatar planetConfig={renderPlanetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />
   }
@@ -210,20 +306,35 @@ export default function PlanetGlobe({ planetConfig, size = 300, framing = 'hero'
     return <GlobeFallback planetConfig={renderPlanetConfig} size={size} />
   }
 
+  const active = onscreen && !reducedMotion && !contextLost
+
   return (
     <PlanetGlobeErrorBoundary fallback={<PlanetAvatar planetConfig={renderPlanetConfig} size={size} rotating rotationDuration={22} className="mx-auto" />}>
       <Suspense fallback={<GlobeFallback planetConfig={renderPlanetConfig} size={size} />}>
-        <div className="relative" style={{ width: size, height: size }}>
+        <div ref={containerRef} className="relative" style={{ width: size, height: size }}>
           <Canvas
             camera={{ position: [0, 0, 2.8], fov: 45 }}
             gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+            dpr={[1, narrowViewport ? 1 : 1.5]}
+            frameloop="demand"
             style={{ width: size, height: size, background: 'transparent' }}
             onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
           >
             <Suspense fallback={null}>
-              <PlanetScene planetConfig={renderPlanetConfig} sceneScale={sceneScale} />
+              <PlanetScene
+                planetConfig={renderPlanetConfig}
+                sceneScale={sceneScale}
+                active={active}
+                onContextLost={handleContextLost}
+                onContextRestored={handleContextRestored}
+              />
             </Suspense>
           </Canvas>
+          {contextLost && (
+            <div className="absolute inset-0" aria-hidden="true">
+              <PlanetAvatar planetConfig={renderPlanetConfig} size={size} rotating={false} className="mx-auto" />
+            </div>
+          )}
         </div>
       </Suspense>
     </PlanetGlobeErrorBoundary>

@@ -38,6 +38,29 @@ test.describe('my-planet — authenticated', () => {
     // The section header is always rendered regardless of whether communities are seeded
     await expect(page.getByText('Recommended Communities')).toBeVisible({ timeout: 8000 })
   })
+
+  // PlanetGlobe (components/planet/PlanetGlobe.tsx) mounts an R3F/WebGL canvas
+  // in the hero section. Smoke-test that it actually renders — this would
+  // have caught it silently never painting (e.g. a broken frameloop="demand"
+  // wiring) — and that prefers-reduced-motion doesn't throw or leave it blank.
+  test('PlanetGlobe hero canvas renders without a page error', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+
+    await page.goto('/my-planet', { waitUntil: 'networkidle' })
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 8000 })
+    expect(errors).toEqual([])
+  })
+
+  test('PlanetGlobe hero canvas renders without a page error under prefers-reduced-motion', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/my-planet', { waitUntil: 'networkidle' })
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 8000 })
+    expect(errors).toEqual([])
+  })
 })
 
 // ── 2. Unauthenticated access — proxy gate ────────────────────────────────────

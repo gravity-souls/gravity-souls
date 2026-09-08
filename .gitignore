@@ -14,7 +14,9 @@
 /coverage
 /e2e/.auth/*.json
 /playwright-report
+/playwright-report-mobile
 /test-results
+/test-results-mobile
 
 # next.js
 /.next/

@@ -475,7 +475,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
 
         {!EARLY_ACCESS && xpSummary && <XPProgressBar xp={xpSummary.xp} userLevel={xpSummary.userLevel} />}
 
-        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-white/10 bg-[rgba(5,4,18,0.92)] py-4 backdrop-blur md:static md:border-0 md:bg-transparent md:py-0">
+        <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-white/10 bg-[rgba(5,4,18,0.92)] pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur md:static md:border-0 md:bg-transparent md:py-0">
           <button
             type="button"
             onClick={savePlanet}

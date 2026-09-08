@@ -37,7 +37,7 @@ export default function SignalComposer({
 
   return (
     <div
-      className="sticky bottom-0 z-10 px-4 py-3"
+      className="sticky bottom-0 z-10 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
       style={{
         background: 'linear-gradient(0deg, rgba(3,3,15,0.97) 0%, rgba(3,3,15,0.88) 100%)',
         backdropFilter: 'blur(16px)',
