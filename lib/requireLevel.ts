@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { EARLY_ACCESS } from '@/lib/featureFlags'
+import { isLevelAuthorized } from '@/lib/level-authorization'
 
 export async function requireLevel(
   request: Request,
@@ -15,11 +16,8 @@ export async function requireLevel(
   })
   const userLevel = user?.userLevel ?? 0
 
-  // Early stage: still grant access below the gate, but report the real
-  // level rather than a fabricated one. Flip EARLY_ACCESS off once level
-  // gating should actually restrict access.
   return {
-    authorized: EARLY_ACCESS || userLevel >= minLevel,
+    authorized: isLevelAuthorized(userLevel, minLevel, EARLY_ACCESS),
     userLevel,
   }
 }
