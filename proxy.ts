@@ -33,5 +33,6 @@ export const config = {
     '/notifications',
     '/communities',
     '/my-universe',
+    '/admin/:path*',
   ],
 }
