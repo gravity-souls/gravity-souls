@@ -50,6 +50,15 @@ export interface PlanetDraft {
   // -- Resonance questions ------------------------------------------------------
   /** Answers to the 5 resonance questions; stored in QuestionnaireResult.answers */
   resonanceAnswers?: ResonanceAnswers
+
+  // -- Privacy ----------------------------------------------------------------
+  /** Who can see the planet once created; mirrors Profile.visibility. Left
+   * undefined until explicitly chosen (like every other optional field here)
+   * so a recalibration session that never touches this step doesn't silently
+   * overwrite an existing PRIVATE choice on save — see the picker's own
+   * `visibility ?? 'MEMBERS'` fallback in Step2InterestEcology for the
+   * display default, and the onboarding-complete route's update branch. */
+  visibility?: 'MEMBERS' | 'PRIVATE'
 }
 
 // --- Initial empty draft -----------------------------------------------------
@@ -69,6 +78,7 @@ export const INITIAL_DRAFT: PlanetDraft = {
   matchPreference:    undefined,
   connectionTypes:    [],
   resonanceAnswers:   {},
+  visibility:         undefined,
 }
 
 // --- Climate options ----------------------------------------------------------

@@ -3,14 +3,23 @@ import { THEME_OPTIONS, LIFESTYLE_OPTIONS } from '@/types/creation'
 import { useTranslations } from 'next-intl'
 
 // --- Step2InterestEcology -----------------------------------------------------
-// Theme multi-select (up to 5) + lifestyle choice.
+// Theme multi-select (up to 5) + lifestyle choice + optional visibility choice.
 // Themes map to biome bands in PlanetScene; lifestyle sets satellite count.
+// Visibility mirrors Profile.visibility. The picker only renders when both
+// `visibility` and `onVisibilityChange` are passed — the onboarding flow passes
+// them so a new user makes a conscious choice at creation time; /settings/planet
+// omits them and keeps using its own self-contained PrivacySection instead, so
+// this doesn't render a second, redundant visibility control there.
+
+type Visibility = 'MEMBERS' | 'PRIVATE'
 
 interface Props {
-  selectedThemes:    string[]
-  lifestyle?:        Lifestyle
-  onThemesChange:    (themes: string[]) => void
-  onLifestyleChange: (l: Lifestyle) => void
+  selectedThemes:      string[]
+  lifestyle?:          Lifestyle
+  visibility?:         Visibility
+  onThemesChange:      (themes: string[]) => void
+  onLifestyleChange:   (l: Lifestyle) => void
+  onVisibilityChange?: (v: Visibility) => void
 }
 
 const MAX_THEMES = 5
@@ -18,10 +27,13 @@ const MAX_THEMES = 5
 export default function Step2InterestEcology({
   selectedThemes,
   lifestyle,
+  visibility,
   onThemesChange,
   onLifestyleChange,
+  onVisibilityChange,
 }: Props) {
   const t = useTranslations('creationSteps')
+  const tSafety = useTranslations('safety')
 
   function toggleTheme(key: string) {
     if (selectedThemes.includes(key)) {
@@ -135,6 +147,38 @@ export default function Step2InterestEcology({
           })}
         </div>
       </div>
+
+      {/* Visibility picker — onboarding only (see Props comment above) */}
+      {onVisibilityChange && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
+            {tSafety('privacyTitle')}
+          </span>
+          <div className="flex flex-col gap-2">
+            {(['MEMBERS', 'PRIVATE'] as const).map((option) => {
+              const active = (visibility ?? 'MEMBERS') === option
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onVisibilityChange(option)}
+                  className="text-left px-4 py-3 rounded-xl text-xs font-medium transition-all duration-200"
+                  style={{
+                    background: active ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.025)',
+                    border: active
+                      ? '1px solid rgba(167,139,250,0.38)'
+                      : '1px solid rgba(167,139,250,0.10)',
+                    color: active ? 'var(--foreground)' : 'var(--ink)',
+                    outline: 'none',
+                  }}
+                >
+                  {option === 'MEMBERS' ? tSafety('visibilityMembers') : tSafety('visibilityPrivate')}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

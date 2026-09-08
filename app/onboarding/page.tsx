@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { authClient } from '@/lib/auth-client'
 import { buildPlanetFromDraft } from '@/lib/planet-builder'
 import { useOnboardingState } from '@/lib/hooks/useOnboardingState'
@@ -85,6 +86,7 @@ const RESONANCE_QUESTIONS: Array<{
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const t = useTranslations('createPlanet')
   const { draft, setDraft, step, setStep, markReady, clear } = useOnboardingState()
   const { data: session, isPending: sessionPending } = authClient.useSession()
   const [saving, setSaving] = useState(false)
@@ -108,6 +110,11 @@ export default function OnboardingPage() {
 
   function advance() { setStep(step + 1) }
   function back()    { setStep(Math.max(0, step - 1)) }
+
+  // Calibration (step 4) is optional per docs/beta-execution.md — "Matching/calibration
+  // is optional, not mandatory." This bypasses the canProceed gate and moves straight to
+  // the reveal with whatever resonanceAnswers (possibly none) are already in the draft.
+  function skipCalibration() { setStep(5) }
 
   function setResonanceAnswer(key: keyof ResonanceAnswers, value: string) {
     setDraft({
@@ -299,8 +306,10 @@ export default function OnboardingPage() {
           <Step2InterestEcology
             selectedThemes={draft.selectedThemes}
             lifestyle={draft.lifestyle}
+            visibility={draft.visibility ?? 'MEMBERS'}
             onThemesChange={(themes) => setDraft({ ...draft, selectedThemes: themes })}
             onLifestyleChange={(l: Lifestyle) => setDraft({ ...draft, lifestyle: l })}
+            onVisibilityChange={(v) => setDraft({ ...draft, visibility: v })}
           />
         )}
 
@@ -370,7 +379,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div className="pt-2">
+        <div className="pt-2 flex flex-col gap-2">
           <GlowButton
             variant="primary"
             fullWidth
@@ -379,6 +388,19 @@ export default function OnboardingPage() {
           >
             {step === 4 ? 'See my planet' : 'Next'}
           </GlowButton>
+
+          {/* Calibration is optional (docs/beta-execution.md) — always let the user
+              skip straight to the reveal from step 4, regardless of how many of the
+              resonance questions they've answered. */}
+          {step === 4 && (
+            <GlowButton
+              variant="ghost"
+              fullWidth
+              onClick={skipCalibration}
+            >
+              {t('skip')}
+            </GlowButton>
+          )}
         </div>
       </div>
     </OnboardingShell>

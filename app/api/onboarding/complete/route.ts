@@ -41,6 +41,11 @@ export async function POST(req: NextRequest) {
           communicationStyle: draft.communicationStyle ?? undefined,
           matchPreference:    draft.matchPreference    ?? undefined,
           location:           draft.location           ?? undefined,
+          // Only set when this session's draft actually carries a value —
+          // matching every sibling field above — so a recalibration that
+          // never touches the visibility picker doesn't silently reset an
+          // existing PRIVATE choice back to MEMBERS.
+          visibility:         draft.visibility          ?? undefined,
           ...(draft.languages?.length    && { languages:    draft.languages }),
           ...(draft.travelCities?.length && { travelCities: draft.travelCities }),
           ...(draft.culturalTags?.length && { culturalTags: draft.culturalTags }),
@@ -54,6 +59,7 @@ export async function POST(req: NextRequest) {
           languages:          draft.languages    ?? [],
           travelCities:       draft.travelCities ?? [],
           culturalTags:       draft.culturalTags ?? [],
+          visibility:         draft.visibility  ?? 'MEMBERS',
         },
       })
 

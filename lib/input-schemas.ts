@@ -68,6 +68,7 @@ export const onboardingSchema = z.object({ draft: z.object({
   communicationStyle: communicationStyle.optional(), abstractAxis: axis, introspectiveAxis: axis,
   location: text(200).optional(), languages: list.optional(), travelCities: list.optional(), culturalTags: list.optional(),
   matchPreference: matchPreference.optional(), connectionTypes: list.optional(), resonanceAnswers: resonanceAnswers.optional(),
+  visibility: z.enum(['MEMBERS', 'PRIVATE']).optional(),
 }).strict() }).strict()
 export const questionnaireSchema = z.object({
   answers: z.record(text(100), z.union([text(2000), z.number().finite(), z.boolean(), z.array(text(200)).max(30)])).optional(),
