@@ -68,6 +68,7 @@ model user {
   blocksReceived   Block[]  @relation("BlockBlocked")
   reportsFiled     Report[] @relation("ReportReporter")
   reportsReceived  Report[] @relation("ReportTargetUser")
+  policyAcceptances PolicyAcceptance[] @relation("PolicyAcceptanceUser")
 }
 
 enum NotificationType {
@@ -666,6 +667,32 @@ model Report {
   @@index([reporterId, createdAt])
   @@index([targetUserId, createdAt])
   @@map("report")
+}
+
+// Records a user's acceptance of a given policy document at a specific
+// version (see lib/policy-versions.ts). Additive/append-only: bumping
+// CURRENT_POLICY_VERSION does not retroactively re-prompt existing users —
+// that's a separate, not-yet-built feature. Recorded via POST
+// /api/user/policy-acceptance, idempotently (upsert on the unique below).
+
+enum PolicyType {
+  TERMS
+  PRIVACY
+  GUIDELINES
+}
+
+model PolicyAcceptance {
+  id         String     @id @default(cuid())
+  userId     String
+  policyType PolicyType
+  version    String
+  acceptedAt DateTime   @default(now())
+
+  user user @relation("PolicyAcceptanceUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, policyType, version])
+  @@index([userId])
+  @@map("policy_acceptance")
 }
 
 // Fixed-window counter backing lib/rate-limit.ts. Durable (survives across

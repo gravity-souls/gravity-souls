@@ -476,7 +476,13 @@
     "signUpFailed": "Inscription échouée",
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Pas encore de compte ?",
-    "hasAccount": "Déjà un compte ?"
+    "hasAccount": "Déjà un compte ?",
+    "policyAgreementPrefix": "J'accepte",
+    "policyAgreementTerms": "les Conditions d'utilisation",
+    "policyAgreementPrivacy": "la Politique de confidentialité",
+    "policyAgreementAnd": "et",
+    "policyAgreementGuidelines": "les Règles de la communauté",
+    "policyAgreementRequired": "Veuillez accepter les Conditions d'utilisation, la Politique de confidentialité et les Règles de la communauté pour continuer."
   },
   "common": {
     "loading": "Chargement...",

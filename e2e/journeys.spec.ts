@@ -57,6 +57,7 @@ test.describe('Journey 1 — new user sign-up', () => {
     await page.fill('#name', JOURNEY.signUp.name)
     await page.fill('#email', JOURNEY.signUp.email)
     await page.fill('#password', JOURNEY.signUp.password)
+    await page.check('#policyAcceptance')
     await page.click('button[type="submit"]')
 
     // Wait for the page to leave /sign-up (hard navigation via window.location.href)

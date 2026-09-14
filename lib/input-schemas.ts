@@ -97,3 +97,8 @@ export const eventStatusSchema = z.object({
 // Defense-in-depth against an accidental/CSRF-triggered DELETE /api/me: the
 // client must send an explicit, literal confirmation, not just hit the route.
 export const deleteAccountSchema = z.object({ confirm: z.literal(true) }).strict()
+
+// POST /api/user/policy-acceptance takes no meaningful fields — it always
+// records all PolicyType values at CURRENT_POLICY_VERSION for the caller —
+// but still runs through readJson for the standard size cap / JSON validation.
+export const policyAcceptanceSchema = z.object({}).strict()

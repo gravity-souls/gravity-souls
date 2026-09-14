@@ -8,7 +8,6 @@ import { authClient } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import LegalFooter from "@/components/auth/LegalFooter";
 
 // Phase 1: planet visual is determined during /onboarding — re-enable once onboarding-complete API is wired
 const PLANET_PICKER_ENABLED = false
@@ -35,6 +34,7 @@ function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetConfig>(PRESET_PLANETS[0]);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,8 +53,16 @@ function SignUpForm() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    // Defense-in-depth: the submit button is already disabled while unchecked,
+    // this only guards a submit triggered some other way (e.g. pressing Enter).
+    if (!policyAccepted) {
+      setError(tAuth("policyAgreementRequired"));
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const result = await authClient.signUp.email({
@@ -89,6 +97,16 @@ function SignUpForm() {
         }
       } catch (e) {
         console.error("Failed to save config:", e);
+      }
+
+      try {
+        await fetch("/api/user/policy-acceptance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+      } catch (e) {
+        console.error("Failed to record policy acceptance:", e);
       }
 
       if (fromOnboarding) {
@@ -211,6 +229,52 @@ function SignUpForm() {
           </div>
         )}
 
+        <div className="flex items-start gap-2 pt-1">
+          <input
+            id="policyAcceptance"
+            type="checkbox"
+            checked={policyAccepted}
+            onChange={(e) => {
+              setPolicyAccepted(e.target.checked);
+              if (e.target.checked) setError("");
+            }}
+            className="mt-0.5 h-4 w-4 shrink-0"
+            style={{ accentColor: "var(--star)" }}
+          />
+          <label
+            htmlFor="policyAcceptance"
+            className="text-xs leading-relaxed"
+            style={{ color: "var(--ghost)" }}
+          >
+            {tAuth("policyAgreementPrefix")}{" "}
+            <Link
+              href="/legal/terms"
+              className="underline transition-colors"
+              style={{ color: "var(--star)" }}
+            >
+              {tAuth("policyAgreementTerms")}
+            </Link>
+            ,{" "}
+            <Link
+              href="/legal/privacy"
+              className="underline transition-colors"
+              style={{ color: "var(--star)" }}
+            >
+              {tAuth("policyAgreementPrivacy")}
+            </Link>
+            {", "}
+            {tAuth("policyAgreementAnd")}{" "}
+            <Link
+              href="/legal/guidelines"
+              className="underline transition-colors"
+              style={{ color: "var(--star)" }}
+            >
+              {tAuth("policyAgreementGuidelines")}
+            </Link>
+            .
+          </label>
+        </div>
+
         {error && (
           <p className="text-sm" style={{ color: "#f87171" }}>
             {error}
@@ -219,7 +283,7 @@ function SignUpForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !policyAccepted}
           className="w-full rounded-xl px-4 py-3 text-sm font-medium transition-opacity disabled:opacity-50"
           style={{
             background: "linear-gradient(135deg, var(--nebula), var(--aurora))",
@@ -240,9 +304,6 @@ function SignUpForm() {
           {tAuth("signIn")}
         </Link>
       </p>
-      <div className="mt-4">
-        <LegalFooter />
-      </div>
     </main>
   );
 }

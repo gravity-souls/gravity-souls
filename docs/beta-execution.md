@@ -88,8 +88,16 @@ risky evolution. Never edit applied migrations or run reset/db push in productio
 ## Remaining launch gates
 
 The repository is not yet ready to invite real users. Follow/block enforcement,
-visibility, moderation/reporting, recovery email, policy acceptance, data-rights
-workflows, content CRUD/media lifecycle, reliable message delivery, and progressive
-onboarding remain separate reviewed changes. Real iPhone Safari and a staging restore
-drill are required before release. Confirm exposed credentials have been rotated in
+visibility, moderation/reporting, data-rights workflows (self-serve export, tombstone
+account deletion), and policy-acceptance logging (a required sign-up checkbox recording
+acceptance per `lib/policy-versions.ts`) have shipped. Real iPhone Safari e2e coverage
+now runs alongside the Chromium suites (`playwright.mobile.config.ts`); a narrow (~1-in-3)
+WebKit-specific timing race on the post-sign-in redirect is mitigated with a CI-only
+retry but not yet root-caused. The Terms of Service, Privacy Policy, and Community
+Guidelines pages are structured drafts, not final — they still need the legal entity
+name/address, support/privacy contact, jurisdiction, retention periods, and processor
+list from the founder before they're real; nothing on those pages should be treated as
+binding yet. Recovery email, content CRUD/media lifecycle, reliable message delivery,
+and progressive onboarding remain separate reviewed changes. A staging restore
+drill is still required before release. Confirm exposed credentials have been rotated in
 the secret manager; never put their replacements in this document or chat.

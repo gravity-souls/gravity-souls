@@ -476,7 +476,13 @@
     "signUpFailed": "Sign up failed",
     "forgotPassword": "Forgot password?",
     "noAccount": "No account yet?",
-    "hasAccount": "Already have an account?"
+    "hasAccount": "Already have an account?",
+    "policyAgreementPrefix": "I agree to the",
+    "policyAgreementTerms": "Terms of Service",
+    "policyAgreementPrivacy": "Privacy Policy",
+    "policyAgreementAnd": "and",
+    "policyAgreementGuidelines": "Community Guidelines",
+    "policyAgreementRequired": "Please accept the Terms of Service, Privacy Policy, and Community Guidelines to continue."
   },
   "common": {
     "loading": "Loading...",

@@ -476,7 +476,13 @@
     "signUpFailed": "注册失败",
     "forgotPassword": "忘记密码？",
     "noAccount": "还没有账号？",
-    "hasAccount": "已有账号？"
+    "hasAccount": "已有账号？",
+    "policyAgreementPrefix": "我同意",
+    "policyAgreementTerms": "服务条款",
+    "policyAgreementPrivacy": "隐私政策",
+    "policyAgreementAnd": "和",
+    "policyAgreementGuidelines": "社区准则",
+    "policyAgreementRequired": "请先同意服务条款、隐私政策和社区准则，然后再继续。"
   },
   "common": {
     "loading": "加载中...",
