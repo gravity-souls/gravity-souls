@@ -76,7 +76,8 @@
     "nebulaTechnical": "构建 / 系统",
     "nebulaEmotional": "情感 / 温暖",
     "nebulaWandering": "流浪 / 边界",
-    "exploreExperience": "探索体验"
+    "exploreExperience": "探索体验",
+    "exploreExperienceCaption": "在实时宇宙球中看你的星球成形。"
   },
   "galaxyPage": {
     "galaxy": "星系",

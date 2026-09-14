@@ -76,7 +76,8 @@
     "nebulaTechnical": "Building / Systems",
     "nebulaEmotional": "Feeling / Warmth",
     "nebulaWandering": "Wandering / Edges",
-    "exploreExperience": "Explore the experience"
+    "exploreExperience": "Explore the experience",
+    "exploreExperienceCaption": "See your planet form in the live cosmic globe."
   },
   "galaxyPage": {
     "galaxy": "Galaxy",
