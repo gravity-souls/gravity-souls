@@ -928,6 +928,7 @@
     "play": "Reprendre",
     "reset": "Réinitialiser",
     "create": "Créer ma planète",
+    "tryWithoutAccount": "Essayer sans compte",
     "note": "Commencez par ce qui vous ressemble.",
     "fallback": "Une vue plus calme. Chaque étape reste accessible.",
     "footer": "Chaque lien commence quelque part.",

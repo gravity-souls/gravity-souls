@@ -102,7 +102,16 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
             // link is correct either way, with no extra request from this page.
             <Link href="/resonance" prefetch={false} className={styles.primary}>{t('openPlanet')}<ArrowRight size={18} aria-hidden="true" /></Link>
           ) : (
-            <Link href="/onboarding" prefetch={false} className={styles.primary}>{t('create')}<ArrowRight size={18} aria-hidden="true" /></Link>
+            // Sign-up first is the encouraged path: a plain (non-onboarding-origin)
+            // sign-up already redirects to /onboarding on success (app/sign-up/page.tsx),
+            // so this alone produces "sign up, then calibrate" with no other wiring.
+            <Link href="/sign-up" prefetch={false} className={styles.primary}>{t('create')}<ArrowRight size={18} aria-hidden="true" /></Link>
+          )}
+          {!signedIn && (
+            // Preserves the original try-before-signup path: /onboarding still
+            // works fully anonymously, stashing answers in sessionStorage and
+            // auto-submitting them right after sign-up/sign-in/OAuth succeeds.
+            <Link href="/onboarding" prefetch={false} className={styles.secondary}>{t('tryWithoutAccount')}</Link>
           )}
           <p className={styles.note}>{t('note')}</p>
         </section>

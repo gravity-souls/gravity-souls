@@ -44,7 +44,11 @@ test('guided steps, controls, layout, and destinations', async ({ page }) => {
   // artificial full-device-height (390x844) viewport, which ignores browser
   // chrome entirely.
   await expect(create).toBeVisible()
-  await expect(create).toHaveAttribute('href', '/onboarding')
+  await expect(create).toHaveAttribute('href', '/sign-up')
+  // The anonymous try-first path still works end to end (sessionStorage draft,
+  // auto-submitted after sign-up/sign-in/OAuth) — it's just no longer the
+  // primary CTA now that sign-up-first is the encouraged default.
+  await expect(page.getByRole('link', { name: 'Try it without an account' })).toHaveAttribute('href', '/onboarding')
   await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toHaveAttribute('href', '/sign-in')
   await expect(page.getByRole('button', { name: 'Previous', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
@@ -67,7 +71,7 @@ test('guided steps, controls, layout, and destinations', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect(apiRequests).toEqual([])
   await create.click()
-  await expect(page).toHaveURL(/\/onboarding$/)
+  await expect(page).toHaveURL(/\/sign-up$/)
 })
 
 test('keyboard selection and reduced motion remain usable', async ({ page }) => {

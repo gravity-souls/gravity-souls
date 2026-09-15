@@ -928,6 +928,7 @@
     "play": "Play",
     "reset": "Reset",
     "create": "Create my planet",
+    "tryWithoutAccount": "Try it without an account",
     "note": "Start with what makes you, you.",
     "fallback": "A quieter view. You can still explore every step.",
     "footer": "Every connection starts somewhere.",

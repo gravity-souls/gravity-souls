@@ -40,6 +40,8 @@
 .chapterControls button:disabled { opacity: .3; cursor: default; }
 .primary { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #07192b; font-size: 13px; font-weight: 600; padding: 16px 21px; border-radius: 6px; background: #c0e2f8; text-decoration: none; box-shadow: 0 4px 32px #85c8ef12; }
 .primary:hover { background: #d3eeff; }
+.secondary { display: block; text-align: center; color: #849db5; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; margin-top: 14px; }
+.secondary:hover { color: #b1cce3; }
 .note { color: #849db5; font-size: 10px; text-align: center; margin-top: 12px; }
 .footer { margin: 0 5%; min-height: 66px; display: flex; gap: 20px; align-items: center; justify-content: space-between; border-top: 1px solid #a0c6ef14; color: #829cb7; font-size: 10px; }
 .footer a { display: flex; gap: 8px; align-items: center; text-decoration: none; }
