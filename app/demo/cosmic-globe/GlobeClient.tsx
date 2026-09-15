@@ -15,9 +15,13 @@ interface Props {
   /** Resolved server-side (page.tsx) from the HttpOnly session cookie —
    * this component never reads it and never calls an API. */
   signedIn: boolean
+  /** True when this renders as "/" itself (the signed-out homepage) rather than
+   * the dedicated /demo/cosmic-globe route — hides the otherwise-circular
+   * "Back to home" footer link. */
+  standalone?: boolean
 }
 
-export default function GlobeClient({ signedIn }: Props) {
+export default function GlobeClient({ signedIn, standalone = false }: Props) {
   const t = useTranslations('cosmicDemo')
   const [step, setStep] = useState<GlobeStep>(0)
   const reducedMotion = useReducedMotionPreference()
@@ -103,7 +107,12 @@ export default function GlobeClient({ signedIn }: Props) {
           <p className={styles.note}>{t('note')}</p>
         </section>
       </div>
-      <footer className={styles.footer}><span>{t('footer')}</span><Link href="/" prefetch={false}>{t('backHome')}<ArrowRight size={13} aria-hidden="true" /></Link></footer>
+      <footer className={styles.footer}>
+        <span>{t('footer')}</span>
+        {!standalone && (
+          <Link href="/" prefetch={false}>{t('backHome')}<ArrowRight size={13} aria-hidden="true" /></Link>
+        )}
+      </footer>
     </div>
   )
 }
