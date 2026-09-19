@@ -4,8 +4,10 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetScene from '@/components/planet/PlanetScene'
+import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
+import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 
 // --- PlanetAwakeningState -----------------------------------------------------
 // Full-page awakening ceremony shown after the 5-step ritual is complete.
@@ -68,6 +70,8 @@ function NovaBurst({ coreColor }: { coreColor: string }) {
 
 export default function PlanetAwakeningState({ planet }: Props) {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
+  const [globeStatus, setGlobeStatus] = useState<GlobeStatus>('loading')
+  const reducedMotion = useReducedMotionPreference()
   const { data: session } = authClient.useSession()
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -114,33 +118,11 @@ export default function PlanetAwakeningState({ planet }: Props) {
         }}
       />
 
-      {/* Orbit rings expanding out */}
-      {phase >= 2 && (
-        <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width:  240 + i * 120,
-                height: 240 + i * 120,
-                border: `1px solid ${visual.coreColor}`,
-                opacity: (0.22 - i * 0.06),
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                animation: `awakening-ring-expand 1.4s var(--ease-cosmic) forwards`,
-                animationDelay: `${i * 120}ms`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Nova burst  -  fires once, exactly when the planet appears */}
-      {phase >= 1 && <NovaBurst coreColor={visual.coreColor} />}
-
-      {/* Planet  -  scales in */}
+      {/* Planet  -  scales in. The cosmic globe, orbit rings, and nova burst
+          are nested here (not page-level) so they center on the planet
+          itself, not the viewport — the page's overall content (planet +
+          text + CTAs below) is centered as one group, so its visual middle
+          sits above true viewport-center. */}
       <div
         className="relative z-10 flex flex-col items-center gap-8 transition-all duration-700"
         style={{
@@ -148,6 +130,52 @@ export default function PlanetAwakeningState({ planet }: Props) {
           transform: phase >= 1 ? 'scale(1) translateY(0)' : 'scale(0.7) translateY(20px)',
         }}
       >
+        {/* Cosmic globe  -  the same shimmering particle-sphere effect used
+            on the homepage/demo, as a large ambient field the planet
+            emerges from. Purely atmospheric (aria-hidden, pointer-events-
+            none) — PlanetScene remains the actual "this is your planet"
+            visual, painted on top since it comes later in DOM order. */}
+        <div
+          className="absolute pointer-events-none transition-opacity duration-1000"
+          aria-hidden="true"
+          style={{
+            width: 560,
+            height: 560,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            opacity: globeStatus === 'ready' ? 0.8 : 0,
+          }}
+        >
+          <CosmicGlobe step={0} paused={reducedMotion} onStatusChange={setGlobeStatus} />
+        </div>
+
+        {/* Orbit rings expanding out */}
+        {phase >= 2 && (
+          <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width:  240 + i * 120,
+                  height: 240 + i * 120,
+                  border: `1px solid ${visual.coreColor}`,
+                  opacity: (0.22 - i * 0.06),
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  animation: `awakening-ring-expand 1.4s var(--ease-cosmic) forwards`,
+                  animationDelay: `${i * 120}ms`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Nova burst  -  fires once, exactly when the planet appears */}
+        {phase >= 1 && <NovaBurst coreColor={visual.coreColor} />}
+
         <PlanetScene planet={planet} size={180} />
       </div>
 
