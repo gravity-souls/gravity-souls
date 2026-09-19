@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetScene from '@/components/planet/PlanetScene'
+import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
+import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 
 // --- PlanetAwakeningState -----------------------------------------------------
 // Full-page awakening ceremony shown after the 5-step ritual is complete.
@@ -18,8 +20,58 @@ interface Props {
   planet: PlanetProfile
 }
 
+// A one-time burst of light marking the exact moment the planet appears —
+// distinct from CosmicBackground's ambient, continuous nebula/star motion
+// behind it. Angles are deliberately uneven (not evenly spaced) so the burst
+// reads as organic rather than a mechanical starburst.
+const NOVA_PARTICLES = [
+  { angle: 12, distance: 130, size: 3, delay: 0 },
+  { angle: 48, distance: 90, size: 2, delay: 40 },
+  { angle: 75, distance: 150, size: 4, delay: 10 },
+  { angle: 108, distance: 105, size: 2, delay: 70 },
+  { angle: 140, distance: 140, size: 3, delay: 20 },
+  { angle: 172, distance: 95, size: 2, delay: 90 },
+  { angle: 205, distance: 155, size: 3, delay: 30 },
+  { angle: 235, distance: 100, size: 2, delay: 60 },
+  { angle: 262, distance: 145, size: 4, delay: 5 },
+  { angle: 296, distance: 110, size: 2, delay: 80 },
+  { angle: 322, distance: 135, size: 3, delay: 50 },
+  { angle: 350, distance: 95, size: 2, delay: 15 },
+] as const
+
+function NovaBurst({ coreColor }: { coreColor: string }) {
+  return (
+    <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%' }}>
+      {NOVA_PARTICLES.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180
+        const dx = Math.cos(rad) * p.distance
+        const dy = Math.sin(rad) * p.distance
+        return (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: p.size,
+              height: p.size,
+              background: '#ffffff',
+              boxShadow: `0 0 ${p.size * 3}px ${p.size}px ${coreColor}`,
+              transform: 'translate(-50%, -50%)',
+              animation: 'awakening-nova-burst 900ms ease-out forwards',
+              animationDelay: `${p.delay}ms`,
+              '--nova-dx': `${dx}px`,
+              '--nova-dy': `${dy}px`,
+            } as CSSProperties}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 export default function PlanetAwakeningState({ planet }: Props) {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
+  const [globeStatus, setGlobeStatus] = useState<GlobeStatus>('loading')
+  const reducedMotion = useReducedMotionPreference()
   const { data: session } = authClient.useSession()
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
@@ -43,8 +95,12 @@ export default function PlanetAwakeningState({ planet }: Props) {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden"
-      style={{ background: 'var(--background)' }}
     >
+      {/* The page's own CosmicBackground + StarfieldCanvas (mounted by
+          StandardShell, always fixed behind everything) show through here —
+          this container deliberately carries no opaque background of its
+          own, so the reveal happens against the real starfield rather than
+          a flat void. */}
       {/* Background light expansion */}
       <div
         className="absolute pointer-events-none transition-all duration-1800"
@@ -62,30 +118,11 @@ export default function PlanetAwakeningState({ planet }: Props) {
         }}
       />
 
-      {/* Orbit rings expanding out */}
-      {phase >= 2 && (
-        <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width:  240 + i * 120,
-                height: 240 + i * 120,
-                border: `1px solid ${visual.coreColor}`,
-                opacity: (0.22 - i * 0.06),
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                animation: `awakening-ring-expand 1.4s var(--ease-cosmic) forwards`,
-                animationDelay: `${i * 120}ms`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Planet  -  scales in */}
+      {/* Planet  -  scales in. The cosmic globe, orbit rings, and nova burst
+          are nested here (not page-level) so they center on the planet
+          itself, not the viewport — the page's overall content (planet +
+          text + CTAs below) is centered as one group, so its visual middle
+          sits above true viewport-center. */}
       <div
         className="relative z-10 flex flex-col items-center gap-8 transition-all duration-700"
         style={{
@@ -93,6 +130,52 @@ export default function PlanetAwakeningState({ planet }: Props) {
           transform: phase >= 1 ? 'scale(1) translateY(0)' : 'scale(0.7) translateY(20px)',
         }}
       >
+        {/* Cosmic globe  -  the same shimmering particle-sphere effect used
+            on the homepage/demo, as a large ambient field the planet
+            emerges from. Purely atmospheric (aria-hidden, pointer-events-
+            none) — PlanetScene remains the actual "this is your planet"
+            visual, painted on top since it comes later in DOM order. */}
+        <div
+          className="absolute pointer-events-none transition-opacity duration-1000"
+          aria-hidden="true"
+          style={{
+            width: 560,
+            height: 560,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            opacity: globeStatus === 'ready' ? 0.8 : 0,
+          }}
+        >
+          <CosmicGlobe step={0} paused={reducedMotion} onStatusChange={setGlobeStatus} />
+        </div>
+
+        {/* Orbit rings expanding out */}
+        {phase >= 2 && (
+          <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width:  240 + i * 120,
+                  height: 240 + i * 120,
+                  border: `1px solid ${visual.coreColor}`,
+                  opacity: (0.22 - i * 0.06),
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  animation: `awakening-ring-expand 1.4s var(--ease-cosmic) forwards`,
+                  animationDelay: `${i * 120}ms`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Nova burst  -  fires once, exactly when the planet appears */}
+        {phase >= 1 && <NovaBurst coreColor={visual.coreColor} />}
+
         <PlanetScene planet={planet} size={180} />
       </div>
 
@@ -187,12 +270,16 @@ export default function PlanetAwakeningState({ planet }: Props) {
         </Link>
       </div>
 
-      {/* Inline CSS for awakening ring animation */}
+      {/* Inline CSS for awakening ring + nova burst animations */}
       <style>{`
         @keyframes awakening-ring-expand {
           from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
           40%  { opacity: 1; }
           to   { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes awakening-nova-burst {
+          from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          to   { opacity: 0; transform: translate(calc(-50% + var(--nova-dx)), calc(-50% + var(--nova-dy))) scale(0.3); }
         }
       `}</style>
     </div>
