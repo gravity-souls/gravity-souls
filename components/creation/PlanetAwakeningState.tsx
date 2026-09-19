@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetScene from '@/components/planet/PlanetScene'
@@ -16,6 +16,54 @@ import { authClient } from '@/lib/auth-client'
 
 interface Props {
   planet: PlanetProfile
+}
+
+// A one-time burst of light marking the exact moment the planet appears —
+// distinct from CosmicBackground's ambient, continuous nebula/star motion
+// behind it. Angles are deliberately uneven (not evenly spaced) so the burst
+// reads as organic rather than a mechanical starburst.
+const NOVA_PARTICLES = [
+  { angle: 12, distance: 130, size: 3, delay: 0 },
+  { angle: 48, distance: 90, size: 2, delay: 40 },
+  { angle: 75, distance: 150, size: 4, delay: 10 },
+  { angle: 108, distance: 105, size: 2, delay: 70 },
+  { angle: 140, distance: 140, size: 3, delay: 20 },
+  { angle: 172, distance: 95, size: 2, delay: 90 },
+  { angle: 205, distance: 155, size: 3, delay: 30 },
+  { angle: 235, distance: 100, size: 2, delay: 60 },
+  { angle: 262, distance: 145, size: 4, delay: 5 },
+  { angle: 296, distance: 110, size: 2, delay: 80 },
+  { angle: 322, distance: 135, size: 3, delay: 50 },
+  { angle: 350, distance: 95, size: 2, delay: 15 },
+] as const
+
+function NovaBurst({ coreColor }: { coreColor: string }) {
+  return (
+    <div className="absolute pointer-events-none" aria-hidden="true" style={{ top: '50%', left: '50%' }}>
+      {NOVA_PARTICLES.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180
+        const dx = Math.cos(rad) * p.distance
+        const dy = Math.sin(rad) * p.distance
+        return (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: p.size,
+              height: p.size,
+              background: '#ffffff',
+              boxShadow: `0 0 ${p.size * 3}px ${p.size}px ${coreColor}`,
+              transform: 'translate(-50%, -50%)',
+              animation: 'awakening-nova-burst 900ms ease-out forwards',
+              animationDelay: `${p.delay}ms`,
+              '--nova-dx': `${dx}px`,
+              '--nova-dy': `${dy}px`,
+            } as CSSProperties}
+          />
+        )
+      })}
+    </div>
+  )
 }
 
 export default function PlanetAwakeningState({ planet }: Props) {
@@ -43,8 +91,12 @@ export default function PlanetAwakeningState({ planet }: Props) {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden"
-      style={{ background: 'var(--background)' }}
     >
+      {/* The page's own CosmicBackground + StarfieldCanvas (mounted by
+          StandardShell, always fixed behind everything) show through here —
+          this container deliberately carries no opaque background of its
+          own, so the reveal happens against the real starfield rather than
+          a flat void. */}
       {/* Background light expansion */}
       <div
         className="absolute pointer-events-none transition-all duration-1800"
@@ -84,6 +136,9 @@ export default function PlanetAwakeningState({ planet }: Props) {
           ))}
         </div>
       )}
+
+      {/* Nova burst  -  fires once, exactly when the planet appears */}
+      {phase >= 1 && <NovaBurst coreColor={visual.coreColor} />}
 
       {/* Planet  -  scales in */}
       <div
@@ -187,12 +242,16 @@ export default function PlanetAwakeningState({ planet }: Props) {
         </Link>
       </div>
 
-      {/* Inline CSS for awakening ring animation */}
+      {/* Inline CSS for awakening ring + nova burst animations */}
       <style>{`
         @keyframes awakening-ring-expand {
           from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
           40%  { opacity: 1; }
           to   { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes awakening-nova-burst {
+          from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          to   { opacity: 0; transform: translate(calc(-50% + var(--nova-dx)), calc(-50% + var(--nova-dy))) scale(0.3); }
         }
       `}</style>
     </div>
