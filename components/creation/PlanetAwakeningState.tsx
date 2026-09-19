@@ -3,7 +3,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
-import PlanetScene from '@/components/planet/PlanetScene'
 import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
@@ -119,22 +118,25 @@ export default function PlanetAwakeningState({ planet }: Props) {
       />
 
       {/* Planet  -  scales in. The cosmic globe, orbit rings, and nova burst
-          are nested here (not page-level) so they center on the planet
-          itself, not the viewport — the page's overall content (planet +
+          are nested here (not page-level) so they center on this wrapper's
+          own box, not the viewport — the page's overall content (planet +
           text + CTAs below) is centered as one group, so its visual middle
-          sits above true viewport-center. */}
+          sits above true viewport-center. The wrapper carries an explicit
+          size since the globe (absolutely positioned) is its only content
+          and wouldn't otherwise give it any natural height in the flex
+          column. */}
       <div
         className="relative z-10 flex flex-col items-center gap-8 transition-all duration-700"
         style={{
+          width: 320,
+          height: 320,
           opacity:   phase >= 1 ? 1 : 0,
           transform: phase >= 1 ? 'scale(1) translateY(0)' : 'scale(0.7) translateY(20px)',
         }}
       >
         {/* Cosmic globe  -  the same shimmering particle-sphere effect used
-            on the homepage/demo, as a large ambient field the planet
-            emerges from. Purely atmospheric (aria-hidden, pointer-events-
-            none) — PlanetScene remains the actual "this is your planet"
-            visual, painted on top since it comes later in DOM order. */}
+            on the homepage/demo. This *is* the planet visual for the
+            reveal (no separate solid-sphere render layered on top). */}
         <div
           className="absolute pointer-events-none transition-opacity duration-1000"
           aria-hidden="true"
@@ -144,7 +146,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            opacity: globeStatus === 'ready' ? 0.8 : 0,
+            opacity: globeStatus === 'ready' ? 1 : 0,
           }}
         >
           <CosmicGlobe step={0} paused={reducedMotion} onStatusChange={setGlobeStatus} />
@@ -175,8 +177,6 @@ export default function PlanetAwakeningState({ planet }: Props) {
 
         {/* Nova burst  -  fires once, exactly when the planet appears */}
         {phase >= 1 && <NovaBurst coreColor={visual.coreColor} />}
-
-        <PlanetScene planet={planet} size={180} />
       </div>
 
       {/* Text  -  fades in after planet */}
