@@ -668,6 +668,7 @@
     "deleteFailed": "Impossible de supprimer votre compte. Veuillez réessayer.",
     "deleteSuccess": "Votre compte a été supprimé. Déconnexion en cours…",
     "backToPlanetSettings": "← Retour aux paramètres de la planète",
+    "guideLink": "Comment fonctionne Gravity Souls",
     "linkFromPlanetSettings": "Compte et données"
   },
   "createPlanet": {
@@ -928,10 +929,12 @@
     "play": "Reprendre",
     "reset": "Réinitialiser",
     "create": "Créer ma planète",
+    "tryWithoutAccount": "Essayer sans compte",
     "note": "Commencez par ce qui vous ressemble.",
     "fallback": "Une vue plus calme. Chaque étape reste accessible.",
     "footer": "Chaque lien commence quelque part.",
     "backHome": "Retour à l’accueil",
+    "howItWorks": "Comment ça marche",
     "steps": {
       "0": {
         "label": "Votre planète",
@@ -950,5 +953,42 @@
       }
     },
     "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici."
+  },
+  "guide": {
+    "eyebrow": "Bien démarrer",
+    "title": "Comment fonctionne Gravity Souls",
+    "intro": "Gravity Souls est un univers social construit autour de planètes, de galaxies, et de l'attraction discrète entre des personnes qui partagent quelque chose de réel. Voici ce que tout cela signifie, et comment trouver vos repères.",
+    "sections": {
+      "planet": {
+        "title": "Votre planète",
+        "body": "Votre planète est votre profil — une persona personnalisable qui reflète qui vous êtes. Façonnez-la grâce à une courte calibration (le scan d'âme), ou construisez-la vous-même. Vous avez toujours une seule planète active à la fois."
+      },
+      "galaxies": {
+        "title": "Galaxies",
+        "body": "Les galaxies sont des communautés construites autour d'intérêts, d'humeurs ou de modes de vie partagés — de l'introspection tranquille aux bâtisseurs nocturnes. Rejoignez celles qui vous ressemblent, et leurs signaux et discussions rejoignent votre orbite."
+      },
+      "signals": {
+        "title": "Signaux",
+        "body": "Un signal est un moment partagé — une publication. Certains dérivent dans le flux ouvert visible par tous ; d'autres vivent au sein d'une galaxie précise, visibles par ses membres."
+      },
+      "resonance": {
+        "title": "Résonance",
+        "body": "La résonance, c'est là où vous voyez qui est attiré vers vous, et pourquoi. C'est votre orbite de connexions potentielles, fondée sur ce que vous avez partagé et la façon dont vous avez calibré votre planète."
+      },
+      "follows": {
+        "title": "Abonnements & messages",
+        "body": "Suivre quelqu'un est à sens unique, et cela vous appartient — indépendamment de toute version particulière de votre planète. Une conversation directe s'ouvre dès que vous vous suivez mutuellement ; elle reste ouverte même si l'un des deux abonnements cesse ensuite."
+      }
+    },
+    "firstStepsTitle": "Vos premiers pas",
+    "steps": {
+      "0": "Faites le scan d'âme, ou passez-le — la calibration est facultative, jamais obligatoire.",
+      "1": "Façonnez votre planète : choisissez son apparence et ce qu'elle dit de vous.",
+      "2": "Explorez une galaxie qui correspond à vos intérêts, et rejoignez-la.",
+      "3": "Partagez un signal — votre premier moment partagé avec l'univers.",
+      "4": "Suivez quelqu'un avec qui vous résonnez. Une fois l'abonnement mutuel, vous pouvez démarrer une conversation."
+    },
+    "cta": "Créer ma planète",
+    "ctaSecondary": "Retour à l'accueil"
   }
 }

@@ -190,6 +190,13 @@ export default function AccountSettingsPage() {
           <p className="text-sm max-w-lg" style={{ color: 'var(--ink)', opacity: 0.55 }}>
             {t('subtitle')}
           </p>
+          <Link
+            href="/guide"
+            className="text-xs w-fit underline underline-offset-4"
+            style={{ color: 'var(--star)' }}
+          >
+            {t('guideLink')}
+          </Link>
         </div>
 
         <div className="flex flex-col gap-6">

@@ -668,6 +668,7 @@
     "deleteFailed": "Could not delete your account. Please try again.",
     "deleteSuccess": "Your account has been deleted. Signing you out…",
     "backToPlanetSettings": "← Back to planet settings",
+    "guideLink": "How Gravity Souls works",
     "linkFromPlanetSettings": "Account & data"
   },
   "createPlanet": {
@@ -928,10 +929,12 @@
     "play": "Play",
     "reset": "Reset",
     "create": "Create my planet",
+    "tryWithoutAccount": "Try it without an account",
     "note": "Start with what makes you, you.",
     "fallback": "A quieter view. You can still explore every step.",
     "footer": "Every connection starts somewhere.",
     "backHome": "Back to home",
+    "howItWorks": "How it works",
     "steps": {
       "0": {
         "label": "Your planet",
@@ -950,5 +953,42 @@
       }
     },
     "motionPreference": "Motion follows your device settings. Select Play to enable it here."
+  },
+  "guide": {
+    "eyebrow": "Getting started",
+    "title": "How Gravity Souls works",
+    "intro": "Gravity Souls is a social universe built around planets, galaxies, and the quiet pull between people who share something real. Here's what everything means, and how to find your footing.",
+    "sections": {
+      "planet": {
+        "title": "Your planet",
+        "body": "Your planet is your profile — a customizable persona that reflects who you are. Shape it through a short calibration (the soul scan), or build it yourself. You always have one active planet at a time."
+      },
+      "galaxies": {
+        "title": "Galaxies",
+        "body": "Galaxies are communities built around shared interests, moods, or ways of living — from quiet introspection to late-night builders. Join the ones that feel like you, and their signals and discussions become part of your orbit."
+      },
+      "signals": {
+        "title": "Signals",
+        "body": "A signal is a shared moment — a post. Some drift through the open stream for everyone to see; others live inside a specific galaxy, visible to its members."
+      },
+      "resonance": {
+        "title": "Resonance",
+        "body": "Resonance is where you see who's drawn toward you, and why. It's your orbit of potential connections, based on what you've shared and how you calibrated your planet."
+      },
+      "follows": {
+        "title": "Follows & messages",
+        "body": "Following someone is one-way, and it's yours — not tied to any one version of your planet. A direct conversation opens once you follow each other; it stays open even if a follow later lapses."
+      }
+    },
+    "firstStepsTitle": "Your first steps",
+    "steps": {
+      "0": "Take the soul scan, or skip it — calibration is optional, never required.",
+      "1": "Shape your planet: choose how it looks and what it says about you.",
+      "2": "Explore a galaxy that matches your interests, and join it.",
+      "3": "Share a signal — your first shared moment with the universe.",
+      "4": "Follow someone who resonates. Once it's mutual, you can start a conversation."
+    },
+    "cta": "Create my planet",
+    "ctaSecondary": "Back to home"
   }
 }
