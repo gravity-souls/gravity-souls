@@ -118,9 +118,12 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
       </div>
       <footer className={styles.footer}>
         <span>{t('footer')}</span>
-        {!standalone && (
-          <Link href="/" prefetch={false}>{t('backHome')}<ArrowRight size={13} aria-hidden="true" /></Link>
-        )}
+        <div className={styles.footerLinks}>
+          <Link href="/guide" prefetch={false}>{t('howItWorks')}<ArrowRight size={13} aria-hidden="true" /></Link>
+          {!standalone && (
+            <Link href="/" prefetch={false}>{t('backHome')}<ArrowRight size={13} aria-hidden="true" /></Link>
+          )}
+        </div>
       </footer>
     </div>
   )
