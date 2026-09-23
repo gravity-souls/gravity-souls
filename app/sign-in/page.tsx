@@ -36,12 +36,6 @@ function SignInForm() {
     } catch { /* initiation failure: browser stays on page, no unhandled rejection */ }
   }
 
-  async function handleAppleSignIn() {
-    try {
-      await authClient.signIn.social({ provider: 'apple', callbackURL: '/auth/social-landing' })
-    } catch { /* initiation failure: browser stays on page */ }
-  }
-
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -119,7 +113,7 @@ function SignInForm() {
         {tAuth("signInSubtitle")}
       </p>
 
-      <SocialAuthButtons onGoogle={handleGoogleSignIn} onApple={handleAppleSignIn} />
+      <SocialAuthButtons onGoogle={handleGoogleSignIn} />
 
       <form onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>

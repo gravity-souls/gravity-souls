@@ -2,7 +2,9 @@
  * Phase 10 verification — Google OAuth wiring (non-Google-roundtrip checks only).
  *
  * What CAN be automated:
- *   - Google button active, Apple + WeChat disabled on sign-in and sign-up
+ *   - Google button active; Apple + WeChat disabled on sign-in and sign-up
+ *     (Apple is disabled pending real APPLE_CLIENT_ID/APPLE_CLIENT_SECRET —
+ *     see app/sign-in/page.tsx and app/sign-up/page.tsx)
  *   - /auth/social-landing → /resonance for authenticated user WITH planet
  *   - /auth/social-landing → /onboarding for authenticated user WITHOUT planet
  *   - /auth/social-landing?error=* → /sign-in?authError=1
@@ -29,10 +31,10 @@ test.describe('sign-in button states', () => {
     await expect(btn).toBeEnabled()
   })
 
-  test('Apple button is enabled on /sign-in', async ({ page }) => {
+  test('Apple button is disabled on /sign-in', async ({ page }) => {
     await page.goto('/sign-in', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeEnabled()
+    await expect(btn).toBeDisabled()
   })
 
   test('WeChat button is disabled on /sign-in', async ({ page }) => {
@@ -53,10 +55,10 @@ test.describe('sign-up button states', () => {
     await expect(btn).toBeEnabled()
   })
 
-  test('Apple button is enabled on /sign-up', async ({ page }) => {
+  test('Apple button is disabled on /sign-up', async ({ page }) => {
     await page.goto('/sign-up', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeEnabled()
+    await expect(btn).toBeDisabled()
   })
 
   test('WeChat button is disabled on /sign-up', async ({ page }) => {
