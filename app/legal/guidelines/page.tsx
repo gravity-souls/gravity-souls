@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { SUPPORT_EMAIL } from '@/lib/legal-config'
 
 export const metadata = { title: 'Community Guidelines — Gravity Souls' }
 
@@ -112,7 +113,7 @@ export default function GuidelinesPage() {
 
         <Section title="6. Contact">
           <p>
-            <Pending>contact email</Pending>
+            {SUPPORT_EMAIL ?? <Pending>contact email</Pending>}
           </p>
         </Section>
       </div>
