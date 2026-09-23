@@ -34,6 +34,10 @@ export const RATE_LIMITS = {
   FOLLOW: { limit: 100, windowMs: 60 * 60_000 },
   REPORT: { limit: 20, windowMs: 60 * 60_000 },
   COMMUNITY_JOIN: { limit: 30, windowMs: 60 * 60_000 },
+  // Keyed by submitted email, not a session — this endpoint is reached by
+  // signed-out visitors. Low limit: this exists to slow down enumeration/
+  // spam of arbitrary addresses, not to accommodate legitimate retry volume.
+  PASSWORD_RESET_REQUEST: { limit: 5, windowMs: 60 * 60_000 },
 } as const
 
 export function rateLimitKey(action: keyof typeof RATE_LIMITS, actorId: string): string {

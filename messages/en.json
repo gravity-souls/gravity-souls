@@ -483,7 +483,22 @@
     "policyAgreementPrivacy": "Privacy Policy",
     "policyAgreementAnd": "and",
     "policyAgreementGuidelines": "Community Guidelines",
-    "policyAgreementRequired": "Please accept the Terms of Service, Privacy Policy, and Community Guidelines to continue."
+    "policyAgreementRequired": "Please accept the Terms of Service, Privacy Policy, and Community Guidelines to continue.",
+    "forgotPasswordTitle": "Reset your password",
+    "forgotPasswordSubtitle": "Enter your email and we'll send you a link to reset your password.",
+    "forgotPasswordSubmit": "Send reset link",
+    "forgotPasswordSent": "If an account exists for that email, a reset link is on its way. Check your inbox.",
+    "backToSignIn": "← Back to sign in",
+    "tooManyRequests": "Too many requests. Please try again later.",
+    "resetPasswordTitle": "Set a new password",
+    "resetPasswordSubtitle": "Choose a new password for your account.",
+    "resetPasswordSubmit": "Reset password",
+    "resetPasswordSuccess": "Your password has been reset. You can now sign in with your new password.",
+    "resetPasswordFailed": "Could not reset your password",
+    "resetPasswordLinkInvalid": "This reset link is invalid or has expired. Request a new one below.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "passwordsDontMatch": "Passwords don't match"
   },
   "common": {
     "loading": "Loading...",

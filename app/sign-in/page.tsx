@@ -137,9 +137,14 @@ function SignInForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            {tAuth("password")}
-          </label>
+          <div className="mb-1 flex items-baseline justify-between">
+            <label htmlFor="password" className="block text-sm font-medium" style={{ color: "var(--ink)" }}>
+              {tAuth("password")}
+            </label>
+            <Link href="/forgot-password" className="text-xs underline" style={{ color: "var(--ghost)" }}>
+              {tAuth("forgotPassword")}
+            </Link>
+          </div>
           <input
             id="password"
             type="password"
