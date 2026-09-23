@@ -36,12 +36,6 @@ function SignInForm() {
     } catch { /* initiation failure: browser stays on page, no unhandled rejection */ }
   }
 
-  async function handleAppleSignIn() {
-    try {
-      await authClient.signIn.social({ provider: 'apple', callbackURL: '/auth/social-landing' })
-    } catch { /* initiation failure: browser stays on page */ }
-  }
-
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -119,7 +113,7 @@ function SignInForm() {
         {tAuth("signInSubtitle")}
       </p>
 
-      <SocialAuthButtons onGoogle={handleGoogleSignIn} onApple={handleAppleSignIn} />
+      <SocialAuthButtons onGoogle={handleGoogleSignIn} />
 
       <form onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>
@@ -143,9 +137,14 @@ function SignInForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
-            {tAuth("password")}
-          </label>
+          <div className="mb-1 flex items-baseline justify-between">
+            <label htmlFor="password" className="block text-sm font-medium" style={{ color: "var(--ink)" }}>
+              {tAuth("password")}
+            </label>
+            <Link href="/forgot-password" className="text-xs underline" style={{ color: "var(--ghost)" }}>
+              {tAuth("forgotPassword")}
+            </Link>
+          </div>
           <input
             id="password"
             type="password"

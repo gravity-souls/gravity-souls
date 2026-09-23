@@ -2,8 +2,12 @@
  * Phase 11 verification — Apple OAuth wiring (non-Apple-roundtrip checks only).
  *
  * What CAN be automated:
- *   - Apple button enabled, Google button still enabled on sign-in and sign-up
- *   - Generated Apple auth URL has correct client_id, redirect_uri, response_type, response_mode, scope
+ *   - Apple button disabled in the UI (no real APPLE_CLIENT_ID/APPLE_CLIENT_SECRET
+ *     configured yet — see app/sign-in/page.tsx and app/sign-up/page.tsx), Google
+ *     button still enabled on sign-in and sign-up
+ *   - Generated Apple auth URL has correct client_id, redirect_uri, response_type,
+ *     response_mode, scope — hitting Better Auth's API directly, independent of the
+ *     UI button state, using the test-only credentials from e2e/environment.ts
  *   - POST to /api/auth/callback/apple with Origin: https://appleid.apple.com does NOT return 403 INVALID_ORIGIN
  *
  * What CANNOT be automated (requires real Apple ID and human interaction):
@@ -21,10 +25,10 @@ import { TEST_BASE_URL } from './environment'
 test.describe('sign-in button states (Phase 11)', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('Apple button is enabled on /sign-in', async ({ page }) => {
+  test('Apple button is disabled on /sign-in', async ({ page }) => {
     await page.goto('/sign-in', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeEnabled()
+    await expect(btn).toBeDisabled()
   })
 
   test('Google button still enabled on /sign-in (regression)', async ({ page }) => {
@@ -39,10 +43,10 @@ test.describe('sign-in button states (Phase 11)', () => {
 test.describe('sign-up button states (Phase 11)', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('Apple button is enabled on /sign-up', async ({ page }) => {
+  test('Apple button is disabled on /sign-up', async ({ page }) => {
     await page.goto('/sign-up', { waitUntil: 'networkidle' })
     const btn = page.getByRole('button', { name: /continue with apple/i })
-    await expect(btn).toBeEnabled()
+    await expect(btn).toBeDisabled()
   })
 
   test('Google button still enabled on /sign-up (regression)', async ({ page }) => {

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { LEGAL_ENTITY_NAME, LEGAL_ENTITY_ADDRESS, JURISDICTION, SUPPORT_EMAIL } from '@/lib/legal-config'
 
 export const metadata = { title: 'Terms of Service — Gravity Souls' }
 
@@ -71,7 +72,11 @@ export default function TermsPage() {
 
         <Section title="1. Who we are">
           <p>
-            <Pending>legal entity name and registered address</Pending>
+            {LEGAL_ENTITY_NAME && LEGAL_ENTITY_ADDRESS ? (
+              <>{LEGAL_ENTITY_NAME}, {LEGAL_ENTITY_ADDRESS}</>
+            ) : (
+              <Pending>legal entity name and registered address</Pending>
+            )}
           </p>
         </Section>
 
@@ -133,13 +138,13 @@ export default function TermsPage() {
 
         <Section title="9. Governing law">
           <p>
-            <Pending>jurisdiction</Pending>
+            {JURISDICTION ?? <Pending>jurisdiction</Pending>}
           </p>
         </Section>
 
         <Section title="10. Contact">
           <p>
-            <Pending>support email</Pending>
+            {SUPPORT_EMAIL ?? <Pending>support email</Pending>}
           </p>
         </Section>
       </div>

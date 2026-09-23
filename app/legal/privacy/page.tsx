@@ -1,5 +1,15 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import {
+  LEGAL_ENTITY_NAME,
+  LEGAL_ENTITY_ADDRESS,
+  SUPPORT_EMAIL,
+  GDPR_LEGAL_BASIS,
+  DATA_RETENTION_PERIODS,
+  DATA_PROCESSORS,
+  INTERNATIONAL_TRANSFERS,
+  COOKIE_ANALYTICS_DISCLOSURE,
+} from '@/lib/legal-config'
 
 export const metadata = { title: 'Privacy Policy — Gravity Souls' }
 
@@ -72,7 +82,11 @@ export default function PrivacyPage() {
 
         <Section title="1. Data controller">
           <p>
-            <Pending>legal entity name and address</Pending>
+            {LEGAL_ENTITY_NAME && LEGAL_ENTITY_ADDRESS ? (
+              <>{LEGAL_ENTITY_NAME}, {LEGAL_ENTITY_ADDRESS}</>
+            ) : (
+              <Pending>legal entity name and address</Pending>
+            )}
           </p>
         </Section>
 
@@ -97,13 +111,13 @@ export default function PrivacyPage() {
 
         <Section title="4. Legal basis for processing">
           <p>
-            <Pending>specific GDPR legal basis determination</Pending>
+            {GDPR_LEGAL_BASIS ?? <Pending>specific GDPR legal basis determination</Pending>}
           </p>
         </Section>
 
         <Section title="5. Data retention">
           <p>
-            <Pending>retention periods</Pending>
+            {DATA_RETENTION_PERIODS ?? <Pending>retention periods</Pending>}
           </p>
         </Section>
 
@@ -118,13 +132,15 @@ export default function PrivacyPage() {
 
         <Section title="7. Data sharing and processors">
           <p>
-            <Pending>processor list (hosting, email, and other third-party services)</Pending>
+            {DATA_PROCESSORS ?? (
+              <Pending>processor list (hosting, email, and other third-party services)</Pending>
+            )}
           </p>
         </Section>
 
         <Section title="8. International data transfers">
           <p>
-            <Pending>international data transfer details</Pending>
+            {INTERNATIONAL_TRANSFERS ?? <Pending>international data transfer details</Pending>}
           </p>
         </Section>
 
@@ -132,13 +148,15 @@ export default function PrivacyPage() {
           <p>
             Gravity Souls uses essential session cookies required to keep you signed in and to
             remember your language preference.{' '}
-            <Pending>any additional cookie/analytics disclosure</Pending>
+            {COOKIE_ANALYTICS_DISCLOSURE ?? (
+              <Pending>any additional cookie/analytics disclosure</Pending>
+            )}
           </p>
         </Section>
 
         <Section title="10. Contact / Data Protection contact">
           <p>
-            <Pending>contact email</Pending>
+            {SUPPORT_EMAIL ?? <Pending>contact email</Pending>}
           </p>
         </Section>
       </div>

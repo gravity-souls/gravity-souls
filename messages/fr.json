@@ -483,7 +483,22 @@
     "policyAgreementPrivacy": "la Politique de confidentialité",
     "policyAgreementAnd": "et",
     "policyAgreementGuidelines": "les Règles de la communauté",
-    "policyAgreementRequired": "Veuillez accepter les Conditions d'utilisation, la Politique de confidentialité et les Règles de la communauté pour continuer."
+    "policyAgreementRequired": "Veuillez accepter les Conditions d'utilisation, la Politique de confidentialité et les Règles de la communauté pour continuer.",
+    "forgotPasswordTitle": "Réinitialiser votre mot de passe",
+    "forgotPasswordSubtitle": "Indiquez votre email, nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "forgotPasswordSubmit": "Envoyer le lien",
+    "forgotPasswordSent": "Si un compte existe pour cet email, un lien de réinitialisation est en route. Vérifiez votre boîte de réception.",
+    "backToSignIn": "← Retour à la connexion",
+    "tooManyRequests": "Trop de requêtes. Veuillez réessayer plus tard.",
+    "resetPasswordTitle": "Choisir un nouveau mot de passe",
+    "resetPasswordSubtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+    "resetPasswordSubmit": "Réinitialiser le mot de passe",
+    "resetPasswordSuccess": "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+    "resetPasswordFailed": "Impossible de réinitialiser votre mot de passe",
+    "resetPasswordLinkInvalid": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau ci-dessous.",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le nouveau mot de passe",
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas"
   },
   "common": {
     "loading": "Chargement...",

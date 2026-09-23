@@ -483,7 +483,22 @@
     "policyAgreementPrivacy": "隐私政策",
     "policyAgreementAnd": "和",
     "policyAgreementGuidelines": "社区准则",
-    "policyAgreementRequired": "请先同意服务条款、隐私政策和社区准则，然后再继续。"
+    "policyAgreementRequired": "请先同意服务条款、隐私政策和社区准则，然后再继续。",
+    "forgotPasswordTitle": "重置密码",
+    "forgotPasswordSubtitle": "输入你的邮箱，我们会发送重置密码的链接给你。",
+    "forgotPasswordSubmit": "发送重置链接",
+    "forgotPasswordSent": "如果该邮箱存在账号，重置链接即将发送。请查看你的收件箱。",
+    "backToSignIn": "← 返回登录",
+    "tooManyRequests": "请求过于频繁，请稍后再试。",
+    "resetPasswordTitle": "设置新密码",
+    "resetPasswordSubtitle": "为你的账号选择一个新密码。",
+    "resetPasswordSubmit": "重置密码",
+    "resetPasswordSuccess": "你的密码已重置。现在可以使用新密码登录了。",
+    "resetPasswordFailed": "无法重置密码",
+    "resetPasswordLinkInvalid": "此重置链接无效或已过期。请在下方重新申请一个。",
+    "newPassword": "新密码",
+    "confirmPassword": "确认新密码",
+    "passwordsDontMatch": "两次输入的密码不一致"
   },
   "common": {
     "loading": "加载中...",

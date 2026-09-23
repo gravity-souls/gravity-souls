@@ -102,3 +102,7 @@ export const deleteAccountSchema = z.object({ confirm: z.literal(true) }).strict
 // records all PolicyType values at CURRENT_POLICY_VERSION for the caller —
 // but still runs through readJson for the standard size cap / JSON validation.
 export const policyAcceptanceSchema = z.object({}).strict()
+
+export const passwordResetRequestSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+}).strict()
