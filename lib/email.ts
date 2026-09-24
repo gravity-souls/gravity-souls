@@ -17,7 +17,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     console.warn('[email] RESEND_API_KEY not configured — password reset email not sent.', { to, resetUrl })
     return
   }
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: FROM,
     to,
     subject: 'Reset your Gravity Souls password',
@@ -28,7 +28,15 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
       <p>This link expires in 1 hour.</p>
     `,
   })
+  // These are server-only logs (never returned to the client, which always
+  // sees the same generic "check your inbox" response either way), so the
+  // real error detail and recipient are safe to include here — this is the
+  // only place either shows up. The previous version logged neither, which
+  // made a real failure (e.g. an unverified sending domain) indistinguishable
+  // from a genuine success by reading Vercel's logs alone.
   if (error) {
-    console.error('[email] Failed to send password reset email', { reference: crypto.randomUUID() })
+    console.error('[email] Failed to send password reset email', { to, error })
+  } else {
+    console.log('[email] Password reset email sent', { to, resendId: data?.id })
   }
 }
