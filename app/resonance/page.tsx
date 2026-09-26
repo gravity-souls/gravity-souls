@@ -121,6 +121,18 @@ export default function ResonancePage() {
 
       if (cancelled) return
 
+      // A single 401 right after landing here can be WebKit's cookie jar not
+      // having committed the session yet rather than a real unauthenticated
+      // state — retry once before bouncing to sign-in.
+      if (res.status === 401) {
+        try {
+          res = await fetch('/api/my-planet')
+        } catch {
+          return
+        }
+        if (cancelled) return
+      }
+
       if (res.status === 401) { window.location.href = '/sign-in?next=/resonance'; return }
       if (res.status === 404) { window.location.href = '/onboarding'; return }
       if (!res.ok) return

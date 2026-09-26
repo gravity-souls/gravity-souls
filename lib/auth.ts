@@ -22,6 +22,19 @@ export const auth = betterAuth({
       await sendPasswordResetEmail(user.email, url)
     },
   },
+  // Better Auth's default /sign-in* and /sign-up* rule (3 req/10s per IP) is
+  // exactly right for real users, but test:e2e:db runs ~90 sequential
+  // Playwright tests against one shared production server from one loopback
+  // IP, exhausting it long before the suite ends. Loosen only in CI
+  // (GitHub Actions sets CI=true) — production keeps the real limit.
+  rateLimit: process.env.CI
+    ? {
+        customRules: {
+          "/sign-in/*": { window: 1, max: 1000 },
+          "/sign-up/*": { window: 1, max: 1000 },
+        },
+      }
+    : undefined,
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
