@@ -340,13 +340,6 @@ export default function ResonancePage() {
 
             <HintStrip hasActive={activeId !== null} />
           </div>
-
-          {/* Inline drawer panel for desktop  -  shown as bottom panel on mobile */}
-          <ResonanceDrawer
-            match={activeMatch}
-            onClose={() => setActiveId(null)}
-            planetById={planetById}
-          />
         </div>
 
         {/* Mobile: selected match summary card when no drawer */}
@@ -365,6 +358,20 @@ export default function ResonancePage() {
         )}
 
       </div>
+
+      {/* Rendered outside the "relative z-10" wrapper above on purpose: that
+          div creates its own stacking context, which traps this drawer's
+          fixed z-50 panel underneath SideNav's mobile bottom nav (also fixed
+          z-50, but a sibling here, not nested inside a lower-z context) —
+          the panel's own z-index can never out-rank an ancestor's stacking
+          context from the inside. Purely a DOM-position fix: the panel is
+          `position: fixed` unconditionally, so it never occupied layout
+          space in the flex row above regardless of where it's rendered. */}
+      <ResonanceDrawer
+        match={activeMatch}
+        onClose={() => setActiveId(null)}
+        planetById={planetById}
+      />
     </AppShell>
   )
 }
