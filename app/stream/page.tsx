@@ -11,12 +11,15 @@ import CreatePostModal from '@/components/stream/CreatePostModal'
 import PostDetail from '@/components/stream/PostDetail'
 import PostGrid from '@/components/stream/PostGrid'
 import StreamSearchBar from '@/components/stream/StreamSearchBar'
+import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import { authClient } from '@/lib/auth-client'
+import { dismissHint } from '@/lib/hints-preferences'
 import type { StreamPost } from '@/types/stream'
 
 export default function StreamPage() {
   const router = useRouter()
   const t = useTranslations('stream')
+  const tCommon = useTranslations('common')
   const { data: session } = authClient.useSession()
   const [category, setCategory] = useState<StreamCategoryTab>('ALL')
   const [search, setSearch] = useState('')
@@ -65,6 +68,14 @@ export default function StreamPage() {
         </div>
 
         <main className="pt-5">
+          {session?.user && (
+            <FirstTimeHint
+              hintKey="stream-first-post"
+              title={tCommon('firstPostHintTitle')}
+              body={tCommon('firstPostHintBody')}
+              className="mb-4"
+            />
+          )}
           <PostGrid
             category={category}
             search={search && !tag ? search : undefined}
@@ -87,6 +98,7 @@ export default function StreamPage() {
         onCreated={(post) => {
           setCreatedPost(post)
           setRefreshKey((key) => key + 1)
+          dismissHint('stream-first-post')
         }}
       />
       <PostDetail

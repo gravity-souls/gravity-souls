@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { authClient } from "@/lib/auth-client";
+import { authClient, waitForSession } from "@/lib/auth-client";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import LegalFooter from "@/components/auth/LegalFooter";
 
@@ -92,6 +92,7 @@ function SignInForm() {
 
       // Priority 3: route based on DB planet state
       try {
+        await waitForSession()
         const res = await fetch('/api/my-planet')
         window.location.href = res.ok ? '/resonance' : '/onboarding'
       } catch {

@@ -9,6 +9,7 @@ import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import LockedLayer from '@/components/ui/LockedLayer'
+import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import type { PlanetProfile } from '@/types/planet'
 import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
 
@@ -175,6 +176,7 @@ interface Props {
 export default function GalaxyPage({ params }: Props) {
   const router = useRouter()
   const t = useTranslations('galaxyPage')
+  const tCommon = useTranslations('common')
   const { slug } = use(params)
 
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
@@ -754,6 +756,16 @@ export default function GalaxyPage({ params }: Props) {
             <div className="px-4 py-3 max-w-5xl mx-auto" role={communityError || postError ? 'alert' : 'status'}>
               <p className="text-sm">{communityLoading ? t('loadingCommunity') : communityError || postError}</p>
               {communityError && <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
+            </div>
+          )}
+
+          {communityJoined && (
+            <div className="px-4 max-w-5xl mx-auto mt-3">
+              <FirstTimeHint
+                hintKey="galaxy-first-join"
+                title={tCommon('firstJoinHintTitle')}
+                body={tCommon('firstJoinHintBody')}
+              />
             </div>
           )}
 

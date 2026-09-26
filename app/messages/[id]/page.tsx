@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import SignalComposer from '@/components/social/SignalComposer'
+import FirstTimeHint from '@/components/hints/FirstTimeHint'
 // --- Types ---
 
 interface MsgData {
@@ -101,9 +102,11 @@ interface Props {
 
 export default function ConversationPage({ params }: Props) {
   const t = useTranslations('messagesPage')
+  const tCommon = useTranslations('common')
   const { id }     = use(params)
   const router     = useRouter()
   const bottomRef  = useRef<HTMLDivElement>(null)
+  const pendingSendRef = useRef<{ content: string; clientMessageId: string } | null>(null)
 
   const [messages, setMessages]       = useState<MsgData[]>([])
   const [otherPlanet, setOtherPlanet] = useState<PlanetData | null>(null)
@@ -160,15 +163,24 @@ export default function ConversationPage({ params }: Props) {
     setSending(true)
     setSendError('')
 
+    // Reuse the same clientMessageId across retries of the same draft (the
+    // composer only clears its text on success), so a resend after a
+    // dropped response can't create a duplicate message server-side.
+    if (pendingSendRef.current?.content !== content) {
+      pendingSendRef.current = { content, clientMessageId: crypto.randomUUID() }
+    }
+    const clientMessageId = pendingSendRef.current.clientMessageId
+
     try {
       const res = await fetch(`/api/conversations/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, clientMessageId }),
       })
       if (!res.ok) throw new Error('delivery-unconfirmed')
       const real = await res.json() as MsgData
       setMessages((prev) => [...prev, real])
+      pendingSendRef.current = null
       return true
     } catch {
       setSendError(t('deliveryUnconfirmed'))
@@ -220,6 +232,16 @@ export default function ConversationPage({ params }: Props) {
 
         <div ref={bottomRef} />
       </div>
+
+      {messages.length > 0 && (
+        <div className="px-4 pb-2">
+          <FirstTimeHint
+            hintKey="messages-first-dm"
+            title={tCommon('firstDmHintTitle')}
+            body={tCommon('firstDmHintBody')}
+          />
+        </div>
+      )}
 
       {/* Composer */}
       {sendError && <p role="alert" className="px-4 py-2 text-sm text-red-300">{sendError}</p>}

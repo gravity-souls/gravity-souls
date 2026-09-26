@@ -532,7 +532,14 @@
     "notFoundTitle": "Cette planète n'existe pas",
     "notFoundDescription": "Les coordonnées suivies mènent à l'espace vide. La planète a peut-être dérivé, ou n'a jamais existé.",
     "returnToUniverse": "Retour à l'univers",
-    "exploreStream": "Explorer le fil"
+    "exploreStream": "Explorer le fil",
+    "gotIt": "Compris",
+    "firstPostHintTitle": "Envoyez votre premier signal",
+    "firstPostHintBody": "Partagez une pensée, une photo ou tout ce qui mérite d'être diffusé. Votre signal apparaîtra ici pour tout le cosmos.",
+    "firstJoinHintTitle": "Vous êtes dans cette galaxie",
+    "firstJoinHintBody": "Vous pouvez maintenant publier, répondre et voir tout ce que cette galaxie partage.",
+    "firstDmHintTitle": "Votre premier faisceau est envoyé",
+    "firstDmHintBody": "Les réponses arrivent ici. Consultez Messages à tout moment pour continuer la conversation."
   },
   "communities": {
     "eyebrow": "Communautés",
