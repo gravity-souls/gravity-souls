@@ -532,7 +532,14 @@
     "notFoundTitle": "这颗星球不存在",
     "notFoundDescription": "你跟随的坐标通向一片空域。这颗星球可能已经漂走，或从未存在。",
     "returnToUniverse": "返回宇宙",
-    "exploreStream": "探索动态"
+    "exploreStream": "探索动态",
+    "gotIt": "知道了",
+    "firstPostHintTitle": "发送你的第一个信号",
+    "firstPostHintBody": "分享一个想法、一张照片，或任何值得广播的内容。你的信号会出现在这里，让整个宇宙看到。",
+    "firstJoinHintTitle": "你已加入这个星系",
+    "firstJoinHintBody": "现在你可以发帖、回复，并看到这个星系分享的一切。",
+    "firstDmHintTitle": "你的第一束信号已发送",
+    "firstDmHintBody": "回复会出现在这里。随时前往消息页面继续对话。"
   },
   "communities": {
     "eyebrow": "社区",

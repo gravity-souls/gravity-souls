@@ -532,7 +532,14 @@
     "notFoundTitle": "This planet doesn't exist",
     "notFoundDescription": "The coordinates you followed lead to empty space. The planet may have drifted, or never existed.",
     "returnToUniverse": "Return to universe",
-    "exploreStream": "Explore the stream"
+    "exploreStream": "Explore the stream",
+    "gotIt": "Got it",
+    "firstPostHintTitle": "Send your first signal",
+    "firstPostHintBody": "Share a thought, a photo, or anything worth broadcasting. Your signal will appear here for the whole cosmos.",
+    "firstJoinHintTitle": "You're in this galaxy",
+    "firstJoinHintBody": "You can now post, reply, and see everything this galaxy shares.",
+    "firstDmHintTitle": "Your first beam is sent",
+    "firstDmHintBody": "Replies land right here. Check Messages any time to keep the conversation going."
   },
   "communities": {
     "eyebrow": "Communities",
