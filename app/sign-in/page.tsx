@@ -86,6 +86,11 @@ function SignInForm() {
       // Priority 2: honour ?next if present and safe
       const raw = searchParams.get('next')
       if (raw?.startsWith('/') && !raw.startsWith('//')) {
+        // The destination almost always does its own auth-dependent fetch
+        // immediately on load (e.g. /resonance's my-planet check) — confirm
+        // the session is actually readable first so that fetch doesn't lose
+        // the same WebKit cookie-commit race Priority 3 already guards against.
+        await waitForSession()
         window.location.href = raw
         return
       }
