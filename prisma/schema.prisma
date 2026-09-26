@@ -571,9 +571,15 @@ model DirectMessage {
   content          String
   type             String   @default("text")
   readAt           DateTime?
+  // Client-generated per-compose-attempt key. Lets a retried send (e.g. after
+  // a dropped response) return the already-created message instead of
+  // creating a duplicate. Nullable/non-unique-alone so existing rows and any
+  // caller that omits it are unaffected.
+  clientMessageId  String?
 
   createdAt        DateTime @default(now())
 
+  @@unique([conversationId, clientMessageId])
   @@index([conversationId, createdAt])
   @@map("direct_message")
 }
