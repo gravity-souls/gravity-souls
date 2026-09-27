@@ -30,12 +30,6 @@ import type { PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { StreamPost } from '@/types/stream'
 
-const SIGNAL_PULSE = [
-  { label: 'Slow Thinkers', valueKey: 'signalNewReplies', color: '#a78bfa', href: '/galaxy/slow-thinkers' },
-  { label: 'Warm Frequency', valueKey: 'signalActiveRooms', color: '#f9a8d4', href: '/galaxy/warm-frequency' },
-  { label: 'Signal / Noise', valueKey: 'signalBuildLogs', color: '#60a5fa', href: '/galaxy/signal-noise' },
-]
-
 // --- Page --------------------------------------------------------------------
 
 export default function HomeDashboard() {
@@ -257,11 +251,10 @@ export default function HomeDashboard() {
   }, [session, communities, router])
 
   const featuredPlanet = nearbyPlanets[0]?.planet
-  const activeCommunityCount = galaxies.length || NEBULA_ZONES.length
   const homepageStats = [
     { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length) },
-    { label: tHome('statsGalaxiesAwake'), value: String(activeCommunityCount) },
-    { label: tHome('statsOpenSignals'), value: '24h' },
+    { label: tHome('statsGalaxiesAwake'), value: String(galaxies.length) },
+    { label: tHome('statsOpenSignals'), value: String(sharedPosts.length) },
   ]
 
   return (
@@ -399,26 +392,6 @@ export default function HomeDashboard() {
                   )}
                 </div>
               )}
-
-              <div className="grid gap-2">
-                {SIGNAL_PULSE.map((signal) => (
-                  <Link
-                    key={signal.label}
-                    href={signal.href}
-                    className="group rounded-xl px-4 py-3 flex items-center justify-between gap-4 transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${signal.color}20`, textDecoration: 'none' }}
-                  >
-                    <span className="flex items-center gap-3 min-w-0">
-                      <span className="w-1 h-8 rounded-full shrink-0" style={{ background: signal.color, boxShadow: `0 0 16px ${signal.color}55` }} aria-hidden="true" />
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{signal.label}</span>
-                        <span className="block text-xs mt-0.5" style={{ color: 'var(--ghost)' }}>{tHome(signal.valueKey)}</span>
-                      </span>
-                    </span>
-                    <span className="text-xs transition-transform duration-200 group-hover:translate-x-1" style={{ color: signal.color }}>{tHome('open')}</span>
-                  </Link>
-                ))}
-              </div>
             </div>
 
             <div className="relative min-h-140 lg:min-h-170" aria-label={tHome('universeFieldLabel')}>
