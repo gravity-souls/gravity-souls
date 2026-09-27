@@ -508,7 +508,8 @@
     "newPassword": "New password",
     "confirmPassword": "Confirm new password",
     "passwordsDontMatch": "Passwords don't match",
-    "signInToContinue": "Sign in to continue where you left off."
+    "signInToContinue": "Sign in to continue where you left off.",
+    "socialComingSoon": "Coming soon"
   },
   "common": {
     "loading": "Loading...",

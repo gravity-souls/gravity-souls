@@ -508,7 +508,8 @@
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le nouveau mot de passe",
     "passwordsDontMatch": "Les mots de passe ne correspondent pas",
-    "signInToContinue": "Connectez-vous pour continuer là où vous étiez."
+    "signInToContinue": "Connectez-vous pour continuer là où vous étiez.",
+    "socialComingSoon": "Bientôt disponible"
   },
   "common": {
     "loading": "Chargement...",

@@ -508,7 +508,8 @@
     "newPassword": "新密码",
     "confirmPassword": "确认新密码",
     "passwordsDontMatch": "两次输入的密码不一致",
-    "signInToContinue": "登录以继续之前的操作。"
+    "signInToContinue": "登录以继续之前的操作。",
+    "socialComingSoon": "即将推出"
   },
   "common": {
     "loading": "加载中...",

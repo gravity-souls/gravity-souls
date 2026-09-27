@@ -1,3 +1,8 @@
+'use client'
+
+import { Clock } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
 interface Props {
   onGoogle?: () => void
   onApple?: () => void
@@ -11,6 +16,8 @@ export default function SocialAuthButtons({
   onWeChat,
   disabled = false,
 }: Props) {
+  const t = useTranslations('auth')
+
   function buttonStyle(isDisabled: boolean): React.CSSProperties {
     return {
       background: 'var(--surface)',
@@ -20,6 +27,12 @@ export default function SocialAuthButtons({
       cursor: isDisabled ? 'not-allowed' : 'pointer',
     }
   }
+
+  // Apple/WeChat have no handler in production (no real credentials configured
+  // yet — see 60aff3c) and are permanently unavailable, distinct from `disabled`
+  // which is just the transient "form is submitting" state that also dims Google.
+  const appleComingSoon = !onApple
+  const weChatComingSoon = !onWeChat
 
   return (
     <div className="flex flex-col gap-3">
@@ -36,29 +49,51 @@ export default function SocialAuthButtons({
           <span className="hidden sm:inline">Google</span>
         </button>
 
-        <button
-          type="button"
-          onClick={onApple}
-          disabled={disabled || !onApple}
-          className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
-          style={buttonStyle(disabled || !onApple)}
-          aria-label="Continue with Apple"
-        >
-          <AppleIcon />
-          <span className="hidden sm:inline">Apple</span>
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onApple}
+            disabled={disabled || appleComingSoon}
+            title={appleComingSoon ? t('socialComingSoon') : undefined}
+            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
+            style={buttonStyle(disabled || appleComingSoon)}
+            aria-label={appleComingSoon ? `Continue with Apple — ${t('socialComingSoon')}` : 'Continue with Apple'}
+          >
+            <AppleIcon />
+            <span className="hidden sm:inline">Apple</span>
+          </button>
+          {appleComingSoon && (
+            <span
+              className="pointer-events-none absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full"
+              style={{ background: 'var(--nebula)', boxShadow: '0 0 0 2px var(--void)' }}
+            >
+              <Clock size={10} strokeWidth={2.6} color="#fff" aria-hidden="true" />
+            </span>
+          )}
+        </div>
 
-        <button
-          type="button"
-          onClick={onWeChat}
-          disabled={disabled || !onWeChat}
-          className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
-          style={buttonStyle(disabled || !onWeChat)}
-          aria-label="Continue with WeChat"
-        >
-          <WeChatIcon />
-          <span className="hidden sm:inline">WeChat</span>
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onWeChat}
+            disabled={disabled || weChatComingSoon}
+            title={weChatComingSoon ? t('socialComingSoon') : undefined}
+            className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
+            style={buttonStyle(disabled || weChatComingSoon)}
+            aria-label={weChatComingSoon ? `Continue with WeChat — ${t('socialComingSoon')}` : 'Continue with WeChat'}
+          >
+            <WeChatIcon />
+            <span className="hidden sm:inline">WeChat</span>
+          </button>
+          {weChatComingSoon && (
+            <span
+              className="pointer-events-none absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full"
+              style={{ background: 'var(--nebula)', boxShadow: '0 0 0 2px var(--void)' }}
+            >
+              <Clock size={10} strokeWidth={2.6} color="#fff" aria-hidden="true" />
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
