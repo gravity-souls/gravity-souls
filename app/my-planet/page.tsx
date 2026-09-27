@@ -149,6 +149,7 @@ export default function MyPlanetPage() {
   const tHome = useTranslations('home')
   const tMyPlanet = useTranslations('myPlanet')
   const tNav = useTranslations('nav')
+  const tStream = useTranslations('stream')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -235,92 +236,106 @@ export default function MyPlanetPage() {
         setPlanet(p)
         setStoredUser({ planetConfig: userPlanetConfig ?? planetConfigFromSource(null, p), userLevel })
 
-        try {
-          const xpRes = await fetch('/api/user/xp')
-          if (xpRes.ok) {
-            const xpData = await xpRes.json()
-            if (typeof xpData?.xp === 'number' && typeof xpData?.userLevel === 'number') {
-              setXpSummary({ xp: xpData.xp, userLevel: xpData.userLevel })
-              setStoredUser((user) => user ? { ...user, userLevel: xpData.userLevel } : user)
+        // These five reads are independent of each other, so they run concurrently
+        // instead of as a serial waterfall.
+        await Promise.all([
+          (async () => {
+            try {
+              const xpRes = await fetch('/api/user/xp')
+              if (xpRes.ok) {
+                const xpData = await xpRes.json()
+                if (typeof xpData?.xp === 'number' && typeof xpData?.userLevel === 'number') {
+                  setXpSummary({ xp: xpData.xp, userLevel: xpData.userLevel })
+                  setStoredUser((user) => user ? { ...user, userLevel: xpData.userLevel } : user)
+                }
+              }
+            } catch {
+              // XP is available for authenticated users only.
             }
-          }
-        } catch {
-          // XP is available for authenticated users only.
-        }
+          })(),
 
-        try {
-          const upcomingRes = await fetch('/api/user/upcoming-events?limit=2')
-          if (upcomingRes.ok) {
-            const upcomingData = await upcomingRes.json() as { event?: GalaxyEventSummary | null; events?: GalaxyEventSummary[] }
-            setUpcomingEvents(upcomingData.events ?? (upcomingData.event ? [upcomingData.event] : []))
-          } else {
-            setUpcomingEvents([])
-          }
-        } catch {
-          setUpcomingEvents([])
-        }
+          (async () => {
+            try {
+              const upcomingRes = await fetch('/api/user/upcoming-events?limit=2')
+              if (upcomingRes.ok) {
+                const upcomingData = await upcomingRes.json() as { event?: GalaxyEventSummary | null; events?: GalaxyEventSummary[] }
+                setUpcomingEvents(upcomingData.events ?? (upcomingData.event ? [upcomingData.event] : []))
+              } else {
+                setUpcomingEvents([])
+              }
+            } catch {
+              setUpcomingEvents([])
+            }
+          })(),
 
-        try {
-          const universeRes = await fetch('/api/universe/planets')
-          if (universeRes.ok) {
-            const universeData = await universeRes.json() as { currentPlanet?: { telemetry?: UniverseSummary } | null }
-            if (universeData.currentPlanet?.telemetry) setUniverseSummary(universeData.currentPlanet.telemetry)
-          }
-        } catch {
-          setUniverseSummary(null)
-        }
+          (async () => {
+            try {
+              const universeRes = await fetch('/api/universe/planets')
+              if (universeRes.ok) {
+                const universeData = await universeRes.json() as { currentPlanet?: { telemetry?: UniverseSummary } | null }
+                if (universeData.currentPlanet?.telemetry) setUniverseSummary(universeData.currentPlanet.telemetry)
+              }
+            } catch {
+              setUniverseSummary(null)
+            }
+          })(),
 
-        // Fetch real planets for resonance map
-        try {
-          const planetsRes = await fetch('/api/planets')
-          if (planetsRes.ok) {
-            const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
-            const allPlanets = planetRows.map((data: Record<string, unknown>) => {
-              const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
-              return {
-                id: data.id as string,
-                name: (data.name as string) || 'Unknown',
-                avatarSymbol: (data.avatarSymbol as string) || '?',
-                tagline: (data.tagline as string) ?? undefined,
-                role: 'resonator' as const,
-                mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
-                style: (data.style as PlanetProfile['style']) ?? 'minimal',
-                lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-                coreThemes: (data.coreThemes as string[]) ?? [],
-                contentFragments: (data.contentFragments as string[]) ?? [],
-                visual,
-                cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
-                emotionalBars: [],
-                createdAt: (data.createdAt as string) ?? new Date().toISOString(),
-                userId: (data.userId as string) ?? '',
-              } as PlanetProfile
-            })
-            setOtherPlanets(allPlanets)
-          }
-        } catch {
-          // Fallback: empty resonances
-        }
+          // Fetch real planets for resonance map
+          (async () => {
+            try {
+              const planetsRes = await fetch('/api/planets')
+              if (planetsRes.ok) {
+                const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
+                const allPlanets = planetRows.map((data: Record<string, unknown>) => {
+                  const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
+                  return {
+                    id: data.id as string,
+                    name: (data.name as string) || 'Unknown',
+                    avatarSymbol: (data.avatarSymbol as string) || '?',
+                    tagline: (data.tagline as string) ?? undefined,
+                    role: 'resonator' as const,
+                    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+                    style: (data.style as PlanetProfile['style']) ?? 'minimal',
+                    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+                    coreThemes: (data.coreThemes as string[]) ?? [],
+                    contentFragments: (data.contentFragments as string[]) ?? [],
+                    visual,
+                    cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
+                    emotionalBars: [],
+                    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+                    userId: (data.userId as string) ?? '',
+                  } as PlanetProfile
+                })
+                setOtherPlanets(allPlanets)
+              }
+            } catch {
+              // Fallback: empty resonances
+            }
+          })(),
 
-        try {
-          const commRes = await fetch('/api/communities')
-          if (commRes.ok) {
-            const commData = (await commRes.json()) as CommunityRaw[]
-            setCommunities(commData.slice(0, 3).map((c) => ({
-              id: c.id,
-              slug: c.slug,
-              name: c.name,
-              symbol: c.symbol,
-              tagline: c.tagline ?? undefined,
-              keywords: c.keywords,
-              mood: c.mood as GalaxyPreview['mood'],
-              memberCount: c.memberCount,
-              maturity: c.maturity as GalaxyPreview['maturity'],
-              accentColor: c.accentColor,
-            })))
-          }
-        } catch {
-          // communities stays empty
-        }
+          (async () => {
+            try {
+              const commRes = await fetch('/api/communities')
+              if (commRes.ok) {
+                const commData = (await commRes.json()) as CommunityRaw[]
+                setCommunities(commData.slice(0, 3).map((c) => ({
+                  id: c.id,
+                  slug: c.slug,
+                  name: c.name,
+                  symbol: c.symbol,
+                  tagline: c.tagline ?? undefined,
+                  keywords: c.keywords,
+                  mood: c.mood as GalaxyPreview['mood'],
+                  memberCount: c.memberCount,
+                  maturity: c.maturity as GalaxyPreview['maturity'],
+                  accentColor: c.accentColor,
+                })))
+              }
+            } catch {
+              // communities stays empty
+            }
+          })(),
+        ])
       }
 
       setLoading(false)
@@ -341,6 +356,17 @@ export default function MyPlanetPage() {
     window.addEventListener('xp:updated', handleXPUpdated)
     return () => window.removeEventListener('xp:updated', handleXPUpdated)
   }, [])
+
+  // /my-planet/customize redirects here with ?customize=1 so it opens the
+  // real customizer instead of duplicating it on its own route.
+  useEffect(() => {
+    if (loading || new URLSearchParams(window.location.search).get('customize') !== '1') return
+    setCustomizerOpen(true)
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('customize')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [loading])
 
   if (!hydrated || loading) return null
 
@@ -685,7 +711,7 @@ export default function MyPlanetPage() {
           </section>
         )}
 
-        <div className="mt-5">
+        <div id="customize" className="mt-5 scroll-mt-24">
           <button
             type="button"
             onClick={() => setCustomizerOpen((open) => !open)}
@@ -806,7 +832,7 @@ export default function MyPlanetPage() {
               <h2 className="mt-1 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{tMyPlanet('myPosts')}</h2>
             </div>
             <button type="button" onClick={() => setCreatePostOpen(true)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ color: '#fff', background: 'rgba(124,58,237,0.76)', border: '1px solid rgba(167,139,250,0.38)' }}>
-              {tMyPlanet('createFirstPost')}
+              {tStream('createPost')}
             </button>
           </div>
           <PostGrid

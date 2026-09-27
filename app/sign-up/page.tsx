@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 // Phase 1: planet visual is determined during /onboarding — re-enable once onboarding-complete API is wired
 const PLANET_PICKER_ENABLED = false
@@ -195,18 +196,11 @@ function SignUpForm() {
           <label htmlFor="password" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("password")}
           </label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={tAuth("passwordMinPlaceholder")}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border-mid)",
-              color: "var(--foreground)",
-            }}
             required
             minLength={8}
           />

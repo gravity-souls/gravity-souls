@@ -10,7 +10,7 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
-import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import PlanetCustomizer from '@/components/planet/PlanetCustomizer'
 import { authClient } from '@/lib/auth-client'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
@@ -18,7 +18,6 @@ import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereSty
 import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
-import { PLANET_TEXTURE_OPTIONS, resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -219,28 +218,13 @@ function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
   }
 }
 
-function planetConfigFromProfile(planet: PlanetProfile): PlanetConfig {
-  const introspection = planet.cognitiveAxes.introspective / 100
-  const abstraction = planet.cognitiveAxes.abstract / 100
-
-  return {
-    baseTexture: resolvePlanetTexture(planet),
-    tintColor: planet.visual.coreColor,
-    atmosphereColor: planet.visual.accentColor,
-    atmosphereDensity: 0.06 + introspection * 0.18,
-    hasRing: resolvePlanetHasRing(),
-    ringColor: planet.visual.accentColor,
-    rotationSpeed: 0.014 + abstraction * 0.012,
-    cloudOpacity: planet.communicationStyle === 'poetic' || planet.communicationStyle === 'reflective' ? 0.12 : 0,
-  }
-}
-
 // --- Page ---------------------------------------------------------------------
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
   const tSettings = useTranslations('planetSettings')
   const tLanguage = useTranslations('language')
+  const tMyPlanet = useTranslations('myPlanet')
   const { data: session, refetch: refetchSession } = authClient.useSession()
   const [mounted,   setMounted]   = useState(false)
   const [draft,     setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
@@ -250,6 +234,8 @@ export default function PlanetSettingsPage() {
   const [saved,     setSaved]     = useState(false)
   const [error,     setError]     = useState('')
   const [accentColor, setAccentColor] = useState('#a78bfa')
+  const [planetConfig, setPlanetConfig] = useState<PlanetConfig | null>(null)
+  const [userLevel, setUserLevel] = useState(1)
 
   useEffect(() => {
     let cancelled = false
@@ -288,6 +274,8 @@ export default function PlanetSettingsPage() {
           const converted = planetProfileToDraft(planet)
           setDraft(converted)
           setAccentColor(planet.visual.coreColor)
+          if (meData?.user?.planetConfig) setPlanetConfig(meData.user.planetConfig)
+          if (typeof meData?.user?.userLevel === 'number') setUserLevel(meData.user.userLevel)
         })
         .catch(() => {
           if (cancelled) return
@@ -301,11 +289,6 @@ export default function PlanetSettingsPage() {
   const previewPlanet = useMemo(
     () => (session?.user?.id ? buildPlanetFromDraft(draft, session.user.id) : null),
     [draft, session?.user?.id],
-  )
-
-  const previewPlanetConfig = useMemo(
-    () => (previewPlanet ? planetConfigFromProfile(previewPlanet) : null),
-    [previewPlanet],
   )
 
   // Keep accent color in sync with climate choice
@@ -387,7 +370,7 @@ export default function PlanetSettingsPage() {
     }
   }
 
-  if (!mounted || !previewPlanet || !previewPlanetConfig) return null
+  if (!mounted || !previewPlanet || !planetConfig) return null
 
   return (
     <AppShell>
@@ -490,39 +473,24 @@ export default function PlanetSettingsPage() {
               </SectionCard>
             </div>
 
-            <SectionCard
-              title={tSettings('planetPhoto')}
-              description={tSettings('planetPhotoDescription')}
-              color={accentColor}
-            >
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PLANET_TEXTURE_OPTIONS.map((option) => {
-                  const selected = resolvePlanetTexture(previewPlanet) === option.file
-                  return (
-                    <button
-                      key={option.file}
-                      type="button"
-                      onClick={() => update('textureFile', option.file)}
-                      className="rounded-2xl p-3 flex flex-col items-center gap-2 transition-all duration-200"
-                      style={{
-                        background: selected ? `${accentColor}18` : 'rgba(255,255,255,0.03)',
-                        border: selected ? `1px solid ${accentColor}55` : '1px solid rgba(255,255,255,0.08)',
-                        cursor: 'pointer',
-                      }}
-                      aria-pressed={selected}
-                    >
-                      <PlanetAvatar textureFile={option.file} size={52} glowColor={accentColor} />
-                      <span className="text-xs font-medium" style={{ color: selected ? 'var(--foreground)' : 'var(--ink)' }}>
-                        {option.label}
-                      </span>
-                      <span className="text-[10px] text-center leading-snug" style={{ color: 'var(--ghost)' }}>
-                        {option.tone}
-                      </span>
-                    </button>
-                  )
-                })}
+            <div id="customize" className="scroll-mt-24 flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
+                  {tMyPlanet('customizeYourPlanet')}
+                </h2>
+                <p className="text-xs leading-snug" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                  {tSettings('planetPhotoDescription')}
+                </p>
               </div>
-            </SectionCard>
+              <div className="rounded-2xl border border-white/10 bg-[rgba(5,4,18,0.76)] p-4 backdrop-blur">
+                <PlanetCustomizer
+                  initialConfig={planetConfig}
+                  planetName={planetName || previewPlanet.name}
+                  userLevel={userLevel}
+                  onSaved={setPlanetConfig}
+                />
+              </div>
+            </div>
 
             <SectionCard
               title={tSettings('emotionalClimate')}
@@ -628,7 +596,7 @@ export default function PlanetSettingsPage() {
               >
                 {tSettings('livePreview')}
               </span>
-              <PlanetGlobe planetConfig={previewPlanetConfig} size={190} />
+              <PlanetGlobe planetConfig={planetConfig} size={190} />
             </div>
 
             {/* Save button */}

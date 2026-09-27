@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   return (
@@ -102,17 +103,10 @@ function ResetPasswordForm() {
           <label htmlFor="newPassword" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("newPassword")}
           </label>
-          <input
+          <PasswordInput
             id="newPassword"
-            type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border-mid)",
-              color: "var(--foreground)",
-            }}
             required
             minLength={8}
           />
@@ -122,17 +116,10 @@ function ResetPasswordForm() {
           <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("confirmPassword")}
           </label>
-          <input
+          <PasswordInput
             id="confirmPassword"
-            type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border-mid)",
-              color: "var(--foreground)",
-            }}
             required
             minLength={8}
           />

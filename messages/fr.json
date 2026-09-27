@@ -69,15 +69,12 @@
     "dailyResonanceReady": "Votre résonance du jour est prête",
     "dailyResonanceDescription": "Cinq planètes sont entrées dans votre orbite aujourd'hui. Voyez qui résonne, et pourquoi.",
     "openResonance": "Ouvrir la résonance",
-    "signalNewReplies": "18 nouvelles réponses",
-    "signalActiveRooms": "5 salons actifs",
-    "signalBuildLogs": "12 journaux de build",
     "nebulaContemplative": "Solitude / Introspection",
     "nebulaTechnical": "Construction / Systèmes",
     "nebulaEmotional": "Émotion / Chaleur",
     "nebulaWandering": "Errance / Frontières",
     "exploreExperience": "Explorer l’expérience",
-    "exploreExperienceCaption": "Regardez votre planète se former dans le globe cosmique en direct."
+    "exploreExperienceCaption": "Une visite guidée du globe cosmique, illustrée en 3D."
   },
   "galaxyPage": {
     "galaxy": "Galaxie",
@@ -272,7 +269,6 @@
     "signalScore": "Score signal",
     "viewConstellation": "Voir votre constellation →",
     "noPostsYet": "Vous n'avez pas encore envoyé de signaux.",
-    "createFirstPost": "Créer votre premier post",
     "editProfile": "Modifier le profil",
     "level": "Niveau {level}",
     "xpToNext": "{xp} XP avant le niveau suivant",
@@ -343,8 +339,7 @@
     "displayNamePlaceholder": "Votre nom d'affichage...",
     "planetName": "Nom de la planète",
     "planetNamePlaceholder": "Nommez votre planète...",
-    "planetPhoto": "Photo de planète",
-    "planetPhotoDescription": "Choisissez la texture visible sur votre profil, vos cartes et vos messages.",
+    "planetPhotoDescription": "Texture, couleur, anneaux et mouvement — tout le monde voit aussi cela.",
     "emotionalClimate": "Climat émotionnel",
     "emotionalClimateDescription": "La météo actuelle de votre monde intérieur. Elle pilote la couleur et la surface.",
     "interestEcology": "Écologie d'intérêts",
@@ -843,7 +838,9 @@
     "sideNav": "Navigation latérale",
     "mobileNav": "Navigation mobile",
     "unread": "Non lu",
-    "deleteNotification": "Supprimer la notification"
+    "deleteNotification": "Supprimer la notification",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "planetActions": {
     "planetDepth": "Profondeur de la planète",

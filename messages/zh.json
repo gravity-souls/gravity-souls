@@ -69,15 +69,12 @@
     "dailyResonanceReady": "你的每日共鸣已准备好",
     "dailyResonanceDescription": "今天有五颗星球进入你的轨道。看看谁与你共鸣，以及原因。",
     "openResonance": "打开共鸣",
-    "signalNewReplies": "18 条新回复",
-    "signalActiveRooms": "5 个活跃房间",
-    "signalBuildLogs": "12 条构建日志",
     "nebulaContemplative": "孤独 / 内省",
     "nebulaTechnical": "构建 / 系统",
     "nebulaEmotional": "情感 / 温暖",
     "nebulaWandering": "流浪 / 边界",
     "exploreExperience": "探索体验",
-    "exploreExperienceCaption": "在实时宇宙球中看你的星球成形。"
+    "exploreExperienceCaption": "宇宙球的 3D 图解导览。"
   },
   "galaxyPage": {
     "galaxy": "星系",
@@ -272,7 +269,6 @@
     "signalScore": "信号强度",
     "viewConstellation": "查看你的星座 →",
     "noPostsYet": "你还没有发送任何信号。",
-    "createFirstPost": "创建第一条动态",
     "editProfile": "编辑资料",
     "level": "等级 {level}",
     "xpToNext": "距下一级还需 {xp} XP",
@@ -343,8 +339,7 @@
     "displayNamePlaceholder": "你的显示名称...",
     "planetName": "星球名称",
     "planetNamePlaceholder": "为你的星球命名...",
-    "planetPhoto": "星球照片",
-    "planetPhotoDescription": "选择其他用户在资料、卡片和消息中看到的星球纹理。",
+    "planetPhotoDescription": "纹理、颜色、光环与动态——其他人也会看到这些。",
     "emotionalClimate": "情绪气候",
     "emotionalClimateDescription": "你内在世界当前的天气，会驱动颜色和表面。",
     "interestEcology": "兴趣生态",
@@ -843,7 +838,9 @@
     "sideNav": "侧边导航",
     "mobileNav": "移动导航",
     "unread": "未读",
-    "deleteNotification": "删除通知"
+    "deleteNotification": "删除通知",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
   },
   "planetActions": {
     "planetDepth": "星球深度",
