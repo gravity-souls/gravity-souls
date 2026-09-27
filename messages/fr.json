@@ -20,7 +20,8 @@
     "mySpace": "Mon espace",
     "account": "Compte",
     "collapseGalaxyLinks": "Réduire les liens de galaxies",
-    "expandGalaxyLinks": "Développer les liens de galaxies"
+    "expandGalaxyLinks": "Développer les liens de galaxies",
+    "signInRequired": "Connexion requise"
   },
   "topbar": {
     "searchPlaceholder": "Chercher planètes, galaxies, événements...",
@@ -506,7 +507,8 @@
     "resetPasswordLinkInvalid": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau ci-dessous.",
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le nouveau mot de passe",
-    "passwordsDontMatch": "Les mots de passe ne correspondent pas"
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas",
+    "signInToContinue": "Connectez-vous pour continuer là où vous étiez."
   },
   "common": {
     "loading": "Chargement...",

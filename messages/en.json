@@ -20,7 +20,8 @@
     "mySpace": "My Space",
     "account": "Account",
     "collapseGalaxyLinks": "Collapse galaxy links",
-    "expandGalaxyLinks": "Expand galaxy links"
+    "expandGalaxyLinks": "Expand galaxy links",
+    "signInRequired": "Sign in required"
   },
   "topbar": {
     "searchPlaceholder": "Search planets, galaxies, events...",
@@ -506,7 +507,8 @@
     "resetPasswordLinkInvalid": "This reset link is invalid or has expired. Request a new one below.",
     "newPassword": "New password",
     "confirmPassword": "Confirm new password",
-    "passwordsDontMatch": "Passwords don't match"
+    "passwordsDontMatch": "Passwords don't match",
+    "signInToContinue": "Sign in to continue where you left off."
   },
   "common": {
     "loading": "Loading...",

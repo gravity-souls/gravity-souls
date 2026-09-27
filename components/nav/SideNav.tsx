@@ -13,6 +13,7 @@ import {
   CircleDot,
   Globe2,
   Home,
+  Lock,
   Orbit,
   Settings,
   Waves,
@@ -49,23 +50,26 @@ interface NavItem {
   labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'settings'
   Icon: LucideIcon
   badge?: boolean
+  // Requires an account — see proxy.ts's matcher, the actual source of truth
+  // for which routes bounce a signed-out visitor to /sign-in.
+  gated?: boolean
 }
 
 const MAIN_ITEMS: NavItem[] = [
   { href: '/', labelKey: 'home', Icon: Home },
-  { href: '/stream', labelKey: 'stream', Icon: Waves },
-  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot },
+  { href: '/stream', labelKey: 'stream', Icon: Waves, gated: true },
+  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot, gated: true },
 ]
 
 const GALAXIES_ITEM: NavItem = { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 }
-const MY_PLANET_ITEM: NavItem = { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true }
+const MY_PLANET_ITEM: NavItem = { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true, gated: true }
 
 const MOBILE_TABS: NavItem[] = [
   { href: '/', labelKey: 'home', Icon: Home },
-  { href: '/stream', labelKey: 'stream', Icon: Waves },
-  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot },
+  { href: '/stream', labelKey: 'stream', Icon: Waves, gated: true },
+  { href: '/resonance', labelKey: 'resonance', Icon: CircleDot, gated: true },
   { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 },
-  { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true },
+  { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true, gated: true },
 ]
 
 interface Props {
@@ -89,11 +93,11 @@ function SectionLabel({ children, collapsed }: { children: string; collapsed: bo
   )
 }
 
-function NavLink({ item, active, collapsed, level, label }: { item: NavItem; active: boolean; collapsed: boolean; level: number; label: string }) {
+function NavLink({ item, active, collapsed, level, label, showLock, lockLabel }: { item: NavItem; active: boolean; collapsed: boolean; level: number; label: string; showLock: boolean; lockLabel: string }) {
   return (
     <Link
       href={item.href}
-      title={collapsed ? label : undefined}
+      title={collapsed ? (showLock ? `${label} — ${lockLabel}` : label) : undefined}
       aria-current={active ? 'page' : undefined}
       className="flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium no-underline transition-colors hover:bg-white/5"
       style={{
@@ -109,6 +113,9 @@ function NavLink({ item, active, collapsed, level, label }: { item: NavItem; act
       >
         <span className="truncate">{label}</span>
         {item.badge && <LevelBadge level={level} size="sm" />}
+        {showLock && (
+          <Lock size={11} strokeWidth={2} className="shrink-0 opacity-50" aria-label={lockLabel} />
+        )}
       </span>
     </Link>
   )
@@ -162,6 +169,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
 
   const currentUserLevel = clampLevel(isAuthenticated ? userLevel : 1)
   const levelDotColor = LEVEL_DOT_COLORS[currentUserLevel]
+  const lockLabel = tNav('signInRequired')
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
   const galaxiesActive = isRouteActive(pathname, '/galaxies')
   const myPlanetActive = isRouteActive(pathname, '/my-planet')
@@ -216,7 +224,16 @@ export default function SideNav({ collapsed, onToggle }: Props) {
           <SectionLabel collapsed={collapsed}>{tNav('main')}</SectionLabel>
           <div className="space-y-1">
             {MAIN_ITEMS.map((item) => (
-              <NavLink key={item.href} item={item} label={tNav(item.labelKey)} active={isRouteActive(pathname, item.href)} collapsed={collapsed} level={currentUserLevel} />
+              <NavLink
+                key={item.href}
+                item={item}
+                label={tNav(item.labelKey)}
+                active={isRouteActive(pathname, item.href)}
+                collapsed={collapsed}
+                level={currentUserLevel}
+                showLock={!!item.gated && !isAuthenticated}
+                lockLabel={lockLabel}
+              />
             ))}
 
             <div>
@@ -259,7 +276,15 @@ export default function SideNav({ collapsed, onToggle }: Props) {
 
           <SectionLabel collapsed={collapsed}>{tNav('mySpace')}</SectionLabel>
           <div className="space-y-1">
-            <NavLink item={MY_PLANET_ITEM} label={tNav('myPlanet')} active={myPlanetActive} collapsed={collapsed} level={currentUserLevel} />
+            <NavLink
+              item={MY_PLANET_ITEM}
+              label={tNav('myPlanet')}
+              active={myPlanetActive}
+              collapsed={collapsed}
+              level={currentUserLevel}
+              showLock={!isAuthenticated}
+              lockLabel={lockLabel}
+            />
             <SubMenu open={showMyPlanetSubItems}>
               <SubLink href="/settings/planet" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/settings/planet')} Icon={Orbit} />
               <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
@@ -268,7 +293,15 @@ export default function SideNav({ collapsed, onToggle }: Props) {
 
           <SectionLabel collapsed={collapsed}>{tNav('account')}</SectionLabel>
           <div className="space-y-1">
-            <NavLink item={{ href: '/settings/planet', labelKey: 'settings', Icon: Settings }} label={tNav('settings')} active={isRouteActive(pathname, '/settings')} collapsed={collapsed} level={currentUserLevel} />
+            <NavLink
+              item={{ href: '/settings/planet', labelKey: 'settings', Icon: Settings, gated: true }}
+              label={tNav('settings')}
+              active={isRouteActive(pathname, '/settings')}
+              collapsed={collapsed}
+              level={currentUserLevel}
+              showLock={!isAuthenticated}
+              lockLabel={lockLabel}
+            />
           </div>
 
           <div className="flex-1" />
@@ -305,11 +338,19 @@ export default function SideNav({ collapsed, onToggle }: Props) {
             >
               <span className="relative">
                 <Icon size={20} strokeWidth={active ? 2.2 : 1.7} />
-                {item.badge && (
+                {item.badge && isAuthenticated && (
                   <span
                     className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-[#090d18]"
                     style={{ background: levelDotColor, boxShadow: `0 0 8px ${levelDotColor}88` }}
                     aria-hidden="true"
+                  />
+                )}
+                {item.gated && !isAuthenticated && (
+                  <Lock
+                    size={10}
+                    strokeWidth={2.4}
+                    className="absolute -right-1.5 -top-1 rounded-full bg-[#090d18] p-0.5 opacity-70"
+                    aria-label={lockLabel}
                   />
                 )}
               </span>

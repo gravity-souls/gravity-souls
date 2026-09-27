@@ -20,7 +20,8 @@
     "mySpace": "我的空间",
     "account": "账户",
     "collapseGalaxyLinks": "收起星系链接",
-    "expandGalaxyLinks": "展开星系链接"
+    "expandGalaxyLinks": "展开星系链接",
+    "signInRequired": "需要登录"
   },
   "topbar": {
     "searchPlaceholder": "搜索星球、星系、活动...",
@@ -506,7 +507,8 @@
     "resetPasswordLinkInvalid": "此重置链接无效或已过期。请在下方重新申请一个。",
     "newPassword": "新密码",
     "confirmPassword": "确认新密码",
-    "passwordsDontMatch": "两次输入的密码不一致"
+    "passwordsDontMatch": "两次输入的密码不一致",
+    "signInToContinue": "登录以继续之前的操作。"
   },
   "common": {
     "loading": "加载中...",

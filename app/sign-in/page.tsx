@@ -117,7 +117,7 @@ function SignInForm() {
         {tAuth("signIn")}
       </h1>
       <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
-        {tAuth("signInSubtitle")}
+        {nextDest ? tAuth("signInToContinue") : tAuth("signInSubtitle")}
       </p>
 
       <SocialAuthButtons onGoogle={handleGoogleSignIn} />
