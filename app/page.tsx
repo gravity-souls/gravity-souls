@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers'
-import GlobeClient from './demo/cosmic-globe/GlobeClient'
+import GlobeClient from './cosmic-globe/GlobeClient'
 import HomeDashboard from './HomeDashboard'
 
 const SESSION_COOKIE = 'better-auth.session_token'
 
-// Resolved server-side (same cookie check as app/demo/cosmic-globe/page.tsx) so a
+// Resolved server-side (same cookie check as app/cosmic-globe/page.tsx) so a
 // signed-out visitor's very first paint is the cosmic-globe showcase, with zero
 // client-side flash while a session check resolves. Signed-in visitors get the
 // live dashboard (HomeDashboard, the former content of this file).

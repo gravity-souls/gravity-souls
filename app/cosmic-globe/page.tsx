@@ -7,7 +7,7 @@ const SESSION_COOKIE = 'better-auth.session_token'
 // added client-side requests — the session cookie is HttpOnly and cannot be
 // read from the page's own JavaScript. See e2e/demo/cosmic-globe.spec.ts,
 // which asserts this route never makes an /api/* request.
-export default async function CosmicGlobeDemoPage() {
+export default async function CosmicGlobePage() {
   const cookieStore = await cookies()
   const signedIn = Boolean(
     cookieStore.get(SESSION_COOKIE)?.value || cookieStore.get(`__Secure-${SESSION_COOKIE}`)?.value,

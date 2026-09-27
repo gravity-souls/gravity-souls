@@ -2,7 +2,7 @@
 
 Reviewed on September 5, 2026. Baseline: commit `4f1ed6b`, before the guided demo changes.
 
-The public `/demo/cosmic-globe` route now presents three steps with translated
+The public `/cosmic-globe` route now presents three steps with translated
 copy, explicit navigation, pause/reset controls, and onboarding/sign-in links.
 The mobile primary action fits within a 390 × 844 viewport. The desktop layout
 places the story beside the globe; mobile places the globe above the story.

@@ -19,7 +19,7 @@ Custom planet textures are stored on local disk only during development. In prod
 
 ## Cosmic Globe introduction
 
-`/demo/cosmic-globe` is a public, translated three-step introduction. Its language
+`/cosmic-globe` is a public, translated three-step introduction. Its language
 selector only updates the browser locale cookie. It does not load account data or
 write to the database. The globe supports pause, reset, reduced motion, and a CSS
 fallback when WebGL is unavailable. Reset returns to the first step and preserves

@@ -16,7 +16,7 @@ interface Props {
    * this component never reads it and never calls an API. */
   signedIn: boolean
   /** True when this renders as "/" itself (the signed-out homepage) rather than
-   * the dedicated /demo/cosmic-globe route — hides the otherwise-circular
+   * the dedicated /cosmic-globe route — hides the otherwise-circular
    * "Back to home" footer link. */
   standalone?: boolean
 }

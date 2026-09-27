@@ -313,7 +313,7 @@ export default function HomeDashboard() {
               </div>
 
               <Link
-                href="/demo/cosmic-globe"
+                href="/cosmic-globe"
                 className="group relative flex items-center gap-4 rounded-2xl px-4 py-3 overflow-hidden transition-all duration-300"
                 style={{
                   background: 'linear-gradient(120deg, rgba(124,77,191,0.22), rgba(96,165,250,0.14))',

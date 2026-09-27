@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 
-const route = '/demo/cosmic-globe'
+const route = '/cosmic-globe'
 const globe = (page: Page) => page.locator('[data-status]')
 
 // Count real WebGL draws, including static frames, without adding test hooks to production.
@@ -195,7 +195,7 @@ test('navigation disposes the globe and restores the app shell', async ({ page }
 test('the introduction is readable before JavaScript loads', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } })
   const page = await context.newPage()
-  await page.goto('http://127.0.0.1:3100/demo/cosmic-globe')
+  await page.goto('http://127.0.0.1:3100/cosmic-globe')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('with you.')
   await expect(page.getByTestId('globe-fallback')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Create my planet' })).toBeInViewport({ ratio: 1 })
