@@ -18,24 +18,17 @@ import UniverseSearch from '@/components/universe/UniverseSearch'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
-import { getPlanetById } from '@/lib/mock-planets'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import {
-  UNIVERSE_PLANET_POSITIONS,
-  POSITIONED_PLANET_IDS,
   NEBULA_ZONES,
   ORBIT_PATHS,
-  buildPositionedPlanets as buildPositionedPlanetsWithFallback,
+  buildRealPositionedPlanets,
   type UniversePlanet,
 } from '@/lib/universe-field'
 import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { StreamPost } from '@/types/stream'
-
-function buildPositionedPlanets(apiPlanets: UniversePlanet[]): PlanetProfile[] {
-  return buildPositionedPlanetsWithFallback(apiPlanets, getPlanetById)
-}
 
 const SIGNAL_PULSE = [
   { label: 'Slow Thinkers', valueKey: 'signalNewReplies', color: '#a78bfa', href: '/galaxy/slow-thinkers' },
@@ -178,7 +171,7 @@ export default function HomeDashboard() {
   }
 
   // --- Nearby planets state ---------------------------------------------------
-  const [nearbyPlanets, setNearbyPlanets] = useState<PlanetProfile[]>([])
+  const [nearbyPlanets, setNearbyPlanets] = useState<ReturnType<typeof buildRealPositionedPlanets>>([])
   const [nearbyLoading, setNearbyLoading] = useState(true)
   const [orbitTeaserCount, setOrbitTeaserCount] = useState(0)
 
@@ -193,7 +186,7 @@ export default function HomeDashboard() {
       .then((r) => r.ok ? r.json() : [])
       .then((data: UniversePlanet[]) => {
         if (cancelled) return
-        setNearbyPlanets(buildPositionedPlanets(data))
+        setNearbyPlanets(buildRealPositionedPlanets(data))
       })
       .catch(() => {
         if (!cancelled) setNearbyPlanets([])
@@ -263,10 +256,10 @@ export default function HomeDashboard() {
       .finally(() => setJoiningSlug(null))
   }, [session, communities, router])
 
-  const featuredPlanet = nearbyPlanets[0]
+  const featuredPlanet = nearbyPlanets[0]?.planet
   const activeCommunityCount = galaxies.length || NEBULA_ZONES.length
   const homepageStats = [
-    { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length || POSITIONED_PLANET_IDS.length) },
+    { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length) },
     { label: tHome('statsGalaxiesAwake'), value: String(activeCommunityCount) },
     { label: tHome('statsOpenSignals'), value: '24h' },
   ]
@@ -489,30 +482,26 @@ export default function HomeDashboard() {
                   ))}
                 </div>
               ) : (
-                nearbyPlanets.map((planet) => {
-                  const pos = UNIVERSE_PLANET_POSITIONS.find((position) => position.id === planet.id)
-                  if (!pos) return null
-                  return (
-                    <div
-                      key={planet.id}
-                      className="absolute transition-transform duration-500 hover:scale-110"
-                      style={{
-                        left: `${pos.x}%`,
-                        top: `${pos.y}%`,
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: Math.round(10 + pos.depth * 10),
-                        opacity: 0.78 + pos.depth * 0.22,
-                      }}
-                    >
-                      <PlanetCard
-                        planet={planet}
-                        size={pos.size}
-                        rotating
-                        onClick={() => setSelectedPlanet(planet)}
-                      />
-                    </div>
-                  )
-                })
+                nearbyPlanets.map(({ position: pos, planet }) => (
+                  <div
+                    key={planet.id}
+                    className="absolute transition-transform duration-500 hover:scale-110"
+                    style={{
+                      left: `${pos.x}%`,
+                      top: `${pos.y}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: Math.round(10 + pos.depth * 10),
+                      opacity: 0.78 + pos.depth * 0.22,
+                    }}
+                  >
+                    <PlanetCard
+                      planet={planet}
+                      size={pos.size}
+                      rotating
+                      onClick={() => setSelectedPlanet(planet)}
+                    />
+                  </div>
+                ))
               )}
 
               {featuredPlanet && (

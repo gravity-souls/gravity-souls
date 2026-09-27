@@ -38,8 +38,6 @@ export const UNIVERSE_PLANET_POSITIONS = [
   { id: 'p-sorvae',   x: 42, y: 22, size: 50, depth: 0.78 },
 ] as const
 
-export const POSITIONED_PLANET_IDS = UNIVERSE_PLANET_POSITIONS.map((position) => position.id)
-
 export const NEBULA_ZONES = [
   { id: 'contemplative', labelKey: 'nebulaContemplative', x: 14, y: 35, color: '#a78bfa', size: 340, galaxySlug: 'slow-thinkers' },
   { id: 'technical',     labelKey: 'nebulaTechnical', x: 72, y: 30, color: '#60a5fa', size: 290, galaxySlug: 'signal-noise'  },
@@ -79,17 +77,6 @@ export function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
   }
   profile.visual = { ...profile.visual, textureFile: resolvePlanetTexture(profile) }
   return profile
-}
-
-/** Maps real API planets onto the fixed zone layout, backfilling any unmatched slot with a mock demo planet. */
-export function buildPositionedPlanets(
-  apiPlanets: UniversePlanet[],
-  getFallbackPlanet: (id: string) => PlanetProfile | undefined,
-): PlanetProfile[] {
-  const apiById = new Map(apiPlanets.map((planet) => [planet.id, universePlanetToProfile(planet)]))
-  return POSITIONED_PLANET_IDS
-    .map((id) => apiById.get(id) ?? getFallbackPlanet(id))
-    .filter((planet): planet is PlanetProfile => !!planet)
 }
 
 /** Maps real API planets onto as many zone-layout slots as there are real planets — no mock backfill. */

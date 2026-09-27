@@ -490,8 +490,3 @@ export const mockPlanets: PlanetProfile[] = [
     userId: 'usr_elarith',
   },
 ]
-
-/** Get a planet by its id */
-export function getPlanetById(id: string): PlanetProfile | undefined {
-  return mockPlanets.find((p) => p.id === id)
-}
