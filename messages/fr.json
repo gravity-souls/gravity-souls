@@ -843,7 +843,9 @@
     "sideNav": "Navigation latérale",
     "mobileNav": "Navigation mobile",
     "unread": "Non lu",
-    "deleteNotification": "Supprimer la notification"
+    "deleteNotification": "Supprimer la notification",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "planetActions": {
     "planetDepth": "Profondeur de la planète",

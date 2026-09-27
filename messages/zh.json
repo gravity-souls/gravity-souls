@@ -843,7 +843,9 @@
     "sideNav": "侧边导航",
     "mobileNav": "移动导航",
     "unread": "未读",
-    "deleteNotification": "删除通知"
+    "deleteNotification": "删除通知",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
   },
   "planetActions": {
     "planetDepth": "星球深度",

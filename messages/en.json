@@ -843,7 +843,9 @@
     "sideNav": "Side navigation",
     "mobileNav": "Mobile navigation",
     "unread": "Unread",
-    "deleteNotification": "Delete notification"
+    "deleteNotification": "Delete notification",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "planetActions": {
     "planetDepth": "Planet depth",

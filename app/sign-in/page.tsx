@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { authClient, waitForSession } from "@/lib/auth-client";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import LegalFooter from "@/components/auth/LegalFooter";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function SignInPage() {
   return (
@@ -151,18 +152,11 @@ function SignInForm() {
               {tAuth("forgotPassword")}
             </Link>
           </div>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={tAuth("passwordPlaceholder")}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border-mid)",
-              color: "var(--foreground)",
-            }}
             required
           />
         </div>
