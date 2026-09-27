@@ -209,10 +209,12 @@ export default function OnboardingPage() {
             >
               Begin Calibration
             </GlowButton>
-            <Link href="/sign-in" className="text-xs transition-colors" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
-              Already have a planet?{' '}
-              <span style={{ color: 'var(--star)' }}>Sign in</span>
-            </Link>
+            {!session?.user && (
+              <Link href="/sign-in" className="text-xs transition-colors" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
+                Already have a planet?{' '}
+                <span style={{ color: 'var(--star)' }}>Sign in</span>
+              </Link>
+            )}
           </div>
         </div>
       </OnboardingShell>
@@ -249,22 +251,24 @@ export default function OnboardingPage() {
             >
               {sessionPending ? 'Resolving…' : saving ? 'Saving…' : 'Save My Planet'}
             </GlowButton>
-            <button
-              type="button"
-              disabled={sessionPending}
-              onClick={handleSignInFromReveal}
-              className="text-xs text-center transition-opacity"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: sessionPending ? 'not-allowed' : 'pointer',
-                color: 'var(--ghost)',
-                opacity: sessionPending ? 0.4 : 1,
-              }}
-            >
-              Already have a planet?{' '}
-              <span style={{ color: 'var(--star)' }}>Sign in</span>
-            </button>
+            {!session?.user && (
+              <button
+                type="button"
+                disabled={sessionPending}
+                onClick={handleSignInFromReveal}
+                className="text-xs text-center transition-opacity"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: sessionPending ? 'not-allowed' : 'pointer',
+                  color: 'var(--ghost)',
+                  opacity: sessionPending ? 0.4 : 1,
+                }}
+              >
+                Already have a planet?{' '}
+                <span style={{ color: 'var(--star)' }}>Sign in</span>
+              </button>
+            )}
           </div>
 
           <button
