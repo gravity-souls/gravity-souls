@@ -77,7 +77,14 @@ test.describe.serial('Phase 25 — sign-up policy acceptance', () => {
     await expect(submit).toBeDisabled()
   })
 
-  test('a full sign-up with the checkbox checked succeeds and records PolicyAcceptance for all three types', async ({ page }) => {
+  test('a full sign-up with the checkbox checked succeeds and records PolicyAcceptance for all three types', async ({ page }, testInfo) => {
+    // Real WebKit under CI's shared, sequentially-loaded server occasionally
+    // takes just over the file's default 20s test timeout to settle the
+    // post-sign-up redirect — give this one more headroom (see also the
+    // parallelized follow-up fetches in app/sign-up/page.tsx, which reduce
+    // how long that redirect legitimately takes to fire).
+    testInfo.setTimeout(30_000)
+
     await page.goto('/sign-up')
     await page.fill('#name', signUpName)
     await page.fill('#email', signUpEmail)
@@ -87,7 +94,7 @@ test.describe.serial('Phase 25 — sign-up policy acceptance', () => {
     await page.click('button[type="submit"]')
 
     // Hard navigation via window.location.href once sign-up + follow-up calls resolve.
-    await page.waitForURL((url) => !url.pathname.startsWith('/sign-up'), { timeout: 20_000 })
+    await page.waitForURL((url) => !url.pathname.startsWith('/sign-up'), { timeout: 25_000 })
 
     const user = await prisma.user.findUniqueOrThrow({ where: { email: signUpEmail } })
     signUpUserId = user.id

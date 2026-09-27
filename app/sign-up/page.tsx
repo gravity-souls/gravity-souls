@@ -73,12 +73,19 @@ function SignUpForm() {
 
       const fromOnboarding = searchParams.get('from') === 'onboarding';
 
-      try {
-        await fetch("/api/user/language", { cache: "no-store" });
-        // Skip legacy planet-config write for onboarding-origin users:
-        // planet visual is set by /api/onboarding/complete via buildPlanetFromDraft.
-        if (!fromOnboarding) {
-          await fetch("/api/user/planet-config", {
+      // These follow-up calls are independent of each other (and, for the
+      // onboarding handoff, independent of /api/onboarding/complete too), so
+      // they run concurrently instead of as a serial waterfall — each is
+      // still best-effort from the client's perspective, logging rather than
+      // blocking the redirect on failure.
+      const languageCall = fetch("/api/user/language", { cache: "no-store" })
+        .catch((e) => { console.error("Failed to save language:", e); });
+
+      // Skip legacy planet-config write for onboarding-origin users:
+      // planet visual is set by /api/onboarding/complete via buildPlanetFromDraft.
+      const planetConfigCall = fromOnboarding
+        ? Promise.resolve()
+        : fetch("/api/user/planet-config", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -88,21 +95,13 @@ function SignUpForm() {
               hasRing: selectedPlanet.hasRing,
               ringColor: selectedPlanet.ringColor,
             }),
-          });
-        }
-      } catch (e) {
-        console.error("Failed to save config:", e);
-      }
+          }).catch((e) => { console.error("Failed to save config:", e); });
 
-      try {
-        await fetch("/api/user/policy-acceptance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-      } catch (e) {
-        console.error("Failed to record policy acceptance:", e);
-      }
+      const policyCall = fetch("/api/user/policy-acceptance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }).catch((e) => { console.error("Failed to record policy acceptance:", e); });
 
       if (fromOnboarding) {
         const isReady = sessionStorage.getItem('gs_onboarding_ready') === 'true';
@@ -110,11 +109,15 @@ function SignUpForm() {
         if (isReady && draftRaw) {
           try {
             const draft = JSON.parse(draftRaw);
-            const res = await fetch('/api/onboarding/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ draft }),
-            });
+            const [res] = await Promise.all([
+              fetch('/api/onboarding/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ draft }),
+              }),
+              languageCall,
+              policyCall,
+            ]);
             if (res.ok) {
               sessionStorage.removeItem('gs_onboarding_draft');
               sessionStorage.removeItem('gs_onboarding_step');
@@ -125,6 +128,8 @@ function SignUpForm() {
           } catch (e) {
             console.error('Onboarding complete failed:', e);
           }
+        } else {
+          await Promise.all([languageCall, policyCall]);
         }
         // Handoff failed or draft missing — return to onboarding so user can retry.
         // Draft is kept in sessionStorage to preserve calibration progress.
@@ -132,6 +137,7 @@ function SignUpForm() {
         return;
       }
 
+      await Promise.all([languageCall, planetConfigCall, policyCall]);
       window.location.href = nextDest || '/onboarding'
     } catch {
       setError(tCommon("error"));
