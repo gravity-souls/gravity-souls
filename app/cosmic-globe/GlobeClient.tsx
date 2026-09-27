@@ -39,7 +39,8 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
     <div className={styles.page}>
       <header className={styles.header}>
         <Link href="/" prefetch={false} className={styles.brand} aria-label={t('home')}>
-          <span className={styles.brandMark} aria-hidden="true">g<span>·</span></span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, no optimization needed */}
+          <img src="/gravity-souls-icon.svg" alt="" className={styles.brandMark} aria-hidden="true" />
           <span>Gravity Souls</span>
         </Link>
         <div className={styles.headerActions}>

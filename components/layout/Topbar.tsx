@@ -109,9 +109,14 @@ export default function Topbar() {
     >
       <div className="grid h-full w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-4 md:grid-cols-[220px_minmax(280px,1fr)_auto] lg:px-5">
         <Link href="/" aria-label={tA11y('homeNav')} className="flex min-w-0 items-center gap-2 justify-self-start text-white no-underline">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-400/12 text-sm font-semibold text-violet-100 shadow-[0_0_24px_rgba(124,58,237,0.18)]">
-            GS
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, no optimization needed */}
+          <img
+            src="/gravity-souls-icon.svg"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(124,58,237,0.18)]"
+          />
           <span className="hidden text-sm font-semibold tracking-wide text-white/90 sm:block">Gravity Souls</span>
         </Link>
 
