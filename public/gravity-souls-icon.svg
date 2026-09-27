@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Gravity Souls icon</title>
+  <desc id="desc">A dark eclipse with two stars in orbit.</desc>
+  <defs>
+    <radialGradient id="space" cx="50%" cy="44%" r="70%">
+      <stop stop-color="#202040"/>
+      <stop offset="1" stop-color="#080E1F"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="38" y1="34" x2="91" y2="91" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7DBFF"/>
+      <stop offset=".55" stop-color="#AFB7E5"/>
+      <stop offset="1" stop-color="#8066B2"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#space)"/>
+  <g transform="rotate(-25 64 64)">
+    <ellipse cx="64" cy="64" rx="53" ry="23" fill="none" stroke="#A998D3" stroke-opacity=".75" stroke-width="2"/>
+  </g>
+  <circle cx="64" cy="64" r="29" fill="#0A1021" stroke="url(#ring)" stroke-width="3.5"/>
+  <path d="M45 43a29 29 0 0 1 46 19" fill="none" stroke="#F1E9FF" stroke-opacity=".88" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="64" cy="64" r="21" fill="#13152B"/>
+  <circle cx="17" cy="84" r="4" fill="#E9D8FF"/>
+  <circle cx="111" cy="43" r="3.5" fill="#C6D2FA"/>
+  <path d="M100 15v8m-4-4h8" stroke="#DCCCF8" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

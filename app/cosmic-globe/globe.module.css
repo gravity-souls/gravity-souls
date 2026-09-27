@@ -4,8 +4,7 @@
 .page :is(button, a):focus-visible { outline: 2px solid #a7ddff; outline-offset: 5px; }
 .header { height: 88px; margin: 0 5%; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #a0c6ef14; position: relative; z-index: 5; }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; letter-spacing: -.025em; text-decoration: none; }
-.brandMark { display: grid; place-content: center; position: relative; border: 1px solid #82bdeb55; width: 32px; height: 32px; border-radius: 50%; color: #c3e6ff; font-size: 23px; font-weight: 400; }
-.brandMark span { position: absolute; right: 4px; top: -3px; }
+.brandMark { display: block; width: 32px; height: 32px; border-radius: 50%; }
 .headerActions { display: flex; gap: 24px; align-items: center; }
 .signIn { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #c1d1e3; text-decoration: none; }
 .experience { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; min-height: calc(100dvh - 154px); padding: 36px 5% 40px; gap: 6%; }
@@ -50,7 +49,7 @@
   .header { height: 62px; margin: 0 6%; }
   .headerActions { gap: 14px; }
   .brand { font-size: 13px; gap: 8px; }
-  .brandMark { width: 27px; height: 27px; font-size: 20px; }
+  .brandMark { width: 27px; height: 27px; }
   .experience { grid-template-columns: 1fr; gap: 22px; padding: 14px 7% 24px; min-height: 0; }
   .stage { height: 195px; }
   .coordinates { padding: 0 2%; font-size: 8px; }

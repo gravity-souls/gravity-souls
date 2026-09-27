@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -9,6 +9,7 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import EmptyState from '@/components/ui/EmptyState'
+import SectionCard from '@/components/ui/SectionCard'
 import Tag from '@/components/ui/Tag'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetCustomizer from '@/components/planet/PlanetCustomizer'
@@ -22,8 +23,16 @@ import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import CreatePostModal from '@/components/stream/CreatePostModal'
 import PostDetail from '@/components/stream/PostDetail'
 import PostGrid from '@/components/stream/PostGrid'
+import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
+import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
+import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereStyle'
+import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
+import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
+import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getResonanceMatches } from '@/lib/match'
+import type { PlanetDraft } from '@/types/creation'
+import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
@@ -150,6 +159,8 @@ export default function MyPlanetPage() {
   const tMyPlanet = useTranslations('myPlanet')
   const tNav = useTranslations('nav')
   const tStream = useTranslations('stream')
+  const tSettings = useTranslations('planetSettings')
+  const tCommon = useTranslations('common')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -163,6 +174,11 @@ export default function MyPlanetPage() {
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
   const [postRefreshKey, setPostRefreshKey] = useState(0)
   const [customizerOpen, setCustomizerOpen] = useState(false)
+  const [tuneOpen, setTuneOpen] = useState(false)
+  const [draft, setDraft] = useState<PlanetDraft>(INITIAL_DRAFT)
+  const [tuneSaving, setTuneSaving] = useState(false)
+  const [tuneSaved, setTuneSaved] = useState(false)
+  const [tuneError, setTuneError] = useState('')
   const [renaming, setRenaming] = useState(false)
   const [renameInput, setRenameInput] = useState('')
   const [taglineInput, setTaglineInput] = useState('')
@@ -234,6 +250,7 @@ export default function MyPlanetPage() {
 
       if (p) {
         setPlanet(p)
+        setDraft(planetProfileToDraft(p))
         setStoredUser({ planetConfig: userPlanetConfig ?? planetConfigFromSource(null, p), userLevel })
 
         // These five reads are independent of each other, so they run concurrently
@@ -367,6 +384,74 @@ export default function MyPlanetPage() {
     })
     return () => cancelAnimationFrame(frame)
   }, [loading])
+
+  const tunedPreview = useMemo(
+    () => buildPlanetFromDraft(draft, planet?.userId ?? ''),
+    [draft, planet?.userId],
+  )
+
+  function updateDraft<K extends keyof PlanetDraft>(key: K, value: PlanetDraft[K]) {
+    setDraft((d) => ({ ...d, [key]: value }))
+  }
+
+  async function handleTuneSave() {
+    setTuneSaving(true)
+    setTuneError('')
+
+    try {
+      const res = await fetch('/api/my-planet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tagline: tunedPreview.tagline,
+          mood: tunedPreview.mood,
+          style: tunedPreview.style,
+          lifestyle: tunedPreview.lifestyle,
+          coreThemes: tunedPreview.coreThemes,
+          contentFragments: tunedPreview.contentFragments,
+          visual: tunedPreview.visual,
+          abstractAxis: tunedPreview.cognitiveAxes.abstract,
+          introspectiveAxis: tunedPreview.cognitiveAxes.introspective,
+          location: tunedPreview.location,
+          languages: tunedPreview.languages,
+          culturalTags: tunedPreview.culturalTags,
+          travelCities: tunedPreview.travelCities,
+          musicTaste: tunedPreview.musicTaste,
+          bookTaste: tunedPreview.bookTaste,
+          filmTaste: tunedPreview.filmTaste,
+          communicationStyle: tunedPreview.communicationStyle,
+          matchPreference: tunedPreview.matchPreference,
+        }),
+      })
+      if (!res.ok) {
+        throw new Error((await res.text()) || tSettings('saveSettingsFailed'))
+      }
+      setPlanet((current) => current ? {
+        ...current,
+        tagline: tunedPreview.tagline,
+        mood: tunedPreview.mood,
+        style: tunedPreview.style,
+        lifestyle: tunedPreview.lifestyle,
+        coreThemes: tunedPreview.coreThemes,
+        contentFragments: tunedPreview.contentFragments,
+        visual: tunedPreview.visual,
+        cognitiveAxes: tunedPreview.cognitiveAxes,
+        location: tunedPreview.location,
+        languages: tunedPreview.languages,
+        culturalTags: tunedPreview.culturalTags,
+        travelCities: tunedPreview.travelCities,
+        communicationStyle: tunedPreview.communicationStyle,
+        matchPreference: tunedPreview.matchPreference,
+      } : current)
+      setTuneSaved(true)
+      setTuneOpen(false)
+      setTimeout(() => setTuneSaved(false), 2800)
+    } catch (e) {
+      setTuneError(e instanceof Error ? e.message : tSettings('saveSettingsFailed'))
+    } finally {
+      setTuneSaving(false)
+    }
+  }
 
   if (!hydrated || loading) return null
 
@@ -615,7 +700,7 @@ export default function MyPlanetPage() {
                     <h1
                       className="text-4xl sm:text-5xl font-bold leading-tight"
                       style={{
-                        background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
+                        backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -694,7 +779,11 @@ export default function MyPlanetPage() {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                <GlowButton href="/settings/planet" variant="primary" className="px-5 py-2.5 text-sm">
+                <GlowButton
+                  onClick={() => setTuneOpen((open) => !open)}
+                  variant="primary"
+                  className="px-5 py-2.5 text-sm"
+                >
                   {tHome('tuneAtmosphere')} ⚙
                 </GlowButton>
                 <GlowButton href="/sbti?next=/my-planet" variant="ghost" className="px-5 py-2.5 text-sm">
@@ -704,6 +793,102 @@ export default function MyPlanetPage() {
             </div>
           </div>
         </section>
+
+        {tuneOpen && (
+          <section id="tune" className="mt-4 scroll-mt-24 flex flex-col gap-4">
+            <SectionCard
+              title={tSettings('emotionalClimate')}
+              description={tSettings('emotionalClimateDescription')}
+              color={visual.coreColor}
+            >
+              <Step1EmotionalTone
+                value={draft.climateKey}
+                onChange={(v) => updateDraft('climateKey', v)}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title={tSettings('interestEcology')}
+              description={tSettings('interestEcologyDescription')}
+              color={visual.coreColor}
+            >
+              <Step2InterestEcology
+                selectedThemes={draft.selectedThemes}
+                lifestyle={draft.lifestyle}
+                onThemesChange={(v) => updateDraft('selectedThemes', v)}
+                onLifestyleChange={(v) => updateDraft('lifestyle', v)}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title={tSettings('atmosphere')}
+              description={tSettings('atmosphereDescription')}
+              color="#a78bfa"
+            >
+              <Step3AtmosphereStyle
+                communicationStyle={draft.communicationStyle}
+                abstractAxis={draft.abstractAxis}
+                introspectiveAxis={draft.introspectiveAxis}
+                onStyleChange={(v) => updateDraft('communicationStyle', v)}
+                onAbstractChange={(v) => updateDraft('abstractAxis', v)}
+                onIntrospectiveChange={(v) => updateDraft('introspectiveAxis', v)}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title={tSettings('culturalPaths')}
+              description={tSettings('culturalPathsDescription')}
+              color="#34d399"
+            >
+              <Step4CulturalPaths
+                location={draft.location}
+                languages={draft.languages}
+                travelCities={draft.travelCities}
+                culturalTags={draft.culturalTags}
+                onLocationChange={(v) => updateDraft('location', v || undefined)}
+                onLanguagesChange={(v) => updateDraft('languages', v)}
+                onCitiesChange={(v) => updateDraft('travelCities', v)}
+                onCulturalChange={(v) => updateDraft('culturalTags', v)}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title={tSettings('relationalGravity')}
+              description={tSettings('relationalGravityDescription')}
+              color="#fbbf24"
+            >
+              <Step5RelationalGravity
+                matchPreference={draft.matchPreference}
+                connectionTypes={draft.connectionTypes}
+                onMatchPrefChange={(v) => updateDraft('matchPreference', v)}
+                onConnectionTypesChange={(v) => updateDraft('connectionTypes', v)}
+              />
+            </SectionCard>
+
+            {tuneError && (
+              <p className="text-xs font-medium" style={{ color: '#f87171' }}>{tuneError}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <GlowButton
+                onClick={handleTuneSave}
+                variant="primary"
+                disabled={tuneSaving}
+                className="px-5 py-2.5 text-sm"
+              >
+                {tuneSaving ? tSettings('saving') : tSettings('saveChanges')}
+              </GlowButton>
+              <button
+                type="button"
+                onClick={() => setTuneOpen(false)}
+                className="px-5 py-2.5 text-sm rounded-lg border border-white/10"
+                style={{ color: 'var(--ghost)' }}
+              >
+                {tCommon('cancel')}
+              </button>
+            </div>
+          </section>
+        )}
 
         {xpSummary && (
           <section className="mt-4">
@@ -905,6 +1090,22 @@ export default function MyPlanetPage() {
           setPostRefreshKey((key) => key + 1)
         }}
       />
+
+      <div
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl flex items-center gap-2.5 transition-all duration-300"
+        style={{
+          background: 'rgba(52,211,153,0.12)',
+          border: '1px solid rgba(52,211,153,0.28)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          opacity: tuneSaved ? 1 : 0,
+          transform: tuneSaved ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(12px)',
+          pointerEvents: 'none',
+        }}
+      >
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }} />
+        <span className="text-xs font-medium" style={{ color: '#34d399' }}>{tSettings('updated')}</span>
+      </div>
     </AppShell>
   )
 }

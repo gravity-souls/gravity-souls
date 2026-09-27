@@ -1,67 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
-import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
-import PlanetCustomizer from '@/components/planet/PlanetCustomizer'
+import SectionCard from '@/components/ui/SectionCard'
 import { authClient } from '@/lib/auth-client'
-import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
-import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
-import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereStyle'
-import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
-import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
-import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
-import type { PlanetDraft } from '@/types/creation'
-import { INITIAL_DRAFT } from '@/types/creation'
-import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
-const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
-
-const DEFAULT_VISUAL: PlanetProfile['visual'] = {
-  coreColor: '#a78bfa',
-  accentColor: '#c4b5fd',
-  ringStyle: 'single',
-  surfaceStyle: 'smooth',
-  satelliteCount: 1,
-  size: 'lg',
-}
-
-// --- Section wrapper ----------------------------------------------------------
-
-function SectionCard({
-  title,
-  description,
-  color,
-  children,
-}: {
-  title:       string
-  description: string
-  color?:      string
-  children:    React.ReactNode
-}) {
-  return (
-    <OrbitCard glowColor={color ?? 'var(--star)'} className="p-6">
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
-            {title}
-          </h2>
-          <p className="text-xs leading-snug" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-            {description}
-          </p>
-        </div>
-        {children}
-      </div>
-    </OrbitCard>
-  )
-}
+const ACCENT_COLOR = '#a78bfa'
 
 // --- Save confirmation toast --------------------------------------------------
 
@@ -94,7 +44,7 @@ function SaveToast({ visible }: { visible: boolean }) {
 
 // --- Privacy: who can see this planet -----------------------------------------
 // Self-contained: reads/writes Profile.visibility independently of the
-// PlanetDraft pipeline above, which does not model this field.
+// identity fields below.
 
 type Visibility = 'MEMBERS' | 'PRIVATE'
 
@@ -182,60 +132,24 @@ function AccountDataSection() {
   )
 }
 
-// --- Convert DB planet data to PlanetProfile for the draft system ----------
-
-function buildPlanetFromApiData(data: Record<string, unknown>): PlanetProfile {
-  const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
-
-  return {
-    id: data.id as string,
-    name: data.name as string,
-    avatarSymbol: (data.avatarSymbol as string) ?? '?',
-    tagline: (data.tagline as string) ?? undefined,
-    role: 'explorer',
-    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
-    style: (data.style as PlanetProfile['style']) ?? 'minimal',
-    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-    coreThemes: (data.coreThemes as string[]) ?? [],
-    contentFragments: (data.contentFragments as string[]) ?? [],
-    visual,
-    cognitiveAxes: {
-      abstract: (data.abstractAxis as number) ?? 50,
-      introspective: (data.introspectiveAxis as number) ?? 50,
-    },
-    emotionalBars: [],
-    location: (data.location as string) ?? undefined,
-    languages: (data.languages as string[]) ?? [],
-    culturalTags: (data.culturalTags as string[]) ?? [],
-    travelCities: (data.travelCities as string[]) ?? [],
-    musicTaste: (data.musicTaste as string[]) ?? [],
-    bookTaste: (data.bookTaste as string[]) ?? [],
-    filmTaste: (data.filmTaste as string[]) ?? [],
-    communicationStyle: (data.communicationStyle as PlanetProfile['communicationStyle']) ?? undefined,
-    matchPreference: (data.matchPreference as PlanetProfile['matchPreference']) ?? 'mixed',
-    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
-    userId: data.userId as string,
-  }
-}
-
 // --- Page ---------------------------------------------------------------------
+// Account-level settings only — display name, planet name, language, privacy,
+// and account/data. Personality traits (mood, interests, atmosphere, cultural
+// paths, relational gravity) and the planet's visual appearance are edited on
+// /my-planet itself, where the same live 3D preview already lives.
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
   const tSettings = useTranslations('planetSettings')
   const tLanguage = useTranslations('language')
-  const tMyPlanet = useTranslations('myPlanet')
-  const { data: session, refetch: refetchSession } = authClient.useSession()
+  const { refetch: refetchSession } = authClient.useSession()
   const [mounted,   setMounted]   = useState(false)
-  const [draft,     setDraft]     = useState<PlanetDraft>(INITIAL_DRAFT)
+  const [loaded,    setLoaded]    = useState(false)
   const [accountName, setAccountName] = useState('')
   const [planetName, setPlanetName] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [saved,     setSaved]     = useState(false)
   const [error,     setError]     = useState('')
-  const [accentColor, setAccentColor] = useState('#a78bfa')
-  const [planetConfig, setPlanetConfig] = useState<PlanetConfig | null>(null)
-  const [userLevel, setUserLevel] = useState(1)
 
   useEffect(() => {
     let cancelled = false
@@ -256,26 +170,9 @@ export default function PlanetSettingsPage() {
             router.replace('/onboarding')
             return
           }
-          const merged = { ...dbPlanet }
-          if (meData?.profile) {
-            merged.location = meData.profile.location ?? undefined
-            merged.languages = meData.profile.languages ?? []
-            merged.culturalTags = meData.profile.culturalTags ?? []
-            merged.travelCities = meData.profile.travelCities ?? []
-            merged.musicTaste = meData.profile.musicTaste ?? []
-            merged.bookTaste = meData.profile.bookTaste ?? []
-            merged.filmTaste = meData.profile.filmTaste ?? []
-            merged.communicationStyle = meData.profile.communicationStyle ?? undefined
-            merged.matchPreference = meData.profile.matchPreference ?? 'mixed'
-          }
-          const planet = buildPlanetFromApiData(merged)
-          setAccountName(meData?.user?.name ?? session?.user?.name ?? '')
-          setPlanetName(planet.name)
-          const converted = planetProfileToDraft(planet)
-          setDraft(converted)
-          setAccentColor(planet.visual.coreColor)
-          if (meData?.user?.planetConfig) setPlanetConfig(meData.user.planetConfig)
-          if (typeof meData?.user?.userLevel === 'number') setUserLevel(meData.user.userLevel)
+          setAccountName(meData?.user?.name ?? '')
+          setPlanetName(dbPlanet.name ?? '')
+          setLoaded(true)
         })
         .catch(() => {
           if (cancelled) return
@@ -284,28 +181,9 @@ export default function PlanetSettingsPage() {
     })
 
     return () => { cancelled = true }
-  }, [router, session?.user?.name])
-
-  const previewPlanet = useMemo(
-    () => (session?.user?.id ? buildPlanetFromDraft(draft, session.user.id) : null),
-    [draft, session?.user?.id],
-  )
-
-  // Keep accent color in sync with climate choice
-  useEffect(() => {
-    let cancelled = false
-    Promise.resolve().then(() => {
-      if (!cancelled && previewPlanet) setAccentColor(previewPlanet.visual.coreColor)
-    })
-    return () => { cancelled = true }
-  }, [previewPlanet])
-
-  function update<K extends keyof PlanetDraft>(key: K, value: PlanetDraft[K]) {
-    setDraft((d) => ({ ...d, [key]: value }))
-  }
+  }, [router])
 
   async function handleSave() {
-    if (!previewPlanet) return
     const nextAccountName = accountName.trim()
     const nextPlanetName = planetName.trim()
 
@@ -331,27 +209,7 @@ export default function PlanetSettingsPage() {
       const res = await fetch('/api/my-planet', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: nextPlanetName,
-          tagline: previewPlanet.tagline,
-          mood: previewPlanet.mood,
-          style: previewPlanet.style,
-          lifestyle: previewPlanet.lifestyle,
-          coreThemes: previewPlanet.coreThemes,
-          contentFragments: previewPlanet.contentFragments,
-          visual: previewPlanet.visual,
-          abstractAxis: previewPlanet.cognitiveAxes.abstract,
-          introspectiveAxis: previewPlanet.cognitiveAxes.introspective,
-          location: previewPlanet.location,
-          languages: previewPlanet.languages,
-          culturalTags: previewPlanet.culturalTags,
-          travelCities: previewPlanet.travelCities,
-          musicTaste: previewPlanet.musicTaste,
-          bookTaste: previewPlanet.bookTaste,
-          filmTaste: previewPlanet.filmTaste,
-          communicationStyle: previewPlanet.communicationStyle,
-          matchPreference: previewPlanet.matchPreference,
-        }),
+        body: JSON.stringify({ name: nextPlanetName }),
       })
       if (!res.ok) {
         throw new Error((await res.text()) || tSettings('savePlanetFailed'))
@@ -370,250 +228,122 @@ export default function PlanetSettingsPage() {
     }
   }
 
-  if (!mounted || !previewPlanet || !planetConfig) return null
+  if (!mounted || !loaded) return null
 
   return (
     <AppShell>
-      <LightCone origin="top-left" color={accentColor} opacity={0.06} double={false} />
+      <LightCone origin="top-left" color={ACCENT_COLOR} opacity={0.06} double={false} />
 
-      <div className="relative z-10 px-4 sm:px-6 pt-8 pb-24 max-w-6xl mx-auto">
+      <div className="relative z-10 px-4 sm:px-6 pt-8 pb-24 max-w-2xl mx-auto">
 
         {/* Header */}
         <div className="flex flex-col gap-2 mb-8">
           <p
             className="text-xs uppercase tracking-[0.25em] font-medium"
-            style={{ color: accentColor, opacity: 0.7 }}
+            style={{ color: ACCENT_COLOR, opacity: 0.7 }}
           >
             {tSettings('settings')}
           </p>
           <h1
             className="text-3xl sm:text-4xl font-bold w-fit"
             style={{
-              backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 100%)`,
+              backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${ACCENT_COLOR} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
               color: 'transparent',
             }}
           >
-            {planetName || previewPlanet.name}
+            {accountName || planetName}
           </h1>
           <p className="text-sm max-w-lg" style={{ color: 'var(--ink)', opacity: 0.55 }}>
             {tSettings('description')}
           </p>
         </div>
 
-        {/* Main grid: edit sections + sticky preview */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
+        <div className="flex flex-col gap-6">
 
-          {/* -- Left: edit sections --------------------------------------- */}
-          <div className="flex flex-col gap-6">
-
-            <SectionCard
-              title={tSettings('identity')}
-              description={tSettings('identityDescription')}
-              color={accentColor}
-            >
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="account-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                    {tSettings('displayName')}
-                  </label>
-                  <input
-                    id="account-name"
-                    type="text"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                    maxLength={40}
-                    className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
-                    style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'var(--foreground)',
-                    }}
-                    placeholder={tSettings('displayNamePlaceholder')}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="planet-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                    {tSettings('planetName')}
-                  </label>
-                  <input
-                    id="planet-name"
-                    type="text"
-                    value={planetName}
-                    onChange={(e) => setPlanetName(e.target.value)}
-                    maxLength={40}
-                    className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
-                    style={{
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'var(--foreground)',
-                    }}
-                    placeholder={tSettings('planetNamePlaceholder')}
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-xs font-medium" style={{ color: '#f87171' }}>
-                    {error}
-                  </p>
-                )}
-              </div>
-            </SectionCard>
-
-            <div className="md:hidden">
-              <SectionCard
-                title={tLanguage('title')}
-                description=""
-                color={accentColor}
-              >
-                <LanguageSwitcher variant="mobile" />
-              </SectionCard>
-            </div>
-
-            <div id="customize" className="scroll-mt-24 flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
-                  {tMyPlanet('customizeYourPlanet')}
-                </h2>
-                <p className="text-xs leading-snug" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-                  {tSettings('planetPhotoDescription')}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-[rgba(5,4,18,0.76)] p-4 backdrop-blur">
-                <PlanetCustomizer
-                  initialConfig={planetConfig}
-                  planetName={planetName || previewPlanet.name}
-                  userLevel={userLevel}
-                  onSaved={setPlanetConfig}
+          <SectionCard
+            title={tSettings('identity')}
+            description={tSettings('identityDescription')}
+            color={ACCENT_COLOR}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="account-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                  {tSettings('displayName')}
+                </label>
+                <input
+                  id="account-name"
+                  type="text"
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  maxLength={40}
+                  className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'var(--foreground)',
+                  }}
+                  placeholder={tSettings('displayNamePlaceholder')}
                 />
               </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="planet-name" className="text-xs font-medium" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
+                  {tSettings('planetName')}
+                </label>
+                <input
+                  id="planet-name"
+                  type="text"
+                  value={planetName}
+                  onChange={(e) => setPlanetName(e.target.value)}
+                  maxLength={40}
+                  className="w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'var(--foreground)',
+                  }}
+                  placeholder={tSettings('planetNamePlaceholder')}
+                />
+              </div>
+
+              {error && (
+                <p className="text-xs font-medium" style={{ color: '#f87171' }}>
+                  {error}
+                </p>
+              )}
             </div>
+          </SectionCard>
 
+          <div className="md:hidden">
             <SectionCard
-              title={tSettings('emotionalClimate')}
-              description={tSettings('emotionalClimateDescription')}
-              color={accentColor}
+              title={tLanguage('title')}
+              description=""
+              color={ACCENT_COLOR}
             >
-              <Step1EmotionalTone
-                value={draft.climateKey}
-                onChange={(v) => update('climateKey', v)}
-              />
+              <LanguageSwitcher variant="mobile" />
             </SectionCard>
-
-            <SectionCard
-              title={tSettings('interestEcology')}
-              description={tSettings('interestEcologyDescription')}
-              color={accentColor}
-            >
-              <Step2InterestEcology
-                selectedThemes={draft.selectedThemes}
-                lifestyle={draft.lifestyle}
-                onThemesChange={(v) => update('selectedThemes', v)}
-                onLifestyleChange={(v) => update('lifestyle', v)}
-              />
-            </SectionCard>
-
-            <SectionCard
-              title={tSettings('atmosphere')}
-              description={tSettings('atmosphereDescription')}
-              color="#a78bfa"
-            >
-              <Step3AtmosphereStyle
-                communicationStyle={draft.communicationStyle}
-                abstractAxis={draft.abstractAxis}
-                introspectiveAxis={draft.introspectiveAxis}
-                onStyleChange={(v) => update('communicationStyle', v)}
-                onAbstractChange={(v) => update('abstractAxis', v)}
-                onIntrospectiveChange={(v) => update('introspectiveAxis', v)}
-              />
-            </SectionCard>
-
-            <SectionCard
-              title={tSettings('culturalPaths')}
-              description={tSettings('culturalPathsDescription')}
-              color="#34d399"
-            >
-              <Step4CulturalPaths
-                location={draft.location}
-                languages={draft.languages}
-                travelCities={draft.travelCities}
-                culturalTags={draft.culturalTags}
-                onLocationChange={(v) => update('location', v || undefined)}
-                onLanguagesChange={(v) => update('languages', v)}
-                onCitiesChange={(v) => update('travelCities', v)}
-                onCulturalChange={(v) => update('culturalTags', v)}
-              />
-            </SectionCard>
-
-            <SectionCard
-              title={tSettings('relationalGravity')}
-              description={tSettings('relationalGravityDescription')}
-              color="#fbbf24"
-            >
-              <Step5RelationalGravity
-                matchPreference={draft.matchPreference}
-                connectionTypes={draft.connectionTypes}
-                onMatchPrefChange={(v) => update('matchPreference', v)}
-                onConnectionTypesChange={(v) => update('connectionTypes', v)}
-              />
-            </SectionCard>
-
-            <PrivacySection />
-
-            <AccountDataSection />
-
-            {/* Save button (bottom of form, mobile) */}
-            <div className="lg:hidden">
-              <GlowButton
-                onClick={handleSave}
-                variant="primary"
-                fullWidth
-                disabled={saving}
-                className="py-4 text-sm"
-              >
-                {saving ? tSettings('saving') : tSettings('saveChanges')}
-              </GlowButton>
-            </div>
           </div>
 
-          {/* -- Right: sticky live preview --------------------------------- */}
-          <div className="hidden lg:flex flex-col gap-6 sticky top-20">
+          <PrivacySection />
 
-            {/* Preview card */}
-            <div
-              className="flex flex-col items-center gap-5 p-6 rounded-3xl"
-              style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: `1px solid ${accentColor}15`,
-              }}
-            >
-              <span
-                className="text-[10px] uppercase tracking-widest self-start"
-                style={{ color: 'var(--ghost)', opacity: 0.5 }}
-              >
-                {tSettings('livePreview')}
-              </span>
-              <PlanetGlobe planetConfig={planetConfig} size={190} />
-            </div>
+          <AccountDataSection />
 
-            {/* Save button */}
-            <GlowButton
-              onClick={handleSave}
-              variant="primary"
-              fullWidth
-              disabled={saving}
-              className="py-4 text-sm"
-            >
-              {saving ? tSettings('saving') : tSettings('saveChanges')}
-            </GlowButton>
+          <GlowButton
+            onClick={handleSave}
+            variant="primary"
+            fullWidth
+            disabled={saving}
+            className="py-4 text-sm"
+          >
+            {saving ? tSettings('saving') : tSettings('saveChanges')}
+          </GlowButton>
 
-            <GlowButton href="/my-planet" variant="ghost" fullWidth className="text-xs py-2.5">
-              {tSettings('viewMyPlanet')}
-            </GlowButton>
-          </div>
+          <GlowButton href="/my-planet" variant="ghost" fullWidth className="text-xs py-2.5">
+            {tSettings('viewMyPlanet')}
+          </GlowButton>
         </div>
       </div>
 
