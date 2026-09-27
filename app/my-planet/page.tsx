@@ -357,6 +357,17 @@ export default function MyPlanetPage() {
     return () => window.removeEventListener('xp:updated', handleXPUpdated)
   }, [])
 
+  // /my-planet/customize redirects here with ?customize=1 so it opens the
+  // real customizer instead of duplicating it on its own route.
+  useEffect(() => {
+    if (loading || new URLSearchParams(window.location.search).get('customize') !== '1') return
+    setCustomizerOpen(true)
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('customize')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [loading])
+
   if (!hydrated || loading) return null
 
   // -- Explorer state  -  no planet formed yet ----------------------------------
@@ -700,7 +711,7 @@ export default function MyPlanetPage() {
           </section>
         )}
 
-        <div className="mt-5">
+        <div id="customize" className="mt-5 scroll-mt-24">
           <button
             type="button"
             onClick={() => setCustomizerOpen((open) => !open)}
