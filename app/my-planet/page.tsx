@@ -149,6 +149,7 @@ export default function MyPlanetPage() {
   const tHome = useTranslations('home')
   const tMyPlanet = useTranslations('myPlanet')
   const tNav = useTranslations('nav')
+  const tStream = useTranslations('stream')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -806,7 +807,7 @@ export default function MyPlanetPage() {
               <h2 className="mt-1 text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{tMyPlanet('myPosts')}</h2>
             </div>
             <button type="button" onClick={() => setCreatePostOpen(true)} className="rounded-full px-4 py-2 text-xs font-semibold" style={{ color: '#fff', background: 'rgba(124,58,237,0.76)', border: '1px solid rgba(167,139,250,0.38)' }}>
-              {tMyPlanet('createFirstPost')}
+              {tStream('createPost')}
             </button>
           </div>
           <PostGrid
