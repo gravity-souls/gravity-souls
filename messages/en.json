@@ -25,6 +25,15 @@
     "markAllRead": "Mark all read",
     "signals": "Signals"
   },
+  "search": {
+    "resultsFor": "Results for \"{query}\"",
+    "planets": "Planets",
+    "galaxies": "Galaxies",
+    "events": "Events",
+    "noResults": "Nothing out there matches that.",
+    "noResultsDescription": "Try a different name, keyword, or theme.",
+    "viewGalaxy": "View galaxy →"
+  },
   "home": {
     "yourPlanet": "Your Planet",
     "tuneAtmosphere": "Tune atmosphere",

@@ -25,6 +25,15 @@
     "markAllRead": "Tout marquer comme lu",
     "signals": "Signaux"
   },
+  "search": {
+    "resultsFor": "Résultats pour « {query} »",
+    "planets": "Planètes",
+    "galaxies": "Galaxies",
+    "events": "Événements",
+    "noResults": "Rien ne correspond à cette recherche.",
+    "noResultsDescription": "Essayez un autre nom, mot-clé, ou thème.",
+    "viewGalaxy": "Voir la galaxie →"
+  },
   "home": {
     "yourPlanet": "Votre Planète",
     "tuneAtmosphere": "Régler l'atmosphère",

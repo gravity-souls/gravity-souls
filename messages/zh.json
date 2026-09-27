@@ -25,6 +25,15 @@
     "markAllRead": "全部标为已读",
     "signals": "信号"
   },
+  "search": {
+    "resultsFor": "「{query}」的搜索结果",
+    "planets": "星球",
+    "galaxies": "星系",
+    "events": "活动",
+    "noResults": "没有匹配的结果。",
+    "noResultsDescription": "试试其他名称、关键词或主题。",
+    "viewGalaxy": "查看星系 →"
+  },
   "home": {
     "yourPlanet": "你的星球",
     "tuneAtmosphere": "调节氛围",
