@@ -93,7 +93,17 @@ export default function OnboardingPage() {
   const [revealError, setRevealError] = useState('')
   const [awakeningPlanet, setAwakeningPlanet] = useState<PlanetProfile | null>(null)
 
-  const previewPlanet = useMemo(() => buildPlanetFromDraft(draft, 'preview'), [draft])
+  // Seeded from the real signed-in user's id when available so the preview
+  // (and the awakening reveal below, which reuses this same object as the
+  // "saved" planet) matches what /api/onboarding/complete actually persists —
+  // buildPlanetFromDraft's name/avatar are deterministic per (draft, userId),
+  // so a placeholder seed here previously showed a different planet than the
+  // one that got saved. Anonymous visitors (no session yet) still preview
+  // against a placeholder, since no real id exists until they sign up.
+  const previewPlanet = useMemo(
+    () => buildPlanetFromDraft(draft, session?.user?.id ?? 'preview'),
+    [draft, session?.user?.id],
+  )
 
   const canProceed = useMemo(() => {
     switch (step) {
