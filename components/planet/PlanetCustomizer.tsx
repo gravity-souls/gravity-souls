@@ -366,7 +366,11 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
             <h2 className="mt-1 text-xl font-semibold" style={{ color: 'var(--foreground)' }}>{planetName}</h2>
           </div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs" style={{ color: 'var(--star)' }}>Lv.{effectiveUserLevel}</span>
+            {/* The real level, not effectiveUserLevel — that one is forced to 5
+                while EARLY_ACCESS is on so every control unlocks, and showing
+                it here read as a fake level that contradicted the real one
+                shown elsewhere (e.g. My Planet's own header). */}
+            <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs" style={{ color: 'var(--star)' }}>Lv.{xpSummary?.userLevel ?? userLevel}</span>
             {onClose && (
               <button
                 type="button"
