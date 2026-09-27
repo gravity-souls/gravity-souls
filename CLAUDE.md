@@ -63,6 +63,8 @@ product decisions.
 
 DB-writing and migration commands (`db:push`, `db:migrate`, `db:deploy`, `db:seed`,
 `test:e2e:db`) always prompt for approval — see `.claude/settings.local.json`. This
-applies to every agent above as well as the main session; no agent may deploy, push
-commits, modify production environment variables, contact external services, run
-production migrations, or delete user data.
+applies to every agent above as well as the main session; no agent may deploy, modify
+production environment variables, contact external services, run production
+migrations, or delete user data.
+
+Pushing commits (any branch, including main) is allowed - founder decision.
