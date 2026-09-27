@@ -155,8 +155,20 @@ test.describe('Journey 3 — social-landing → /resonance → reload', () => {
 
 test.describe('Journey 4 — sign-out / sign-back-in', () => {
   test.use({ storageState: AUTH_SO })
+  // This test destructively signs its dedicated user out (deletes the DB
+  // session) partway through, so a retry can never validly re-run it — the
+  // retry always fails at the very first assertion ("Expected to start on
+  // /resonance") against the now-invalidated storageState fixture, masking
+  // whatever the real first-attempt failure was. Disable retries here and
+  // rely on the timeout bump below instead.
+  test.describe.configure({ retries: 0 })
 
-  test('sign-out → /resonance redirects to /sign-in → sign-in returns to /resonance', async ({ page }) => {
+  test('sign-out → /resonance redirects to /sign-in → sign-in returns to /resonance', async ({ page }, testInfo) => {
+    // Real WebKit under CI's shared, sequentially-loaded server occasionally
+    // takes just over the file's default 20s test timeout to settle the
+    // post-sign-in redirect (observed 21.2s) — give this one more headroom.
+    testInfo.setTimeout(35_000)
+
     // Confirm starting authenticated state
     await page.goto('/resonance')
     await page.waitForTimeout(2_000)
@@ -185,7 +197,7 @@ test.describe('Journey 4 — sign-out / sign-back-in', () => {
     await page.fill('#password', E2E.signOut.password)
     await page.click('button[type="submit"]')
 
-    await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 20_000 })
+    await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 30_000 })
     const afterSignIn = new URL(page.url()).pathname
     expect(afterSignIn, `Expected /resonance after sign-back-in but got ${afterSignIn}`).toBe('/resonance')
   })

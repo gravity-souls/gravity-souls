@@ -51,7 +51,12 @@ test.describe('middleware gate — signed out', () => {
 test.describe('sign-in ?next redirect', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('sign-in with ?next=/resonance lands on /resonance after auth', async ({ page }) => {
+  test('sign-in with ?next=/resonance lands on /resonance after auth', async ({ page }, testInfo) => {
+    // Real WebKit under CI's shared, sequentially-loaded server occasionally
+    // takes just over the file's default 20s test timeout to settle the
+    // post-sign-in redirect — give this one more headroom.
+    testInfo.setTimeout(30_000)
+
     await page.goto('/sign-in?next=/resonance')
 
     await page.fill('#email', E2E.withPlanet.email)
@@ -60,7 +65,7 @@ test.describe('sign-in ?next redirect', () => {
 
     // After successful sign-in the JS calls router.push(next) → /resonance
     // The page then loads /resonance and calls GET /api/my-planet (real DB, returns planet)
-    await page.waitForURL('**/resonance', { timeout: 15_000 })
+    await page.waitForURL('**/resonance', { timeout: 25_000 })
     // Wait for the page to stabilize — router.refresh() called after router.push() can cause
     // a brief intermediate state before the final URL settles.
     await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
