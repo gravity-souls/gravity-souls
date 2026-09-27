@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { blockedUserIds } from "@/lib/visibility";
+import { universePlanetToProfile } from "@/lib/universe-field";
 
 const RESULT_LIMIT = 8;
 
@@ -41,7 +42,13 @@ export async function GET(request: Request) {
         name: true,
         avatarSymbol: true,
         tagline: true,
+        mood: true,
+        style: true,
+        lifestyle: true,
+        coreThemes: true,
         visual: true,
+        abstractAxis: true,
+        introspectiveAxis: true,
       },
       orderBy: { createdAt: "desc" },
       take: RESULT_LIMIT,
@@ -85,7 +92,7 @@ export async function GET(request: Request) {
   ]);
 
   return NextResponse.json({
-    planets,
+    planets: planets.map((p) => universePlanetToProfile({ ...p, visual: (p.visual ?? {}) as Record<string, unknown> })),
     galaxies,
     events: events.map((e) => ({
       id: e.id,

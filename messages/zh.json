@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Gravity-Souls  -  灵魂找到彼此引力之地",
+    "description": "Gravity-Souls 让你遇见与你内心共鸣的人。通过真实的自我表达，发现共鸣、契合与真诚的连接。"
+  },
   "nav": {
     "home": "首页",
     "stream": "动态",
@@ -714,7 +718,60 @@
     "saving": "保存中...",
     "awakenPlanet": "唤醒我的星球",
     "continue": "继续 →",
-    "back": "← 返回"
+    "back": "← 返回",
+    "introEyebrow": "共鸣校准",
+    "introTitle": "发现你的宇宙身份",
+    "introDescription": "一段简短的仪式，塑造代表你的星球——并找到与你共鸣的人。",
+    "beginCalibration": "开始校准",
+    "alreadyHavePlanetQuestion": "已经有星球了？",
+    "signIn": "登录",
+    "revealEyebrow": "你的星球已经成形",
+    "resolving": "校验中…",
+    "saveMyPlanet": "保存我的星球",
+    "next": "下一步",
+    "seeMyPlanet": "查看我的星球",
+    "genericSaveError": "出了点问题，请重试。",
+    "genericNetworkError": "网络错误，请重试。",
+    "resonanceSignatureTitle": "共鸣特征",
+    "resonanceSignatureSubtitle": "你如何与自己、与他人相处。",
+    "optional": "可选",
+    "resonance": {
+      "emotionalProcessing": {
+        "question": "当有心事压在心头时，你倾向于…",
+        "alone": "独自退避",
+        "together": "找人倾诉",
+        "creating": "创作些什么",
+        "moving": "活动身体"
+      },
+      "leadWith": {
+        "question": "认识新朋友时，你首先展现的是…",
+        "curiosity": "好奇心",
+        "warmth": "温暖",
+        "ideas": "想法",
+        "silence": "安静的存在感"
+      },
+      "connectionSeeking": {
+        "question": "你现在寻找的连接是…",
+        "deep-slow": "深沉而缓慢",
+        "playful": "轻松有趣",
+        "intellectual": "理性思辨",
+        "soulful": "灵魂共鸣"
+      },
+      "solitudeNeed": {
+        "question": "你需要多少独处时间？",
+        "daily": "每天——独处让我充电",
+        "weekly": "每周",
+        "rarely": "很少",
+        "social": "我在人群中更自在"
+      },
+      "lifeChapter": {
+        "question": "你现在的生活像是…",
+        "building": "构建中",
+        "exploring": "探索中",
+        "healing": "疗愈中",
+        "waiting": "等待中"
+      }
+    }
   },
   "creationSteps": {
     "climateTitle": "设置你世界的气候",
@@ -830,7 +887,13 @@
     "planets": "星球",
     "preview": "预览",
     "searchAll": "搜索所有包含“{query}”的星系 →",
-    "quickKeywords": "快速搜索关键词"
+    "quickKeywords": "快速搜索关键词",
+    "chipCompanion": "搭子",
+    "chipSolitude": "孤独",
+    "chipLateNight": "深夜",
+    "chipArtistic": "文艺表达",
+    "chipTravel": "旅行",
+    "chipThinking": "思考"
   },
   "a11y": {
     "backToMessages": "返回消息",

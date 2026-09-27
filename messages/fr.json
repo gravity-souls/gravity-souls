@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Gravity-Souls  -  Là où les âmes trouvent leur gravité",
+    "description": "Gravity-Souls vous connecte à ceux qui partagent votre élan intérieur. Découvrez la résonance, la compatibilité et une connexion authentique grâce à l'expression sincère de qui vous êtes."
+  },
   "nav": {
     "home": "Accueil",
     "stream": "Fil",
@@ -714,7 +718,60 @@
     "saving": "Enregistrement...",
     "awakenPlanet": "Éveiller ma planète",
     "continue": "Continuer →",
-    "back": "← Retour"
+    "back": "← Retour",
+    "introEyebrow": "Calibration de résonance",
+    "introTitle": "Découvrez votre identité cosmique",
+    "introDescription": "Un court rituel pour façonner la planète qui vous représente — et trouver celles et ceux avec qui vous résonnez.",
+    "beginCalibration": "Commencer la calibration",
+    "alreadyHavePlanetQuestion": "Vous avez déjà une planète ?",
+    "signIn": "Se connecter",
+    "revealEyebrow": "Votre planète a pris forme",
+    "resolving": "Vérification…",
+    "saveMyPlanet": "Enregistrer ma planète",
+    "next": "Suivant",
+    "seeMyPlanet": "Voir ma planète",
+    "genericSaveError": "Une erreur s'est produite. Veuillez réessayer.",
+    "genericNetworkError": "Erreur réseau. Veuillez réessayer.",
+    "resonanceSignatureTitle": "Signature de résonance",
+    "resonanceSignatureSubtitle": "Comment vous entrez en relation — avec vous-même et avec les autres.",
+    "optional": "optionnel",
+    "resonance": {
+      "emotionalProcessing": {
+        "question": "Quand quelque chose vous pèse, vous avez tendance à…",
+        "alone": "Vous isoler",
+        "together": "En parler",
+        "creating": "Créer quelque chose",
+        "moving": "Bouger votre corps"
+      },
+      "leadWith": {
+        "question": "En rencontrant quelqu'un de nouveau, vous menez avec…",
+        "curiosity": "Curiosité",
+        "warmth": "Chaleur",
+        "ideas": "Idées",
+        "silence": "Présence silencieuse"
+      },
+      "connectionSeeking": {
+        "question": "Le lien que vous recherchez en ce moment…",
+        "deep-slow": "Profond et lent",
+        "playful": "Ludique et léger",
+        "intellectual": "Intellectuel",
+        "soulful": "Habité, sincère"
+      },
+      "solitudeNeed": {
+        "question": "De combien de solitude avez-vous besoin ?",
+        "daily": "Quotidiennement — je me ressource seul(e)",
+        "weekly": "Chaque semaine",
+        "rarely": "Rarement",
+        "social": "Je m'épanouis en compagnie"
+      },
+      "lifeChapter": {
+        "question": "Votre vie en ce moment ressemble à…",
+        "building": "Construction",
+        "exploring": "Exploration",
+        "healing": "Guérison",
+        "waiting": "Attente"
+      }
+    }
   },
   "creationSteps": {
     "climateTitle": "Définissez le climat de votre monde",
@@ -830,7 +887,13 @@
     "planets": "Planètes",
     "preview": "Aperçu",
     "searchAll": "Rechercher toutes les galaxies pour \"{query}\" →",
-    "quickKeywords": "Mots-clés rapides"
+    "quickKeywords": "Mots-clés rapides",
+    "chipCompanion": "Compagnon",
+    "chipSolitude": "Solitude",
+    "chipLateNight": "Nuit tardive",
+    "chipArtistic": "Artistique",
+    "chipTravel": "Voyage",
+    "chipThinking": "Réflexion"
   },
   "a11y": {
     "backToMessages": "Retour aux messages",

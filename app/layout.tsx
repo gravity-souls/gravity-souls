@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import { Noto_Sans_SC } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getLocale, getMessages } from 'next-intl/server'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import './globals.css'
 import RouteShell from '@/components/layout/RouteShell'
 
@@ -17,10 +17,12 @@ const notoSansSC = Noto_Sans_SC({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'Gravity-Souls  -  Where souls find their gravity',
-  description:
-    'Gravity-Souls connects you with those who share your inner pull. Discover resonance, compatibility, and genuine connection through the power of authentic expression.',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('metadata')
+  return {
+    title: t('title'),
+    description: t('description'),
+  }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

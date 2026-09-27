@@ -8,14 +8,7 @@ import AppShell from '@/components/layout/AppShell'
 import OrbitCard from '@/components/ui/OrbitCard'
 import EmptyState from '@/components/ui/EmptyState'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
-
-interface PlanetResult {
-  id: string
-  name: string
-  avatarSymbol: string
-  tagline: string | null
-  visual: { textureFile?: string } | null
-}
+import type { PlanetProfile } from '@/types/planet'
 
 interface GalaxyResult {
   id: string
@@ -36,7 +29,7 @@ interface EventResult {
 }
 
 interface SearchResults {
-  planets: PlanetResult[]
+  planets: PlanetProfile[]
   galaxies: GalaxyResult[]
   events: EventResult[]
 }

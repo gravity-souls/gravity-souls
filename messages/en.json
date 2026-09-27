@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Gravity-Souls  -  Where souls find their gravity",
+    "description": "Gravity-Souls connects you with those who share your inner pull. Discover resonance, compatibility, and genuine connection through the power of authentic expression."
+  },
   "nav": {
     "home": "Home",
     "stream": "Stream",
@@ -714,7 +718,60 @@
     "saving": "Saving...",
     "awakenPlanet": "Awaken my planet",
     "continue": "Continue →",
-    "back": "← Back"
+    "back": "← Back",
+    "introEyebrow": "Resonance Calibration",
+    "introTitle": "Discover your cosmic identity",
+    "introDescription": "A short ritual to shape the planet that represents you — and to find the ones you resonate with.",
+    "beginCalibration": "Begin Calibration",
+    "alreadyHavePlanetQuestion": "Already have a planet?",
+    "signIn": "Sign in",
+    "revealEyebrow": "Your planet has taken shape",
+    "resolving": "Resolving…",
+    "saveMyPlanet": "Save My Planet",
+    "next": "Next",
+    "seeMyPlanet": "See my planet",
+    "genericSaveError": "Something went wrong. Please try again.",
+    "genericNetworkError": "Network error. Please try again.",
+    "resonanceSignatureTitle": "Resonance signature",
+    "resonanceSignatureSubtitle": "How you relate — to yourself and to others.",
+    "optional": "optional",
+    "resonance": {
+      "emotionalProcessing": {
+        "question": "When something weighs on you, you tend to…",
+        "alone": "Withdraw alone",
+        "together": "Talk it through",
+        "creating": "Create something",
+        "moving": "Move your body"
+      },
+      "leadWith": {
+        "question": "Meeting someone new, you lead with…",
+        "curiosity": "Curiosity",
+        "warmth": "Warmth",
+        "ideas": "Ideas",
+        "silence": "Quiet presence"
+      },
+      "connectionSeeking": {
+        "question": "The connection you're looking for right now…",
+        "deep-slow": "Deep and slow",
+        "playful": "Playful and light",
+        "intellectual": "Intellectual",
+        "soulful": "Soulful"
+      },
+      "solitudeNeed": {
+        "question": "How much solitude do you need?",
+        "daily": "Daily — I recharge alone",
+        "weekly": "Weekly",
+        "rarely": "Rarely",
+        "social": "I thrive in company"
+      },
+      "lifeChapter": {
+        "question": "Your life right now feels like…",
+        "building": "Building",
+        "exploring": "Exploring",
+        "healing": "Healing",
+        "waiting": "Waiting"
+      }
+    }
   },
   "creationSteps": {
     "climateTitle": "Set the climate of your world",
@@ -830,7 +887,13 @@
     "planets": "Planets",
     "preview": "Preview",
     "searchAll": "Search all galaxies for \"{query}\" →",
-    "quickKeywords": "Quick search keywords"
+    "quickKeywords": "Quick search keywords",
+    "chipCompanion": "Companion",
+    "chipSolitude": "Solitude",
+    "chipLateNight": "Late night",
+    "chipArtistic": "Artistic",
+    "chipTravel": "Travel",
+    "chipThinking": "Thinking"
   },
   "a11y": {
     "backToMessages": "Back to messages",
