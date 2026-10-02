@@ -61,6 +61,7 @@ export default function UniverseProfileCard({ universe: u }: Props) {
                   background: `linear-gradient(135deg, #e8e0ff 0%, ${glowColor} 55%, #818cf8 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  color: 'transparent',
                   backgroundClip: 'text',
                 }}
               >

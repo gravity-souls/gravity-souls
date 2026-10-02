@@ -250,8 +250,8 @@ export default function PlanetSettingsPage() {
               backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${ACCENT_COLOR} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
               color: 'transparent',
+              backgroundClip: 'text',
             }}
           >
             {accountName || planetName}

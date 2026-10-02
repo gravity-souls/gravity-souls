@@ -228,6 +228,7 @@ export default function ResonancePage() {
                 background: 'linear-gradient(135deg, #e8e0ff 0%, #a78bfa 60%, #818cf8 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
+                color: 'transparent',
                 backgroundClip: 'text',
               }}
             >
@@ -274,6 +275,7 @@ export default function ResonancePage() {
               background: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 60%, #818cf8 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              color: 'transparent',
               backgroundClip: 'text',
             }}
           >

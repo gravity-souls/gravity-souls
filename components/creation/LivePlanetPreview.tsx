@@ -53,6 +53,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
             background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
+            color: 'transparent',
             backgroundClip: 'text',
           }}
         >

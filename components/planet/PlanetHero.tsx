@@ -193,6 +193,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
               background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              color: 'transparent',
               backgroundClip: 'text',
             }}
           >
