@@ -114,7 +114,7 @@ function NavLink({ item, active, collapsed, level, label, showLock, lockLabel }:
         <span className="truncate">{label}</span>
         {item.badge && <LevelBadge level={level} size="sm" />}
         {showLock && (
-          <Lock size={11} strokeWidth={2} className="shrink-0 opacity-50" aria-label={lockLabel} />
+          <Lock size={11} strokeWidth={2} className="shrink-0 opacity-50" aria-hidden="true" />
         )}
       </span>
     </Link>
@@ -350,7 +350,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
                     size={10}
                     strokeWidth={2.4}
                     className="absolute -right-1.5 -top-1 rounded-full bg-[#090d18] p-0.5 opacity-70"
-                    aria-label={lockLabel}
+                    aria-hidden="true"
                   />
                 )}
               </span>
