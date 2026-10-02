@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw } from 'lucide-react'
 import CosmicGlobe, { type GlobeStatus, type GlobeStep } from '@/components/fx/CosmicGlobe'
@@ -21,19 +21,51 @@ interface Props {
   standalone?: boolean
 }
 
+// Shape returned by the already-public GET /api/communities (also used
+// anonymously by UniverseSearch) — just the fields this preview needs.
+interface CommunityPreview {
+  slug: string
+  name: string
+  symbol: string
+  tagline: string | null
+  accentColor: string
+  memberCount: number
+}
+
 export default function GlobeClient({ signedIn, standalone = false }: Props) {
   const t = useTranslations('cosmicDemo')
+  const tGalaxies = useTranslations('galaxies')
   const [step, setStep] = useState<GlobeStep>(0)
   const reducedMotion = useReducedMotionPreference()
   const [motionChoice, setMotionChoice] = useState<'system' | 'play' | 'pause'>('system')
   const paused = motionChoice === 'pause' || (motionChoice === 'system' && reducedMotion)
   const [resetKey, setResetKey] = useState(0)
   const [status, setStatus] = useState<GlobeStatus>('loading')
+  const [featuredGalaxy, setFeaturedGalaxy] = useState<CommunityPreview | null>(null)
 
   function reset() {
     setStep(0)
     setResetKey((value) => value + 1)
   }
+
+  // A real galaxy to preview before sign-up — picks the most populous one
+  // from the already-public community catalogue. Planet/signal examples
+  // below are deliberately illustrative instead: lib/visibility.ts's
+  // canViewProfile() treats a signed-out viewer as unable to see anyone's
+  // planet/post (member-visible by default), so a real one doesn't belong
+  // on this pre-signup page.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/communities')
+      .then((res) => (res.ok ? (res.json() as Promise<CommunityPreview[]>) : []))
+      .then((rows) => {
+        if (cancelled || rows.length === 0) return
+        const featured = rows.reduce((best, row) => (row.memberCount > best.memberCount ? row : best))
+        Promise.resolve().then(() => { if (!cancelled) setFeaturedGalaxy(featured) })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className={styles.page}>
@@ -117,6 +149,33 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
           <p className={styles.note}>{t('note')}</p>
         </section>
       </div>
+
+      <section className={styles.preview} aria-label={t('preview.label')}>
+        <p className={styles.previewEyebrow}>{t('preview.eyebrow')}</p>
+        <div className={styles.previewGrid}>
+          {featuredGalaxy && (
+            <Link href={`/galaxy/${featuredGalaxy.slug}`} prefetch={false} className={styles.previewCard}>
+              <span className={styles.previewCardIcon} style={{ color: featuredGalaxy.accentColor }} aria-hidden="true">{featuredGalaxy.symbol}</span>
+              <p className={styles.previewCardTitle}>{featuredGalaxy.name}</p>
+              <p className={styles.previewCardMeta}>{tGalaxies('members', { count: featuredGalaxy.memberCount })}</p>
+              {featuredGalaxy.tagline && <p className={styles.previewCardBody}>{featuredGalaxy.tagline}</p>}
+            </Link>
+          )}
+
+          <div className={styles.previewCard}>
+            <span className={styles.previewCardBadge}>{t('preview.examplePlanet')}</span>
+            <p className={styles.previewCardTitle}>{t('preview.planetName')}</p>
+            <p className={styles.previewCardMeta}>{t('preview.planetTags')}</p>
+            <p className={styles.previewCardBody}>{t('preview.planetTagline')}</p>
+          </div>
+
+          <div className={styles.previewCard}>
+            <span className={styles.previewCardBadge}>{t('preview.exampleSignal')}</span>
+            <p className={styles.previewCardBody}>{t('preview.signalBody')}</p>
+          </div>
+        </div>
+      </section>
+
       <footer className={styles.footer}>
         <span>{t('footer')}</span>
         <div className={styles.footerLinks}>

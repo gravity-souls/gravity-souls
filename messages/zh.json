@@ -1046,7 +1046,17 @@
         "body": "星系让拥有共同兴趣的人相聚。加入社区，交流想法，发现一起参与的活动。"
       }
     },
-    "motionPreference": "动画默认遵循设备设置。选择播放即可在此页面启用动画。"
+    "motionPreference": "动画默认遵循设备设置。选择播放即可在此页面启用动画。",
+    "preview": {
+      "label": "内部一瞥",
+      "eyebrow": "这里有什么",
+      "examplePlanet": "示例星球",
+      "exampleSignal": "示例信号",
+      "planetName": "Noctar-62",
+      "planetTags": "平静 · 独处 · 诗意",
+      "planetTagline": "一个安静的轨道，靠近后才会展开。",
+      "signalBody": "有没有人也觉得凌晨两点是思绪最清晰的时候？想找同样在黑夜里思考的人。"
+    }
   },
   "guide": {
     "eyebrow": "新手入门",

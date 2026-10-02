@@ -1046,7 +1046,17 @@
         "body": "Galaxies bring people together around shared interests. Join a community, exchange ideas, and discover activities."
       }
     },
-    "motionPreference": "Motion follows your device settings. Select Play to enable it here."
+    "motionPreference": "Motion follows your device settings. Select Play to enable it here.",
+    "preview": {
+      "label": "A glimpse inside",
+      "eyebrow": "What's inside",
+      "examplePlanet": "Example planet",
+      "exampleSignal": "Example signal",
+      "planetName": "Noctar-62",
+      "planetTags": "Calm · Solitary · Poetic",
+      "planetTagline": "A quiet orbit that opens up once you get close.",
+      "signalBody": "Does anyone else find 2am the only time their mind feels clear? Looking for people who think in the dark too."
+    }
   },
   "guide": {
     "eyebrow": "Getting started",

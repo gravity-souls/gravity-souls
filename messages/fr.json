@@ -1046,7 +1046,17 @@
         "body": "Les galaxies réunissent des personnes autour de passions communes. Rejoignez une communauté, échangez et découvrez des activités."
       }
     },
-    "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici."
+    "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici.",
+    "preview": {
+      "label": "Un aperçu de l'intérieur",
+      "eyebrow": "Ce qui vous attend",
+      "examplePlanet": "Exemple de planète",
+      "exampleSignal": "Exemple de signal",
+      "planetName": "Noctar-62",
+      "planetTags": "Calme · Solitaire · Poétique",
+      "planetTagline": "Une orbite tranquille qui s'ouvre dès qu'on s'en approche.",
+      "signalBody": "Quelqu'un d'autre trouve que 2h du matin est le seul moment où son esprit est clair ? Je cherche des gens qui réfléchissent dans le noir, eux aussi."
+    }
   },
   "guide": {
     "eyebrow": "Bien démarrer",
