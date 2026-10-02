@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Gravity-Souls  -  Là où les âmes trouvent leur gravité",
+    "description": "Gravity-Souls vous connecte à ceux qui partagent votre élan intérieur. Découvrez la résonance, la compatibilité et une connexion authentique grâce à l'expression sincère de qui vous êtes."
+  },
   "nav": {
     "home": "Accueil",
     "stream": "Fil",
@@ -16,7 +20,8 @@
     "mySpace": "Mon espace",
     "account": "Compte",
     "collapseGalaxyLinks": "Réduire les liens de galaxies",
-    "expandGalaxyLinks": "Développer les liens de galaxies"
+    "expandGalaxyLinks": "Développer les liens de galaxies",
+    "signInRequired": "Connexion requise"
   },
   "topbar": {
     "searchPlaceholder": "Chercher planètes, galaxies, événements...",
@@ -24,6 +29,15 @@
     "noNotifications": "Aucun signal. Votre orbite est silencieuse.",
     "markAllRead": "Tout marquer comme lu",
     "signals": "Signaux"
+  },
+  "search": {
+    "resultsFor": "Résultats pour « {query} »",
+    "planets": "Planètes",
+    "galaxies": "Galaxies",
+    "events": "Événements",
+    "noResults": "Rien ne correspond à cette recherche.",
+    "noResultsDescription": "Essayez un autre nom, mot-clé, ou thème.",
+    "viewGalaxy": "Voir la galaxie →"
   },
   "home": {
     "yourPlanet": "Votre Planète",
@@ -493,7 +507,9 @@
     "resetPasswordLinkInvalid": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau ci-dessous.",
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le nouveau mot de passe",
-    "passwordsDontMatch": "Les mots de passe ne correspondent pas"
+    "passwordsDontMatch": "Les mots de passe ne correspondent pas",
+    "signInToContinue": "Connectez-vous pour continuer là où vous étiez.",
+    "socialComingSoon": "Bientôt disponible"
   },
   "common": {
     "loading": "Chargement...",
@@ -705,7 +721,60 @@
     "saving": "Enregistrement...",
     "awakenPlanet": "Éveiller ma planète",
     "continue": "Continuer →",
-    "back": "← Retour"
+    "back": "← Retour",
+    "introEyebrow": "Calibration de résonance",
+    "introTitle": "Découvrez votre identité cosmique",
+    "introDescription": "Un court rituel pour façonner la planète qui vous représente — et trouver celles et ceux avec qui vous résonnez.",
+    "beginCalibration": "Commencer la calibration",
+    "alreadyHavePlanetQuestion": "Vous avez déjà une planète ?",
+    "signIn": "Se connecter",
+    "revealEyebrow": "Votre planète a pris forme",
+    "resolving": "Vérification…",
+    "saveMyPlanet": "Enregistrer ma planète",
+    "next": "Suivant",
+    "seeMyPlanet": "Voir ma planète",
+    "genericSaveError": "Une erreur s'est produite. Veuillez réessayer.",
+    "genericNetworkError": "Erreur réseau. Veuillez réessayer.",
+    "resonanceSignatureTitle": "Signature de résonance",
+    "resonanceSignatureSubtitle": "Comment vous entrez en relation — avec vous-même et avec les autres.",
+    "optional": "optionnel",
+    "resonance": {
+      "emotionalProcessing": {
+        "question": "Quand quelque chose vous pèse, vous avez tendance à…",
+        "alone": "Vous isoler",
+        "together": "En parler",
+        "creating": "Créer quelque chose",
+        "moving": "Bouger votre corps"
+      },
+      "leadWith": {
+        "question": "En rencontrant quelqu'un de nouveau, vous menez avec…",
+        "curiosity": "Curiosité",
+        "warmth": "Chaleur",
+        "ideas": "Idées",
+        "silence": "Présence silencieuse"
+      },
+      "connectionSeeking": {
+        "question": "Le lien que vous recherchez en ce moment…",
+        "deep-slow": "Profond et lent",
+        "playful": "Ludique et léger",
+        "intellectual": "Intellectuel",
+        "soulful": "Habité, sincère"
+      },
+      "solitudeNeed": {
+        "question": "De combien de solitude avez-vous besoin ?",
+        "daily": "Quotidiennement — je me ressource seul(e)",
+        "weekly": "Chaque semaine",
+        "rarely": "Rarement",
+        "social": "Je m'épanouis en compagnie"
+      },
+      "lifeChapter": {
+        "question": "Votre vie en ce moment ressemble à…",
+        "building": "Construction",
+        "exploring": "Exploration",
+        "healing": "Guérison",
+        "waiting": "Attente"
+      }
+    }
   },
   "creationSteps": {
     "climateTitle": "Définissez le climat de votre monde",
@@ -821,7 +890,13 @@
     "planets": "Planètes",
     "preview": "Aperçu",
     "searchAll": "Rechercher toutes les galaxies pour \"{query}\" →",
-    "quickKeywords": "Mots-clés rapides"
+    "quickKeywords": "Mots-clés rapides",
+    "chipCompanion": "Compagnon",
+    "chipSolitude": "Solitude",
+    "chipLateNight": "Nuit tardive",
+    "chipArtistic": "Artistique",
+    "chipTravel": "Voyage",
+    "chipThinking": "Réflexion"
   },
   "a11y": {
     "backToMessages": "Retour aux messages",
@@ -971,7 +1046,17 @@
         "body": "Les galaxies réunissent des personnes autour de passions communes. Rejoignez une communauté, échangez et découvrez des activités."
       }
     },
-    "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici."
+    "motionPreference": "Les animations suivent les réglages de votre appareil. Sélectionnez Reprendre pour les activer ici.",
+    "preview": {
+      "label": "Un aperçu de l'intérieur",
+      "eyebrow": "Ce qui vous attend",
+      "examplePlanet": "Exemple de planète",
+      "exampleSignal": "Exemple de signal",
+      "planetName": "Noctar-62",
+      "planetTags": "Calme · Solitaire · Poétique",
+      "planetTagline": "Une orbite tranquille qui s'ouvre dès qu'on s'en approche.",
+      "signalBody": "Quelqu'un d'autre trouve que 2h du matin est le seul moment où son esprit est clair ? Je cherche des gens qui réfléchissent dans le noir, eux aussi."
+    }
   },
   "guide": {
     "eyebrow": "Bien démarrer",

@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { getFeaturedGalaxy } from '@/lib/featured-galaxy'
 import GlobeClient from './cosmic-globe/GlobeClient'
 import HomeDashboard from './HomeDashboard'
 
@@ -15,7 +16,8 @@ export default async function HomePage() {
   )
 
   if (!signedIn) {
-    return <GlobeClient signedIn={false} standalone />
+    const featuredGalaxy = await getFeaturedGalaxy()
+    return <GlobeClient signedIn={false} standalone featuredGalaxy={featuredGalaxy} />
   }
 
   return <HomeDashboard />

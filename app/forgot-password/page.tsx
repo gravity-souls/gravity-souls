@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
       <h1 className="mb-2 text-3xl font-semibold" style={{ color: "var(--foreground)" }}>
         {tAuth("forgotPasswordTitle")}
       </h1>
-      <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
+      <p className="mb-8 text-sm" style={{ color: "var(--ink)" }}>
         {tAuth("forgotPasswordSubtitle")}
       </p>
 

@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { mockPlanets } from '@/lib/mock-planets'
 import type { PlanetProfile } from '@/types/planet'
 
 interface Props {
@@ -28,13 +27,13 @@ interface CommunityRow {
 // --- Quick keyword chips -----------------------------------------------------
 
 const QUICK_CHIPS = [
-  { label: '搭子',     q: 'community' },
-  { label: '孤独',     q: 'introspection' },
-  { label: '深夜',     q: 'slow living' },
-  { label: '文艺表达', q: 'art' },
-  { label: '旅行',     q: 'travel' },
-  { label: '思考',     q: 'philosophy' },
-]
+  { labelKey: 'chipCompanion', q: 'community' },
+  { labelKey: 'chipSolitude',  q: 'introspection' },
+  { labelKey: 'chipLateNight', q: 'slow living' },
+  { labelKey: 'chipArtistic',  q: 'art' },
+  { labelKey: 'chipTravel',    q: 'travel' },
+  { labelKey: 'chipThinking',  q: 'philosophy' },
+] as const
 
 // --- UniverseSearch ----------------------------------------------------------
 
@@ -48,6 +47,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
   const router = useRouter()
 
   const [allGalaxies, setAllGalaxies] = useState<CommunityRow[]>([])
+  const [matchedPlanets, setMatchedPlanets] = useState<PlanetProfile[]>([])
 
   // Fetch the real community catalogue once on mount for galaxy search.
   useEffect(() => {
@@ -62,6 +62,29 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
   const trimmed = query.trim()
   const showDropdown = focused && trimmed.length >= 1
 
+  // Real planet matches, debounced — unlike the small, preloaded galaxy
+  // catalogue above, this is a live DB query (respecting the same
+  // visibility/block rules as /api/planets, via /api/search) and shouldn't
+  // fire on every keystroke.
+  useEffect(() => {
+    let cancelled = false
+
+    if (!showDropdown) {
+      Promise.resolve().then(() => { if (!cancelled) setMatchedPlanets([]) })
+      return () => { cancelled = true }
+    }
+
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
+        .then((res) => (res.ok ? res.json() : { planets: [] }))
+        .then((data: { planets: PlanetProfile[] }) => {
+          if (!cancelled) setMatchedPlanets(data.planets.slice(0, 4))
+        })
+        .catch(() => { if (!cancelled) setMatchedPlanets([]) })
+    }, 250)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [trimmed, showDropdown])
+
   // Search results
   const matchedGalaxies: CommunityRow[] = showDropdown
     ? allGalaxies.filter((g) => {
@@ -73,14 +96,6 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
           (g.description?.toLowerCase().includes(q) ?? false)
         )
       }).slice(0, 3)
-    : []
-  const matchedPlanets: PlanetProfile[] = showDropdown
-    ? mockPlanets.filter(
-        (p) =>
-          p.name.toLowerCase().includes(trimmed.toLowerCase()) ||
-          p.coreThemes.some((t) => t.toLowerCase().includes(trimmed.toLowerCase())) ||
-          p.tagline?.toLowerCase().includes(trimmed.toLowerCase())
-      ).slice(0, 4)
     : []
 
   const hasResults = matchedGalaxies.length > 0 || matchedPlanets.length > 0
@@ -285,9 +300,9 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
 
       {/* -- Quick keyword chips -------------------------------------------- */}
       <div className="flex flex-wrap gap-2" role="group" aria-label={t('quickKeywords')}>
-        {QUICK_CHIPS.map(({ label, q }) => (
+        {QUICK_CHIPS.map(({ labelKey, q }) => (
           <Link
-            key={label}
+            key={labelKey}
             href={`/galaxies?q=${encodeURIComponent(q)}`}
             className="px-3 py-1.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
             style={{
@@ -309,7 +324,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
               el.style.background = 'rgba(255,255,255,0.04)'
             }}
           >
-            {label}
+            {t(labelKey)}
           </Link>
         ))}
       </div>

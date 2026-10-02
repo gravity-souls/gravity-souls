@@ -17,11 +17,6 @@ function firstLine(content: string) {
   return content.split('\n').find((line) => line.trim())?.trim() ?? content
 }
 
-function mediaRatio(post: StreamPost) {
-  const seed = post.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  return [1.18, 1.32, 1.48, 1.62, 1.78][seed % 5]
-}
-
 export default function PostCard({ post, compact = false, onOpen }: PostCardProps) {
   const firstMedia = post.mediaUrls[0]
   const firstMediaType = post.mediaTypes[0]
@@ -39,12 +34,17 @@ export default function PostCard({ post, compact = false, onOpen }: PostCardProp
       className="group mb-3 inline-block w-full cursor-pointer overflow-hidden rounded-2xl transition-all duration-200 hover:scale-[1.02]"
       style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${accent}22`, boxShadow: '0 10px 34px rgba(0,0,0,0.28)' }}
     >
-      <div className="relative overflow-hidden" style={{ aspectRatio: firstMedia ? `1 / ${compact ? 1.1 : mediaRatio(post)}` : `1 / ${compact ? 0.82 : 1.12}` }}>
+      {/* Media renders at its own natural aspect ratio (no forced crop) so a
+          wide landscape photo isn't squeezed into a tall narrow sliver — the
+          masonry grid's varied card heights come from real photo shapes
+          instead of a fake randomized one. Text-only posts have no intrinsic
+          shape, so they keep a fixed box. */}
+      <div className="relative overflow-hidden" style={!firstMedia ? { aspectRatio: `1 / ${compact ? 0.82 : 1.12}` } : undefined}>
         {firstMedia && firstMediaType === 'image' && (
-          <img src={firstMedia} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img src={firstMedia} alt="" className="block h-auto w-full" loading="lazy" />
         )}
         {firstMedia && firstMediaType === 'video' && (
-          <video src={firstMedia} className="h-full w-full object-cover" muted loop playsInline autoPlay={!compact} controls={false} />
+          <video src={firstMedia} className="block h-auto w-full" muted loop playsInline autoPlay={!compact} controls={false} />
         )}
         {!firstMedia && (
           <div className="flex h-full w-full items-center p-4" style={{ background: `linear-gradient(145deg, ${accent}3f, rgba(8,10,28,0.94))` }}>

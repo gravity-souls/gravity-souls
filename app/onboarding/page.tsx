@@ -23,65 +23,14 @@ const TOTAL_STEPS = 5
 
 const RESONANCE_QUESTIONS: Array<{
   key: keyof ResonanceAnswers
-  question: string
   required: boolean
-  options: Array<{ value: string; label: string }>
+  options: string[]
 }> = [
-  {
-    key: 'emotionalProcessing',
-    question: 'When something weighs on you, you tend to…',
-    required: true,
-    options: [
-      { value: 'alone',    label: 'Withdraw alone' },
-      { value: 'together', label: 'Talk it through' },
-      { value: 'creating', label: 'Create something' },
-      { value: 'moving',   label: 'Move your body' },
-    ],
-  },
-  {
-    key: 'leadWith',
-    question: 'Meeting someone new, you lead with…',
-    required: true,
-    options: [
-      { value: 'curiosity', label: 'Curiosity' },
-      { value: 'warmth',    label: 'Warmth' },
-      { value: 'ideas',     label: 'Ideas' },
-      { value: 'silence',   label: 'Quiet presence' },
-    ],
-  },
-  {
-    key: 'connectionSeeking',
-    question: "The connection you're looking for right now…",
-    required: true,
-    options: [
-      { value: 'deep-slow',    label: 'Deep and slow' },
-      { value: 'playful',      label: 'Playful and light' },
-      { value: 'intellectual', label: 'Intellectual' },
-      { value: 'soulful',      label: 'Soulful' },
-    ],
-  },
-  {
-    key: 'solitudeNeed',
-    question: 'How much solitude do you need?',
-    required: false,
-    options: [
-      { value: 'daily',   label: 'Daily — I recharge alone' },
-      { value: 'weekly',  label: 'Weekly' },
-      { value: 'rarely',  label: 'Rarely' },
-      { value: 'social',  label: 'I thrive in company' },
-    ],
-  },
-  {
-    key: 'lifeChapter',
-    question: 'Your life right now feels like…',
-    required: false,
-    options: [
-      { value: 'building',  label: 'Building' },
-      { value: 'exploring', label: 'Exploring' },
-      { value: 'healing',   label: 'Healing' },
-      { value: 'waiting',   label: 'Waiting' },
-    ],
-  },
+  { key: 'emotionalProcessing', required: true,  options: ['alone', 'together', 'creating', 'moving'] },
+  { key: 'leadWith',            required: true,  options: ['curiosity', 'warmth', 'ideas', 'silence'] },
+  { key: 'connectionSeeking',   required: true,  options: ['deep-slow', 'playful', 'intellectual', 'soulful'] },
+  { key: 'solitudeNeed',        required: false, options: ['daily', 'weekly', 'rarely', 'social'] },
+  { key: 'lifeChapter',         required: false, options: ['building', 'exploring', 'healing', 'waiting'] },
 ]
 
 export default function OnboardingPage() {
@@ -150,10 +99,10 @@ export default function OnboardingPage() {
           clear()
           setAwakeningPlanet(savedPlanet)
         } else {
-          setRevealError('Something went wrong. Please try again.')
+          setRevealError(t('genericSaveError'))
         }
       } catch {
-        setRevealError('Network error. Please try again.')
+        setRevealError(t('genericNetworkError'))
       } finally {
         setSaving(false)
       }
@@ -192,20 +141,19 @@ export default function OnboardingPage() {
 
           <div className="flex flex-col gap-3 text-center">
             <p className="text-eyebrow" style={{ letterSpacing: '0.16em' }}>
-              Resonance Calibration
+              {t('introEyebrow')}
             </p>
             <h1
               className="text-3xl sm:text-4xl font-semibold leading-tight"
               style={{ color: 'var(--foreground)' }}
             >
-              Discover your cosmic identity
+              {t('introTitle')}
             </h1>
             <p
               className="text-sm sm:text-base leading-relaxed max-w-sm mx-auto"
               style={{ color: 'var(--ink)', opacity: 0.72 }}
             >
-              A short ritual to shape the planet that represents you — and to find
-              the ones you resonate with.
+              {t('introDescription')}
             </p>
           </div>
 
@@ -217,12 +165,12 @@ export default function OnboardingPage() {
               className="w-full sm:w-auto px-10 py-3"
               onClick={() => setStep(1)}
             >
-              Begin Calibration
+              {t('beginCalibration')}
             </GlowButton>
             {!session?.user && (
               <Link href="/sign-in" className="text-xs transition-colors" style={{ color: 'var(--ghost)', textDecoration: 'none' }}>
-                Already have a planet?{' '}
-                <span style={{ color: 'var(--star)' }}>Sign in</span>
+                {t('alreadyHavePlanetQuestion')}{' '}
+                <span style={{ color: 'var(--star)' }}>{t('signIn')}</span>
               </Link>
             )}
           </div>
@@ -238,7 +186,7 @@ export default function OnboardingPage() {
         <div className="flex flex-col gap-8 items-center">
           <div className="text-center flex flex-col gap-1.5">
             <p className="text-eyebrow" style={{ letterSpacing: '0.16em' }}>
-              Your planet has taken shape
+              {t('revealEyebrow')}
             </p>
             <h2 className="text-2xl font-semibold" style={{ color: 'var(--foreground)' }}>
               {previewPlanet.name}
@@ -259,7 +207,7 @@ export default function OnboardingPage() {
               disabled={sessionPending || saving}
               onClick={handleSave}
             >
-              {sessionPending ? 'Resolving…' : saving ? 'Saving…' : 'Save My Planet'}
+              {sessionPending ? t('resolving') : saving ? t('saving') : t('saveMyPlanet')}
             </GlowButton>
             {!session?.user && (
               <button
@@ -275,8 +223,8 @@ export default function OnboardingPage() {
                   opacity: sessionPending ? 0.4 : 1,
                 }}
               >
-                Already have a planet?{' '}
-                <span style={{ color: 'var(--star)' }}>Sign in</span>
+                {t('alreadyHavePlanetQuestion')}{' '}
+                <span style={{ color: 'var(--star)' }}>{t('signIn')}</span>
               </button>
             )}
           </div>
@@ -287,7 +235,7 @@ export default function OnboardingPage() {
             className="text-xs transition-colors"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ghost)' }}
           >
-            ← Back
+            {t('back')}
           </button>
         </div>
       </OnboardingShell>
@@ -306,7 +254,7 @@ export default function OnboardingPage() {
           className="self-start text-sm transition-colors"
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ghost)' }}
         >
-          ← Back
+          {t('back')}
         </button>
 
         {step === 1 && (
@@ -342,10 +290,10 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-1.5">
               <h2 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-                Resonance signature
+                {t('resonanceSignatureTitle')}
               </h2>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.6 }}>
-                How you relate — to yourself and to others.
+                {t('resonanceSignatureSubtitle')}
               </p>
             </div>
 
@@ -354,24 +302,24 @@ export default function OnboardingPage() {
               return (
                 <div key={q.key} className="flex flex-col gap-3">
                   <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                    {q.question}
+                    {t(`resonance.${q.key}.question`)}
                     {!q.required && (
                       <span
                         className="ml-2 text-[10px] uppercase tracking-widest"
                         style={{ color: 'var(--ghost)', opacity: 0.5 }}
                       >
-                        optional
+                        {t('optional')}
                       </span>
                     )}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {q.options.map((opt) => {
-                      const active = currentValue === opt.value
+                    {q.options.map((value) => {
+                      const active = currentValue === value
                       return (
                         <button
-                          key={opt.value}
+                          key={value}
                           type="button"
-                          onClick={() => setResonanceAnswer(q.key, opt.value)}
+                          onClick={() => setResonanceAnswer(q.key, value)}
                           className="px-3 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200"
                           style={{
                             background: active ? 'rgba(167,139,250,0.14)' : 'rgba(255,255,255,0.025)',
@@ -382,7 +330,7 @@ export default function OnboardingPage() {
                             outline: 'none',
                           }}
                         >
-                          {opt.label}
+                          {t(`resonance.${q.key}.${value}`)}
                         </button>
                       )
                     })}
@@ -400,7 +348,7 @@ export default function OnboardingPage() {
             disabled={!canProceed}
             onClick={advance}
           >
-            {step === 4 ? 'See my planet' : 'Next'}
+            {step === 4 ? t('seeMyPlanet') : t('next')}
           </GlowButton>
 
           {/* Calibration is optional (docs/beta-execution.md) — always let the user

@@ -116,8 +116,8 @@ function SignInForm() {
       <h1 className="mb-2 text-3xl font-semibold" style={{ color: "var(--foreground)" }}>
         {tAuth("signIn")}
       </h1>
-      <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
-        {tAuth("signInSubtitle")}
+      <p className="mb-8 text-sm" style={{ color: "var(--ink)" }}>
+        {nextDest ? tAuth("signInToContinue") : tAuth("signInSubtitle")}
       </p>
 
       <SocialAuthButtons onGoogle={handleGoogleSignIn} />
@@ -180,7 +180,7 @@ function SignInForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
+      <p className="mt-6 text-sm" style={{ color: "var(--ink)" }}>
         {tAuth("noAccount")}{" "}
         <Link
           href={nextDest ? `/sign-up?next=${encodeURIComponent(nextDest)}` : '/sign-up'}

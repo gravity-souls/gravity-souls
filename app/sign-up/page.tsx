@@ -151,7 +151,7 @@ function SignUpForm() {
       <h1 className="mb-2 text-3xl font-semibold" style={{ color: "var(--foreground)" }}>
         {tAuth("signUp")}
       </h1>
-      <p className="mb-8 text-sm" style={{ color: "var(--ghost)" }}>
+      <p className="mb-8 text-sm" style={{ color: "var(--ink)" }}>
         {tAuth("signUpSubtitle")}
       </p>
 
@@ -238,7 +238,7 @@ function SignUpForm() {
           <label
             htmlFor="policyAcceptance"
             className="text-xs leading-relaxed"
-            style={{ color: "var(--ghost)" }}
+            style={{ color: "var(--ink)" }}
           >
             {tAuth("policyAgreementPrefix")}{" "}
             <Link
@@ -288,7 +288,7 @@ function SignUpForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-sm" style={{ color: "var(--ghost)" }}>
+      <p className="mt-6 text-sm" style={{ color: "var(--ink)" }}>
         {tAuth("hasAccount")}{" "}
         <Link
           href={nextDest ? `/sign-in?next=${encodeURIComponent(nextDest)}` : '/sign-in'}

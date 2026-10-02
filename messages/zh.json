@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Gravity-Souls  -  灵魂找到彼此引力之地",
+    "description": "Gravity-Souls 让你遇见与你内心共鸣的人。通过真实的自我表达，发现共鸣、契合与真诚的连接。"
+  },
   "nav": {
     "home": "首页",
     "stream": "动态",
@@ -16,7 +20,8 @@
     "mySpace": "我的空间",
     "account": "账户",
     "collapseGalaxyLinks": "收起星系链接",
-    "expandGalaxyLinks": "展开星系链接"
+    "expandGalaxyLinks": "展开星系链接",
+    "signInRequired": "需要登录"
   },
   "topbar": {
     "searchPlaceholder": "搜索星球、星系、活动...",
@@ -24,6 +29,15 @@
     "noNotifications": "暂无信号，你的轨道很安静。",
     "markAllRead": "全部标为已读",
     "signals": "信号"
+  },
+  "search": {
+    "resultsFor": "「{query}」的搜索结果",
+    "planets": "星球",
+    "galaxies": "星系",
+    "events": "活动",
+    "noResults": "没有匹配的结果。",
+    "noResultsDescription": "试试其他名称、关键词或主题。",
+    "viewGalaxy": "查看星系 →"
   },
   "home": {
     "yourPlanet": "你的星球",
@@ -493,7 +507,9 @@
     "resetPasswordLinkInvalid": "此重置链接无效或已过期。请在下方重新申请一个。",
     "newPassword": "新密码",
     "confirmPassword": "确认新密码",
-    "passwordsDontMatch": "两次输入的密码不一致"
+    "passwordsDontMatch": "两次输入的密码不一致",
+    "signInToContinue": "登录以继续之前的操作。",
+    "socialComingSoon": "即将推出"
   },
   "common": {
     "loading": "加载中...",
@@ -705,7 +721,60 @@
     "saving": "保存中...",
     "awakenPlanet": "唤醒我的星球",
     "continue": "继续 →",
-    "back": "← 返回"
+    "back": "← 返回",
+    "introEyebrow": "共鸣校准",
+    "introTitle": "发现你的宇宙身份",
+    "introDescription": "一段简短的仪式，塑造代表你的星球——并找到与你共鸣的人。",
+    "beginCalibration": "开始校准",
+    "alreadyHavePlanetQuestion": "已经有星球了？",
+    "signIn": "登录",
+    "revealEyebrow": "你的星球已经成形",
+    "resolving": "校验中…",
+    "saveMyPlanet": "保存我的星球",
+    "next": "下一步",
+    "seeMyPlanet": "查看我的星球",
+    "genericSaveError": "出了点问题，请重试。",
+    "genericNetworkError": "网络错误，请重试。",
+    "resonanceSignatureTitle": "共鸣特征",
+    "resonanceSignatureSubtitle": "你如何与自己、与他人相处。",
+    "optional": "可选",
+    "resonance": {
+      "emotionalProcessing": {
+        "question": "当有心事压在心头时，你倾向于…",
+        "alone": "独自退避",
+        "together": "找人倾诉",
+        "creating": "创作些什么",
+        "moving": "活动身体"
+      },
+      "leadWith": {
+        "question": "认识新朋友时，你首先展现的是…",
+        "curiosity": "好奇心",
+        "warmth": "温暖",
+        "ideas": "想法",
+        "silence": "安静的存在感"
+      },
+      "connectionSeeking": {
+        "question": "你现在寻找的连接是…",
+        "deep-slow": "深沉而缓慢",
+        "playful": "轻松有趣",
+        "intellectual": "理性思辨",
+        "soulful": "灵魂共鸣"
+      },
+      "solitudeNeed": {
+        "question": "你需要多少独处时间？",
+        "daily": "每天——独处让我充电",
+        "weekly": "每周",
+        "rarely": "很少",
+        "social": "我在人群中更自在"
+      },
+      "lifeChapter": {
+        "question": "你现在的生活像是…",
+        "building": "构建中",
+        "exploring": "探索中",
+        "healing": "疗愈中",
+        "waiting": "等待中"
+      }
+    }
   },
   "creationSteps": {
     "climateTitle": "设置你世界的气候",
@@ -821,7 +890,13 @@
     "planets": "星球",
     "preview": "预览",
     "searchAll": "搜索所有包含“{query}”的星系 →",
-    "quickKeywords": "快速搜索关键词"
+    "quickKeywords": "快速搜索关键词",
+    "chipCompanion": "搭子",
+    "chipSolitude": "孤独",
+    "chipLateNight": "深夜",
+    "chipArtistic": "文艺表达",
+    "chipTravel": "旅行",
+    "chipThinking": "思考"
   },
   "a11y": {
     "backToMessages": "返回消息",
@@ -971,7 +1046,17 @@
         "body": "星系让拥有共同兴趣的人相聚。加入社区，交流想法，发现一起参与的活动。"
       }
     },
-    "motionPreference": "动画默认遵循设备设置。选择播放即可在此页面启用动画。"
+    "motionPreference": "动画默认遵循设备设置。选择播放即可在此页面启用动画。",
+    "preview": {
+      "label": "内部一瞥",
+      "eyebrow": "这里有什么",
+      "examplePlanet": "示例星球",
+      "exampleSignal": "示例信号",
+      "planetName": "Noctar-62",
+      "planetTags": "平静 · 独处 · 诗意",
+      "planetTagline": "一个安静的轨道，靠近后才会展开。",
+      "signalBody": "有没有人也觉得凌晨两点是思绪最清晰的时候？想找同样在黑夜里思考的人。"
+    }
   },
   "guide": {
     "eyebrow": "新手入门",

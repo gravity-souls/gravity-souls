@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw } from 'lucide-react'
 import CosmicGlobe, { type GlobeStatus, type GlobeStep } from '@/components/fx/CosmicGlobe'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
+import type { FeaturedGalaxy } from '@/lib/featured-galaxy'
 import styles from './globe.module.css'
 
 const STEPS = [0, 1, 2] as const
@@ -19,10 +20,16 @@ interface Props {
    * the dedicated /cosmic-globe route — hides the otherwise-circular
    * "Back to home" footer link. */
   standalone?: boolean
+  /** Resolved server-side (page.tsx) via lib/featured-galaxy.ts — never
+   * fetched client-side. e2e/demo/cosmic-globe.spec.ts asserts this page
+   * makes zero /api/* requests, so it can never go blank if the database is
+   * unreachable; null here just means the galaxy card doesn't render. */
+  featuredGalaxy: FeaturedGalaxy | null
 }
 
-export default function GlobeClient({ signedIn, standalone = false }: Props) {
+export default function GlobeClient({ signedIn, standalone = false, featuredGalaxy }: Props) {
   const t = useTranslations('cosmicDemo')
+  const tGalaxies = useTranslations('galaxies')
   const [step, setStep] = useState<GlobeStep>(0)
   const reducedMotion = useReducedMotionPreference()
   const [motionChoice, setMotionChoice] = useState<'system' | 'play' | 'pause'>('system')
@@ -117,6 +124,33 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
           <p className={styles.note}>{t('note')}</p>
         </section>
       </div>
+
+      <section className={styles.preview} aria-label={t('preview.label')}>
+        <p className={styles.previewEyebrow}>{t('preview.eyebrow')}</p>
+        <div className={styles.previewGrid}>
+          {featuredGalaxy && (
+            <Link href={`/galaxy/${featuredGalaxy.slug}`} prefetch={false} className={styles.previewCard}>
+              <span className={styles.previewCardIcon} style={{ color: featuredGalaxy.accentColor }} aria-hidden="true">{featuredGalaxy.symbol}</span>
+              <p className={styles.previewCardTitle}>{featuredGalaxy.name}</p>
+              <p className={styles.previewCardMeta}>{tGalaxies('members', { count: featuredGalaxy.memberCount })}</p>
+              {featuredGalaxy.tagline && <p className={styles.previewCardBody}>{featuredGalaxy.tagline}</p>}
+            </Link>
+          )}
+
+          <div className={styles.previewCard}>
+            <span className={styles.previewCardBadge}>{t('preview.examplePlanet')}</span>
+            <p className={styles.previewCardTitle}>{t('preview.planetName')}</p>
+            <p className={styles.previewCardMeta}>{t('preview.planetTags')}</p>
+            <p className={styles.previewCardBody}>{t('preview.planetTagline')}</p>
+          </div>
+
+          <div className={styles.previewCard}>
+            <span className={styles.previewCardBadge}>{t('preview.exampleSignal')}</span>
+            <p className={styles.previewCardBody}>{t('preview.signalBody')}</p>
+          </div>
+        </div>
+      </section>
+
       <footer className={styles.footer}>
         <span>{t('footer')}</span>
         <div className={styles.footerLinks}>
