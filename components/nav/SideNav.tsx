@@ -286,7 +286,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               lockLabel={lockLabel}
             />
             <SubMenu open={showMyPlanetSubItems}>
-              <SubLink href="/settings/planet" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/settings/planet')} Icon={Orbit} />
+              <SubLink href="/my-planet/customize" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/my-planet/customize')} Icon={Orbit} />
               <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
             </SubMenu>
           </div>
