@@ -385,6 +385,18 @@ export default function MyPlanetPage() {
     return () => cancelAnimationFrame(frame)
   }, [loading])
 
+  // /my-planet/report redirects here with #match-report. The browser's native
+  // scroll-to-hash fires on initial load, before this page (gated on `loading`)
+  // has rendered the #match-report element — so it never actually scrolls.
+  // Same fix as #customize above: retry once this content exists.
+  useEffect(() => {
+    if (loading || window.location.hash !== '#match-report') return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('match-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [loading])
+
   const tunedPreview = useMemo(
     () => buildPlanetFromDraft(draft, planet?.userId ?? ''),
     [draft, planet?.userId],
