@@ -13,6 +13,22 @@ import { useTranslations } from 'next-intl'
 
 type Visibility = 'MEMBERS' | 'PRIVATE'
 
+// THEME_OPTIONS' keys (e.g. 'night & silence') are the real stored values —
+// not valid translation-path segments — so they're mapped to the
+// creationSteps.themeOptions.* keys actually used in messages/*.json.
+const THEME_TRANSLATION_KEY: Record<string, string> = {
+  'night & silence':       'nightSilence',
+  'memory':                'memory',
+  'dream logic':           'dreamLogic',
+  'emotional texture':     'emotionalTexture',
+  'visual sensation':      'visualSensation',
+  'inner structure':       'innerStructure',
+  'solitude & connection': 'solitudeConnection',
+  'language & culture':    'languageCulture',
+  'making & craft':        'makingCraft',
+  'movement & place':      'movementPlace',
+}
+
 interface Props {
   selectedThemes:      string[]
   lifestyle?:          Lifestyle
@@ -84,7 +100,7 @@ export default function Step2InterestEcology({
                   cursor: blocked ? 'not-allowed' : 'pointer',
                   outline: 'none',
                 }}
-                title={opt.description}
+                title={t(`themeOptions.${THEME_TRANSLATION_KEY[opt.key]}.description`)}
               >
                 {/* Color dot */}
                 <div
@@ -98,7 +114,7 @@ export default function Step2InterestEcology({
                   className="text-xs font-medium"
                   style={{ color: active ? opt.color : 'var(--ink)', opacity: active ? 1 : 0.7 }}
                 >
-                  {opt.label}
+                  {t(`themeOptions.${THEME_TRANSLATION_KEY[opt.key]}.label`)}
                 </span>
               </button>
             )
@@ -136,10 +152,10 @@ export default function Step2InterestEcology({
                 </span>
                 <div className="flex flex-col gap-0">
                   <span className="text-xs font-semibold" style={{ color: active ? 'var(--foreground)' : 'var(--ink)' }}>
-                    {opt.label}
+                    {t(`lifestyleOptions.${opt.key}.label`)}
                   </span>
                   <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.65 }}>
-                    {opt.description}
+                    {t(`lifestyleOptions.${opt.key}.description`)}
                   </span>
                 </div>
               </button>

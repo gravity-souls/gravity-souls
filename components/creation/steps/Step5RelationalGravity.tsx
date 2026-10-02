@@ -78,10 +78,10 @@ export default function Step5RelationalGravity({
                     className="text-sm font-semibold"
                     style={{ color: active ? opt.color : 'var(--foreground)' }}
                   >
-                    {opt.label}
+                    {t(`matchPrefOptions.${opt.key}.label`)}
                   </span>
                   <span className="text-xs leading-snug" style={{ color: 'var(--ink)', opacity: active ? 0.8 : 0.55 }}>
-                    {opt.description}
+                    {t(`matchPrefOptions.${opt.key}.description`)}
                   </span>
                 </div>
 
@@ -131,10 +131,10 @@ export default function Step5RelationalGravity({
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-xs font-medium" style={{ color: active ? 'var(--foreground)' : 'var(--ink)' }}>
-                    {opt.label}
+                    {t(`connectionOptions.${opt.key}.label`)}
                   </span>
                   <span className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
-                    {opt.description}
+                    {t(`connectionOptions.${opt.key}.description`)}
                   </span>
                 </div>
               </button>

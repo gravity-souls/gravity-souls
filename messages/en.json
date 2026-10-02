@@ -808,7 +808,151 @@
     "gravityTitle": "Set the gravity of the connections you want",
     "gravitySubtitle": "This shapes how the resonance field aligns planets for you. It is a tendency, not a rule - you can always change it.",
     "orbitTendency": "Your orbit tendency",
-    "openTo": "What you are open to"
+    "openTo": "What you are open to",
+    "climateOptions": {
+      "calm": {
+        "label": "Still",
+        "description": "Depth without turbulence. A quiet that listens."
+      },
+      "melancholic": {
+        "label": "Heavy",
+        "description": "A fog you know well. Beauty inside the weight."
+      },
+      "introspective": {
+        "label": "Inward",
+        "description": "The interior is vast. You are its cartographer."
+      },
+      "electric": {
+        "label": "Charged",
+        "description": "Frequency on. You generate momentum."
+      },
+      "turbulent": {
+        "label": "Restless",
+        "description": "Energy seeking form. Not settled - not lost."
+      },
+      "expansive": {
+        "label": "Open",
+        "description": "Generous with space. Wide orbit. Collects things."
+      }
+    },
+    "themeOptions": {
+      "nightSilence": {
+        "label": "Night & silence",
+        "description": "Darkness as habitat"
+      },
+      "memory": {
+        "label": "Memory",
+        "description": "What stays, transformed"
+      },
+      "dreamLogic": {
+        "label": "Dream logic",
+        "description": "The rules of the interior"
+      },
+      "emotionalTexture": {
+        "label": "Emotional texture",
+        "description": "The weight of feeling"
+      },
+      "visualSensation": {
+        "label": "Visual sensation",
+        "description": "Light, image, surface"
+      },
+      "innerStructure": {
+        "label": "Inner structure",
+        "description": "Pattern beneath things"
+      },
+      "solitudeConnection": {
+        "label": "Solitude & connection",
+        "description": "The paradox of togetherness"
+      },
+      "languageCulture": {
+        "label": "Language & culture",
+        "description": "How words shape worlds"
+      },
+      "makingCraft": {
+        "label": "Making & craft",
+        "description": "Creation as thinking"
+      },
+      "movementPlace": {
+        "label": "Movement & place",
+        "description": "Where you are and have been"
+      }
+    },
+    "lifestyleOptions": {
+      "solitary": {
+        "label": "Solitary",
+        "description": "Depth over breadth. Space to think."
+      },
+      "communal": {
+        "label": "Communal",
+        "description": "Energy from others. Together is generative."
+      },
+      "nomadic": {
+        "label": "Nomadic",
+        "description": "Roots in motion. Transit as home."
+      },
+      "rooted": {
+        "label": "Rooted",
+        "description": "Anchored. Depth from staying."
+      }
+    },
+    "commStyleOptions": {
+      "poetic": {
+        "label": "Poetic",
+        "description": "Meaning arrives through image and suggestion."
+      },
+      "direct": {
+        "label": "Direct",
+        "description": "Clarity first. You say what you mean."
+      },
+      "analytical": {
+        "label": "Analytical",
+        "description": "Structure before intuition. Precision as care."
+      },
+      "reflective": {
+        "label": "Reflective",
+        "description": "You listen twice before you speak once."
+      },
+      "playful": {
+        "label": "Playful",
+        "description": "Lightness as a mode. Wit alongside depth."
+      }
+    },
+    "matchPrefOptions": {
+      "similar": {
+        "label": "Resonance",
+        "description": "You gravitate toward kindred spirits. Shared frequency matters."
+      },
+      "mixed": {
+        "label": "Open orbit",
+        "description": "Space for both resonance and contrast. Your orbit is wide."
+      },
+      "complementary": {
+        "label": "Contrast",
+        "description": "Drawn to what you lack. Difference as productive gravity."
+      }
+    },
+    "connectionOptions": {
+      "deep-conversation": {
+        "label": "Deep conversation",
+        "description": "Slow, meaningful exchange."
+      },
+      "activity-buddy": {
+        "label": "Activity companion",
+        "description": "Shared projects or interests."
+      },
+      "friendship": {
+        "label": "Mutual orbit",
+        "description": "Long-term resonance."
+      },
+      "community-companion": {
+        "label": "Community companion",
+        "description": "Galaxy co-membership."
+      },
+      "chat": {
+        "label": "Casual signal",
+        "description": "Light, occasional."
+      }
+    }
   },
   "createUniverse": {
     "formation": "Universe formation",

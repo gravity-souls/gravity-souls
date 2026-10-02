@@ -808,7 +808,151 @@
     "gravityTitle": "Définissez la gravité des connexions souhaitées",
     "gravitySubtitle": "Cela influence l'alignement du champ de résonance. C'est une tendance, pas une règle - vous pouvez toujours la modifier.",
     "orbitTendency": "Votre tendance orbitale",
-    "openTo": "Ce à quoi vous êtes ouvert"
+    "openTo": "Ce à quoi vous êtes ouvert",
+    "climateOptions": {
+      "calm": {
+        "label": "Immobile",
+        "description": "Profondeur sans turbulence. Un calme qui écoute."
+      },
+      "melancholic": {
+        "label": "Lourd",
+        "description": "Un brouillard que vous connaissez bien. De la beauté dans le poids."
+      },
+      "introspective": {
+        "label": "Intérieur",
+        "description": "L'intérieur est vaste. Vous en êtes le cartographe."
+      },
+      "electric": {
+        "label": "Chargé",
+        "description": "En fréquence. Vous générez l'élan."
+      },
+      "turbulent": {
+        "label": "Agité",
+        "description": "Une énergie qui cherche sa forme. Ni posée, ni perdue."
+      },
+      "expansive": {
+        "label": "Ouvert",
+        "description": "Généreux en espace. Une orbite large. Qui collectionne."
+      }
+    },
+    "themeOptions": {
+      "nightSilence": {
+        "label": "Nuit et silence",
+        "description": "L'obscurité comme habitat"
+      },
+      "memory": {
+        "label": "Mémoire",
+        "description": "Ce qui reste, transformé"
+      },
+      "dreamLogic": {
+        "label": "Logique du rêve",
+        "description": "Les règles de l'intérieur"
+      },
+      "emotionalTexture": {
+        "label": "Texture émotionnelle",
+        "description": "Le poids du ressenti"
+      },
+      "visualSensation": {
+        "label": "Sensation visuelle",
+        "description": "Lumière, image, surface"
+      },
+      "innerStructure": {
+        "label": "Structure intérieure",
+        "description": "Le motif sous les choses"
+      },
+      "solitudeConnection": {
+        "label": "Solitude et connexion",
+        "description": "Le paradoxe d'être ensemble"
+      },
+      "languageCulture": {
+        "label": "Langue et culture",
+        "description": "Comment les mots façonnent les mondes"
+      },
+      "makingCraft": {
+        "label": "Création et artisanat",
+        "description": "Créer comme façon de penser"
+      },
+      "movementPlace": {
+        "label": "Mouvement et lieu",
+        "description": "Où vous êtes et avez été"
+      }
+    },
+    "lifestyleOptions": {
+      "solitary": {
+        "label": "Solitaire",
+        "description": "La profondeur plutôt que l'étendue. De l'espace pour penser."
+      },
+      "communal": {
+        "label": "Communautaire",
+        "description": "L'énergie vient des autres. Ensemble, c'est génératif."
+      },
+      "nomadic": {
+        "label": "Nomade",
+        "description": "Des racines en mouvement. Le transit comme foyer."
+      },
+      "rooted": {
+        "label": "Enraciné",
+        "description": "Ancré. La profondeur vient du fait de rester."
+      }
+    },
+    "commStyleOptions": {
+      "poetic": {
+        "label": "Poétique",
+        "description": "Le sens arrive par l'image et la suggestion."
+      },
+      "direct": {
+        "label": "Direct",
+        "description": "La clarté d'abord. Vous dites ce que vous pensez."
+      },
+      "analytical": {
+        "label": "Analytique",
+        "description": "La structure avant l'intuition. La précision comme soin."
+      },
+      "reflective": {
+        "label": "Réfléchi",
+        "description": "Vous écoutez deux fois avant de parler une fois."
+      },
+      "playful": {
+        "label": "Joueur",
+        "description": "La légèreté comme mode. L'esprit à côté de la profondeur."
+      }
+    },
+    "matchPrefOptions": {
+      "similar": {
+        "label": "Résonance",
+        "description": "Vous gravitez vers des esprits proches des vôtres. La fréquence partagée compte."
+      },
+      "mixed": {
+        "label": "Orbite ouverte",
+        "description": "De la place pour la résonance et le contraste. Votre orbite est large."
+      },
+      "complementary": {
+        "label": "Contraste",
+        "description": "Attiré par ce qui vous manque. La différence comme gravité productive."
+      }
+    },
+    "connectionOptions": {
+      "deep-conversation": {
+        "label": "Conversation profonde",
+        "description": "Un échange lent et significatif."
+      },
+      "activity-buddy": {
+        "label": "Compagnon d'activité",
+        "description": "Des projets ou intérêts partagés."
+      },
+      "friendship": {
+        "label": "Orbite mutuelle",
+        "description": "Une résonance à long terme."
+      },
+      "community-companion": {
+        "label": "Compagnon de communauté",
+        "description": "Co-appartenance à une galaxie."
+      },
+      "chat": {
+        "label": "Signal informel",
+        "description": "Léger, occasionnel."
+      }
+    }
   },
   "createUniverse": {
     "formation": "Formation d'univers",

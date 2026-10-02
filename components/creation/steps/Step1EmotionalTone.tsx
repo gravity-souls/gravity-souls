@@ -63,7 +63,7 @@ export default function Step1EmotionalTone({ value, onChange }: Props) {
                 className="text-sm font-semibold"
                 style={{ color: active ? opt.coreColor : 'var(--foreground)' }}
               >
-                {opt.label}
+                {t(`climateOptions.${opt.key}.label`)}
               </span>
 
               {/* Description */}
@@ -71,7 +71,7 @@ export default function Step1EmotionalTone({ value, onChange }: Props) {
                 className="text-[11px] leading-snug"
                 style={{ color: 'var(--ghost)', opacity: active ? 0.85 : 0.6 }}
               >
-                {opt.description}
+                {t(`climateOptions.${opt.key}.description`)}
               </span>
             </button>
           )

@@ -808,7 +808,151 @@
     "gravityTitle": "设置你想要的连接引力",
     "gravitySubtitle": "这会影响共鸣场如何为你排列星球。它是一种倾向，不是规则，你随时可以修改。",
     "orbitTendency": "你的轨道倾向",
-    "openTo": "你愿意接纳的连接"
+    "openTo": "你愿意接纳的连接",
+    "climateOptions": {
+      "calm": {
+        "label": "静止",
+        "description": "没有波动的深度。一种倾听的宁静。"
+      },
+      "melancholic": {
+        "label": "沉重",
+        "description": "你熟悉的雾气。沉重中的美。"
+      },
+      "introspective": {
+        "label": "内向",
+        "description": "内在辽阔无边，你是它的绘图者。"
+      },
+      "electric": {
+        "label": "充电",
+        "description": "频率开启。你在产生动力。"
+      },
+      "turbulent": {
+        "label": "躁动",
+        "description": "寻找形态的能量。未安定，也未迷失。"
+      },
+      "expansive": {
+        "label": "开放",
+        "description": "慷慨地留有空间。宽广的轨道。收集万物。"
+      }
+    },
+    "themeOptions": {
+      "nightSilence": {
+        "label": "夜晚与寂静",
+        "description": "黑暗作为栖息地"
+      },
+      "memory": {
+        "label": "记忆",
+        "description": "留下的，被改变的"
+      },
+      "dreamLogic": {
+        "label": "梦境逻辑",
+        "description": "内心世界的规则"
+      },
+      "emotionalTexture": {
+        "label": "情感质地",
+        "description": "感受的重量"
+      },
+      "visualSensation": {
+        "label": "视觉感知",
+        "description": "光、影像、表面"
+      },
+      "innerStructure": {
+        "label": "内在结构",
+        "description": "事物之下的模式"
+      },
+      "solitudeConnection": {
+        "label": "独处与连接",
+        "description": "共处的悖论"
+      },
+      "languageCulture": {
+        "label": "语言与文化",
+        "description": "词语如何塑造世界"
+      },
+      "makingCraft": {
+        "label": "创作与手艺",
+        "description": "创造即思考"
+      },
+      "movementPlace": {
+        "label": "移动与地方",
+        "description": "你所在与曾经所在之处"
+      }
+    },
+    "lifestyleOptions": {
+      "solitary": {
+        "label": "独处型",
+        "description": "深度胜于广度。给自己思考的空间。"
+      },
+      "communal": {
+        "label": "群居型",
+        "description": "能量来自他人。共同在一起更具生成力。"
+      },
+      "nomadic": {
+        "label": "游牧型",
+        "description": "根在移动中。迁徙即为家。"
+      },
+      "rooted": {
+        "label": "扎根型",
+        "description": "锚定。深度源于停留。"
+      }
+    },
+    "commStyleOptions": {
+      "poetic": {
+        "label": "诗意",
+        "description": "意义通过意象与暗示到来。"
+      },
+      "direct": {
+        "label": "直接",
+        "description": "清晰为先。你说出你的想法。"
+      },
+      "analytical": {
+        "label": "分析型",
+        "description": "结构先于直觉。精确即关怀。"
+      },
+      "reflective": {
+        "label": "反思型",
+        "description": "你会倾听两次，再开口一次。"
+      },
+      "playful": {
+        "label": "玩味型",
+        "description": "轻盈作为一种方式。机智与深度并存。"
+      }
+    },
+    "matchPrefOptions": {
+      "similar": {
+        "label": "共鸣",
+        "description": "你倾向于寻找同类灵魂。共享的频率很重要。"
+      },
+      "mixed": {
+        "label": "开放轨道",
+        "description": "为共鸣与反差都留有空间。你的轨道很宽广。"
+      },
+      "complementary": {
+        "label": "反差",
+        "description": "被你所缺少的东西吸引。差异是一种有建设性的引力。"
+      }
+    },
+    "connectionOptions": {
+      "deep-conversation": {
+        "label": "深度交流",
+        "description": "缓慢而有意义的交流。"
+      },
+      "activity-buddy": {
+        "label": "活动伙伴",
+        "description": "共同的项目或兴趣。"
+      },
+      "friendship": {
+        "label": "相互轨道",
+        "description": "长期的共鸣。"
+      },
+      "community-companion": {
+        "label": "社群伙伴",
+        "description": "共同加入同一星系。"
+      },
+      "chat": {
+        "label": "随意信号",
+        "description": "轻松、偶尔。"
+      }
+    }
   },
   "createUniverse": {
     "formation": "宇宙形成",

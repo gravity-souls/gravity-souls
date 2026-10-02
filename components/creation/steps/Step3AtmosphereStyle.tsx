@@ -109,10 +109,10 @@ export default function Step3AtmosphereStyle({
                 </span>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-xs font-semibold" style={{ color: active ? 'var(--foreground)' : 'var(--ink)' }}>
-                    {opt.label}
+                    {t(`commStyleOptions.${opt.key}.label`)}
                   </span>
                   <span className="text-[10px] leading-snug" style={{ color: 'var(--ghost)', opacity: 0.65 }}>
-                    {opt.description}
+                    {t(`commStyleOptions.${opt.key}.description`)}
                   </span>
                 </div>
               </button>
