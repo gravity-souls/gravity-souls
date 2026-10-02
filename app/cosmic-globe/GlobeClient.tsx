@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Pause, Play, RotateCcw } from 'lucide-react'
 import CosmicGlobe, { type GlobeStatus, type GlobeStep } from '@/components/fx/CosmicGlobe'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
+import type { FeaturedGalaxy } from '@/lib/featured-galaxy'
 import styles from './globe.module.css'
 
 const STEPS = [0, 1, 2] as const
@@ -19,20 +20,14 @@ interface Props {
    * the dedicated /cosmic-globe route — hides the otherwise-circular
    * "Back to home" footer link. */
   standalone?: boolean
+  /** Resolved server-side (page.tsx) via lib/featured-galaxy.ts — never
+   * fetched client-side. e2e/demo/cosmic-globe.spec.ts asserts this page
+   * makes zero /api/* requests, so it can never go blank if the database is
+   * unreachable; null here just means the galaxy card doesn't render. */
+  featuredGalaxy: FeaturedGalaxy | null
 }
 
-// Shape returned by the already-public GET /api/communities (also used
-// anonymously by UniverseSearch) — just the fields this preview needs.
-interface CommunityPreview {
-  slug: string
-  name: string
-  symbol: string
-  tagline: string | null
-  accentColor: string
-  memberCount: number
-}
-
-export default function GlobeClient({ signedIn, standalone = false }: Props) {
+export default function GlobeClient({ signedIn, standalone = false, featuredGalaxy }: Props) {
   const t = useTranslations('cosmicDemo')
   const tGalaxies = useTranslations('galaxies')
   const [step, setStep] = useState<GlobeStep>(0)
@@ -41,31 +36,11 @@ export default function GlobeClient({ signedIn, standalone = false }: Props) {
   const paused = motionChoice === 'pause' || (motionChoice === 'system' && reducedMotion)
   const [resetKey, setResetKey] = useState(0)
   const [status, setStatus] = useState<GlobeStatus>('loading')
-  const [featuredGalaxy, setFeaturedGalaxy] = useState<CommunityPreview | null>(null)
 
   function reset() {
     setStep(0)
     setResetKey((value) => value + 1)
   }
-
-  // A real galaxy to preview before sign-up — picks the most populous one
-  // from the already-public community catalogue. Planet/signal examples
-  // below are deliberately illustrative instead: lib/visibility.ts's
-  // canViewProfile() treats a signed-out viewer as unable to see anyone's
-  // planet/post (member-visible by default), so a real one doesn't belong
-  // on this pre-signup page.
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/communities')
-      .then((res) => (res.ok ? (res.json() as Promise<CommunityPreview[]>) : []))
-      .then((rows) => {
-        if (cancelled || rows.length === 0) return
-        const featured = rows.reduce((best, row) => (row.memberCount > best.memberCount ? row : best))
-        Promise.resolve().then(() => { if (!cancelled) setFeaturedGalaxy(featured) })
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
 
   return (
     <div className={styles.page}>
