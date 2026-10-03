@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { NotificationTemplates, createNotification } from "@/lib/createNotification";
+import { NotificationTemplates } from "@/lib/createNotification";
+import { grantXP } from "@/lib/grantXP";
 import { getUserLocale } from "@/lib/notification-i18n";
 import { isBlocked } from "@/lib/visibility";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
@@ -127,6 +128,7 @@ export async function POST(
     if (!input.ok) return input.response
     const body = input.data;
     const { content, clientMessageId } = body;
+    const trimmedContent = content.trim();
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json({ error: "Message content is required" }, { status: 400 });
@@ -139,6 +141,9 @@ export async function POST(
         where: { conversationId: id, clientMessageId },
       });
       if (existing) {
+        if (existing.senderId !== userId || existing.content !== trimmedContent) {
+          return NextResponse.json({ error: "Message key already used" }, { status: 409 });
+        }
         return NextResponse.json({
           id: existing.id,
           fromId: existing.senderId,
@@ -152,16 +157,30 @@ export async function POST(
     const messageAllowed = await checkRateLimit(rateLimitKey("MESSAGE_SEND", userId), RATE_LIMITS.MESSAGE_SEND.limit, RATE_LIMITS.MESSAGE_SEND.windowMs);
     if (!messageAllowed) return NextResponse.json({ error: "Too many messages. Try again later." }, { status: 429 });
 
-    let msg;
+    const recipientLocale = await getUserLocale(recipientId);
+    const notification = await NotificationTemplates.newMessage(
+      session.user.name ?? "A planet", `/messages/${id}`, recipientLocale,
+    );
+
+    let sent;
     try {
-      msg = await prisma.directMessage.create({
-        data: {
-          conversationId: id,
-          senderId: userId,
-          content: content.trim(),
-          type: "text",
-          clientMessageId: clientMessageId ?? undefined,
-        },
+      sent = await prisma.$transaction(async (tx) => {
+        const created = await tx.directMessage.create({
+          data: {
+            conversationId: id,
+            senderId: userId,
+            content: trimmedContent,
+            type: "text",
+            clientMessageId: clientMessageId ?? undefined,
+          },
+        });
+        await tx.conversationThread.update({
+          where: { id },
+          data: { lastMessageAt: created.createdAt },
+        });
+        const messageCount = await tx.directMessage.count({ where: { conversationId: id } });
+        await tx.notification.create({ data: { userId: recipientId, ...notification } });
+        return { msg: created, isFirstMessage: messageCount === 1 };
       });
     } catch (error) {
       // Two concurrent retries with the same clientMessageId can both pass the
@@ -172,6 +191,9 @@ export async function POST(
           where: { conversationId: id, clientMessageId },
         });
         if (existing) {
+          if (existing.senderId !== userId || existing.content !== trimmedContent) {
+            return NextResponse.json({ error: "Message key already used" }, { status: 409 });
+          }
           return NextResponse.json({
             id: existing.id,
             fromId: existing.senderId,
@@ -184,24 +206,22 @@ export async function POST(
       throw error;
     }
 
-    // Update conversation lastMessageAt
-    await prisma.conversationThread.update({
-      where: { id },
-      data: { lastMessageAt: new Date() },
-    });
-
-    const recipientLocale = await getUserLocale(recipientId);
-    await createNotification({
-      userId: recipientId,
-      ...(await NotificationTemplates.newMessage(session.user.name ?? "A planet", `/messages/${id}`, recipientLocale)),
-    });
+    // XP is a separate reward; its failure must not turn a delivered message
+    // into an apparent failed send and trigger a duplicate retry.
+    if (sent.isFirstMessage) {
+      try {
+        await grantXP(userId, "RESONANCE_SENT");
+      } catch (error) {
+        console.error("Could not grant message XP", error);
+      }
+    }
 
     return NextResponse.json({
-      id: msg.id,
-      fromId: msg.senderId,
-      content: msg.content,
-      type: msg.type,
-      sentAt: msg.createdAt.toISOString(),
+      id: sent.msg.id,
+      fromId: sent.msg.senderId,
+      content: sent.msg.content,
+      type: sent.msg.type,
+      sentAt: sent.msg.createdAt.toISOString(),
     }, { status: 201 });
 
   } catch (error) {

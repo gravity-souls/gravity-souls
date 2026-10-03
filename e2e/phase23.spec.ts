@@ -86,9 +86,19 @@ test.describe.serial('Phase 23 — account deletion (tombstone) and export', () 
     expect((await recipientCtx.post('/api/follows', { data: { userId: deleterId } })).status()).toBe(201)
 
     // A real DM the deleter sends to the recipient.
-    const convRes = await deleterCtx.post('/api/conversations', { data: { recipientId, message: dmContent } })
+    const convRes = await deleterCtx.post('/api/conversations', { data: { recipientId } })
     expect(convRes.status()).toBe(201)
     conversationId = (await convRes.json()).conversationId
+    expect(await prisma.directMessage.count({ where: { conversationId } })).toBe(0)
+    const clientMessageId = crypto.randomUUID()
+    expect((await deleterCtx.post(`/api/conversations/${conversationId}`, {
+      data: { content: dmContent, clientMessageId },
+    })).status()).toBe(201)
+    expect((await deleterCtx.post(`/api/conversations/${conversationId}`, {
+      data: { content: dmContent, clientMessageId },
+    })).status()).toBe(200)
+    expect(await prisma.directMessage.count({ where: { conversationId } })).toBe(1)
+    expect(await prisma.notification.count({ where: { userId: recipientId, type: 'NEW_MESSAGE', actionUrl: `/messages/${conversationId}` } })).toBe(1)
 
     // Own private data seeded directly (mirrors global-setup.ts's convention
     // of writing fixtures straight through Prisma rather than every UI flow).

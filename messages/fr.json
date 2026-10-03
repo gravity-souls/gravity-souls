@@ -28,6 +28,10 @@
     "notifications": "Notifications",
     "noNotifications": "Aucun signal. Votre orbite est silencieuse.",
     "markAllRead": "Tout marquer comme lu",
+    "messages": "Messages",
+    "newCount": "{count} nouvelles",
+    "updateError": "Impossible de mettre à jour la notification. Réessayez.",
+    "loadError": "Impossible de charger les notifications. Réessayez.",
     "signals": "Signaux"
   },
   "search": {

@@ -3,8 +3,6 @@ import { conversationSchema } from '@/lib/input-schemas'
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { grantXP } from "@/lib/grantXP";
-import { NotificationTemplates, createNotification } from "@/lib/createNotification";
 import { canContact, mutualFollow } from "@/lib/visibility";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -110,16 +108,13 @@ export async function POST(request: Request) {
     const input = await readJson(request, conversationSchema)
     if (!input.ok) return input.response
     const body = input.data;
-    const { recipientId, message } = body;
+    const { recipientId } = body;
 
     if (!recipientId || typeof recipientId !== "string") {
       return NextResponse.json({ error: "recipientId is required" }, { status: 400 });
     }
     if (recipientId === userId) {
       return NextResponse.json({ error: "Cannot message yourself" }, { status: 400 });
-    }
-    if (!message || typeof message !== "string" || message.trim().length === 0) {
-      return NextResponse.json({ error: "Message content is required" }, { status: 400 });
     }
 
     // Verify recipient exists
@@ -151,40 +146,14 @@ export async function POST(request: Request) {
       if (!allowed) return NextResponse.json({ error: "Too many new conversations. Try again later." }, { status: 429 });
     }
 
-    // Find or create conversation
+    // Opening a conversation never sends a message. The composer performs the send.
     const conversation = await prisma.conversationThread.upsert({
       where: { userAId_userBId: { userAId: uA, userBId: uB } },
-      create: {
-        userAId: uA,
-        userBId: uB,
-        lastMessageAt: new Date(),
-      },
-      update: {
-        lastMessageAt: new Date(),
-      },
+      create: { userAId: uA, userBId: uB },
+      update: {},
     });
 
-    const messageAllowed = await checkRateLimit(rateLimitKey("MESSAGE_SEND", userId), RATE_LIMITS.MESSAGE_SEND.limit, RATE_LIMITS.MESSAGE_SEND.windowMs);
-    if (!messageAllowed) return NextResponse.json({ error: "Too many messages. Try again later." }, { status: 429 });
-
-    // Create the message
-    const msg = await prisma.directMessage.create({
-      data: {
-        conversationId: conversation.id,
-        senderId: userId,
-        content: message.trim(),
-        type: "beam",
-      },
-    });
-
-    const xpEvent = await grantXP(userId, "RESONANCE_SENT");
-
-    await createNotification({
-      userId: recipientId,
-      ...NotificationTemplates.resonanceReceived(session.user.name ?? "A planet", `/messages/${conversation.id}`),
-    });
-
-    return NextResponse.json({ conversationId: conversation.id, message: msg, xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });
+    return NextResponse.json({ conversationId: conversation.id }, { status: existingThread ? 200 : 201 });
 
   } catch (error) {
     return safeApiError(error)

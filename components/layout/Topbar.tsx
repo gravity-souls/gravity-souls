@@ -137,9 +137,8 @@ export default function Topbar() {
           <NotificationBell />
           <LanguageSwitcher variant="desktop" />
 
-          {/* TODO: replace this placeholder with the dedicated chat system entry point. */}
           <Link
-            href="/stream"
+            href="/messages"
             aria-label={tA11y('messages')}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white md:hidden"
           >

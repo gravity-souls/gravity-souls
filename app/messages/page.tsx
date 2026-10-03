@@ -186,10 +186,7 @@ function MessagesInner() {
           const res = await fetch('/api/conversations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              recipientId,
-              message: t('firstSignal', { name: planet.name ?? t('thisPlanet') }),
-            }),
+            body: JSON.stringify({ recipientId }),
           })
           if (cancelled) return
 

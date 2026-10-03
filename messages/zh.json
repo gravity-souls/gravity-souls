@@ -28,6 +28,10 @@
     "notifications": "通知",
     "noNotifications": "暂无信号，你的轨道很安静。",
     "markAllRead": "全部标为已读",
+    "messages": "消息",
+    "newCount": "{count} 条新通知",
+    "updateError": "无法更新通知，请重试。",
+    "loadError": "无法加载通知，请重试。",
     "signals": "信号"
   },
   "search": {

@@ -12,7 +12,7 @@ export async function GET() {
 
   const userId = session.user.id
 
-  const [notifications, unreadCount] = await Promise.all([
+  const [notifications, unreadCount, unreadMessagesCount] = await Promise.all([
     prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -21,7 +21,14 @@ export async function GET() {
     prisma.notification.count({
       where: { userId, read: false },
     }),
+    prisma.directMessage.count({
+      where: {
+        senderId: { not: userId },
+        readAt: null,
+        conversation: { OR: [{ userAId: userId }, { userBId: userId }] },
+      },
+    }),
   ])
 
-  return NextResponse.json({ notifications, unreadCount })
+  return NextResponse.json({ notifications, unreadCount, unreadMessagesCount })
 }

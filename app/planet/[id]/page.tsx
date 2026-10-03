@@ -174,10 +174,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
       const res = await fetch('/api/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientId: planet.userId,
-          message: t('firstSignal', { name: planet.name }),
-        }),
+        body: JSON.stringify({ recipientId: planet.userId }),
       })
       if (res.ok) {
         const data = await res.json()

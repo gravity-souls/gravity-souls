@@ -187,10 +187,7 @@ function DrawerContent({
       const res = await fetch('/api/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientId: planet.userId,
-          message: `First signal to ${planet.name}`,
-        }),
+        body: JSON.stringify({ recipientId: planet.userId }),
       })
 
       if (res.status === 401) {

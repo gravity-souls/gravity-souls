@@ -28,6 +28,10 @@
     "notifications": "Notifications",
     "noNotifications": "No signals yet. Your orbit is quiet.",
     "markAllRead": "Mark all read",
+    "messages": "Messages",
+    "newCount": "{count} new",
+    "updateError": "Could not update the notification. Try again.",
+    "loadError": "Could not load notifications. Try again.",
     "signals": "Signals"
   },
   "search": {

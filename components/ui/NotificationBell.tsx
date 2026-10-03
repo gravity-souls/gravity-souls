@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Bell } from 'lucide-react'
+import { Bell, MessageCircle } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import NotificationItem, { type SerializedNotification } from '@/components/ui/NotificationItem'
 
 interface NotificationResponse {
   notifications: SerializedNotification[]
   unreadCount: number
+  unreadMessagesCount: number
 }
 
 export default function NotificationBell() {
@@ -22,6 +23,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<SerializedNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -36,31 +38,21 @@ export default function NotificationBell() {
       const response = await fetch('/api/notifications', { cache: 'no-store' })
 
       if (!response.ok) {
-        throw new Error('Unable to load notifications')
+        throw new Error(tTopbar('loadError'))
       }
 
       const data = (await response.json()) as NotificationResponse
       setNotifications(data.notifications)
       setUnreadCount(data.unreadCount)
+      setUnreadMessagesCount(data.unreadMessagesCount)
       return data
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load notifications')
+      setError(err instanceof Error ? err.message : tTopbar('loadError'))
       return null
     } finally {
       setIsLoading(false)
     }
-  }, [session?.user])
-
-  const markAllRead = useCallback(async () => {
-    await fetch('/api/notifications/read', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ all: true }),
-    })
-
-    setUnreadCount(0)
-    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })))
-  }, [])
+  }, [session?.user, tTopbar])
 
   useEffect(() => {
     if (!session?.user || isOpen) return
@@ -77,21 +69,8 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!isOpen || !session?.user) return
 
-    let cancelled = false
-
-    async function loadAndMarkRead() {
-      const data = await fetchNotifications()
-      if (!cancelled && data && data.unreadCount > 0) {
-        await markAllRead()
-      }
-    }
-
-    void loadAndMarkRead()
-
-    return () => {
-      cancelled = true
-    }
-  }, [fetchNotifications, isOpen, markAllRead, session?.user])
+    void fetchNotifications()
+  }, [fetchNotifications, isOpen, session?.user])
 
   useEffect(() => {
     if (!isOpen) return
@@ -117,16 +96,20 @@ export default function NotificationBell() {
 
   const handleSelect = async (notification: SerializedNotification) => {
     if (!notification.read) {
-      await fetch('/api/notifications/read', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [notification.id] }),
-      })
-
-      setNotifications((current) =>
-        current.map((item) => (item.id === notification.id ? { ...item, read: true } : item)),
-      )
-      setUnreadCount((current) => Math.max(0, current - 1))
+      try {
+        const response = await fetch('/api/notifications/read', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [notification.id] }),
+        })
+        if (!response.ok) throw new Error('update failed')
+        setNotifications((current) =>
+          current.map((item) => (item.id === notification.id ? { ...item, read: true } : item)),
+        )
+        setUnreadCount((current) => Math.max(0, current - 1))
+      } catch {
+        setError(tTopbar('updateError'))
+      }
     }
 
     setIsOpen(false)
@@ -136,7 +119,13 @@ export default function NotificationBell() {
   const handleDelete = async (id: string) => {
     const notification = notifications.find((item) => item.id === id)
 
-    await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+    try {
+      const response = await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('delete failed')
+    } catch {
+      setError(tTopbar('updateError'))
+      return
+    }
 
     setNotifications((current) => current.filter((item) => item.id !== id))
     if (notification && !notification.read) {
@@ -180,8 +169,17 @@ export default function NotificationBell() {
               <p className="text-sm font-semibold text-white">{tTopbar('notifications')}</p>
               <p className="text-[11px] text-white/42">{tTopbar('signals')}</p>
             </div>
-            {unreadCount > 0 && <span className="rounded-full bg-violet-400/16 px-2 py-1 text-[11px] font-semibold text-violet-200">{unreadCount} new</span>}
+            {unreadCount > 0 && <span className="rounded-full bg-violet-400/16 px-2 py-1 text-[11px] font-semibold text-violet-200">{tTopbar('newCount', { count: unreadCount })}</span>}
           </div>
+
+          <Link
+            href="/messages"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center justify-between border-b border-white/8 px-4 py-3 text-sm font-medium text-white/80 no-underline transition hover:bg-white/6 hover:text-white"
+          >
+            <span className="flex items-center gap-2"><MessageCircle className="h-4 w-4 text-violet-300" />{tTopbar('messages')}</span>
+            {unreadMessagesCount > 0 && <span className="rounded-full bg-violet-400 px-2 py-0.5 text-xs font-bold text-slate-950">{unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}</span>}
+          </Link>
 
           <div className="max-h-120 overflow-y-auto py-1">
             {isLoading && notifications.length === 0 ? (
