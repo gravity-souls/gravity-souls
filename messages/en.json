@@ -540,6 +540,7 @@
     "planetLevel": "Planet level",
     "maximumLevelReached": "Maximum level reached ✦",
     "xpToLevel": "{current} / {required} XP to {level}",
+    "howToEarnXp": "How to earn XP",
     "dismissLevelUp": "Dismiss level up",
     "levelUp": "Level up",
     "singularityReached": "✦ You have reached Singularity",
@@ -1240,6 +1241,31 @@
       }
     },
     "firstStepsTitle": "Your first steps",
+    "levels": {
+      "title": "Grow your planet",
+      "intro": "Play at your own pace: shape your planet, explore galaxies, share signals, and build real connections. Successful actions earn XP for your planet. Your level tracks your journey; it is not a measure of your worth or compatibility.",
+      "earnTitle": "How to earn XP",
+      "actions": {
+        "profile": "Complete your profile (once)",
+        "daily": "Visit on a new day",
+        "post": "Share a signal",
+        "galaxy": "Join a galaxy",
+        "message": "Send the first message in a conversation",
+        "rsvp": "Join an event",
+        "proposal": "Propose an event",
+        "approved": "Have your event approved"
+      },
+      "milestonesTitle": "Planet milestones",
+      "threshold": "Lv.{level} · {xp} XP",
+      "milestones": {
+        "1": "Start with planet presets",
+        "2": "Planet color",
+        "3": "Atmosphere and rings",
+        "4": "Rotation and clouds",
+        "5": "Your own planet texture"
+      },
+      "earlyAccess": "During early access, customization controls may be available before you reach their listed level. Your XP and level still grow. You can see your progress on My Planet."
+    },
     "steps": {
       "0": "Take the soul scan, or skip it — calibration is optional, never required.",
       "1": "Shape your planet: choose how it looks and what it says about you.",

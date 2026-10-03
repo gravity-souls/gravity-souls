@@ -1,5 +1,6 @@
 import { LEVEL_NAMES, clampLevel, xpToNextLevel } from '@/lib/xp'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 
 interface Props {
   xp: number
@@ -41,6 +42,9 @@ export default function XPProgressBar({ xp, userLevel }: Props) {
           ? t('maximumLevelReached')
           : t('xpToLevel', { current: progress.current, required: progress.required, level: LEVEL_NAMES[nextLevel] })}
       </p>
+      <Link href="/guide#levels" className="mt-3 inline-block text-xs font-medium underline underline-offset-2" style={{ color: 'var(--star)' }}>
+        {t('howToEarnXp')}
+      </Link>
     </div>
   )
 }

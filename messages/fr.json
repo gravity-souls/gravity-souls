@@ -540,6 +540,7 @@
     "planetLevel": "Niveau de planète",
     "maximumLevelReached": "Niveau maximum atteint ✦",
     "xpToLevel": "{current} / {required} XP vers {level}",
+    "howToEarnXp": "Comment gagner de l’XP",
     "dismissLevelUp": "Fermer le niveau supérieur",
     "levelUp": "Niveau supérieur",
     "singularityReached": "✦ Vous avez atteint la singularité",
@@ -1240,6 +1241,31 @@
       }
     },
     "firstStepsTitle": "Vos premiers pas",
+    "levels": {
+      "title": "Faites grandir votre planète",
+      "intro": "Avancez à votre rythme : façonnez votre planète, explorez des galaxies, partagez des signaux et créez de vrais liens. Les actions réussies rapportent de l’XP à votre planète. Votre niveau reflète votre parcours, pas votre valeur ni votre compatibilité.",
+      "earnTitle": "Comment gagner de l’XP",
+      "actions": {
+        "profile": "Compléter votre profil (une fois)",
+        "daily": "Revenir un nouveau jour",
+        "post": "Partager un signal",
+        "galaxy": "Rejoindre une galaxie",
+        "message": "Envoyer le premier message d’une conversation",
+        "rsvp": "Participer à un événement",
+        "proposal": "Proposer un événement",
+        "approved": "Faire approuver votre événement"
+      },
+      "milestonesTitle": "Étapes de votre planète",
+      "threshold": "Niv.{level} · {xp} XP",
+      "milestones": {
+        "1": "Commencer avec les modèles de planète",
+        "2": "Couleur de la planète",
+        "3": "Atmosphère et anneaux",
+        "4": "Rotation et nuages",
+        "5": "Votre propre texture de planète"
+      },
+      "earlyAccess": "Pendant l’accès anticipé, les options de personnalisation peuvent être disponibles avant le niveau indiqué. Votre XP et votre niveau continuent de progresser. Suivez-les sur Ma planète."
+    },
     "steps": {
       "0": "Faites le scan d'âme, ou passez-le — la calibration est facultative, jamais obligatoire.",
       "1": "Façonnez votre planète : choisissez son apparence et ce qu'elle dit de vous.",
