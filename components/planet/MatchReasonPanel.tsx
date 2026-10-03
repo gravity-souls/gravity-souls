@@ -1,5 +1,7 @@
 import type { PlanetProfile } from '@/types/planet'
 import type { ResonancePlanet } from '@/types/planet'
+import { useTranslations } from 'next-intl'
+import { themeLabel } from '@/lib/planet-labels'
 
 // --- Beam colour map (mirrors lib/match.ts) ----------------------------------
 
@@ -68,6 +70,7 @@ interface Props {
 }
 
 export default function MatchReasonPanel({ match, targetPlanet }: Props) {
+  const tCreation = useTranslations('creationSteps')
   const meta = BEAM_META[match.beamColor] ?? BEAM_META.teal
   const { coreColor } = targetPlanet.visual
 
@@ -140,9 +143,9 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
           >
             Shared territory:
           </span>
-          {targetPlanet.coreThemes.slice(0, 3).map((t) => (
+          {targetPlanet.coreThemes.slice(0, 3).map((theme) => (
             <span
-              key={t}
+              key={theme}
               className="text-[10px] px-2 py-0.5 rounded-md tracking-wide"
               style={{
                 background: `${coreColor}10`,
@@ -150,7 +153,7 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
                 color: coreColor,
               }}
             >
-              {t}
+              {themeLabel(tCreation, theme)}
             </span>
           ))}
         </div>

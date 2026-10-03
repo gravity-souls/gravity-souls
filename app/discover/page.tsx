@@ -14,6 +14,7 @@ import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetProfile } from '@/types/planet'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { themeLabel } from '@/lib/planet-labels'
 
 // --- Helper: convert DB planet to PlanetProfile for matching engine ----------
 
@@ -78,6 +79,7 @@ function ResonanceBar({ score, color }: { score: number; color: string }) {
 // --- Planet card for discover ------------------------------------------------
 
 function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: number }) {
+  const tCreation = useTranslations('creationSteps')
   const color = planet.visual?.coreColor ?? '#a78bfa'
 
   return (
@@ -108,7 +110,7 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
         {planet.coreThemes.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {planet.coreThemes.slice(0, 5).map((theme) => (
-              <Tag key={theme} label={theme} variant="dim" />
+              <Tag key={theme} label={themeLabel(tCreation, theme)} variant="dim" />
             ))}
           </div>
         )}

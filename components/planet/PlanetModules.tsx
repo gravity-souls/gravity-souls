@@ -1,4 +1,6 @@
 import type { PlanetProfile } from '@/types/planet'
+import { useTranslations } from 'next-intl'
+import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 
 // --- CognitiveStyleModule -----------------------------------------------------
 // 2-axis plot: abstract vs concrete (X), introspective vs outward (Y)
@@ -166,6 +168,7 @@ export function ContentOrbit({ planet }: { planet: PlanetProfile }) {
 // --- ThemeCloud ----------------------------------------------------------------
 
 export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations('creationSteps')
   return (
     <div className="flex flex-col gap-3">
       <span
@@ -185,7 +188,7 @@ export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
               color: planet.visual.coreColor,
             }}
           >
-            {theme}
+            {themeLabel(t, theme)}
           </span>
         ))}
         <span
@@ -196,7 +199,7 @@ export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
             color: 'var(--star)',
           }}
         >
-          {planet.mood}
+          {moodLabel(t, planet.mood)}
         </span>
         <span
           className="px-3 py-1 rounded-full text-xs font-medium tracking-wide capitalize"
@@ -206,7 +209,7 @@ export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
             color: 'var(--star)',
           }}
         >
-          {planet.lifestyle}
+          {lifestyleLabel(t, planet.lifestyle)}
         </span>
       </div>
     </div>

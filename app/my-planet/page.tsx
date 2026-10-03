@@ -31,6 +31,7 @@ import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalG
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
 import { getResonanceMatches } from '@/lib/match'
+import { themeLabel, moodLabel, lifestyleLabel, commStyleLabel } from '@/lib/planet-labels'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -161,6 +162,7 @@ export default function MyPlanetPage() {
   const tStream = useTranslations('stream')
   const tSettings = useTranslations('planetSettings')
   const tCommon = useTranslations('common')
+  const tCreation = useTranslations('creationSteps')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
@@ -503,8 +505,8 @@ export default function MyPlanetPage() {
     const score = matches[0]?.strength ?? fallbackResonanceScore(p.id)
     // Derive personality traits from mood + coreThemes
     const traits: string[] = []
-    if (p.mood) traits.push(p.mood.charAt(0).toUpperCase() + p.mood.slice(1))
-    if (p.coreThemes[0]) traits.push(p.coreThemes[0])
+    if (p.mood) traits.push(moodLabel(tCreation, p.mood))
+    if (p.coreThemes[0]) traits.push(themeLabel(tCreation, p.coreThemes[0]))
     return { planet: p, score, traits }
   })
   const matchReportSummary = universeSummary ?? {
@@ -760,7 +762,7 @@ export default function MyPlanetPage() {
                   </span>
                   <div className="inline-flex flex-wrap gap-1.5 mt-1">
                     {planet.coreThemes.map((theme) => (
-                      <Tag key={theme} label={theme} variant="dim" />
+                      <Tag key={theme} label={themeLabel(tCreation, theme)} variant="dim" />
                     ))}
                   </div>
                 </div>
@@ -776,16 +778,16 @@ export default function MyPlanetPage() {
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                   style={{ background: `${visual.coreColor}14`, border: `1px solid ${visual.coreColor}28`, color: visual.coreColor }}>
-                  {planet.mood}
+                  {moodLabel(tCreation, planet.mood)}
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                   style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', color: 'var(--star)' }}>
-                  {planet.lifestyle}
+                  {lifestyleLabel(tCreation, planet.lifestyle)}
                 </span>
                 {planet.communicationStyle && (
                   <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--ink)' }}>
-                    {planet.communicationStyle}
+                    {commStyleLabel(tCreation, planet.communicationStyle)}
                   </span>
                 )}
               </div>

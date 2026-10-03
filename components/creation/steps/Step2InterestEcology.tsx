@@ -1,5 +1,6 @@
 import type { Lifestyle } from '@/types/planet'
 import { THEME_OPTIONS, LIFESTYLE_OPTIONS } from '@/types/creation'
+import { themeLabel, themeDescription } from '@/lib/planet-labels'
 import { useTranslations } from 'next-intl'
 
 // --- Step2InterestEcology -----------------------------------------------------
@@ -12,22 +13,6 @@ import { useTranslations } from 'next-intl'
 // this doesn't render a second, redundant visibility control there.
 
 type Visibility = 'MEMBERS' | 'PRIVATE'
-
-// THEME_OPTIONS' keys (e.g. 'night & silence') are the real stored values —
-// not valid translation-path segments — so they're mapped to the
-// creationSteps.themeOptions.* keys actually used in messages/*.json.
-const THEME_TRANSLATION_KEY: Record<string, string> = {
-  'night & silence':       'nightSilence',
-  'memory':                'memory',
-  'dream logic':           'dreamLogic',
-  'emotional texture':     'emotionalTexture',
-  'visual sensation':      'visualSensation',
-  'inner structure':       'innerStructure',
-  'solitude & connection': 'solitudeConnection',
-  'language & culture':    'languageCulture',
-  'making & craft':        'makingCraft',
-  'movement & place':      'movementPlace',
-}
 
 interface Props {
   selectedThemes:      string[]
@@ -100,7 +85,7 @@ export default function Step2InterestEcology({
                   cursor: blocked ? 'not-allowed' : 'pointer',
                   outline: 'none',
                 }}
-                title={t(`themeOptions.${THEME_TRANSLATION_KEY[opt.key]}.description`)}
+                title={themeDescription(t, opt.key)}
               >
                 {/* Color dot */}
                 <div
@@ -114,7 +99,7 @@ export default function Step2InterestEcology({
                   className="text-xs font-medium"
                   style={{ color: active ? opt.color : 'var(--ink)', opacity: active ? 1 : 0.7 }}
                 >
-                  {t(`themeOptions.${THEME_TRANSLATION_KEY[opt.key]}.label`)}
+                  {themeLabel(t, opt.key)}
                 </span>
               </button>
             )

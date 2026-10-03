@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
@@ -117,6 +118,7 @@ function DrawerContent({
   savedPlanetIds?: Set<string> | null
 }) {
   const t = useTranslations('planetPage')
+  const tCreation = useTranslations('creationSteps')
   const router = useRouter()
   const { coreColor } = planet.visual
   const fragment = planet.contentFragments[0]
@@ -281,7 +283,7 @@ function DrawerContent({
               border:     `1px solid ${coreColor}35`,
             }}
           >
-            {planet.mood}
+            {moodLabel(tCreation, planet.mood)}
           </span>
           <span
             className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold tracking-widest uppercase"
@@ -291,7 +293,7 @@ function DrawerContent({
               border:     '1px solid var(--border-soft)',
             }}
           >
-            {planet.lifestyle}
+            {lifestyleLabel(tCreation, planet.lifestyle)}
           </span>
         </div>
 
@@ -309,7 +311,7 @@ function DrawerContent({
                   border:     '1px solid var(--border-soft)',
                 }}
               >
-                {theme}
+                {themeLabel(tCreation, theme)}
               </span>
             ))}
           </div>

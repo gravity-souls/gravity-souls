@@ -9,6 +9,7 @@ import SafetyMenu from '@/components/social/SafetyMenu'
 import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
@@ -124,6 +125,7 @@ interface Props {
 
 export default function PlanetHero({ planet, viewerRole }: Props) {
   const t = useTranslations('planetPage')
+  const tCreation = useTranslations('creationSteps')
   const { visual } = planet
   const isDesktop = useIsDesktop()
   const globeSize = isDesktop ? 260 : 200
@@ -238,7 +240,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
                 color: visual.coreColor,
               }}
             >
-              {planet.mood}
+              {moodLabel(tCreation, planet.mood)}
             </span>
             <span
               className="text-xs px-2.5 py-0.5 rounded-full capitalize"
@@ -248,7 +250,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
                 color: 'var(--star)',
               }}
             >
-              {planet.lifestyle}
+              {lifestyleLabel(tCreation, planet.lifestyle)}
             </span>
             {planet.sbtiType && (
               <span
@@ -278,7 +280,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
                     opacity: 0.85,
                   }}
                 >
-                  {theme}
+                  {themeLabel(tCreation, theme)}
                 </span>
               ))}
             </div>

@@ -10,6 +10,7 @@ import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import LockedLayer from '@/components/ui/LockedLayer'
 import FirstTimeHint from '@/components/hints/FirstTimeHint'
+import { galaxyMoodLabel } from '@/lib/planet-labels'
 import type { PlanetProfile } from '@/types/planet'
 import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
 
@@ -177,6 +178,7 @@ export default function GalaxyPage({ params }: Props) {
   const router = useRouter()
   const t = useTranslations('galaxyPage')
   const tCommon = useTranslations('common')
+  const tGalaxies = useTranslations('galaxies')
   const { slug } = use(params)
 
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
@@ -693,7 +695,7 @@ export default function GalaxyPage({ params }: Props) {
                     className="px-3 py-1 rounded-xl text-xs capitalize"
                     style={{ background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--border-soft)' }}
                   >
-                    {galaxy.mood}
+                    {galaxyMoodLabel(tGalaxies, galaxy.mood)}
                   </span>
                   <span
                     className="px-3 py-1 rounded-xl text-xs capitalize"
@@ -1234,7 +1236,7 @@ export default function GalaxyPage({ params }: Props) {
                   <div className="flex flex-col gap-3">
                     {[
                       { label: t('members'), value: galaxy.memberCount.toLocaleString() },
-                      { label: t('atmosphere'), value: galaxy.mood },
+                      { label: t('atmosphere'), value: galaxyMoodLabel(tGalaxies, galaxy.mood) },
                       { label: t('status'), value: galaxy.maturity },
                       { label: t('keywords'), value: galaxy.keywords.length.toString() },
                     ].map(({ label, value }) => (

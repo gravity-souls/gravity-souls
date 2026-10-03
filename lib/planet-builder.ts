@@ -103,7 +103,7 @@ function deriveTagline(draft: PlanetDraft): string {
 
 // --- Reverse mapping: PlanetProfile → PlanetDraft ----------------------------
 
-const MOOD_TO_CLIMATE: Record<Mood, string> = {
+export const MOOD_TO_CLIMATE: Record<Mood, string> = {
   calm:        'calm',
   melancholic: 'melancholic',
   intense:     'electric',

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import GlowButton from '@/components/ui/GlowButton'
@@ -17,6 +19,7 @@ interface Props {
 }
 
 export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }: Props) {
+  const t = useTranslations('creationSteps')
   const [removing, setRemoving] = useState(false)
   const { coreColor, accentColor } = planet.visual
 
@@ -87,7 +90,7 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
             color: coreColor,
           }}
         >
-          {planet.mood}
+          {moodLabel(t, planet.mood)}
         </span>
         <span
           className="text-[10px] px-2 py-0.5 rounded-full capitalize"
@@ -97,7 +100,7 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
             color: 'var(--star)',
           }}
         >
-          {planet.lifestyle}
+          {lifestyleLabel(t, planet.lifestyle)}
         </span>
       </div>
 

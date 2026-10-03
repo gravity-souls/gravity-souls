@@ -1,6 +1,8 @@
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { themeLabel, moodLabel, lifestyleLabel, commStyleLabel } from '@/lib/planet-labels'
+import { useTranslations } from 'next-intl'
 
 // --- LivePlanetPreview --------------------------------------------------------
 // Compact planet preview shown alongside creation steps.
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export default function LivePlanetPreview({ planet, size = 140, showMeta = true }: Props) {
+  const tCreation = useTranslations('creationSteps')
   const { visual } = planet
   const textureFile = resolvePlanetTexture(planet)
 
@@ -71,7 +74,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
                 color: visual.coreColor,
               }}
             >
-              {planet.mood}
+              {moodLabel(tCreation, planet.mood)}
             </span>
             {/* Lifestyle chip */}
             <span
@@ -82,7 +85,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
                 color: 'var(--star)',
               }}
             >
-              {planet.lifestyle}
+              {lifestyleLabel(tCreation, planet.lifestyle)}
             </span>
             {/* Communication style if set */}
             {planet.communicationStyle && (
@@ -94,7 +97,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
                   color: 'var(--ink)',
                 }}
               >
-                {planet.communicationStyle}
+                {commStyleLabel(tCreation, planet.communicationStyle)}
               </span>
             )}
           </div>
@@ -103,9 +106,9 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
         {/* Theme tags */}
         {showMeta && planet.coreThemes.length > 0 && planet.coreThemes[0] !== 'inner drift' && (
           <div className="flex flex-wrap justify-center gap-1">
-            {planet.coreThemes.slice(0, 3).map((t) => (
+            {planet.coreThemes.slice(0, 3).map((theme) => (
               <span
-                key={t}
+                key={theme}
                 className="text-[9px] px-1.5 py-0.5 rounded"
                 style={{
                   background: `${visual.coreColor}10`,
@@ -113,7 +116,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
                   opacity: 0.75,
                 }}
               >
-                {t}
+                {themeLabel(tCreation, theme)}
               </span>
             ))}
           </div>

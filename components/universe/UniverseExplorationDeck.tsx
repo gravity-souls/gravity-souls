@@ -9,6 +9,7 @@ import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetVisual from '@/components/planet/PlanetVisual'
 import GlassPanel from '@/components/ui/GlassPanel'
 import GlowButton from '@/components/ui/GlowButton'
+import { galaxyMoodLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 type DeckMode = 'planets' | 'galaxies'
@@ -309,6 +310,7 @@ function PlanetChip({
   active: boolean
   onClick: () => void
 }) {
+  const tCreation = useTranslations('creationSteps')
   return (
     <button
       type="button"
@@ -325,7 +327,7 @@ function PlanetChip({
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{planet.name}</div>
           <div className="truncate text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>
-            {planet.mood} · {planet.lifestyle}
+            {moodLabel(tCreation, planet.mood)} · {lifestyleLabel(tCreation, planet.lifestyle)}
           </div>
         </div>
         {planet.isOnline && (
@@ -347,6 +349,7 @@ function GalaxyChip({
   active: boolean
   onClick: () => void
 }) {
+  const tGalaxies = useTranslations('galaxies')
   return (
     <button
       type="button"
@@ -372,7 +375,7 @@ function GalaxyChip({
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{galaxy.name}</div>
           <div className="truncate text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>
-            {galaxy.mood} · {galaxy.memberCount.toLocaleString()} members
+            {galaxyMoodLabel(tGalaxies, galaxy.mood)} · {galaxy.memberCount.toLocaleString()} members
           </div>
         </div>
       </div>
@@ -470,6 +473,8 @@ function drawConnectionLines(nodes: DeckNodePosition[], color: string) {
 
 export default function UniverseExplorationDeck() {
   const t = useTranslations('universeDeck')
+  const tCreation = useTranslations('creationSteps')
+  const tGalaxies = useTranslations('galaxies')
   const searchParams = useSearchParams()
   const [mode, setMode] = useState<DeckMode>('planets')
   const [selectedPlanetId, setSelectedPlanetId] = useState('')
@@ -693,19 +698,19 @@ export default function UniverseExplorationDeck() {
                   {mode === 'planets' ? (
                     <>
                       <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: selectedPlanet.visual.accentColor, border: `1px solid ${selectedPlanet.visual.coreColor}40`, background: `${selectedPlanet.visual.coreColor}10` }}>
-                        {selectedPlanet.mood}
+                        {moodLabel(tCreation, selectedPlanet.mood)}
                       </div>
                       <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.14)' }}>
                         {selectedPlanet.style}
                       </div>
                       <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.14)' }}>
-                        {selectedPlanet.lifestyle}
+                        {lifestyleLabel(tCreation, selectedPlanet.lifestyle)}
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: selectedGalaxy.accentColor, border: `1px solid ${selectedGalaxy.accentColor}40`, background: `${selectedGalaxy.accentColor}10` }}>
-                        {selectedGalaxy.mood}
+                        {galaxyMoodLabel(tGalaxies, selectedGalaxy.mood)}
                       </div>
                       <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.24em]" style={{ color: 'var(--ink)', border: '1px solid rgba(148,163,184,0.14)' }}>
                         {selectedGalaxy.maturity}
@@ -975,7 +980,7 @@ export default function UniverseExplorationDeck() {
                         >
                           <div>
                             <div className="text-sm font-semibold text-slate-50">{galaxy.name}</div>
-                            <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--ghost)' }}>{galaxy.mood}</div>
+                            <div className="text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--ghost)' }}>{galaxyMoodLabel(tGalaxies, galaxy.mood)}</div>
                           </div>
                           <div className="text-xl" style={{ color: galaxy.accentColor }}>{galaxy.symbol}</div>
                         </button>
