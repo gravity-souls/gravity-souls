@@ -104,7 +104,7 @@ export default async function GuidePage() {
             </li>
           ))}
         </ol>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>{t('levels.earlyAccess')}</p>
+        <p className="rounded-xl border border-violet-300/15 bg-violet-300/[0.07] px-3 py-3 text-sm leading-relaxed" style={{ color: 'var(--ink)' }}>{t('levels.earlyAccess')}</p>
       </section>
 
       <div className="flex flex-col sm:flex-row items-center gap-3">
