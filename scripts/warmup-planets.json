@@ -1,0 +1,186 @@
+{
+  "planets": [
+    {
+      "seedKey": "mira-27",
+      "name": "Mira-27",
+      "tone": "Still",
+      "galaxy": "Slow Thinkers",
+      "themes": [
+        "philosophy",
+        "writing",
+        "slow living"
+      ],
+      "interests": [
+        "long essays",
+        "second-hand bookshops",
+        "walking without a route"
+      ],
+      "headline": "I need a little time before I know what I think.",
+      "about": "I keep notes from walks and usually turn them into questions, not conclusions. I would enjoy reading something you changed your mind about recently.",
+      "conversationStarter": "What idea stayed with you longer than you expected?",
+      "visualDirection": "Deep indigo, faint atmosphere, no ring"
+    },
+    {
+      "seedKey": "iora-42",
+      "name": "Iora-42",
+      "tone": "Open",
+      "galaxy": "Warm Frequency",
+      "themes": [
+        "community",
+        "care",
+        "everyday rituals"
+      ],
+      "interests": [
+        "cooking for friends",
+        "neighborhood cafés",
+        "voice notes"
+      ],
+      "headline": "The small check-ins matter to me.",
+      "about": "I like conversations that can be ordinary: a recipe that failed, a good bus ride, or how your week really went. I listen carefully and appreciate the same in return.",
+      "conversationStarter": "What is one small thing that made this week easier?",
+      "visualDirection": "Warm coral with a soft amber glow"
+    },
+    {
+      "seedKey": "veyr-31",
+      "name": "Veyr-31",
+      "tone": "Restless",
+      "galaxy": "Threshold States",
+      "themes": [
+        "travel",
+        "belonging",
+        "culture"
+      ],
+      "interests": [
+        "night trains",
+        "learning languages",
+        "city maps"
+      ],
+      "headline": "Some places feel like home only after you leave.",
+      "about": "I have moved enough to collect favorite corners in several cities. These days I am curious about the routines people build when everything around them changes.",
+      "conversationStarter": "Which place surprised you by feeling familiar?",
+      "visualDirection": "Slate blue, thin silver ring, gentle rotation"
+    },
+    {
+      "seedKey": "celyn-58",
+      "name": "Celyn-58",
+      "tone": "Charged",
+      "galaxy": "Signal & Noise",
+      "themes": [
+        "technology",
+        "software",
+        "building"
+      ],
+      "interests": [
+        "small tools",
+        "open source",
+        "designing calm interfaces"
+      ],
+      "headline": "I build little things to solve annoyances I can name.",
+      "about": "I enjoy talking about how a product feels after the demo is over. I am prototyping a simpler way to keep track of ideas, and I would rather hear a sharp question than polite praise.",
+      "conversationStarter": "What is a tiny tool you wish existed?",
+      "visualDirection": "Electric cyan highlights on a dark graphite surface"
+    },
+    {
+      "seedKey": "sora-46",
+      "name": "Sora-46",
+      "tone": "Inward",
+      "galaxy": "Dusk Archives",
+      "themes": [
+        "books",
+        "literature",
+        "poetry"
+      ],
+      "interests": [
+        "used books",
+        "marginal notes",
+        "short fiction"
+      ],
+      "headline": "I remember a book by the person who handed it to me.",
+      "about": "I read slowly and often stop for a single sentence. Recent favorites are stories about ordinary people making slightly brave choices. Recommendations are welcome, including books you did not finish.",
+      "conversationStarter": "Which book did you put down but still think about?",
+      "visualDirection": "Muted burgundy, paper-gold halo, subtle grain"
+    },
+    {
+      "seedKey": "nalo-19",
+      "name": "Nalo-19",
+      "tone": "Charged",
+      "galaxy": "Body Clocks",
+      "themes": [
+        "movement",
+        "health",
+        "rest"
+      ],
+      "interests": [
+        "swimming",
+        "morning stretches",
+        "long walks"
+      ],
+      "headline": "Movement helps me hear my own thoughts.",
+      "about": "I am learning to balance training with enough rest. I love practical routines people can actually keep, especially when life gets busy. No performance goals required to talk here.",
+      "conversationStarter": "What kind of movement leaves you feeling better afterward?",
+      "visualDirection": "Sea green with a quiet, breathable atmosphere"
+    },
+    {
+      "seedKey": "elyn-73",
+      "name": "Elyn-73",
+      "tone": "Open",
+      "galaxy": "Image Makers",
+      "themes": [
+        "photography",
+        "design",
+        "illustration"
+      ],
+      "interests": [
+        "street photography",
+        "sketchbooks",
+        "color studies"
+      ],
+      "headline": "I take pictures of things people walk past.",
+      "about": "Most of my photos are windows, reflections, and the last light in a room. I like hearing what someone else notices in the same image; it is usually different from what I saw.",
+      "conversationStarter": "What detail caught your eye today?",
+      "visualDirection": "Lavender and muted rose with a photographic light band"
+    },
+    {
+      "seedKey": "oren-24",
+      "name": "Oren-24",
+      "tone": "Still",
+      "galaxy": "Late Night Economics",
+      "themes": [
+        "economics",
+        "politics",
+        "work"
+      ],
+      "interests": [
+        "local businesses",
+        "public transport",
+        "how prices shape choices"
+      ],
+      "headline": "I like following a big question back to everyday life.",
+      "about": "I am interested in why a street has three empty shops and one busy bakery. I ask more questions than I answer, and I value good-faith disagreement with concrete examples.",
+      "conversationStarter": "What everyday price or rule would you like someone to explain?",
+      "visualDirection": "Copper and midnight blue, restrained orbital lines"
+    }
+  ],
+  "signals": [
+    {
+      "planetSeedKey": "mira-27",
+      "galaxy": "Slow Thinkers",
+      "text": "I used to think changing my mind meant I had missed something. Lately it feels more like I finally noticed it. What changed your mind this year?"
+    },
+    {
+      "planetSeedKey": "iora-42",
+      "galaxy": "Warm Frequency",
+      "text": "A friend brought soup over and stayed for ten minutes. It was exactly enough. What small gesture has stayed with you?"
+    },
+    {
+      "planetSeedKey": "celyn-58",
+      "galaxy": "Signal & Noise",
+      "text": "The best feature in a tool I tried this week was a button that let me leave without losing my place. What tiny design decision have you appreciated lately?"
+    },
+    {
+      "planetSeedKey": "elyn-73",
+      "galaxy": "Image Makers",
+      "text": "I photographed the same corner at 8 a.m. and 6 p.m. It looked like two different places. What changes a familiar scene for you?"
+    }
+  ]
+}

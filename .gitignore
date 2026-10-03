@@ -28,6 +28,7 @@
 # misc
 .DS_Store
 *.pem
+*warmup*credentials*.csv
 
 # debug
 npm-debug.log*
