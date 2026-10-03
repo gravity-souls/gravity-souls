@@ -37,6 +37,7 @@ product decisions.
 | Auth | `lib/session.ts`, `lib/requireLevel.ts` (note: `requireLevel`'s `EARLY_ACCESS` bypass is temporary — must be resolved before real users) |
 | Rate limiting | `lib/rate-limit.ts` |
 | Notifications | `lib/createNotification.ts` |
+| Translations (en/fr/zh) | `messages/*.json`, `lib/planet-labels.ts` (stored-trait display), `lib/notification-i18n.ts` (server-side text) — see `.claude/skills/i18n-localization/SKILL.md` |
 
 ## Scripts
 
@@ -58,6 +59,7 @@ product decisions.
 | Onboarding / calibration / activation hints | `onboarding-ux` | `backend-data-engineer` (build), `ux-activation-reviewer` (audit) |
 | `components/fx/**` / `PlanetGlobe.tsx` changes | `mobile-webgl-qa` | `visual-mobile-qa` |
 | Pre-release verification | `release-readiness` | `release-manager` |
+| Any new/changed user-facing text, or displaying a stored trait value | `i18n-localization` | `backend-data-engineer` (build) |
 
 ## Permissions
 
