@@ -1254,5 +1254,20 @@
     "complementaryDepth": "Profondeur complémentaire",
     "worldviewNote": "{a} ↔ {b}",
     "footerNote": "Ces dimensions émergent de votre planète et de la leur — pas un algorithme, mais un miroir."
+  },
+  "matchReasonPanel": {
+    "whyYouResonate": "Pourquoi vous résonnez",
+    "emotionResonance": "Résonance émotionnelle",
+    "interestResonance": "Résonance d'intérêt",
+    "thoughtResonance": "Résonance de pensée",
+    "lifestyleResonance": "Résonance de mode de vie",
+    "emotionDescription": "Vous partagez un registre émotionnel similaire. ",
+    "interestDescription": "Vos territoires thématiques se recoupent. ",
+    "thoughtDescription": "Vos styles cognitifs sont étroitement alignés. ",
+    "lifestyleDescription": "Vos rythmes et modes de vie se complètent. ",
+    "strongSignal": "C'est un signal fort — cette orbite a de fortes chances de résonner profondément.",
+    "commonGround": "Il y a un vrai terrain d'entente ici, avec de la place pour la différence.",
+    "quietConnection": "Une connexion plus discrète — à explorer lentement.",
+    "sharedTerritory": "Territoire partagé :"
   }
 }

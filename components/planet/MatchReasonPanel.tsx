@@ -4,12 +4,14 @@ import { useTranslations } from 'next-intl'
 import { themeLabel } from '@/lib/planet-labels'
 
 // --- Beam colour map (mirrors lib/match.ts) ----------------------------------
+// `type` keys the matchReasonPanel.* translation lookups below (e.g.
+// `${type}Resonance`, `${type}Description`) — not display text itself.
 
-const BEAM_META: Record<string, { label: string; color: string; description: string }> = {
-  violet: { label: 'Emotion',   color: '#a78bfa', description: 'You share a similar emotional register' },
-  teal:   { label: 'Interest',  color: '#34d399', description: 'Your thematic territories overlap' },
-  amber:  { label: 'Thought',   color: '#fbbf24', description: 'Your cognitive styles are closely aligned' },
-  blue:   { label: 'Lifestyle', color: '#60a5fa', description: 'Your rhythms and ways of living complement each other' },
+const BEAM_META: Record<string, { type: 'emotion' | 'interest' | 'thought' | 'lifestyle'; color: string }> = {
+  violet: { type: 'emotion',   color: '#a78bfa' },
+  teal:   { type: 'interest',  color: '#34d399' },
+  amber:  { type: 'thought',   color: '#fbbf24' },
+  blue:   { type: 'lifestyle', color: '#60a5fa' },
 }
 
 // --- Strength ring -----------------------------------------------------------
@@ -70,6 +72,7 @@ interface Props {
 }
 
 export default function MatchReasonPanel({ match, targetPlanet }: Props) {
+  const t = useTranslations('matchReasonPanel')
   const tCreation = useTranslations('creationSteps')
   const meta = BEAM_META[match.beamColor] ?? BEAM_META.teal
   const { coreColor } = targetPlanet.visual
@@ -108,13 +111,13 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
             className="text-[10px] uppercase tracking-widest font-medium"
             style={{ color: 'var(--star)', opacity: 0.55 }}
           >
-            Why you resonate
+            {t('whyYouResonate')}
           </p>
           <p
             className="text-sm font-semibold"
             style={{ color: meta.color }}
           >
-            {meta.label} resonance
+            {t(`${meta.type}Resonance`)}
           </p>
         </div>
 
@@ -126,12 +129,13 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
 
       {/* Reason description */}
       <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.72 }}>
-        {meta.description}.{' '}
-        {match.strength >= 70
-          ? 'This is a strong signal  -  this orbit is likely to resonate deeply.'
-          : match.strength >= 45
-          ? 'There is real common ground here, with room for difference.'
-          : 'A quieter connection  -  worth exploring slowly.'}
+        {t(`${meta.type}Description`) + (
+          match.strength >= 70
+            ? t('strongSignal')
+            : match.strength >= 45
+            ? t('commonGround')
+            : t('quietConnection')
+        )}
       </p>
 
       {/* Shared themes if any */}
@@ -141,7 +145,7 @@ export default function MatchReasonPanel({ match, targetPlanet }: Props) {
             className="text-[10px] uppercase tracking-widest self-center"
             style={{ color: 'var(--ghost)' }}
           >
-            Shared territory:
+            {t('sharedTerritory')}
           </span>
           {targetPlanet.coreThemes.slice(0, 3).map((theme) => (
             <span

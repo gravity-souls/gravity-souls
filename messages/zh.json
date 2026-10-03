@@ -1254,5 +1254,20 @@
     "complementaryDepth": "互补的深度",
     "worldviewNote": "{a} ↔ {b}",
     "footerNote": "这些维度源自你和对方的星球 — 不是算法，而是一面镜子。"
+  },
+  "matchReasonPanel": {
+    "whyYouResonate": "你们为何共鸣",
+    "emotionResonance": "情感共鸣",
+    "interestResonance": "兴趣共鸣",
+    "thoughtResonance": "思维共鸣",
+    "lifestyleResonance": "生活方式共鸣",
+    "emotionDescription": "你们拥有相似的情感基调。",
+    "interestDescription": "你们的主题领域有所重叠。",
+    "thoughtDescription": "你们的认知风格高度一致。",
+    "lifestyleDescription": "你们的节奏与生活方式相互补充。",
+    "strongSignal": "这是一个强烈的信号——这个轨道很可能产生深度共鸣。",
+    "commonGround": "这里有真正的共同点，同时也保留了差异的空间。",
+    "quietConnection": "一种更安静的连接——值得慢慢探索。",
+    "sharedTerritory": "共享领域："
   }
 }

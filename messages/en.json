@@ -1254,5 +1254,20 @@
     "complementaryDepth": "Complementary depth",
     "worldviewNote": "{a} ↔ {b}",
     "footerNote": "These dimensions emerge from your planet and theirs — not an algorithm, but a mirror."
+  },
+  "matchReasonPanel": {
+    "whyYouResonate": "Why you resonate",
+    "emotionResonance": "Emotion resonance",
+    "interestResonance": "Interest resonance",
+    "thoughtResonance": "Thought resonance",
+    "lifestyleResonance": "Lifestyle resonance",
+    "emotionDescription": "You share a similar emotional register. ",
+    "interestDescription": "Your thematic territories overlap. ",
+    "thoughtDescription": "Your cognitive styles are closely aligned. ",
+    "lifestyleDescription": "Your rhythms and ways of living complement each other. ",
+    "strongSignal": "This is a strong signal — this orbit is likely to resonate deeply.",
+    "commonGround": "There is real common ground here, with room for difference.",
+    "quietConnection": "A quieter connection — worth exploring slowly.",
+    "sharedTerritory": "Shared territory:"
   }
 }
