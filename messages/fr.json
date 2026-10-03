@@ -1238,5 +1238,21 @@
     },
     "cta": "Créer ma planète",
     "ctaSecondary": "Retour à l'accueil"
+  },
+  "resonancePanel": {
+    "resonanceField": "Champ de résonance",
+    "match": "correspondance",
+    "sharedResonance": "Résonance partagée",
+    "expressionStyle": "Style d'expression",
+    "emotionalFrequency": "Fréquence émotionnelle",
+    "culturalOrbit": "Orbite culturelle",
+    "artsResonance": "Résonance artistique",
+    "worldviewOrbit": "Orbite de vision du monde",
+    "bothStyle": "Tous deux {style}",
+    "styleMeets": "{a} rencontre {b}",
+    "closeFrequency": "Fréquence intérieure proche",
+    "complementaryDepth": "Profondeur complémentaire",
+    "worldviewNote": "{a} ↔ {b}",
+    "footerNote": "Ces dimensions émergent de votre planète et de la leur — pas un algorithme, mais un miroir."
   }
 }

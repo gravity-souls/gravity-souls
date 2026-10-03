@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl'
+import { themeLabel, lifestyleLabel, commStyleLabel } from '@/lib/planet-labels'
 import type { PlanetProfile } from '@/types/planet'
 
 // --- Orbit color tokens ----------------------------------------------------
@@ -12,13 +14,17 @@ const ORBIT: Record<string, string> = {
 }
 
 // --- Derive match dimensions from two planets -----------------------------
+// Each dimension carries raw data only — labels and notes are translated at
+// render time (deriveMatchDimensions is a plain function, not a component,
+// so it can't call useTranslations itself).
 
-interface MatchDimension {
-  label: string
-  score: number
-  color: string
-  note: string
-}
+type MatchDimension =
+  | { kind: 'sharedThemes'; score: number; color: string; themes: string[] }
+  | { kind: 'expressionStyle'; score: number; color: string; same: boolean; viewerStyle: string; subjectStyle: string }
+  | { kind: 'emotionalFrequency'; score: number; color: string; close: boolean }
+  | { kind: 'culturalOrbit'; score: number; color: string; cities: string[] }
+  | { kind: 'artsResonance'; score: number; color: string; art: string }
+  | { kind: 'worldviewOrbit'; score: number; color: string; viewerLifestyle: string; subjectLifestyle: string }
 
 function deriveMatchDimensions(
   viewer: PlanetProfile,
@@ -30,10 +36,10 @@ function deriveMatchDimensions(
   const sharedThemes = viewer.coreThemes.filter((t) => subject.coreThemes.includes(t))
   if (sharedThemes.length > 0) {
     dims.push({
-      label: 'Shared resonance',
+      kind:  'sharedThemes',
       score: Math.min(100, sharedThemes.length * 25 + 25),
       color: ORBIT.blue,
-      note: sharedThemes.slice(0, 2).join(' · '),
+      themes: sharedThemes.slice(0, 2),
     })
   }
 
@@ -41,22 +47,22 @@ function deriveMatchDimensions(
   if (viewer.communicationStyle && subject.communicationStyle) {
     const same = viewer.communicationStyle === subject.communicationStyle
     dims.push({
-      label: 'Expression style',
+      kind:  'expressionStyle',
       score: same ? 92 : 48,
       color: ORBIT.purple,
-      note: same
-        ? `Both ${viewer.communicationStyle}`
-        : `${viewer.communicationStyle} meets ${subject.communicationStyle}`,
+      same,
+      viewerStyle:  viewer.communicationStyle,
+      subjectStyle: subject.communicationStyle,
     })
   }
 
   // 3. Emotional frequency (red)  -  closeness in introspective axis
   const introDiff = Math.abs(viewer.cognitiveAxes.introspective - subject.cognitiveAxes.introspective)
   dims.push({
-    label: 'Emotional frequency',
+    kind:  'emotionalFrequency',
     score: Math.max(20, 100 - introDiff),
     color: ORBIT.red,
-    note: introDiff < 20 ? 'Close inner frequency' : 'Complementary depth',
+    close: introDiff < 20,
   })
 
   // 4. Cultural orbit  -  shared travel cities (green)
@@ -66,10 +72,10 @@ function deriveMatchDimensions(
     )
     if (shared.length > 0) {
       dims.push({
-        label: 'Cultural orbit',
+        kind:  'culturalOrbit',
         score: Math.min(100, shared.length * 30 + 40),
         color: ORBIT.green,
-        note: shared.slice(0, 2).join(' · '),
+        cities: shared.slice(0, 2),
       })
     }
   }
@@ -84,24 +90,62 @@ function deriveMatchDimensions(
   )
   if (sharedArts.length > 0) {
     dims.push({
-      label: 'Arts resonance',
+      kind:  'artsResonance',
       score: Math.min(100, sharedArts.length * 35 + 30),
       color: ORBIT.gold,
-      note: sharedArts[0],
+      art: sharedArts[0],
     })
   }
 
   // 6. Worldview orbit  -  lifestyle complement (orange)
   if (dims.length < 4 && viewer.lifestyle !== subject.lifestyle) {
     dims.push({
-      label: 'Worldview orbit',
+      kind:  'worldviewOrbit',
       score: 62,
       color: ORBIT.orange,
-      note: `${viewer.lifestyle} ↔ ${subject.lifestyle}`,
+      viewerLifestyle:  viewer.lifestyle,
+      subjectLifestyle: subject.lifestyle,
     })
   }
 
   return dims.slice(0, 4)
+}
+
+// --- Translation ------------------------------------------------------------
+
+type SafeT = {
+  (key: string, values?: Record<string, string | number>): string
+  has(key: string): boolean
+}
+
+function dimensionLabel(t: SafeT, dim: MatchDimension): string {
+  switch (dim.kind) {
+    case 'sharedThemes':       return t('sharedResonance')
+    case 'expressionStyle':    return t('expressionStyle')
+    case 'emotionalFrequency': return t('emotionalFrequency')
+    case 'culturalOrbit':      return t('culturalOrbit')
+    case 'artsResonance':      return t('artsResonance')
+    case 'worldviewOrbit':     return t('worldviewOrbit')
+  }
+}
+
+function dimensionNote(t: SafeT, tCreation: SafeT, dim: MatchDimension): string {
+  switch (dim.kind) {
+    case 'sharedThemes':
+      return dim.themes.map((theme) => themeLabel(tCreation, theme)).join(' · ')
+    case 'expressionStyle':
+      return dim.same
+        ? t('bothStyle', { style: commStyleLabel(tCreation, dim.viewerStyle) })
+        : t('styleMeets', { a: commStyleLabel(tCreation, dim.viewerStyle), b: commStyleLabel(tCreation, dim.subjectStyle) })
+    case 'emotionalFrequency':
+      return dim.close ? t('closeFrequency') : t('complementaryDepth')
+    case 'culturalOrbit':
+      return dim.cities.join(' · ')
+    case 'artsResonance':
+      return dim.art
+    case 'worldviewOrbit':
+      return t('worldviewNote', { a: lifestyleLabel(tCreation, dim.viewerLifestyle), b: lifestyleLabel(tCreation, dim.subjectLifestyle) })
+  }
 }
 
 // --- PlanetResonancePanel -------------------------------------------------
@@ -120,6 +164,8 @@ interface Props {
  * Only render when the viewer is a resonator (has viewerPlanet).
  */
 export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
+  const t = useTranslations('resonancePanel')
+  const tCreation = useTranslations('creationSteps')
   const dimensions = deriveMatchDimensions(viewerPlanet, subject)
   if (dimensions.length === 0) return null
 
@@ -152,7 +198,7 @@ export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
           className="text-[10px] uppercase tracking-[0.2em] font-semibold"
           style={{ color: 'var(--star)', opacity: 0.52 }}
         >
-          Resonance field
+          {t('resonanceField')}
         </span>
         <div
           className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -162,7 +208,7 @@ export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
             color: subject.visual.coreColor,
           }}
         >
-          <span className="opacity-60 text-[10px]">match</span>
+          <span className="opacity-60 text-[10px]">{t('match')}</span>
           {overallScore}
         </div>
       </div>
@@ -170,13 +216,13 @@ export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
       {/* Dimension bars */}
       <div className="flex flex-col gap-3">
         {dimensions.map((dim) => (
-          <div key={dim.label} className="flex flex-col gap-1.5">
+          <div key={dim.kind} className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium" style={{ color: 'var(--ink)', opacity: 0.82 }}>
-                {dim.label}
+                {dimensionLabel(t, dim)}
               </span>
               <span className="text-[10px] max-w-[16ch] text-right truncate" style={{ color: dim.color, opacity: 0.7 }}>
-                {dim.note}
+                {dimensionNote(t, tCreation, dim)}
               </span>
             </div>
             <div
@@ -206,7 +252,7 @@ export default function PlanetResonancePanel({ subject, viewerPlanet }: Props) {
           borderColor: 'rgba(167,139,250,0.08)',
         }}
       >
-        These dimensions emerge from your planet and theirs  -  not an algorithm, but a mirror.
+        {t('footerNote')}
       </p>
     </div>
   )

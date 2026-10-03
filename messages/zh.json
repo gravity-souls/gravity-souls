@@ -1238,5 +1238,21 @@
     },
     "cta": "创建我的星球",
     "ctaSecondary": "返回首页"
+  },
+  "resonancePanel": {
+    "resonanceField": "共鸣场",
+    "match": "匹配度",
+    "sharedResonance": "共享共鸣",
+    "expressionStyle": "表达风格",
+    "emotionalFrequency": "情感频率",
+    "culturalOrbit": "文化轨道",
+    "artsResonance": "艺术共鸣",
+    "worldviewOrbit": "世界观轨道",
+    "bothStyle": "都是{style}",
+    "styleMeets": "{a} 遇见 {b}",
+    "closeFrequency": "内在频率接近",
+    "complementaryDepth": "互补的深度",
+    "worldviewNote": "{a} ↔ {b}",
+    "footerNote": "这些维度源自你和对方的星球 — 不是算法，而是一面镜子。"
   }
 }

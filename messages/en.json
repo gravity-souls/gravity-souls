@@ -1238,5 +1238,21 @@
     },
     "cta": "Create my planet",
     "ctaSecondary": "Back to home"
+  },
+  "resonancePanel": {
+    "resonanceField": "Resonance field",
+    "match": "match",
+    "sharedResonance": "Shared resonance",
+    "expressionStyle": "Expression style",
+    "emotionalFrequency": "Emotional frequency",
+    "culturalOrbit": "Cultural orbit",
+    "artsResonance": "Arts resonance",
+    "worldviewOrbit": "Worldview orbit",
+    "bothStyle": "Both {style}",
+    "styleMeets": "{a} meets {b}",
+    "closeFrequency": "Close inner frequency",
+    "complementaryDepth": "Complementary depth",
+    "worldviewNote": "{a} ↔ {b}",
+    "footerNote": "These dimensions emerge from your planet and theirs — not an algorithm, but a mirror."
   }
 }
