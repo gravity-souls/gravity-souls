@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { NotificationTemplates, createNotification } from "@/lib/createNotification";
+import { getUserLocale } from "@/lib/notification-i18n";
 import { isBlocked } from "@/lib/visibility";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -189,9 +190,10 @@ export async function POST(
       data: { lastMessageAt: new Date() },
     });
 
+    const recipientLocale = await getUserLocale(recipientId);
     await createNotification({
       userId: recipientId,
-      ...NotificationTemplates.resonanceAccepted(session.user.name ?? "A planet", `/messages/${id}`),
+      ...(await NotificationTemplates.newMessage(session.user.name ?? "A planet", `/messages/${id}`, recipientLocale)),
     });
 
     return NextResponse.json({

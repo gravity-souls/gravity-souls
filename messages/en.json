@@ -467,7 +467,14 @@
     "eventReminder": "Event starting soon",
     "levelUp": "You have evolved",
     "newMatch": "New planets in your orbit",
-    "commentReceived": "Someone resonated with your signal"
+    "commentReceived": "Someone resonated with your signal",
+    "newMessageTitle": "New message from {name}",
+    "newMessageBody": "{name} sent you a message",
+    "eventApprovedTitle": "Your event was approved ✦",
+    "eventApprovedBody": "“{title}” is now live in {galaxy}",
+    "eventNewTitle": "New event in {galaxy}",
+    "eventProposalUpdateTitle": "Event proposal update",
+    "eventProposalRejectedBody": "Your event proposal was not approved"
   },
   "auth": {
     "signIn": "Sign In",

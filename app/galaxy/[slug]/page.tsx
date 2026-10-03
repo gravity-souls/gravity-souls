@@ -310,6 +310,18 @@ export default function GalaxyPage({ params }: Props) {
     return () => { cancelled = true }
   }, [community, t])
 
+  // Approved-event notifications link here with #events. The browser's native
+  // scroll-to-hash fires on initial load, before this page (gated on
+  // communityLoading) has rendered the #events element — so it never actually
+  // scrolls. Same fix as /my-planet's #match-report.
+  useEffect(() => {
+    if (communityLoading || window.location.hash !== '#events') return
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('events')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [communityLoading])
+
   async function handleJoinCommunity() {
     if (!community) {
       setPostError(t('communityUnavailable'))
@@ -845,7 +857,7 @@ export default function GalaxyPage({ params }: Props) {
                 </section>
 
                 {/* Events */}
-                <section>
+                <section id="events" className="scroll-mt-24">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-data-label">{t('events')}</p>
                     {isGalaxyAdmin && <span className="text-xs" style={{ color: accentColor }}>{t('admin')}</span>}

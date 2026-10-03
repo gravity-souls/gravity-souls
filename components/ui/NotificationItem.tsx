@@ -58,6 +58,8 @@ function IconForType({ type }: { type: SerializedNotification['type'] }) {
       return <Trophy className={className} />
     case 'NEW_MATCH':
       return <Sparkles className={className} />
+    case 'NEW_MESSAGE':
+      return <MessageCircle className={className} />
     default:
       return <Bell className={className} />
   }

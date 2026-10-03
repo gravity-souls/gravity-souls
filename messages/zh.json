@@ -467,7 +467,14 @@
     "eventReminder": "活动即将开始",
     "levelUp": "你已进化",
     "newMatch": "你的轨道中有新星球",
-    "commentReceived": "有人与你的信号产生了共鸣"
+    "commentReceived": "有人与你的信号产生了共鸣",
+    "newMessageTitle": "来自{name}的新消息",
+    "newMessageBody": "{name}给你发送了一条消息",
+    "eventApprovedTitle": "你的活动已通过审核 ✦",
+    "eventApprovedBody": "「{title}」现已在{galaxy}中发布",
+    "eventNewTitle": "{galaxy}中有新活动",
+    "eventProposalUpdateTitle": "活动提案更新",
+    "eventProposalRejectedBody": "你的活动提案未获批准"
   },
   "auth": {
     "signIn": "登录",

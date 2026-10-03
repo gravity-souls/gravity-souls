@@ -29,6 +29,7 @@ const TYPE_ICON: Record<string, string> = {
   LEVEL_UP:           '▲',
   NEW_MATCH:          '⊛',
   COMMENT_RECEIVED:   '◌',
+  NEW_MESSAGE:        '✉',
 }
 
 // --- Relative time helper ----------------------------------------------------

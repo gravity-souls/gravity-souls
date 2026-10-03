@@ -2,6 +2,8 @@ import { readJson, safeApiError } from '@/lib/api-input'
 import { eventStatusSchema } from '@/lib/input-schemas'
 import { EventStatus, NotificationType } from '@prisma/client'
 import { NotificationTemplates, createNotification } from '@/lib/createNotification'
+import { tNotification } from '@/lib/notification-i18n'
+import { resolveLocale } from '@/lib/i18n-locales'
 import { getCommunityAccess, jsonError } from '@/lib/galaxy-events'
 import { grantXP } from '@/lib/grantXP'
 import { requireUser } from '@/lib/session'
@@ -39,12 +41,13 @@ export async function PATCH(
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
-        proposer: { select: { id: true, name: true } },
+        proposer: { select: { id: true, name: true, language: true } },
         galaxy: {
           select: {
             id: true,
+            slug: true,
             name: true,
-            memberships: { select: { userId: true } },
+            memberships: { select: { userId: true, user: { select: { language: true } } } },
           },
         },
       },
@@ -58,33 +61,51 @@ export async function PATCH(
       select: { id: true, status: true, title: true },
     })
 
+    const eventsActionUrl = `/galaxy/${event.galaxy.slug}#events`
+
     if (status === EventStatus.APPROVED) {
+      const proposerLocale = resolveLocale(event.proposer.language)
       await createNotification({
         userId: event.proposerId,
         type: NotificationType.GALAXY_NEW_EVENT,
-        title: 'Your event was approved ✦',
-        body: `"${event.title}" is now live in ${event.galaxy.name}`,
-        actionUrl: `/galaxies/${id}/events/${event.id}`,
+        title: await tNotification(proposerLocale, 'eventApprovedTitle'),
+        body: await tNotification(proposerLocale, 'eventApprovedBody', { title: event.title, galaxy: event.galaxy.name }),
+        actionUrl: eventsActionUrl,
       })
 
-      const template = NotificationTemplates.galaxyNewEvent(event.galaxy.name, event.title, `/galaxies/${id}/events/${event.id}`)
-      await prisma.notification.createMany({
-        data: event.galaxy.memberships.map((member) => ({
-          userId: member.userId,
-          ...template,
-        })),
-      })
+      // Each member gets the notification in their own locale, not the admin's —
+      // group by locale so we only translate once per distinct locale, not once per member.
+      const membersByLocale = new Map<string, string[]>()
+      for (const member of event.galaxy.memberships) {
+        const locale = resolveLocale(member.user.language)
+        const ids = membersByLocale.get(locale) ?? []
+        ids.push(member.userId)
+        membersByLocale.set(locale, ids)
+      }
+
+      for (const [locale, userIds] of membersByLocale) {
+        const template = await NotificationTemplates.galaxyNewEvent(
+          event.galaxy.name,
+          event.title,
+          eventsActionUrl,
+          resolveLocale(locale),
+        )
+        await prisma.notification.createMany({
+          data: userIds.map((userId) => ({ userId, ...template })),
+        })
+      }
 
       const xpEvent = await grantXP(event.proposerId, 'EVENT_APPROVED')
       return Response.json({ event: updatedEvent, xpEvent, leveledUp: xpEvent.leveledUp })
     }
 
+    const proposerLocale = resolveLocale(event.proposer.language)
     await createNotification({
       userId: event.proposerId,
       type: NotificationType.GALAXY_NEW_EVENT,
-      title: 'Event proposal update',
-      body: rejectionReason ?? 'Your event proposal was not approved',
-      actionUrl: `/galaxies/${id}/events`,
+      title: await tNotification(proposerLocale, 'eventProposalUpdateTitle'),
+      body: rejectionReason ?? await tNotification(proposerLocale, 'eventProposalRejectedBody'),
+      actionUrl: eventsActionUrl,
     })
 
     return Response.json({ event: updatedEvent })

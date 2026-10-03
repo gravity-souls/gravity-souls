@@ -467,7 +467,14 @@
     "eventReminder": "Événement bientôt",
     "levelUp": "Vous avez évolué",
     "newMatch": "Nouvelles planètes dans votre orbite",
-    "commentReceived": "Quelqu'un a résonné avec votre signal"
+    "commentReceived": "Quelqu'un a résonné avec votre signal",
+    "newMessageTitle": "Nouveau message de {name}",
+    "newMessageBody": "{name} vous a envoyé un message",
+    "eventApprovedTitle": "Votre événement a été approuvé ✦",
+    "eventApprovedBody": "« {title} » est maintenant publié dans {galaxy}",
+    "eventNewTitle": "Nouvel événement dans {galaxy}",
+    "eventProposalUpdateTitle": "Mise à jour de la proposition d'événement",
+    "eventProposalRejectedBody": "Votre proposition d'événement n'a pas été approuvée"
   },
   "auth": {
     "signIn": "Connexion",

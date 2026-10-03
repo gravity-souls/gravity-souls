@@ -1,5 +1,7 @@
 import { NotificationType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { tNotification } from '@/lib/notification-i18n'
+import type { Locale } from '@/lib/i18n-locales'
 
 export async function createNotification({
   userId,
@@ -38,9 +40,9 @@ export const NotificationTemplates = {
     body: 'A new post was shared in your galaxy',
     actionUrl,
   }),
-  galaxyNewEvent: (galaxyName: string, eventName: string, actionUrl: string) => ({
+  galaxyNewEvent: async (galaxyName: string, eventName: string, actionUrl: string, locale: Locale) => ({
     type: NotificationType.GALAXY_NEW_EVENT,
-    title: `New event in ${galaxyName}`,
+    title: await tNotification(locale, 'eventNewTitle', { galaxy: galaxyName }),
     body: eventName,
     actionUrl,
   }),
@@ -78,6 +80,12 @@ export const NotificationTemplates = {
     type: NotificationType.NEW_FOLLOWER,
     title: 'A new planet is following yours',
     body: `${followerName} started following you`,
+    actionUrl,
+  }),
+  newMessage: async (senderName: string, actionUrl: string, locale: Locale) => ({
+    type: NotificationType.NEW_MESSAGE,
+    title: await tNotification(locale, 'newMessageTitle', { name: senderName }),
+    body: await tNotification(locale, 'newMessageBody', { name: senderName }),
     actionUrl,
   }),
 }
