@@ -516,6 +516,38 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
     const threadContext = () => ({ params: Promise.resolve({ id: threadId }) })
     const getRequest = (query = '') =>
       new Request('https://example.test/api' + query)
+    await t.test('chat text preserves emoji, internal newlines and URLs across delivery, retry and received history', async () => {
+      const sender = 'chat-text-sender', recipient = 'chat-text-recipient'
+      for (const id of [sender, recipient]) await db.user.create({ data: { id, name: id, email: `${id}@example.test`, language: 'fr' } })
+      const thread = await db.conversationThread.create({ data: { userAId: sender, userBId: recipient } })
+      const ctx = { params: Promise.resolve({ id: thread.id }) }
+      const content = '你好 😊❤️\nBonjour 👋\nhttps://example.test/路径?q=1&x=2'
+      const clientMessageId = crypto.randomUUID()
+      as(sender)
+      const sent = await messages.POST(request({ content, clientMessageId }), ctx)
+      assert.equal(sent.status, 201)
+      const row = await sent.json()
+      assert.equal(row.content, content)
+      assert.equal(row.type, 'text')
+      const retry = await messages.POST(request({ content, clientMessageId }), ctx)
+      assert.equal(retry.status, 200)
+      assert.equal((await retry.json()).id, row.id)
+      assert.equal(await db.directMessage.count({ where: { conversationId: thread.id } }), 1)
+      assert.equal(await db.notification.count({ where: { userId: recipient, type: 'NEW_MESSAGE' } }), 1)
+      as(recipient)
+      const received = await (await messages.GET(getRequest(), ctx)).json()
+      assert.equal(received.messages[0].content, content)
+      assert.equal(received.messages[0].readAt, undefined)
+      assert.equal((await db.directMessage.findUnique({ where: { id: row.id } })).readAt, null)
+      as(sender)
+      assert.equal((await messages.POST(request({ content: '🪐'.repeat(2001) }), ctx)).status, 400)
+      const atLimit = await messages.POST(request({ content: '🪐'.repeat(2000), clientMessageId: crypto.randomUUID() }), ctx)
+      assert.equal(atLimit.status, 201)
+      assert.equal((await atLimit.json()).content.length, 4000)
+      await db.notification.deleteMany({ where: { userId: { in: [sender, recipient] } } })
+      await db.conversationThread.delete({ where: { id: thread.id } })
+      await db.user.deleteMany({ where: { id: { in: [sender, recipient] } } })
+    })
     await t.test(
       'mutual-follow contact opens a thread without silently sending a message',
       async () => {

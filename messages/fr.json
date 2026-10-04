@@ -1834,5 +1834,39 @@
     "empty": "Aucun signal associé pour le moment.",
     "more": "Afficher plus",
     "mediaVisibility": "Les liens des fichiers médias peuvent être partagés. Ne téléversez pas de fichiers confidentiels."
+  },
+  "chatContent": {
+    "placeholder": "Écrire un message…",
+    "addEmoji": "Ajouter un emoji",
+    "emojiPicker": "Emojis courants",
+    "closeEmoji": "Fermer le sélecteur d’emojis",
+    "opensNewTab": "s’ouvre dans un nouvel onglet",
+    "desktopHint": "Entrée pour envoyer · Maj+Entrée pour aller à la ligne",
+    "mobileHint": "Entrée pour aller à la ligne · Touchez ↑ pour envoyer",
+    "characterCount": "{count} / {max}",
+    "limitReached": "Cet emoji dépasse la limite du message. Raccourcissez votre brouillon.",
+    "sendFailed": "Envoi non confirmé. Votre brouillon reste ici ; réessayez.",
+    "emoji": {
+      "smile": "Sourire",
+      "laugh": "Rire",
+      "joy": "Larmes de joie",
+      "wink": "Clin d’œil",
+      "heartEyes": "Yeux en cœur",
+      "thoughtful": "Réflexion",
+      "sad": "Tristesse",
+      "surprised": "Surprise",
+      "wave": "Salut",
+      "thumbsUp": "Pouce levé",
+      "clap": "Applaudissements",
+      "thanks": "Merci",
+      "heart": "Cœur",
+      "sparkles": "Étincelles",
+      "star": "Étoile",
+      "moon": "Lune",
+      "planet": "Planète",
+      "rocket": "Fusée",
+      "celebrate": "Fête",
+      "hug": "Câlin"
+    }
   }
 }

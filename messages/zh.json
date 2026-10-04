@@ -1834,5 +1834,39 @@
     "empty": "暂无关联动态。",
     "more": "查看更多",
     "mediaVisibility": "媒体文件链接可以被转发，请勿上传私密文件。"
+  },
+  "chatContent": {
+    "placeholder": "输入消息…",
+    "addEmoji": "添加表情",
+    "emojiPicker": "常用表情",
+    "closeEmoji": "关闭表情选择器",
+    "opensNewTab": "在新标签页打开",
+    "desktopHint": "Enter 发送 · Shift+Enter 换行",
+    "mobileHint": "回车换行 · 点击 ↑ 发送",
+    "characterCount": "{count} / {max}",
+    "limitReached": "添加这个表情会超过消息长度限制，请先缩短草稿。",
+    "sendFailed": "暂时无法确认送达，草稿已保留，请重试。",
+    "emoji": {
+      "smile": "微笑",
+      "laugh": "大笑",
+      "joy": "笑哭",
+      "wink": "眨眼",
+      "heartEyes": "喜爱",
+      "thoughtful": "思考",
+      "sad": "难过",
+      "surprised": "惊讶",
+      "wave": "挥手",
+      "thumbsUp": "赞",
+      "clap": "鼓掌",
+      "thanks": "感谢",
+      "heart": "爱心",
+      "sparkles": "闪光",
+      "star": "星星",
+      "moon": "月亮",
+      "planet": "行星",
+      "rocket": "火箭",
+      "celebrate": "庆祝",
+      "hug": "拥抱"
+    }
   }
 }

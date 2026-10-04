@@ -1834,5 +1834,39 @@
     "empty": "No related signals yet.",
     "more": "Show more",
     "mediaVisibility": "Media uses shareable file links. Do not upload confidential files."
+  },
+  "chatContent": {
+    "placeholder": "Write a message…",
+    "addEmoji": "Add an emoji",
+    "emojiPicker": "Common emoji",
+    "closeEmoji": "Close emoji picker",
+    "opensNewTab": "opens in a new tab",
+    "desktopHint": "Enter to send · Shift+Enter for a new line",
+    "mobileHint": "Return for a new line · Tap ↑ to send",
+    "characterCount": "{count} / {max}",
+    "limitReached": "This emoji does not fit within the message limit. Shorten your draft first.",
+    "sendFailed": "Unable to confirm delivery. Your draft is saved here; try again.",
+    "emoji": {
+      "smile": "Smile",
+      "laugh": "Laugh",
+      "joy": "Tears of joy",
+      "wink": "Wink",
+      "heartEyes": "Heart eyes",
+      "thoughtful": "Thinking",
+      "sad": "Sad",
+      "surprised": "Surprised",
+      "wave": "Wave",
+      "thumbsUp": "Thumbs up",
+      "clap": "Applause",
+      "thanks": "Thanks",
+      "heart": "Heart",
+      "sparkles": "Sparkles",
+      "star": "Star",
+      "moon": "Moon",
+      "planet": "Planet",
+      "rocket": "Rocket",
+      "celebrate": "Celebrate",
+      "hug": "Hug"
+    }
   }
 }
