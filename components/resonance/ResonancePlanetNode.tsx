@@ -24,17 +24,17 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
   return (
     <button
       onClick={onClick}
-      className="absolute flex flex-col items-center gap-1.5 group"
+      className="absolute flex flex-col items-center gap-1.5 group rounded-xl focus-visible:outline-2 focus-visible:outline-violet-200"
       style={{
         ...style,
         transform: 'translate(-50%, -50%)',
         width:  size + 40, // click target wider than visual
-        outline: 'none',
         background: 'transparent',
         border: 'none',
         cursor: 'pointer',
         padding: 0,
       }}
+      aria-pressed={isActive}
       aria-label={`${planet.name}  -  resonance score ${match.score}`}
     >
       {/* Planet orb — texture-based avatar */}
@@ -43,9 +43,9 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
           width:  size,
           height: size,
           borderRadius: '50%',
-          border: `2px solid ${color}`,
+          border: 'none',
           boxShadow: isActive
-            ? `0 0 0 4px ${color}22, 0 0 20px ${color}44`
+            ? `0 0 20px ${planet.visual.coreColor}44`
             : `0 0 10px ${planet.visual.coreColor}44`,
           transition: 'all 0.25s ease',
           position: 'relative',
@@ -61,29 +61,10 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
           rotationDuration={16 + (planet.id.length % 5) * 3}
         />
 
-        {/* Score badge */}
-        <div
-          style={{
-            position: 'absolute',
-            top: -6,
-            right: -6,
-            width: 18,
-            height: 18,
-            borderRadius: '50%',
-            background: color,
-            border: '1px solid rgba(4,3,18,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 8,
-            fontWeight: 700,
-            color: '#000',
-            lineHeight: 1,
-          }}
-        >
-          {match.score}
-        </div>
       </div>
+      <span className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold leading-none" style={{ color, background: `${color}14` }}>
+        {match.score}
+      </span>
 
       {/* Planet name */}
       <span

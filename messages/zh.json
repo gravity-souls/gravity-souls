@@ -4,6 +4,7 @@
     "description": "Gravity-Souls 让你遇见与你内心共鸣的人。通过真实的自我表达，发现共鸣、契合与真诚的连接。"
   },
   "nav": {
+    "messages": "消息",
     "home": "首页",
     "stream": "动态",
     "resonance": "共鸣",
@@ -1052,6 +1053,8 @@
     "chipThinking": "思考"
   },
   "a11y": {
+    "previousCommunities": "上一组社区",
+    "nextCommunities": "下一组社区",
     "backToMessages": "返回消息",
     "sendSignal": "发送信号",
     "close": "关闭",
