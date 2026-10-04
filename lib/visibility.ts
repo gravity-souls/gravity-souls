@@ -35,12 +35,12 @@ export async function blockedUserIds(viewerId: string): Promise<Set<string>> {
  * (not yet created) defaults to the approved MEMBERS-visible default.
  * The owner can always view their own planet.
  */
-export async function canViewProfile(viewerId: string | null, targetUserId: string): Promise<boolean> {
+export async function canViewProfile(viewerId: string | null, targetUserId: string, db: Pick<Prisma.TransactionClient, 'block' | 'profile' | 'follow'> = prisma): Promise<boolean> {
   if (viewerId === targetUserId) return true
   if (!viewerId) return false
-  if (await isBlocked(viewerId, targetUserId)) return false
+  if (await isBlocked(viewerId, targetUserId, db)) return false
 
-  const profile = await prisma.profile.findUnique({
+  const profile = await db.profile.findUnique({
     where: { userId: targetUserId },
     select: { visibility: true },
   })
@@ -48,7 +48,7 @@ export async function canViewProfile(viewerId: string | null, targetUserId: stri
   if (visibility === 'MEMBERS') return true
 
   // PRIVATE: visible only to a mutual connection (either direction follows).
-  const connection = await prisma.follow.findFirst({
+  const connection = await db.follow.findFirst({
     where: {
       OR: [
         { followerId: viewerId, followingId: targetUserId },
@@ -62,12 +62,12 @@ export async function canViewProfile(viewerId: string | null, targetUserId: stri
 
 /**
  * Can actorId start new contact (DM, follow) with targetUserId? Blocks
- * always win. New DMs additionally require a mutual follow (approved),
- * checked separately by the caller via mutualFollow().
+ * always win. New threads need mutual follows or explicit invitation acceptance
+ * (ADR 0002), checked separately by their creation routes.
  */
-export async function canContact(actorId: string, targetUserId: string): Promise<boolean> {
+export async function canContact(actorId: string, targetUserId: string, db: Pick<Prisma.TransactionClient, 'block'> = prisma): Promise<boolean> {
   if (actorId === targetUserId) return false
-  return !(await isBlocked(actorId, targetUserId))
+  return !(await isBlocked(actorId, targetUserId, db))
 }
 
 export async function mutualFollow(userIdA: string, userIdB: string): Promise<boolean> {

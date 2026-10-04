@@ -1,13 +1,14 @@
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 /**
  * Fixed-window rate limiter backed by Postgres so a limit holds across
  * serverless instances (an in-memory counter would not). One atomic
  * INSERT ... ON CONFLICT avoids a read-then-write race under concurrency.
  */
-export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+export async function checkRateLimit(key: string, limit: number, windowMs: number, db: Pick<Prisma.TransactionClient, '$queryRaw'> = prisma): Promise<boolean> {
   const id = crypto.randomUUID()
-  const rows = await prisma.$queryRaw<{ count: number }[]>`
+  const rows = await db.$queryRaw<{ count: number }[]>`
     INSERT INTO "rate_limit_bucket" ("id", "bucketKey", "windowStart", "count", "updatedAt")
     VALUES (${id}, ${key}, now(), 1, now())
     ON CONFLICT ("bucketKey") DO UPDATE SET
@@ -29,6 +30,7 @@ export async function checkRateLimit(key: string, limit: number, windowMs: numbe
 }
 
 export const RATE_LIMITS = {
+  BEAM_INVITATION: { limit: 5, windowMs: 24 * 60 * 60_000 },
   POST_CREATE: { limit: 30, windowMs: 60 * 60_000 },
   EVENT_INTEREST: { limit: 60, windowMs: 60_000 },
   CONVERSATION_START: { limit: 20, windowMs: 60 * 60_000 },

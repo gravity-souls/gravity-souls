@@ -46,6 +46,8 @@ model user {
   memberships CommunityMembership[]
   conversationsA ConversationThread[] @relation("convUserA")
   conversationsB ConversationThread[] @relation("convUserB")
+  beamInvitationsSent BeamInvitation[] @relation("BeamInvitationSender")
+  beamInvitationsReceived BeamInvitation[] @relation("BeamInvitationRecipient")
   sentMessages   DirectMessage[]
   communityPosts CommunityPost[]
   communityPostReplies CommunityPostReply[]
@@ -84,6 +86,8 @@ enum NotificationType {
   COMMENT_RECEIVED
   NEW_FOLLOWER
   NEW_MESSAGE
+  BEAM_INVITATION
+  BEAM_INVITATION_ACCEPTED
 }
 
 model Notification {
@@ -608,6 +612,29 @@ model ConversationThread {
 
   @@unique([userAId, userBId])
   @@map("conversation_thread")
+}
+
+enum BeamInvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model BeamInvitation {
+  id String @id @default(cuid())
+  senderId String
+  recipientId String
+  status BeamInvitationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resolvedAt DateTime?
+  sender user @relation("BeamInvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient user @relation("BeamInvitationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  @@unique([senderId, recipientId])
+  @@index([recipientId, status, createdAt])
+  @@index([senderId, createdAt])
+  @@map("beam_invitation")
 }
 
 model DirectMessage {

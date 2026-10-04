@@ -45,6 +45,10 @@ function IconForType({ type }: { type: SerializedNotification['type'] }) {
   const className = 'h-4 w-4'
 
   switch (type) {
+    case 'BEAM_INVITATION':
+      return <Sparkles className={className} />
+    case 'BEAM_INVITATION_ACCEPTED':
+      return <CheckCircle2 className={className} />
     case 'RESONANCE_RECEIVED':
       return <Orbit className={className} />
     case 'RESONANCE_ACCEPTED':

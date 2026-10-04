@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import FollowButton from '@/components/social/FollowButton'
+import SendBeamInvitationButton from '@/components/social/SendBeamInvitationButton'
 import { announcePlanetAction } from '@/lib/planet-actions'
 import { withExplorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 export default function BeamButton({ userId, planetId, hasFollowControl = false, conversationId, origin }: { userId?: string; planetId: string; hasFollowControl?: boolean; conversationId?: string; origin?: ExplorationOrigin | null }) {
@@ -30,5 +31,6 @@ export default function BeamButton({ userId, planetId, hasFollowControl = false,
     <p className="max-w-xs text-xs text-white/50">{t('openOnly')}</p>
     {error && <div role="alert" className="max-w-xs text-xs text-red-300">{t(error === 'auth' ? 'signInRequired' : error)} {error === 'auth' ? <Link href="/sign-in">{t('signIn')}</Link> : <button type="button" className="underline" onClick={open}>{t('retry')}</button>}</div>}
     {error === 'mutualRequired' && <div className="flex flex-col gap-2">{userId && !hasFollowControl && <FollowButton userId={userId} />}<Link href="/relationships" className="text-xs text-violet-300 underline">{t('viewRelationships')}</Link></div>}
+    {error === 'mutualRequired' && userId && <SendBeamInvitationButton userId={userId} origin={origin} />}
   </div>
 }

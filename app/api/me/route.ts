@@ -104,6 +104,7 @@ export async function DELETE(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR NO KEY UPDATE`
       const owned = await tx.community.findMany({ where: { creatorId: userId }, orderBy: { id: 'asc' } })
       for (const galaxy of owned) {
         await tx.$queryRaw`SELECT id FROM community WHERE id = ${galaxy.id} FOR UPDATE`
@@ -157,6 +158,7 @@ export async function DELETE(request: Request) {
         tx.profile.deleteMany({ where: { userId } }),
         tx.questionnaireResult.deleteMany({ where: { userId } }),
         tx.savedPlanet.deleteMany({ where: { userId } }),
+        tx.beamInvitation.deleteMany({ where: { OR: [{ senderId: userId }, { recipientId: userId }] } }),
         tx.follow.deleteMany({ where: { OR: [{ followerId: userId }, { followingId: userId }] } }),
         tx.block.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } }),
         tx.communityMembership.deleteMany({ where: { userId } }),

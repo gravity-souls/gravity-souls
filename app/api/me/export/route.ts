@@ -54,6 +54,7 @@ export async function GET() {
       proposedEvents,
       eventRSVPs,
       conversations,
+      beamInvitations,
     ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -102,6 +103,7 @@ export async function GET() {
         orderBy: { createdAt: "asc" },
         include: { messages: { orderBy: { createdAt: "asc" } } },
       }),
+      prisma.beamInvitation.findMany({ where: { OR: [{ senderId: userId }, { recipientId: userId }] }, orderBy: { createdAt: 'asc' } }),
     ]);
 
     if (!user) return Response.json({ error: "Not found" }, { status: 404 });
@@ -136,6 +138,7 @@ export async function GET() {
 
     const payload = {
       exportedAt: new Date().toISOString(),
+      beamInvitations,
       account: user,
       sessions,
       linkedAccounts: accounts,

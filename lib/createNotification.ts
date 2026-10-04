@@ -35,6 +35,8 @@ async function localized(
   }
 }
 export const NotificationTemplates = {
+  beamInvitation: (id: string, locale: Locale) => localized(NotificationType.BEAM_INVITATION, 'beamInvitation', locale, `/messages?invitations=received&invite=${id}`),
+  beamInvitationAccepted: (id: string, locale: Locale) => localized(NotificationType.BEAM_INVITATION_ACCEPTED, 'beamInvitationAccepted', locale, `/messages/${id}`),
   resonanceReceived: (name: string, url: string, locale: Locale) =>
     localized(
       NotificationType.RESONANCE_RECEIVED,

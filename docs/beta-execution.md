@@ -6,7 +6,8 @@ The founder approved these defaults during this implementation session:
 
 - Beta minimum age: 18+.
 - One-way follows; follow edges belong to users, not replaceable planet records.
-- New private messages require mutual follow and recipient permission.
+- New chats require mutual follow or explicit recipient acceptance of a separate beam
+  invitation (ADR 0002); recipient permissions still apply. Neither opening nor accepting sends a message.
 - Member-visible profiles and posts by default; community content follows community access.
 - Matching/calibration is optional.
 - A galaxy is the presentation of a community for beta, not a separate entity.
