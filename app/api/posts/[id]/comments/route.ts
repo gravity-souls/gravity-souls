@@ -1,3 +1,5 @@
+import { canContact } from '@/lib/visibility'
+import { postReadDenial, serializeVisibleComment } from '@/lib/post-context'
 import { getUserLocale } from '@/lib/notification-i18n'
 import { NotificationTemplates, createNotification } from '@/lib/createNotification'
 import { prisma } from '@/lib/prisma'
@@ -27,6 +29,8 @@ export async function GET(
   const session = await getOptionalSession()
   const userId = session?.user.id ?? null
   const { id } = await params
+  const denied = await postReadDenial(id, userId)
+  if (denied) return denied
   const url = new URL(request.url)
   const cursor = url.searchParams.get('cursor')
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit') ?? COMMENT_PAGE_SIZE) || COMMENT_PAGE_SIZE))
@@ -52,9 +56,9 @@ export async function GET(
   const nextComment = comments.length > limit ? comments.pop() : null
 
   return Response.json({
-    comments: comments.map((comment) => serializeComment(comment, userId)),
-    nextCursor: nextComment?.id ?? null,
-  })
+    comments: (await Promise.all(comments.map((comment) => serializeVisibleComment(comment, userId)))).filter(comment => comment !== null),
+    nextCursor: nextComment ? comments.at(-1)?.id ?? null : null,
+  }, { headers: { 'Cache-Control': 'private, no-store' } })
 }
 
 export async function POST(
@@ -69,6 +73,8 @@ export async function POST(
   }
 
   const { id } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
   const body = await request.json().catch(() => null) as { content?: unknown; parentId?: unknown } | null
   const content = typeof body?.content === 'string' ? body.content.trim() : ''
   const requestedParentId = typeof body?.parentId === 'string' && body.parentId.trim() ? body.parentId.trim() : null
@@ -83,6 +89,7 @@ export async function POST(
     ? await prisma.postComment.findUnique({ where: { id: requestedParentId }, select: { id: true, postId: true, authorId: true, parentId: true } })
     : null
   if (requestedParentId && (!parentComment || parentComment.postId !== id)) return jsonError('Comment not found', 404)
+  if (parentComment && parentComment.authorId !== session.user.id && !await canContact(session.user.id, parentComment.authorId)) return jsonError('Comment not found', 404)
   const parentId = parentComment?.parentId ?? parentComment?.id ?? null
 
   const [, comment] = await prisma.$transaction([

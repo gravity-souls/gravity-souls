@@ -1,3 +1,4 @@
+import { postReadDenial } from '@/lib/post-context'
 import { readJson } from '@/lib/api-input'
 import { postCommentEditSchema } from '@/lib/input-schemas'
 import { prisma } from '@/lib/prisma'
@@ -32,6 +33,8 @@ export async function PATCH(
   }
 
   const { id, commentId } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
 
   const input = await readJson(request, postCommentEditSchema)
   if (!input.ok) return input.response
@@ -64,6 +67,8 @@ export async function DELETE(
   }
 
   const { id, commentId } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
   const comment = await prisma.postComment.findUnique({
     where: { id: commentId },
     select: { id: true, postId: true, authorId: true, parentId: true },
