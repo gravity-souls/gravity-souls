@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -31,9 +32,11 @@ interface Props {
  * with cover image, title, date/time, location, and tags.
  */
 export default function UpcomingActivityCard({ event, className = '', onOpen, compact = false }: Props) {
+  const locale = useLocale()
+  const t = useTranslations('myPlanet')
   const accent = event.accentColor ?? '#a78bfa'
   const date = new Date(event.date)
-  const dateStr = date.toLocaleDateString('en-US', compact
+  const dateStr = date.toLocaleDateString(locale, compact
     ? { weekday: 'short', month: 'short', day: 'numeric' }
     : { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
   const ctaStyle = {
@@ -133,7 +136,7 @@ export default function UpcomingActivityCard({ event, className = '', onOpen, co
             className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all text-center`}
             style={ctaStyle}
           >
-            View details &amp; RSVP
+            {t('eventDetails')}
           </button>
         ) : event.href ? (
           <Link
@@ -141,7 +144,7 @@ export default function UpcomingActivityCard({ event, className = '', onOpen, co
             className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all text-center`}
             style={ctaStyle}
           >
-            View details &amp; RSVP
+            {t('eventDetails')}
           </Link>
         ) : (
           <button
@@ -150,7 +153,7 @@ export default function UpcomingActivityCard({ event, className = '', onOpen, co
             className={`${compact ? 'py-1.5' : 'py-2'} w-full rounded-lg text-xs font-medium tracking-wide transition-all opacity-60`}
             style={ctaStyle}
           >
-            Details coming soon
+            {t('eventDetailsSoon')}
           </button>
         )}
       </div>

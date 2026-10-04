@@ -9,20 +9,20 @@ import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetGlobe from '@/components/planet/PlanetGlobe'
 import XPProgressBar from '@/components/planet/XPProgressBar'
 import { EARLY_ACCESS } from '@/lib/featureFlags'
-import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
+import { clampLevel } from '@/lib/xp'
 import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
 
 const COLOR_SWATCHES = [
-  { name: 'Nebula', tone: 'Deep violet', color: '#7c4dbf' },
-  { name: 'Lumen', tone: 'Soft lavender', color: '#a78bfa' },
-  { name: 'Orbit', tone: 'Clear blue', color: '#60a5fa' },
-  { name: 'Aurora', tone: 'Electric cyan', color: '#22d3ee' },
-  { name: 'Verdant', tone: 'Living green', color: '#34d399' },
-  { name: 'Solar', tone: 'Warm gold', color: '#fbbf24' },
-  { name: 'Ember', tone: 'Bright orange', color: '#fb923c' },
-  { name: 'Pulse', tone: 'Signal red', color: '#f87171' },
-  { name: 'Bloom', tone: 'Rose light', color: '#f472b6' },
-  { name: 'Mist', tone: 'Pale glow', color: '#e8e0ff' },
+  { name: 'Nebula', color: '#7c4dbf' },
+  { name: 'Lumen', color: '#a78bfa' },
+  { name: 'Orbit', color: '#60a5fa' },
+  { name: 'Aurora', color: '#22d3ee' },
+  { name: 'Verdant', color: '#34d399' },
+  { name: 'Solar', color: '#fbbf24' },
+  { name: 'Ember', color: '#fb923c' },
+  { name: 'Pulse', color: '#f87171' },
+  { name: 'Bloom', color: '#f472b6' },
+  { name: 'Mist', color: '#e8e0ff' },
 ]
 
 interface Props {
@@ -60,14 +60,11 @@ function findPreset(config: PlanetConfig) {
   return PRESET_PLANETS.find((planet) => planet.baseTexture === config.baseTexture) ?? PRESET_PLANETS[0]
 }
 
-async function readResponseError(response: Response, fallback: string) {
-  const data = await response.clone().json().catch(() => null)
-  if (typeof data?.error === 'string') return data.error
-
-  if (response.status === 401) return 'Sign in before uploading a custom texture'
-  if (response.status === 403) return 'Custom textures are locked for this planet'
-  if (response.status === 413) return 'The texture file is too large'
-  if (response.status >= 500) return 'The server could not store this texture'
+async function readResponseError(response: Response, fallback: string, t: ReturnType<typeof useTranslations>) {
+  if (response.status === 401) return t('uploadSignIn')
+  if (response.status === 403) return t('uploadLocked')
+  if (response.status === 413) return t('fileSizeError')
+  if (response.status >= 500) return t('uploadServerError')
 
   return fallback
 }
@@ -75,7 +72,6 @@ async function readResponseError(response: Response, fallback: string) {
 function findColorOption(value: string) {
   return COLOR_SWATCHES.find((option) => option.color.toLowerCase() === value.toLowerCase()) ?? {
     name: 'Custom',
-    tone: 'Saved color',
     color: value,
   }
 }
@@ -112,8 +108,8 @@ function ColorControl({
           />
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>{label}</p>
-            <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{selectedOption.name}</p>
-            <p className="text-xs" style={{ color: 'var(--ink)', opacity: 0.62 }}>{selectedOption.tone}</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{t(`swatches.${selectedOption.name}.name`)}</p>
+            <p className="text-xs" style={{ color: 'var(--ink)', opacity: 0.62 }}>{t(`swatches.${selectedOption.name}.tone`)}</p>
           </div>
         </div>
       </div>
@@ -133,7 +129,7 @@ function ColorControl({
                 boxShadow: selected ? `0 0 18px ${option.color}44` : 'none',
                 transform: selected ? 'scale(1.08)' : 'scale(1)',
               }}
-              aria-label={t('chooseColor', { name: option.name })}
+              aria-label={t('chooseColor', { name: t(`swatches.${option.name}.name`) })}
               aria-pressed={selected}
             >
               <span
@@ -142,7 +138,7 @@ function ColorControl({
                 aria-hidden="true"
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[11px] font-semibold" style={{ color: 'var(--foreground)' }}>{option.name}</span>
+                <span className="block truncate text-[11px] font-semibold" style={{ color: 'var(--foreground)' }}>{t(`swatches.${option.name}.name`)}</span>
               </span>
               {selected && <Check size={13} style={{ color: option.color }} aria-hidden="true" />}
             </button>
@@ -169,6 +165,7 @@ function ControlSection({
   const t = useTranslations('planetCustomizer')
   const locked = !earlyAccess && userLevel < level
   const unlockLevel = clampLevel(level)
+  const tCommon = useTranslations('common')
 
   return (
     <section className="rounded-lg border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -176,7 +173,7 @@ function ControlSection({
         <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{title}</h3>
         {locked && (
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[11px]" style={{ color: 'var(--ghost)' }}>
-            <Lock size={12} /> {t('unlockAt', { level, name: LEVEL_NAMES[unlockLevel] })}
+            <Lock size={12} /> {t('unlockAt', { level, name: tCommon(`levelNames.${unlockLevel}`) })}
           </span>
         )}
       </div>
@@ -257,7 +254,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       })
 
       if (!response.ok) {
-        throw new Error(await readResponseError(response, t('saveError')))
+        throw new Error(await readResponseError(response, t('saveError'), t))
       }
 
       setSavedConfig(localConfig)
@@ -296,7 +293,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       const response = await fetch('/api/user/planet-texture', { method: 'POST', body: formData })
 
       if (!response.ok) {
-        throw new Error(await readResponseError(response, t('uploadFailed')))
+        throw new Error(await readResponseError(response, t('uploadFailed'), t))
       }
 
       const data = await response.json().catch(() => null)

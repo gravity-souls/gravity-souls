@@ -1,4 +1,4 @@
-import { LEVEL_NAMES, clampLevel, xpToNextLevel } from '@/lib/xp'
+import { clampLevel, xpToNextLevel } from '@/lib/xp'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 
@@ -19,7 +19,7 @@ export default function XPProgressBar({ xp, userLevel }: Props) {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>{t('planetLevel')}</p>
-          <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{LEVEL_NAMES[level]}</p>
+          <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{t(`levelNames.${level}`)}</p>
         </div>
         <span className="text-xs font-semibold" style={{ color: level === 5 ? '#f59e0b' : 'var(--star)' }}>Lv.{level}</span>
       </div>
@@ -40,7 +40,7 @@ export default function XPProgressBar({ xp, userLevel }: Props) {
       <p className="mt-2 text-xs" style={{ color: 'var(--ghost)' }}>
         {isMax
           ? t('maximumLevelReached')
-          : t('xpToLevel', { current: progress.current, required: progress.required, level: LEVEL_NAMES[nextLevel] })}
+          : t('xpToLevel', { current: progress.current, required: progress.required, level: t(`levelNames.${nextLevel}`) })}
       </p>
       <Link href="/guide#levels" className="mt-3 inline-block text-xs font-medium underline underline-offset-2" style={{ color: 'var(--star)' }}>
         {t('howToEarnXp')}

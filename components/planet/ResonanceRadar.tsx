@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 /**
  * ResonanceRadar — SVG-based pentagon/radar chart for the Resonance Overview section.
  * Shows 5–6 personality dimensions as vertices of a polygon.
@@ -34,6 +36,7 @@ export default function ResonanceRadar({
   balance,
   className = '',
 }: Props) {
+  const t = useTranslations('myPlanet')
   const n = dimensions.length
   const angleStep = 360 / n
 
@@ -128,7 +131,7 @@ export default function ResonanceRadar({
       {balance !== undefined && (
         <div className="flex items-center gap-2">
           <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-            Resonance balance
+            {t('resonanceBalance')}
           </span>
           <span className="text-sm font-semibold tabular-nums" style={{ color: accentColor }}>
             {balance}%

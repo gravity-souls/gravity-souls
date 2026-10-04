@@ -1,4 +1,5 @@
-import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
+import { useTranslations } from 'next-intl'
+import { clampLevel } from '@/lib/xp'
 
 const LEVEL_COLORS = {
   1: '#6b7280',
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function LevelBadge({ level, size = 'sm' }: Props) {
+  const t = useTranslations('common')
   const safeLevel = clampLevel(level)
   const color = LEVEL_COLORS[safeLevel]
   const isMax = safeLevel === 5
@@ -28,7 +30,7 @@ export default function LevelBadge({ level, size = 'sm' }: Props) {
           color: safeLevel === 1 ? '#e5e7eb' : '#fff',
           boxShadow: isMax ? `0 0 16px ${color}88` : `0 0 8px ${color}44`,
         }}
-        title={LEVEL_NAMES[safeLevel]}
+        title={t(`levelNames.${safeLevel}`)}
       >
         {safeLevel}
       </span>
@@ -48,7 +50,7 @@ export default function LevelBadge({ level, size = 'sm' }: Props) {
       <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[11px]" style={{ background: `${color}2f` }}>
         {safeLevel}
       </span>
-      {LEVEL_NAMES[safeLevel]}
+      {t(`levelNames.${safeLevel}`)}
     </span>
   )
 }

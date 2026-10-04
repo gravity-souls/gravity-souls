@@ -3,11 +3,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
+import { clampLevel } from '@/lib/xp'
 
 interface LevelToastState {
   level: number
-  levelName: string
 }
 
 function isLevelUpPayload(value: unknown): value is { leveledUp: true; xpEvent?: { newLevel?: number } } {
@@ -44,7 +43,7 @@ export default function LevelUpToast() {
         .then((data) => {
           if (!isLevelUpPayload(data)) return
           const level = clampLevel(data.xpEvent?.newLevel ?? 1)
-          setToast({ level, levelName: LEVEL_NAMES[level] })
+          setToast({ level })
         })
         .catch(() => {})
 
@@ -86,7 +85,7 @@ export default function LevelUpToast() {
               {toast.level}
             </motion.div>
             <p className="text-[11px] uppercase tracking-[0.26em]" style={{ color: 'var(--ghost)' }}>{t('levelUp')}</p>
-            <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{toast.levelName}</h2>
+            <h2 className="mt-2 text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{t(`levelNames.${toast.level}`)}</h2>
             <p className="mt-3 text-sm" style={{ color: 'var(--ink)' }}>
               {toast.level === 5 ? t('singularityReached') : t('customizationsUnlocked')}
             </p>
