@@ -705,7 +705,9 @@
       "5": "奇点"
     },
     "saving": "保存中…",
-    "planetTexturesBy": "星球纹理来源"
+    "planetTexturesBy": "星球纹理来源",
+    "assetCredits": "素材署名",
+    "textureAdaptations": "行星纹理可能经过裁切、调色及动画处理后展示。"
   },
   "communities": {
     "eyebrow": "社区",
@@ -1665,7 +1667,11 @@
     "group_emotional-theme": "情绪主题",
     "group_culture-travel": "文化与旅行",
     "group_art-books-music": "书籍音乐艺术",
-    "group_worldview-complement": "互补世界观"
+    "group_worldview-complement": "互补世界观",
+    "browseObjects": "星团与星球",
+    "closeSidebar": "收起面板",
+    "viewMode": "展示方式",
+    "mapView": "星图视图"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",

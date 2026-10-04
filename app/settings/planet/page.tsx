@@ -140,6 +140,7 @@ function AccountDataSection() {
 
 export default function PlanetSettingsPage() {
   const router = useRouter()
+  const tCommon = useTranslations('common')
   const tSettings = useTranslations('planetSettings')
   const tLanguage = useTranslations('language')
   const { refetch: refetchSession } = authClient.useSession()
@@ -236,6 +237,7 @@ export default function PlanetSettingsPage() {
 
       <div className="relative z-10 px-4 sm:px-6 pt-8 pb-24 max-w-2xl mx-auto">
 
+        <Link href="/legal/credits" className="mb-5 inline-block text-xs text-slate-400 underline">{tCommon('assetCredits')}</Link>
         {/* Header */}
         <div className="flex flex-col gap-2 mb-8">
           <p

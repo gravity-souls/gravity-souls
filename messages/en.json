@@ -705,7 +705,9 @@
       "5": "Singularity"
     },
     "saving": "Saving…",
-    "planetTexturesBy": "Planet textures by"
+    "planetTexturesBy": "Planet textures by",
+    "assetCredits": "Asset credits",
+    "textureAdaptations": "Planet textures may be cropped, tinted and animated for display."
   },
   "communities": {
     "eyebrow": "Communities",
@@ -1665,7 +1667,11 @@
     "group_emotional-theme": "Emotional themes",
     "group_culture-travel": "Culture and travel",
     "group_art-books-music": "Books, music and art",
-    "group_worldview-complement": "Complementary worldview"
+    "group_worldview-complement": "Complementary worldview",
+    "browseObjects": "Constellations & planets",
+    "closeSidebar": "Close panel",
+    "viewMode": "View format",
+    "mapView": "Star map"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

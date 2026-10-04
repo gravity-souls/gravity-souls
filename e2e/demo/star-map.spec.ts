@@ -52,6 +52,11 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
   await expect(
     page.getByRole('button', { name: /Pause|Play|Reset|Zoom in|Zoom out/ }),
   ).toHaveCount(0)
+  const panelToggle = page.getByRole('button', {
+    name: 'Constellations & planets',
+    exact: true,
+  })
+  if (await panelToggle.isVisible()) await panelToggle.click()
   await page.getByRole('button', { name: 'Calm 1 planets' }).click()
   await page.getByRole('button', { name: 'Browser fixture planet' }).click()
   await expect(
@@ -81,9 +86,19 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/star-map')
+  const panelToggle = page.getByRole('button', {
+    name: 'Constellations & planets',
+    exact: true,
+  })
+  if (await panelToggle.isVisible()) await panelToggle.click()
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
   ).toBeVisible()
+  const closePanel = page.getByRole('button', {
+    name: 'Close panel',
+    exact: true,
+  })
+  if (await closePanel.isVisible()) await closePanel.click()
   const box = await page.locator('canvas').boundingBox()
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height * 0.44)
   await page.mouse.wheel(0, -550)
@@ -117,6 +132,11 @@ test('map data failure clears stale objects and explains failure', async ({
   page,
 }) => {
   await page.goto('/star-map')
+  const panelToggle = page.getByRole('button', {
+    name: 'Constellations & planets',
+    exact: true,
+  })
+  if (await panelToggle.isVisible()) await panelToggle.click()
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
   ).toBeVisible()
@@ -129,4 +149,34 @@ test('map data failure clears stale objects and explains failure', async ({
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
   ).toHaveCount(0)
+})
+
+test('view switch stays above the map and objects occupy a side panel', async ({
+  page,
+}) => {
+  await page.goto('/star-map')
+  const switcher = page.getByRole('link', {
+    name: 'Open list view',
+    exact: true,
+  })
+  await expect(switcher).toHaveAttribute('href', '/discover')
+  const canvas = await page.locator('canvas').boundingBox()
+  const switchBox = await switcher.boundingBox()
+  expect(switchBox!.y + switchBox!.height).toBeLessThan(canvas!.y)
+  const toggle = page.getByRole('button', {
+    name: 'Constellations & planets',
+    exact: true,
+  })
+  if (await toggle.isVisible()) {
+    await expect(page.locator('#star-map-sidebar')).toBeHidden()
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await page.getByRole('button', { name: 'Close panel', exact: true }).click()
+    await expect(page.locator('#star-map-sidebar')).toBeHidden()
+  } else {
+    const panel = await page.locator('#star-map-sidebar').boundingBox()
+    expect(panel!.x).toBeGreaterThan(canvas!.x + canvas!.width)
+    expect(Math.abs(panel!.y - canvas!.y)).toBeLessThan(2)
+  }
+  await expect(page.getByText('Planet textures by')).toHaveCount(0)
 })

@@ -705,7 +705,9 @@
       "5": "Singularité"
     },
     "saving": "Enregistrement…",
-    "planetTexturesBy": "Textures planétaires par"
+    "planetTexturesBy": "Textures planétaires par",
+    "assetCredits": "Crédits des ressources",
+    "textureAdaptations": "Les textures peuvent être recadrées, teintées et animées pour leur affichage."
   },
   "communities": {
     "eyebrow": "Communautés",
@@ -1665,7 +1667,11 @@
     "group_emotional-theme": "Thèmes émotionnels",
     "group_culture-travel": "Culture et voyages",
     "group_art-books-music": "Livres, musique et art",
-    "group_worldview-complement": "Vision complémentaire"
+    "group_worldview-complement": "Vision complémentaire",
+    "browseObjects": "Constellations et planètes",
+    "closeSidebar": "Fermer le panneau",
+    "viewMode": "Affichage",
+    "mapView": "Carte stellaire"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",

@@ -264,3 +264,92 @@
     bottom: 18px;
   }
 }
+/* Exploration controls stay beside the map; small screens use a side drawer. */
+.explorer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  align-items: stretch;
+}
+.explorer .stage {
+  min-width: 0;
+}
+.sidebar {
+  min-width: 0;
+  max-height: min(67vh, 680px);
+  min-height: 440px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border: 1px solid #ffffff16;
+  border-radius: 16px;
+  background: #0b101cf2;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff24 transparent;
+}
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.sidebarHeader h2 {
+  font-size: 12px;
+  color: #b7c4d7;
+}
+.map .sidebar .clusters {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 14px;
+}
+.map .sidebar .clusters button {
+  padding: 12px;
+}
+.sidebar .nodeList {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sidebar .nodeList button {
+  overflow-wrap: anywhere;
+}
+.map .sidebar .card {
+  position: static;
+  width: auto;
+  margin-top: 16px;
+  padding: 14px;
+  box-shadow: none;
+}
+.map .sidebar .card h2 {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.map .sidebarToggle {
+  display: none;
+}
+@media (max-width: 767px) {
+  .explorer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .map .sidebarToggle {
+    display: inline-flex;
+    align-self: flex-start;
+  }
+  .sidebar {
+    display: none;
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(290px, calc(100% - 32px));
+    max-height: 520px;
+    min-height: 0;
+    box-shadow: -16px 0 40px #0008;
+  }
+  .sidebar[data-open='true'] {
+    display: block;
+  }
+  .sidebarHeader button {
+    font-size: 11px;
+    padding: 8px;
+  }
+}
