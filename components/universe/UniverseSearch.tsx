@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { PlanetProfile } from '@/types/planet'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 
 interface Props {
   onPlanetSelect?: (planet: PlanetProfile) => void
@@ -256,16 +257,7 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)' }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
-                    <span
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
-                      style={{
-                        background: `${p.visual.coreColor}22`,
-                        color:      p.visual.coreColor,
-                        boxShadow:  `0 0 8px ${p.visual.coreColor}30`,
-                      }}
-                    >
-                      {p.avatarSymbol}
-                    </span>
+                    <PlanetAvatar planetConfig={p.planetConfig} size={28} glowColor={p.visual.coreColor} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{p.name}</p>
                       <p className="text-xs truncate" style={{ color: 'var(--ghost)' }}>{p.tagline}</p>

@@ -22,6 +22,18 @@ export interface UserPlanetConfigSource {
   planetCustomTexture?: string | null
 }
 
+export const USER_PLANET_CONFIG_SELECT = {
+  planetTexture: true,
+  planetTint: true,
+  planetAtmoColor: true,
+  planetAtmoDensity: true,
+  planetHasRing: true,
+  planetRingColor: true,
+  planetRotationSpeed: true,
+  planetCloudOpacity: true,
+  planetCustomTexture: true,
+} as const
+
 export interface PlanetVisualSource {
   mood: string
   lifestyle: string

@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import SignalComposer from '@/components/social/SignalComposer'
 import FirstTimeHint from '@/components/hints/FirstTimeHint'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import type { PlanetConfig } from '@/types/planet'
 // --- Types ---
 
 interface MsgData {
@@ -22,6 +24,7 @@ interface PlanetData {
   name: string
   avatarSymbol: string
   visual: { coreColor: string; accentColor: string }
+  planetConfig?: PlanetConfig | null
 }
 
 // --- Message bubble ----------------------------------------------------------
@@ -54,7 +57,7 @@ function MessageBubble({ msg, isOwn, color }: { msg: MsgData; isOwn: boolean; co
 
 function ConvHeader({ planet, fallbackName, onBack }: { planet: PlanetData | null; fallbackName: string; onBack: () => void }) {
   const t = useTranslations('messagesPage')
-  const color = planet?.visual?.coreColor ?? '#a78bfa'
+  const color = planet?.planetConfig?.tintColor ?? planet?.visual?.coreColor ?? '#a78bfa'
   return (
     <div
       className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3"
@@ -67,15 +70,9 @@ function ConvHeader({ planet, fallbackName, onBack }: { planet: PlanetData | nul
       <button onClick={onBack} className="text-sm" style={{ color: 'var(--ghost)' }}>
         &#8592;
       </button>
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-        style={{
-          background: `${color}20`,
-          border: `1px solid ${color}30`,
-        }}
-      >
-        {planet?.avatarSymbol ?? '?'}
-      </div>
+      {planet ? <PlanetAvatar planetConfig={planet.planetConfig ?? undefined} size={32} glowColor={color} /> : (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ color, background: `${color}20` }}>?</div>
+      )}
       <div className="flex flex-col">
         <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
           {planet?.name ?? fallbackName ?? t('unknown')}

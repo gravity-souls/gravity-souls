@@ -9,6 +9,7 @@ import { grantXP } from "@/lib/grantXP";
 import { getUserLocale } from "@/lib/notification-i18n";
 import { isBlocked } from "@/lib/visibility";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
+import { resolveUserPlanetConfig } from "@/lib/user-planet-config";
 
 // GET /api/conversations/[id] - get messages for a conversation
 export async function GET(
@@ -72,8 +73,8 @@ export async function GET(
         id: conversation.id,
         createdAt: conversation.createdAt,
       },
-      myPlanet: myUser.planets[0] ?? null,
-      otherPlanet: otherUser.planets[0] ?? null,
+      myPlanet: myUser.planets[0] ? { ...myUser.planets[0], planetConfig: resolveUserPlanetConfig(myUser, myUser.planets[0]) } : null,
+      otherPlanet: otherUser.planets[0] ? { ...otherUser.planets[0], planetConfig: resolveUserPlanetConfig(otherUser, otherUser.planets[0]) } : null,
       otherUser: { id: otherUser.id, name: otherUser.name },
       messages: messages.map((m: { id: string; senderId: string; content: string; type: string; readAt: Date | null; createdAt: Date }) => ({
         id: m.id,

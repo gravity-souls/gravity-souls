@@ -302,6 +302,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
       }
 
       setSavedConfig(localConfig)
+      window.dispatchEvent(new CustomEvent('planet-config:updated', { detail: localConfig }))
       onSaved?.(localConfig)
       setMessage(t('saved'))
       onClose?.()

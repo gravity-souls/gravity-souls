@@ -25,6 +25,7 @@ interface ApiSavedPlanetRow {
     lifestyle: string
     coreThemes: string[]
     visual: Record<string, unknown>
+    planetConfig?: PlanetProfile['planetConfig']
   }
 }
 
@@ -51,6 +52,7 @@ function savedPlanetToProfile(data: ApiSavedPlanetRow['planet']): PlanetProfile 
       satelliteCount: 0,
       size:           'lg',
     },
+    planetConfig: data.planetConfig,
     cognitiveAxes: { abstract: 50, introspective: 50 },
     emotionalBars: [],
     createdAt: new Date().toISOString(),

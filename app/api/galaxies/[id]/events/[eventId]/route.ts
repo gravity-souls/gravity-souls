@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getCommunityAccess, jsonError, serializeEventDetail } from '@/lib/galaxy-events'
 import { requireUser } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { USER_PLANET_CONFIG_SELECT } from '@/lib/user-planet-config'
 
 export async function GET(
   _request: Request,
@@ -24,10 +25,10 @@ export async function GET(
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
-      proposer: { select: { id: true, name: true, planetTexture: true, userLevel: true } },
+      proposer: { select: { id: true, name: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
       rsvps: {
         orderBy: { createdAt: 'asc' },
-        include: { user: { select: { id: true, name: true, planetTexture: true, userLevel: true } } },
+        include: { user: { select: { id: true, name: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } } },
       },
       _count: { select: { rsvps: true } },
     },

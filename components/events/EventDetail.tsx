@@ -106,7 +106,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onStatusCha
         </p>
 
         <div className="mt-6 flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <PlanetAvatar textureFile={event.proposer.planetTexture ?? undefined} size={40} showBadge level={event.proposer.userLevel ?? 1} />
+          <PlanetAvatar planetConfig={event.proposer.planetConfig ?? undefined} textureFile={event.proposer.planetTexture ?? undefined} size={40} showBadge level={event.proposer.userLevel ?? 1} />
           <div>
             <p className="text-xs" style={{ color: 'var(--ghost)' }}>{tEvents('proposedBy')}</p>
             <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{event.proposer.name}</p>
@@ -124,7 +124,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onStatusCha
             <div className="flex min-h-10 items-center pl-2">
               {visibleAttendees.map((attendee, index) => (
                 <div key={attendee.id} className="-ml-2" style={{ zIndex: visibleAttendees.length - index }} title={attendee.name}>
-                  <PlanetAvatar textureFile={attendee.planetTexture ?? undefined} size={34} showBadge level={attendee.userLevel} />
+                  <PlanetAvatar planetConfig={attendee.planetConfig ?? undefined} textureFile={attendee.planetTexture ?? undefined} size={34} showBadge level={attendee.userLevel} />
                 </div>
               ))}
               {visibleAttendees.length === 0 && <span className="text-sm" style={{ color: 'var(--ghost)' }}>{tEvents('noRsvps')}</span>}

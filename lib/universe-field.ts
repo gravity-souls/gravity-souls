@@ -1,5 +1,5 @@
 import { resolvePlanetTexture } from '@/lib/planet-textures'
-import type { PlanetProfile, PlanetVisualConfig } from '@/types/planet'
+import type { PlanetConfig, PlanetProfile, PlanetVisualConfig } from '@/types/planet'
 
 // Shape returned by GET /api/universe
 export interface UniversePlanet {
@@ -14,6 +14,7 @@ export interface UniversePlanet {
   visual: PlanetVisualConfig | Record<string, unknown>
   abstractAxis: number
   introspectiveAxis: number
+  planetConfig?: PlanetConfig | null
 }
 
 // --- Universe field: planet positions (% within the field container) ---------
@@ -74,6 +75,7 @@ export function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
     emotionalBars: [],
     createdAt: '',
     userId: '',
+    planetConfig: p.planetConfig ?? undefined,
   }
   profile.visual = { ...profile.visual, textureFile: resolvePlanetTexture(profile) }
   return profile

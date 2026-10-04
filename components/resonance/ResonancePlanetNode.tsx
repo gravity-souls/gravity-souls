@@ -53,6 +53,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
         }}
       >
         <PlanetAvatar
+          planetConfig={planet.planetConfig}
           textureFile={resolvePlanetTexture(planet)}
           size={size}
           glowColor={planet.visual.coreColor}

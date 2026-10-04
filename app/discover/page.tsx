@@ -38,6 +38,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
       satelliteCount: 1,
       size: 'lg' as const,
     },
+    planetConfig: (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
     cognitiveAxes: {
       abstract: (data.abstractAxis as number) ?? 50,
       introspective: (data.introspectiveAxis as number) ?? 50,
@@ -80,13 +81,14 @@ function ResonanceBar({ score, color }: { score: number; color: string }) {
 
 function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: number }) {
   const tCreation = useTranslations('creationSteps')
-  const color = planet.visual?.coreColor ?? '#a78bfa'
+  const color = planet.planetConfig?.tintColor ?? planet.visual?.coreColor ?? '#a78bfa'
 
   return (
     <Link href={`/planet/${planet.id}`}>
       <OrbitCard hoverable lift glowColor={color} className="flex flex-col gap-4 p-5">
         <div className="flex items-start gap-4">
           <PlanetAvatar
+            planetConfig={planet.planetConfig}
             textureFile={resolvePlanetTexture(planet)}
             size={48}
             glowColor={color}

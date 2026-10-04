@@ -120,10 +120,10 @@ function DrawerContent({
   const t = useTranslations('planetPage')
   const tCreation = useTranslations('creationSteps')
   const router = useRouter()
-  const { coreColor } = planet.visual
+  const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
   const fragment = planet.contentFragments[0]
   const textureFile = resolvePlanetTexture(planet)
-  const planetConfig: PlanetConfig = {
+  const planetConfig: PlanetConfig = planet.planetConfig ?? {
     baseTexture: textureFile,
     tintColor: planet.visual.coreColor,
     atmosphereColor: planet.visual.accentColor,

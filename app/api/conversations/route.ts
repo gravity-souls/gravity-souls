@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { canContact, mutualFollow } from "@/lib/visibility";
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from "@/lib/rate-limit";
+import { resolveUserPlanetConfig } from "@/lib/user-planet-config";
 
 // GET /api/conversations - list all conversations for the current user
 export async function GET() {
@@ -62,6 +63,7 @@ export async function GET() {
               avatarSymbol: otherPlanet.avatarSymbol,
               visual: otherPlanet.visual,
               mood: otherPlanet.mood,
+              planetConfig: resolveUserPlanetConfig(otherUser, otherPlanet),
             }
           : null,
         lastMessage: lastMsg

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
 
@@ -21,7 +22,7 @@ interface Props {
 export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }: Props) {
   const t = useTranslations('creationSteps')
   const [removing, setRemoving] = useState(false)
-  const { coreColor, accentColor } = planet.visual
+  const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
 
   async function handleUnsave() {
     setRemoving(true)
@@ -53,17 +54,7 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
         className="flex items-center gap-3 group"
         style={{ textDecoration: 'none' }}
       >
-        <div
-          className="shrink-0 flex items-center justify-center rounded-full transition-transform group-hover:scale-105"
-          style={{
-            width: 48, height: 48,
-            background: `radial-gradient(circle at 35% 30%, ${accentColor}cc 0%, ${coreColor}88 50%, ${coreColor}20 100%)`,
-            boxShadow: `0 0 0 1px ${coreColor}30, 0 0 14px ${coreColor}30`,
-            fontSize: 20, color: coreColor,
-          }}
-        >
-          {planet.avatarSymbol}
-        </div>
+        <PlanetAvatar planetConfig={planet.planetConfig} textureFile={planet.visual.textureFile} size={48} glowColor={coreColor} />
 
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>

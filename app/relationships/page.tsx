@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import RelationshipCard from '@/components/social/RelationshipCard'
 import RelationshipStateBadge from '@/components/social/RelationshipStateBadge'
+import type { PlanetConfig } from '@/types/planet'
 
 interface PlanetSummary {
   id: string
@@ -15,6 +16,8 @@ interface PlanetSummary {
   avatarSymbol: string
   tagline: string | null
   visual: unknown
+  mood: string
+  planetConfig?: PlanetConfig | null
 }
 
 interface FollowRow {

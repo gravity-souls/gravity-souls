@@ -59,6 +59,58 @@ test.describe('authenticated API protections', () => {
     expect(await prisma.directMessage.count()).toBe(0)
   })
 
+  test('saved appearance is shared by planet list, search, home and saved planets', async ({ request, playwright, browser }) => {
+    const userId = E2E.withPlanet.userId
+    const planet = await prisma.planet.findFirstOrThrow({ where: { userId, active: true }, select: { id: true, name: true } })
+    const original = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { planetTexture: true, planetTint: true, planetHasRing: true, planetCustomTexture: true },
+    })
+    const existingSave = await prisma.savedPlanet.findUnique({
+      where: { userId_planetId: { userId: E2E.noPlanet.userId, planetId: planet.id } },
+    })
+    const customTextureUrl = '/textures/neptune.jpg'
+    await prisma.user.update({
+      where: { id: userId },
+      data: { planetTexture: 'mars.jpg', planetTint: '#ec4899', planetHasRing: true, planetCustomTexture: customTextureUrl },
+    })
+    const viewer = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
+    const guest = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL })
+    const context = await browser.newContext({ storageState: AUTH_NP })
+    try {
+      expect((await guest.get('/api/universe')).status()).toBe(401)
+      const guestSearch = await guest.get(`/api/search?q=${encodeURIComponent(planet.name)}`)
+      expect((await guestSearch.json()).planets).toEqual([])
+      const own = await request.get('/api/my-planet')
+      expect((await own.json()).planetConfig.customTextureUrl).toBe(customTextureUrl)
+
+      const list = await viewer.get('/api/planets')
+      expect((await list.json()).planets.find((item: { id: string }) => item.id === planet.id).planetConfig).toMatchObject({
+        baseTexture: 'mars.jpg', customTextureUrl, tintColor: '#ec4899', hasRing: true,
+      })
+      const search = await viewer.get(`/api/search?q=${encodeURIComponent(planet.name)}`)
+      expect((await search.json()).planets.find((item: { id: string }) => item.id === planet.id).planetConfig.customTextureUrl).toBe(customTextureUrl)
+      const universe = await viewer.get('/api/universe')
+      expect((await universe.json()).find((item: { id: string }) => item.id === planet.id).planetConfig.customTextureUrl).toBe(customTextureUrl)
+      const detail = await viewer.get(`/api/planets/${planet.id}`)
+      expect((await detail.json()).planetConfig.customTextureUrl).toBe(customTextureUrl)
+
+      expect((await viewer.post('/api/saved-planets', { data: { planetId: planet.id } })).status()).toBe(200)
+      const saved = await viewer.get('/api/saved-planets')
+      expect((await saved.json()).savedPlanets.find((item: { planetId: string }) => item.planetId === planet.id).planet.planetConfig.customTextureUrl).toBe(customTextureUrl)
+
+      const page = await context.newPage()
+      await page.goto(`${test.info().project.use.baseURL}/search?q=${encodeURIComponent(planet.name)}`)
+      await expect(page.locator(`a[href="/planet/${planet.id}"] img[src="${customTextureUrl}"]`)).toBeVisible()
+    } finally {
+      await context.close()
+      await viewer.dispose()
+      await guest.dispose()
+      if (!existingSave) await prisma.savedPlanet.deleteMany({ where: { userId: E2E.noPlanet.userId, planetId: planet.id } })
+      await prisma.user.update({ where: { id: userId }, data: original })
+    }
+  })
+
   test('conversation participants remain enforced and a valid message persists', async ({ request, playwright }) => {
     const thread = await prisma.conversationThread.create({ data: { userAId: E2E.noPlanet.userId, userBId: E2E.handoff.userId } })
     try {

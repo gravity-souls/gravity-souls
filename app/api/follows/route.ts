@@ -5,6 +5,7 @@ import { followSchema } from '@/lib/input-schemas'
 import { canContact } from '@/lib/visibility'
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { NotificationTemplates, createNotification } from '@/lib/createNotification'
+import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from '@/lib/user-planet-config'
 
 const PLANET_SUMMARY_SELECT = {
   id: true,
@@ -17,9 +18,17 @@ const PLANET_SUMMARY_SELECT = {
 async function planetSummaries(userIds: string[]) {
   const rows = userIds.length === 0 ? [] : await prisma.planet.findMany({
     where: { userId: { in: userIds }, active: true },
-    select: { ...PLANET_SUMMARY_SELECT, userId: true },
+    select: { ...PLANET_SUMMARY_SELECT, userId: true, mood: true, lifestyle: true, coreThemes: true, user: { select: USER_PLANET_CONFIG_SELECT } },
   })
-  return new Map(rows.map((r) => [r.userId, r]))
+  return new Map(rows.map((r) => [r.userId, {
+    id: r.id,
+    name: r.name,
+    avatarSymbol: r.avatarSymbol,
+    tagline: r.tagline,
+    visual: r.visual,
+    mood: r.mood,
+    planetConfig: resolveUserPlanetConfig(r.user, r),
+  }]))
 }
 
 // GET /api/follows - my outgoing follows and my followers (owner-only)

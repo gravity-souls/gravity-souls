@@ -1055,6 +1055,7 @@ export default function MyPlanetPage() {
           }}
         >
           <PlanetAvatar
+            planetConfig={currentUser.planetConfig}
             textureFile={textureFile}
             size={36}
             glowColor={visual.coreColor}

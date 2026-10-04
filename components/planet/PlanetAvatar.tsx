@@ -25,7 +25,7 @@ interface Props {
 
 /**
  * PlanetAvatar — lightweight planet image for lists, cards, and match tiles.
- * Uses Next Image with CSS border-radius + box-shadow glow. No WebGL.
+ * Uses a lightweight image with CSS glow, clouds and a small ring. No WebGL.
  */
 export default function PlanetAvatar({
   planetConfig,
@@ -38,20 +38,27 @@ export default function PlanetAvatar({
   level = 1,
   className = '',
 }: Props) {
-  const [failed, setFailed] = useState(false)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
   const resolvedTexture = planetConfig?.baseTexture ?? textureFile ?? 'jupiter.jpg'
   const resolvedGlowColor = planetConfig?.tintColor ?? glowColor
   const textureSrc = planetConfig?.customTextureUrl ?? `/textures/${resolvedTexture}`
+  const failed = failedSrc === textureSrc
+  const ringColor = planetConfig?.ringColor || resolvedGlowColor
 
   return (
     <div
-      className={`relative shrink-0 rounded-full overflow-hidden ${className}`}
+      className={`relative shrink-0 rounded-full ${className}`}
       style={{
         width: size,
         height: size,
-        boxShadow: `0 0 ${Math.round(size * 0.4)}px ${resolvedGlowColor}80, 0 0 ${size}px ${resolvedGlowColor}20`,
       }}
     >
+      <div
+        className="absolute inset-0 overflow-hidden rounded-full"
+        style={{
+          boxShadow: `0 0 ${Math.round(size * 0.4)}px ${resolvedGlowColor}80, 0 0 ${size}px ${planetConfig?.atmosphereColor ?? resolvedGlowColor}30`,
+        }}
+      >
       {failed ? (
         /* CSS gradient sphere fallback */
         <div
@@ -75,14 +82,14 @@ export default function PlanetAvatar({
           }}
           aria-hidden="true"
         >
-          <img src={textureSrc} alt="" className="hidden" onError={() => setFailed(true)} />
+          <img src={textureSrc} alt="" className="hidden" onError={() => setFailedSrc(textureSrc)} />
         </div>
       ) : (
         <img
           src={textureSrc}
           alt=""
           draggable={false}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(textureSrc)}
           className="w-full h-full object-cover rounded-full select-none"
           style={{ display: 'block', width: size, height: size }}
         />
@@ -95,6 +102,31 @@ export default function PlanetAvatar({
           background: 'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.18) 0%, transparent 55%)',
         }}
       />
+
+      {planetConfig && planetConfig.cloudOpacity > 0 && (
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{
+            background: 'repeating-linear-gradient(165deg, transparent 0%, rgba(255,255,255,0.45) 12%, transparent 24%, transparent 40%)',
+            opacity: planetConfig.cloudOpacity * 0.55,
+          }}
+        />
+      )}
+      </div>
+
+      {planetConfig?.hasRing && size >= 24 && (
+        <div
+          className="pointer-events-none absolute left-1/2 top-1/2 rounded-full border"
+          style={{
+            width: size * 1.22,
+            height: size * 0.42,
+            transform: 'translate(-50%, -50%) rotate(-22deg)',
+            borderColor: `${ringColor}a8`,
+            boxShadow: `0 0 ${Math.max(3, Math.round(size * 0.1))}px ${ringColor}88`,
+          }}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Terminator shadow for depth */}
       <div

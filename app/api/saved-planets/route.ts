@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from "@/lib/user-planet-config";
+import { canViewProfile } from "@/lib/visibility";
 
 // GET /api/saved-planets — return the authenticated user's saved planets (newest first)
 export async function GET() {
@@ -18,6 +20,7 @@ export async function GET() {
       planet: {
         select: {
           id: true,
+          userId: true,
           name: true,
           avatarSymbol: true,
           tagline: true,
@@ -25,12 +28,19 @@ export async function GET() {
           lifestyle: true,
           coreThemes: true,
           visual: true,
+          user: { select: USER_PLANET_CONFIG_SELECT },
         },
       },
     },
   });
 
-  return NextResponse.json({ savedPlanets });
+  const visibility = await Promise.all(savedPlanets.map(({ planet }) => canViewProfile(session.user.id, planet.userId)));
+  return NextResponse.json({
+    savedPlanets: savedPlanets.filter((_, index) => visibility[index]).map(({ planet, ...saved }) => {
+      const { user, ...planetData } = planet;
+      return { ...saved, planet: { ...planetData, planetConfig: resolveUserPlanetConfig(user, planet) } };
+    }),
+  });
 }
 
 // POST /api/saved-planets — save a planet for the authenticated user (idempotent, always 200)
@@ -51,6 +61,9 @@ export async function POST(request: Request) {
 
   const planet = await prisma.planet.findUnique({ where: { id: planetId } });
   if (!planet) {
+    return NextResponse.json({ error: "Planet not found" }, { status: 404 });
+  }
+  if (!(await canViewProfile(session.user.id, planet.userId))) {
     return NextResponse.json({ error: "Planet not found" }, { status: 404 });
   }
 

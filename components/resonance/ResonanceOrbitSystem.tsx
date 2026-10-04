@@ -6,6 +6,7 @@ import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 import ResonancePlanetNode from '@/components/resonance/ResonancePlanetNode'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 
 // --- Geometry -----------------------------------------------------------------
 
@@ -141,7 +142,7 @@ export default function ResonanceOrbitSystem({
         onClick={() => onSelect(null)}
         aria-label={`${sourcePlanet.name} - ${tHome('yourPlanet')}`}
       >
-        {sourcePlanet.avatarSymbol}
+        <PlanetAvatar planetConfig={sourcePlanet.planetConfig} size={hubR * 2 - 4} glowColor={sourcePlanet.visual.coreColor} />
       </button>
 
       {/* "Your planet" label */}

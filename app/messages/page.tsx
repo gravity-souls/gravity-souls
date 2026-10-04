@@ -9,6 +9,8 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import type { PlanetConfig } from '@/types/planet'
 // --- Types for API response ---
 
 interface ConvPlanet {
@@ -17,6 +19,7 @@ interface ConvPlanet {
   avatarSymbol: string
   visual: { coreColor: string; accentColor: string }
   mood: string
+  planetConfig?: PlanetConfig | null
 }
 
 interface PlanetTarget {
@@ -55,22 +58,16 @@ interface ConversationItem {
 function ConversationCard({ conv }: { conv: ConversationItem }) {
   const t = useTranslations('messagesPage')
   const planet = conv.otherPlanet
-  const color = planet?.visual?.coreColor ?? '#a78bfa'
+  const color = planet?.planetConfig?.tintColor ?? planet?.visual?.coreColor ?? '#a78bfa'
   const preview = conv.lastMessage?.content ?? t('noMessagesYet')
 
   return (
     <Link href={`/messages/${conv.id}`}>
       <OrbitCard hoverable glowColor={color} className="flex items-center gap-4 p-4">
         {/* Planet avatar */}
-        <div
-          className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg"
-          style={{
-            background: `radial-gradient(circle at 38% 32%, ${color}38, ${color}10)`,
-            boxShadow: `0 0 0 1px ${color}28`,
-          }}
-        >
-          {planet?.avatarSymbol ?? '?'}
-        </div>
+        {planet ? <PlanetAvatar planetConfig={planet.planetConfig ?? undefined} size={40} glowColor={color} /> : (
+          <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ color, background: `${color}20` }}>?</div>
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

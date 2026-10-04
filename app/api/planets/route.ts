@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { safeApiError } from "@/lib/api-input";
 import { blockedUserIds } from "@/lib/visibility";
+import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from "@/lib/user-planet-config";
 
 const PAGE_SIZE = 30;
 
@@ -53,6 +54,7 @@ export async function GET(request: Request) {
         user: {
           select: {
             userLevel: true,
+            ...USER_PLANET_CONFIG_SELECT,
             profile: {
               select: {
                 location: true,
@@ -99,6 +101,7 @@ export async function GET(request: Request) {
       communicationStyle: p.user.profile?.communicationStyle ?? null,
       matchPreference: p.user.profile?.matchPreference ?? "mixed",
       userLevel: p.user.userLevel ?? 1,
+      planetConfig: resolveUserPlanetConfig(p.user, p),
     }));
 
     return Response.json({ planets: result, nextCursor: nextPlanet?.id ?? null });

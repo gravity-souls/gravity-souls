@@ -2,6 +2,8 @@ import Link from 'next/link'
 import RelationshipStateBadge, { type FollowState } from '@/components/social/RelationshipStateBadge'
 import GlowButton from '@/components/ui/GlowButton'
 import { relativeTime } from '@/lib/time'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import type { PlanetConfig } from '@/types/planet'
 
 interface PlanetSummary {
   id: string
@@ -9,6 +11,8 @@ interface PlanetSummary {
   avatarSymbol: string
   tagline: string | null
   visual: unknown
+  mood: string
+  planetConfig?: PlanetConfig | null
 }
 
 interface Props {
@@ -22,8 +26,7 @@ interface Props {
 
 export default function RelationshipCard({ status, since, planet, onUnfollow, onFollowBack, busy }: Props) {
   const visual = (planet.visual ?? {}) as { coreColor?: string; accentColor?: string }
-  const coreColor = visual.coreColor ?? '#a78bfa'
-  const accentColor = visual.accentColor ?? '#c4b5fd'
+  const coreColor = planet.planetConfig?.tintColor ?? visual.coreColor ?? '#a78bfa'
 
   return (
     <div
@@ -36,17 +39,9 @@ export default function RelationshipCard({ status, since, planet, onUnfollow, on
     >
       <Link
         href={`/planet/${planet.id}`}
-        className="shrink-0 flex items-center justify-center rounded-full transition-transform group-hover:scale-105"
-        style={{
-          width: 48, height: 48,
-          background: `radial-gradient(circle at 35% 30%, ${accentColor}cc 0%, ${coreColor}88 50%, ${coreColor}20 100%)`,
-          boxShadow: `0 0 0 1px ${coreColor}30, 0 0 14px ${coreColor}30`,
-          fontSize: 20,
-          color: coreColor,
-          textDecoration: 'none',
-        }}
+        className="shrink-0 transition-transform group-hover:scale-105"
       >
-        {planet.avatarSymbol}
+        <PlanetAvatar planetConfig={planet.planetConfig ?? undefined} size={48} glowColor={coreColor} />
       </Link>
 
       <div className="flex-1 min-w-0 flex flex-col gap-1">

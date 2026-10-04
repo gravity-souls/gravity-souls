@@ -1,3 +1,5 @@
+import type { PlanetConfig } from '@/types/planet'
+
 export type EventStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PASSED'
 
 export type EventCategory = 'MEETUP' | 'ONLINE' | 'WORKSHOP' | 'STARGAZING' | 'DISCUSSION' | 'OTHER'
@@ -6,6 +8,7 @@ export interface EventProposer {
   id: string
   name: string
   planetTexture: string | null
+  planetConfig?: PlanetConfig | null
   userLevel?: number
 }
 
@@ -13,6 +16,7 @@ export interface EventAttendee {
   id: string
   name: string
   planetTexture: string | null
+  planetConfig?: PlanetConfig | null
   userLevel: number
 }
 

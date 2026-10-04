@@ -3,6 +3,7 @@ import { planetCreateSchema, planetUpdateSchema } from '@/lib/input-schemas'
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from "@/lib/user-planet-config";
 
 // GET /api/my-planet - returns the current user's active planet
 export async function GET() {
@@ -16,13 +17,15 @@ export async function GET() {
 
     const planet = await prisma.planet.findFirst({
       where: { userId: session.user.id, active: true },
+      include: { user: { select: USER_PLANET_CONFIG_SELECT } },
     });
 
     if (!planet) {
       return NextResponse.json({ error: "No active planet found" }, { status: 404 });
     }
 
-    return NextResponse.json(planet);
+    const { user, ...planetData } = planet;
+    return NextResponse.json({ ...planetData, planetConfig: resolveUserPlanetConfig(user, planet) });
 
   } catch (error) {
     return safeApiError(error)

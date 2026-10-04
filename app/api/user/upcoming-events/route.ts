@@ -3,6 +3,7 @@ import { serializeEventSummary } from '@/lib/galaxy-events'
 import { requireUser } from '@/lib/session'
 import { updatePassedEvents } from '@/lib/updatePassedEvents'
 import { prisma } from '@/lib/prisma'
+import { USER_PLANET_CONFIG_SELECT } from '@/lib/user-planet-config'
 
 export async function GET(request: Request) {
   let session
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   const userId = session.user.id
   const baseInclude = {
     galaxy: { select: { id: true, name: true, slug: true, accentColor: true } },
-    proposer: { select: { id: true, name: true, planetTexture: true, userLevel: true } },
+    proposer: { select: { id: true, name: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
     rsvps: { where: { userId }, select: { userId: true } },
     _count: { select: { rsvps: true } },
   } as const

@@ -36,7 +36,7 @@ export default function PlanetCard({
   style,
   className = '',
 }: Props) {
-  const { coreColor } = planet.visual
+  const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
 
   return (
     <button
@@ -62,6 +62,7 @@ export default function PlanetCard({
 
       {/* Planet orb — texture-based avatar */}
       <PlanetAvatar
+        planetConfig={planet.planetConfig}
         textureFile={resolvePlanetTexture(planet)}
         size={size}
         glowColor={coreColor}

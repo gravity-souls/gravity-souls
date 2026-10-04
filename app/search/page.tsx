@@ -108,7 +108,7 @@ function SearchResultsPage() {
                 <Link key={planet.id} href={`/planet/${planet.id}`} className="no-underline">
                   <OrbitCard glowColor="#a78bfa" className="p-4">
                     <div className="flex items-center gap-4">
-                      <PlanetAvatar textureFile={planet.visual?.textureFile ?? 'jupiter.jpg'} size={44} />
+                      <PlanetAvatar planetConfig={planet.planetConfig} textureFile={planet.visual?.textureFile ?? 'jupiter.jpg'} size={44} />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{planet.name}</p>
                         {planet.tagline && (

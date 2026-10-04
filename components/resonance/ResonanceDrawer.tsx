@@ -8,6 +8,7 @@ import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 import GlowButton from '@/components/ui/GlowButton'
 import MatchDimensionBars from '@/components/resonance/MatchDimensionBars'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 
 // --- Relationship type labels -------------------------------------------------
 
@@ -168,16 +169,7 @@ function DrawerContent({
 
         {/* Planet identity */}
         <div className="flex items-center gap-4">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0"
-            style={{
-              background: `${planet.visual.coreColor}15`,
-              border: `1px solid ${planet.visual.coreColor}35`,
-              boxShadow: `0 0 24px ${planet.visual.coreColor}25`,
-            }}
-          >
-            {planet.avatarSymbol}
-          </div>
+          <PlanetAvatar planetConfig={planet.planetConfig} size={56} glowColor={planet.visual.coreColor} />
           <div className="flex flex-col gap-1 min-w-0">
             <h2 className="text-lg font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
               {planet.name}

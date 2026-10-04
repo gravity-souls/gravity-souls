@@ -83,7 +83,7 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {matches.map(({ planet, score, traits }) => {
-          const color = planet.visual?.coreColor ?? '#a78bfa'
+          const color = planet.planetConfig?.tintColor ?? planet.visual?.coreColor ?? '#a78bfa'
           return (
             <div
               key={planet.id}
@@ -111,6 +111,7 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
               >
                 {/* Avatar */}
                 <PlanetAvatar
+                  planetConfig={planet.planetConfig}
                   textureFile={resolvePlanetTexture(planet)}
                   size={56}
                   glowColor={color}

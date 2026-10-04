@@ -40,6 +40,7 @@ export default function Topbar() {
   const [query, setQuery] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [planetConfig, setPlanetConfig] = useState<PlanetConfig | null>(null)
+  const planetConfigVersion = useRef(0)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const currentPlanetConfig = session?.user?.id ? planetConfig : null
   const topbarPlanetConfig = currentPlanetConfig ?? FALLBACK_PLANET_CONFIG
@@ -48,13 +49,14 @@ export default function Topbar() {
     if (!session?.user?.id) return
 
     let cancelled = false
+    const version = planetConfigVersion.current
 
     async function loadProfile() {
       const response = await fetch('/api/me', { cache: 'no-store' })
       if (!response.ok) return
 
       const data = (await response.json()) as MeResponse
-      if (!cancelled) setPlanetConfig(data.user?.planetConfig ?? null)
+      if (!cancelled && version === planetConfigVersion.current) setPlanetConfig(data.user?.planetConfig ?? null)
     }
 
     void loadProfile()
@@ -63,6 +65,18 @@ export default function Topbar() {
       cancelled = true
     }
   }, [session?.user?.id])
+
+  useEffect(() => {
+    function handlePlanetConfigUpdated(event: Event) {
+      const config = (event as CustomEvent<PlanetConfig>).detail
+      if (config) {
+        planetConfigVersion.current += 1
+        setPlanetConfig(config)
+      }
+    }
+    window.addEventListener('planet-config:updated', handlePlanetConfigUpdated)
+    return () => window.removeEventListener('planet-config:updated', handlePlanetConfigUpdated)
+  }, [])
 
   useEffect(() => {
     if (!isMenuOpen) return

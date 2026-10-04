@@ -1,6 +1,7 @@
 import { EventStatus, type EventCategory, type Community, type CommunityMembership } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { planetConfigFromUser, type UserPlanetConfigSource } from '@/lib/user-planet-config'
 
 export const EVENT_PAGE_SIZE = 20
 
@@ -92,7 +93,7 @@ type EventSummaryInput = {
   coverImage: string | null
   createdAt: Date
   updatedAt: Date
-  proposer: { id: string; name: string; planetTexture: string | null; userLevel?: number | null }
+  proposer: UserPlanetConfigSource & { id: string; name: string; planetTexture: string | null; userLevel?: number | null }
   rsvps?: { userId: string }[]
   _count: { rsvps: number }
   userHasRSVPed?: boolean
@@ -101,7 +102,7 @@ type EventSummaryInput = {
 type EventDetailInput = Omit<EventSummaryInput, 'rsvps'> & {
   rsvps: {
     userId: string
-    user: { id: string; name: string; planetTexture: string | null; userLevel: number }
+    user: UserPlanetConfigSource & { id: string; name: string; planetTexture: string | null; userLevel: number }
   }[]
 }
 
@@ -126,6 +127,7 @@ export function serializeEventSummary(event: EventSummaryInput) {
       id: event.proposer.id,
       name: event.proposer.name,
       planetTexture: event.proposer.planetTexture,
+      planetConfig: planetConfigFromUser(event.proposer),
       userLevel: event.proposer.userLevel ?? 1,
     },
   }
@@ -143,6 +145,7 @@ export function serializeEventDetail(event: EventDetailInput) {
       id: rsvp.user.id,
       name: rsvp.user.name,
       planetTexture: rsvp.user.planetTexture,
+      planetConfig: planetConfigFromUser(rsvp.user),
       userLevel: rsvp.user.userLevel,
     })),
     spotsRemaining,

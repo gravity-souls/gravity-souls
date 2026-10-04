@@ -4,14 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { blockedUserIds } from "@/lib/visibility";
 import { universePlanetToProfile } from "@/lib/universe-field";
+import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from "@/lib/user-planet-config";
 
 const RESULT_LIMIT = 8;
 
 // GET /api/search?q=... — site-wide search across planets, galaxies, and
-// upcoming approved events. Works signed-out (no personalized exclusions);
-// once authenticated, blocked users and the viewer's own planet are excluded
-// and PRIVATE profiles are always excluded, mirroring /api/planets — never
-// reimplement this filtering on the client.
+// upcoming approved events. Planet profiles are member-visible; guests can
+// still search galaxies and events.
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").trim();
@@ -27,7 +26,7 @@ export async function GET(request: Request) {
   if (userId) excludedUserIds.add(userId);
 
   const [planets, galaxies, events] = await Promise.all([
-    prisma.planet.findMany({
+    userId ? prisma.planet.findMany({
       where: {
         active: true,
         userId: { notIn: Array.from(excludedUserIds) },
@@ -49,10 +48,11 @@ export async function GET(request: Request) {
         visual: true,
         abstractAxis: true,
         introspectiveAxis: true,
+        user: { select: USER_PLANET_CONFIG_SELECT },
       },
       orderBy: { createdAt: "desc" },
       take: RESULT_LIMIT,
-    }),
+    }) : Promise.resolve([]),
     prisma.community.findMany({
       where: {
         OR: [
@@ -92,7 +92,10 @@ export async function GET(request: Request) {
   ]);
 
   return NextResponse.json({
-    planets: planets.map((p) => universePlanetToProfile({ ...p, visual: (p.visual ?? {}) as Record<string, unknown> })),
+    planets: planets.map((p) => ({
+      ...universePlanetToProfile({ ...p, visual: (p.visual ?? {}) as Record<string, unknown> }),
+      planetConfig: resolveUserPlanetConfig(p.user, p),
+    })),
     galaxies,
     events: events.map((e) => ({
       id: e.id,

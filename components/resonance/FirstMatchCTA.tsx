@@ -4,6 +4,7 @@ import { orbitColorHex } from '@/lib/match'
 import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
+import PlanetAvatar from '@/components/planet/PlanetAvatar'
 
 const HINT_KEY = 'resonance-first-match-viewed'
 
@@ -19,8 +20,7 @@ export default function FirstMatchCTA({ topMatch, planet, onReveal }: Props) {
 
   const color = orbitColorHex(topMatch.orbitColor)
   const displayName   = planet?.name ?? null
-  const displaySymbol = planet?.avatarSymbol ?? '◎'
-  const symbolColor   = planet?.visual.coreColor ?? color
+  const symbolColor   = planet?.planetConfig?.tintColor ?? planet?.visual.coreColor ?? color
 
   return (
     <div
@@ -31,16 +31,9 @@ export default function FirstMatchCTA({ topMatch, planet, onReveal }: Props) {
       }}
     >
       {/* Planet symbol */}
-      <div
-        className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg"
-        style={{
-          background: `${symbolColor}15`,
-          border: `1px solid ${symbolColor}35`,
-        }}
-        aria-hidden="true"
-      >
-        {displaySymbol}
-      </div>
+      {planet ? <PlanetAvatar planetConfig={planet.planetConfig} size={40} glowColor={symbolColor} /> : (
+        <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ color: symbolColor, background: `${symbolColor}15` }} aria-hidden="true">◎</div>
+      )}
 
       {/* Copy */}
       <div className="flex-1 min-w-0">
