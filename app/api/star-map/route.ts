@@ -98,6 +98,7 @@ export async function GET(request: Request) {
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         select: {
           id: true,
+          userId: true,
           name: true,
           tagline: true,
           mood: true,
@@ -119,8 +120,42 @@ export async function GET(request: Request) {
     ])
     const more = rows.length > PAGE_SIZE
     if (more) rows.pop()
+    // Only the viewer's relationships to the bounded, permitted batch are read.
+    // Saved collections and conversation IDs are never queried for another viewer.
+    const targetIds = [...new Set(rows.map((p) => p.userId))]
+    const [saved, follows, conversations] = rows.length ? await Promise.all([
+      prisma.savedPlanet.findMany({
+        where: { userId: user.id, planetId: { in: rows.map((p) => p.id) } },
+        select: { planetId: true },
+      }),
+      prisma.follow.findMany({
+        where: { OR: [
+          { followerId: user.id, followingId: { in: targetIds } },
+          { followingId: user.id, followerId: { in: targetIds } },
+        ] },
+        select: { followerId: true, followingId: true },
+      }),
+      prisma.conversationThread.findMany({
+        where: { OR: [
+          { userAId: user.id, userBId: { in: targetIds } },
+          { userBId: user.id, userAId: { in: targetIds } },
+        ] },
+        select: { id: true, userAId: true, userBId: true },
+      }),
+    ]) : [[], [], []]
+    const savedIds = new Set(saved.map((row) => row.planetId))
+    const followingIds = new Set(follows.filter((row) => row.followerId === user.id).map((row) => row.followingId))
+    const followerIds = new Set(follows.filter((row) => row.followingId === user.id).map((row) => row.followerId))
+    const threadIds = new Map(conversations.map((row) => [row.userAId === user.id ? row.userBId : row.userAId, row.id]))
     const nodes = rows.map((p) => ({
       id: p.id,
+      userId: p.userId,
+      relationship: {
+        saved: savedIds.has(p.id),
+        following: followingIds.has(p.userId),
+        followedBy: followerIds.has(p.userId),
+        conversationId: threadIds.get(p.userId) ?? null,
+      },
       name: p.name,
       tagline: p.tagline,
       href: `/planet/${p.id}`,

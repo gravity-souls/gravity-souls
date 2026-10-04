@@ -13,6 +13,10 @@ const Composer = require('../components/galaxy/DiscussionComposer.tsx').default
 const RSVP = require('../components/events/RSVPButton.tsx').default
 const EventCard = require('../components/events/EventCard.tsx').default
 const StarMap = require('../components/star-map/StarMap.tsx').default
+const RelationshipStatus = require('../components/social/PlanetRelationshipStatus.tsx').default
+const ReturnLink = require('../components/social/ExplorationReturnLink.tsx').default
+const Beam = require('../components/social/BeamButton.tsx').default
+const { explorationOrigin, explorationReturnHref, withExplorationOrigin } = require('../lib/exploration-return.ts')
 const event = {
   id: 'evt',
   galaxyId: 'g',
@@ -46,6 +50,23 @@ function render(locale, child) {
   )
 }
 for (const locale of ['en', 'zh', 'fr']) {
+  test(`star-map relationship labels and chat return links translate in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`).starMap
+    const text = key => renderToStaticMarkup(React.createElement('span', null, m[key])).slice(6, -7)
+    const badge = state => render(locale, React.createElement(RelationshipStatus, { relationship: state }))
+    const mutual = badge({ saved: true, following: true, followedBy: true, conversationId: 'thread' })
+    for (const key of ['savedStatus', 'mutualStatus', 'conversationStatus']) assert.ok(mutual.includes(text(key)))
+    assert.ok(!mutual.includes(`<span>${text('followingStatus')}</span>`))
+    const incoming = badge({ saved: false, following: false, followedBy: true, conversationId: null })
+    assert.ok(incoming.includes(text('followsYouStatus')))
+    assert.ok(!incoming.includes(text('savedStatus')))
+    assert.equal(badge({ saved: false, following: false, followedBy: false, conversationId: null }), '')
+    const back = render(locale, React.createElement(ReturnLink, { origin: 'star-map' }))
+    assert.ok(back.includes(text('returnMap')))
+    assert.ok(back.includes('href="/star-map?mode=discover"'))
+    const beam = render(locale, React.createElement(Beam, { userId: 'target', planetId: 'planet', conversationId: 'thread', origin: 'star-map' }))
+    assert.ok(beam.includes(text('continueChat')))
+  })
   test(`attendance request, capacity and withdrawal controls remain usable in ${locale}`, () => {
     const messages = require(`../messages/${locale}.json`)
     const attendance = (state, count = 2) => render(locale, React.createElement(RSVP, {
@@ -102,6 +123,13 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(!closed.includes('<button'))
   })
 }
+test('exploration origins accept only fixed map destinations', () => {
+  for (const value of ['https://evil.test', '//evil.test', 'javascript:alert(1)', '/settings', '../', '', null]) assert.equal(explorationOrigin(value), null)
+  assert.equal(explorationReturnHref(explorationOrigin('star-map')), '/star-map?mode=discover')
+  assert.equal(explorationReturnHref(explorationOrigin('home-star-map')), '/')
+  assert.equal(withExplorationOrigin('/messages/thread', 'star-map'), '/messages/thread?from=star-map')
+  assert.equal(withExplorationOrigin('/messages/thread', null), '/messages/thread')
+})
 test('all workflow and notification keys exist in three languages', () => {
   const locales = ['en', 'zh', 'fr'].map((l) =>
     require(`../messages/${l}.json`),

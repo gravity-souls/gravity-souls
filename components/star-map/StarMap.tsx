@@ -5,6 +5,12 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import PlanetRelationshipStatus from '@/components/social/PlanetRelationshipStatus'
+import SavePlanetButton from '@/components/social/SavePlanetButton'
+import FollowButton from '@/components/social/FollowButton'
+import BeamButton from '@/components/social/BeamButton'
+import { PLANET_ACTION_CHANGED } from '@/lib/planet-actions'
+import { withExplorationOrigin } from '@/lib/exploration-return'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { mapCenter, stableUnit } from '@/lib/star-map'
 import type { StarMapData, StarMapMode, StarMapNode } from '@/types/star-map'
@@ -28,10 +34,13 @@ export default function StarMap({
   compact?: boolean
 }) {
   const t = useTranslations('starMap')
+  const ta = useTranslations('planetActions')
   const storageKey = compact ? `star-map:home:${mode}` : `star-map:${mode}`
   const [data, setData] = useState(EMPTY)
   const [focus, setFocus] = useState<string | null>(null)
-  const [selected, setSelected] = useState<StarMapNode | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = data.nodes.find(node => node.id === selectedId) ?? null
+  const [revision, setRevision] = useState(0)
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [cursor, setCursor] = useState<string | null>(null)
@@ -46,7 +55,6 @@ export default function StarMap({
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const moved = useRef(false)
   const view = useRef({ yaw: -0.12, pitch: -0.1, zoom: 1 })
-  const restoredSelection = useRef<string | null>(null)
   const [restored, setRestored] = useState(false)
   const reduced = useReducedMotionPreference()
 
@@ -65,8 +73,9 @@ export default function StarMap({
             setCursor(saved.cursor)
           if (typeof saved.focus === 'string' && saved.focus.length <= 100)
             setFocus(saved.focus)
-          if (typeof saved.selected === 'string')
-            restoredSelection.current = saved.selected
+          if (typeof saved.selected === 'string' && saved.selected.length <= 100)
+            setSelectedId(saved.selected)
+          if (typeof saved.sidebarOpen === 'boolean') setSidebarOpen(saved.sidebarOpen)
           if (
             saved.view &&
             Number.isFinite(saved.view.yaw) &&
@@ -96,7 +105,8 @@ export default function StarMap({
             query,
             cursor,
             focus,
-            selected: selected?.id,
+            selected: selectedId,
+            sidebarOpen,
             view: view.current,
           }),
         )
@@ -104,12 +114,26 @@ export default function StarMap({
         /* Optional per-tab state only. */
       }
     }
+    save()
     window.addEventListener('pagehide', save)
     return () => {
       save()
       window.removeEventListener('pagehide', save)
     }
-  }, [storageKey, query, cursor, focus, selected, restored])
+  }, [storageKey, query, cursor, focus, selectedId, sidebarOpen, restored])
+
+  useEffect(() => {
+    const refresh = () => setRevision(value => value + 1)
+    const visible = () => { if (!document.hidden) refresh() }
+    window.addEventListener('focus', refresh)
+    window.addEventListener(PLANET_ACTION_CHANGED, refresh)
+    document.addEventListener('visibilitychange', visible)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener(PLANET_ACTION_CHANGED, refresh)
+      document.removeEventListener('visibilitychange', visible)
+    }
+  }, [])
 
   const queryGroup = mode === 'discover' ? focus : null
 
@@ -124,7 +148,6 @@ export default function StarMap({
       if (abort.signal.aborted) return
       setLoading(true)
       setError(null)
-      setSelected(null)
       try {
         const response = await fetch(`/api/star-map?${params}`, {
           signal: abort.signal,
@@ -135,14 +158,7 @@ export default function StarMap({
         const result = (await response.json()) as StarMapData
         if (!abort.signal.aborted) {
           setData(result)
-          if (restoredSelection.current) {
-            setSelected(
-              result.nodes.find(
-                (node) => node.id === restoredSelection.current,
-              ) ?? null,
-            )
-            restoredSelection.current = null
-          }
+          setSelectedId(current => result.nodes.some(node => node.id === current) ? current : null)
         }
       } catch (cause) {
         if (!abort.signal.aborted) {
@@ -159,7 +175,7 @@ export default function StarMap({
     }
     void load()
     return () => abort.abort()
-  }, [mode, query, cursor, queryGroup, restored])
+  }, [mode, query, cursor, queryGroup, restored, revision])
 
   const clusters = useMemo(
     () =>
@@ -339,13 +355,13 @@ export default function StarMap({
         )[0]
         if (nearest) {
           setFocus(nearest.groupId)
-          setSelected(null)
+          setSelectedId(null)
           setCursor(null)
           view.current.zoom = 2.4
         }
       } else if (focus && view.current.zoom <= 1.2) {
         setFocus(null)
-        setSelected(null)
+        setSelectedId(null)
         setCursor(null)
         view.current.zoom = 1
       }
@@ -381,7 +397,7 @@ export default function StarMap({
 
   function enter(id: string) {
     setFocus(id)
-    setSelected(null)
+    setSelectedId(null)
     setCursor(null)
     view.current.zoom = 2.4
   }
@@ -399,7 +415,7 @@ export default function StarMap({
             setQuery(search.trim())
             setCursor(null)
             setFocus(null)
-            setSelected(null)
+            setSelectedId(null)
             view.current.zoom = 1
           }}
         >
@@ -428,7 +444,7 @@ export default function StarMap({
           className={styles.back}
           onClick={() => {
             setFocus(null)
-            setSelected(null)
+            setSelectedId(null)
             setCursor(null)
             view.current.zoom = 1
           }}
@@ -467,7 +483,7 @@ export default function StarMap({
                 setZoomTick((value) => value + 1)
               } else if (event.key === 'Escape') {
                 setFocus(null)
-                setSelected(null)
+                setSelectedId(null)
                 setCursor(null)
                 view.current.zoom = 1
               }
@@ -530,7 +546,7 @@ export default function StarMap({
                   if (nearest) enter(nearest.groupId)
                 } else if (focus && view.current.zoom <= 1.2) {
                   setFocus(null)
-                  setSelected(null)
+                  setSelectedId(null)
                   setCursor(null)
                   view.current.zoom = 1
                 }
@@ -547,7 +563,7 @@ export default function StarMap({
                 )[0]
                 if (hit && Math.hypot(hit.x - x, hit.y - y) < 36) {
                   if (hit.node) {
-                    setSelected(hit.node)
+                    setSelectedId(hit.node.id)
                     setSidebarOpen(true)
                   } else enter(hit.groupId)
                 }
@@ -564,6 +580,7 @@ export default function StarMap({
           {!loading && error && (
             <div className={styles.fallback} role="alert">
               {t(error)}
+              {error !== 'signIn' && <button type="button" className={styles.next} onClick={() => setRevision(value => value + 1)}>{ta('retry')}</button>}
               {error === 'signIn' && (
                 <Link href="/sign-in?next=/star-map">{t('signInAction')}</Link>
               )}
@@ -605,15 +622,12 @@ export default function StarMap({
                     onClick={() =>
                       focus === group.id
                         ? (setFocus(null),
-                          setSelected(null),
+                          setSelectedId(null),
                           setCursor(null),
                           (view.current.zoom = 1))
                         : mode === 'galaxies'
                           ? (enter(group.id),
-                            setSelected(
-                              data.nodes.find((node) => node.id === group.id) ??
-                                null,
-                            ))
+                            setSelectedId(group.id))
                           : enter(group.id)
                     }
                     style={
@@ -637,7 +651,7 @@ export default function StarMap({
                         <button
                           key={node.id}
                           aria-pressed={selected?.id === node.id}
-                          onClick={() => setSelected(node)}
+                          onClick={() => setSelectedId(node.id)}
                         >
                           {node.planetConfig && (
                             <PlanetAvatar
@@ -645,7 +659,10 @@ export default function StarMap({
                               size={28}
                             />
                           )}
-                          <span>{node.name}</span>
+                          <span className={styles.nodeIdentity}>
+                            <span>{node.name}</span>
+                            <PlanetRelationshipStatus relationship={node.relationship} />
+                          </span>
                           {node.score !== undefined && (
                             <span>{node.score}%</span>
                           )}
@@ -662,7 +679,7 @@ export default function StarMap({
                 disabled={loading}
                 onClick={() => {
                   setCursor(data.nextCursor)
-                  setSelected(null)
+                  setSelectedId(null)
                   if (mode === 'galaxies') {
                     setFocus(null)
                     view.current.zoom = 1
@@ -693,15 +710,28 @@ export default function StarMap({
                 <h2>{selected.name}</h2>
               </div>
               <p>{selected.tagline}</p>
+              <PlanetRelationshipStatus relationship={selected.relationship} />
               {selected.score !== undefined && (
                 <p>{t('score', { score: selected.score })}</p>
               )}
               {selected.memberCount !== undefined && (
                 <p>{t('members', { count: selected.memberCount })}</p>
               )}
-              <Link href={selected.href}>
+              <Link href={mode === 'discover' ? withExplorationOrigin(selected.href, compact ? 'home-star-map' : 'star-map') : selected.href}>
                 {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
               </Link>
+              {mode === 'discover' && selected.userId && (
+                <div className={styles.planetActions} key={selected.id}>
+                  <p>{t('privateRelationships')}</p>
+                  <div className={styles.actionPair}>
+                    <SavePlanetButton planetId={selected.id} initialSaved={selected.relationship?.saved} />
+                    <FollowButton userId={selected.userId} />
+                  </div>
+                  <BeamButton userId={selected.userId} planetId={selected.id} hasFollowControl
+                    conversationId={selected.relationship?.conversationId ?? undefined}
+                    origin={compact ? 'home-star-map' : 'star-map'} />
+                </div>
+              )}
             </div>
           )}
         </aside>

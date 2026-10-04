@@ -1670,6 +1670,16 @@
     "tag4": "想法"
   },
   "starMap": {
+    "relationshipStatus": "你与这颗星球的关系",
+    "savedStatus": "已在轨道中",
+    "followingStatus": "已关注",
+    "mutualStatus": "已互关",
+    "followsYouStatus": "关注了你",
+    "conversationStatus": "已有会话",
+    "privateRelationships": "这些关系标记仅你可见。",
+    "continueChat": "继续聊天",
+    "returnMap": "← 返回星图",
+    "returnHomeMap": "← 返回首页星图",
     "title": "星图",
     "subtitle": "在真实星球与星系之间探索，一次走近一个星群。",
     "modes": "星图模式",

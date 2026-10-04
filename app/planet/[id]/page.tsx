@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -12,6 +12,8 @@ import EmptyState from '@/components/ui/EmptyState'
 import LockedLayer from '@/components/ui/LockedLayer'
 import PlanetLoading from '@/app/planet/[id]/loading'
 import BeamButton from '@/components/social/BeamButton'
+import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
+import { explorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import PlanetHero from '@/components/planet/PlanetHero'
 import MatchReasonPanel from '@/components/planet/MatchReasonPanel'
 import PlanetResonancePanel from '@/components/planet/PlanetResonancePanel'
@@ -162,8 +164,8 @@ function FogVeil({
 
 // --- Send signal button (starts a conversation) ----------------------------
 
-function SendSignalButton({ planet }: { planet: PlanetProfile }) {
-  return <BeamButton key={planet.id} userId={planet.userId} planetId={planet.id} />
+function SendSignalButton({ planet, origin }: { planet: PlanetProfile; origin?: ExplorationOrigin | null }) {
+  return <BeamButton key={planet.id} userId={planet.userId} planetId={planet.id} origin={origin} />
 }
 
 // --- Helper: convert DB planet to PlanetProfile ------------------------------
@@ -221,6 +223,7 @@ function isPlanetConfig(value: unknown): value is PlanetConfig {
 // --- Page inner ---------------------------------------------------------------
 
 function PlanetPageInner() {
+  const origin = explorationOrigin(useSearchParams().get('from'))
   const t = useTranslations('planetPage')
   const tNav = useTranslations('nav')
   const params = useParams()
@@ -317,6 +320,7 @@ function PlanetPageInner() {
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-6xl mx-auto">
+        <ExplorationReturnLink origin={origin} />
 
         {/* -- Breadcrumb ------------------------------------------------ */}
         <nav className="flex items-center gap-2 text-xs mb-6" style={{ color: 'var(--ghost)' }}>
@@ -340,7 +344,7 @@ function PlanetPageInner() {
         </nav>
 
         {/* -- Hero ------------------------------------------------------ */}
-        <PlanetHero planet={planet} viewerRole={viewerRole} />
+        <PlanetHero planet={planet} viewerRole={viewerRole} origin={origin} />
 
         {/* -- Match reason (Resonator only) ------------------------------ */}
         {isResonator && (
@@ -517,7 +521,7 @@ function PlanetPageInner() {
             {t('backToDiscover')}
           </GlowButton>
           {!isSelf && isResonator && (
-            <SendSignalButton planet={planet} />
+            <SendSignalButton planet={planet} origin={origin} />
           )}
           {!isSelf && (
             <GlowButton href="/my-planet" variant="ghost" className="py-3 text-sm">

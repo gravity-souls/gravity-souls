@@ -87,6 +87,6 @@ export async function discoveryPlanetWhere(viewerId: string): Promise<import('@p
   return {
     active: true,
     userId: { notIn: [...excluded] },
-    user: { OR: [{ profile: null }, { profile: { is: { visibility: { not: 'PRIVATE' } } } }] },
+    user: { deletedAt: null, OR: [{ profile: null }, { profile: { is: { visibility: { not: 'PRIVATE' } } } }] },
   }
 }

@@ -64,7 +64,7 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
   ).toBeVisible()
   await expect(
     page.getByRole('link', { name: 'View planet →' }),
-  ).toHaveAttribute('href', '/planet/fixture-planet')
+  ).toHaveAttribute('href', '/planet/fixture-planet?from=star-map')
   await expect(
     page.locator('aside img[src="/textures/earth_day.jpg"]'),
   ).toBeVisible()

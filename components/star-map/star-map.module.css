@@ -432,8 +432,8 @@
 }
 /* Keep the selected identity visible without a second scrolling list. */
 .sidebar .card {
-  max-height: none;
-  overflow: visible;
+  max-height: 58%;
+  overflow-y: auto;
 }
 .sidebar .card h2,
 .sidebar .card p {
@@ -441,4 +441,29 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+}
+.nodeIdentity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.planetActions {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+.actionPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.planetActions button {
+  min-height: 40px;
+  width: 100%;
+  font-size: 11px;
+}
+.planetActions [role='alert'],
+.planetActions [role='alert'] p {
+  -webkit-line-clamp: unset;
+  overflow: visible;
 }

@@ -1,12 +1,14 @@
 'use client'
 
-import { use, useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { use, useState, useEffect, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { notifyInboxChanged } from '@/lib/inbox-client'
 import SignalComposer from '@/components/social/SignalComposer'
 import FirstTimeHint from '@/components/hints/FirstTimeHint'
+import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
+import { explorationOrigin } from '@/lib/exploration-return'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types ---
@@ -150,7 +152,8 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default function ConversationPage({ params }: Props) {
+function ConversationPageInner({ params }: Props) {
+  const origin = explorationOrigin(useSearchParams().get('from'))
   const t = useTranslations('messagesPage')
   const tCommon = useTranslations('common')
   const tw = useTranslations('inboxWorkflow')
@@ -369,6 +372,7 @@ export default function ConversationPage({ params }: Props) {
         fallbackName={otherUserName}
         onBack={() => router.push('/messages')}
       />
+      <ExplorationReturnLink origin={origin} />
 
       {loadError && (
         <p role="alert" className="px-4 py-3 text-sm text-rose-200">
@@ -457,4 +461,8 @@ export default function ConversationPage({ params }: Props) {
       />
     </div>
   )
+}
+
+export default function ConversationPage(props: Props) {
+  return <Suspense><ConversationPageInner {...props} /></Suspense>
 }

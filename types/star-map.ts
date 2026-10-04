@@ -8,6 +8,8 @@ export interface StarMapGroup {
 }
 export interface StarMapNode {
   id: string
+  userId?: string
+  relationship?: StarMapRelationship
   groupId: string
   name: string
   tagline?: string | null
@@ -16,6 +18,12 @@ export interface StarMapNode {
   level?: number
   score?: number
   memberCount?: number
+}
+export interface StarMapRelationship {
+  saved: boolean
+  following: boolean
+  followedBy: boolean
+  conversationId: string | null
 }
 export interface StarMapData {
   groups: StarMapGroup[]
