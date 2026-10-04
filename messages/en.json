@@ -20,6 +20,9 @@
     "main": "Main",
     "mySpace": "My Space",
     "account": "Account",
+    "collapse": "Collapse",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
     "collapseGalaxyLinks": "Collapse galaxy links",
     "expandGalaxyLinks": "Expand galaxy links",
     "signInRequired": "Sign in required"

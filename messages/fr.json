@@ -20,6 +20,9 @@
     "main": "Principal",
     "mySpace": "Mon espace",
     "account": "Compte",
+    "collapse": "Réduire",
+    "collapseSidebar": "Réduire la barre latérale",
+    "expandSidebar": "Développer la barre latérale",
     "collapseGalaxyLinks": "Réduire les liens de galaxies",
     "expandGalaxyLinks": "Développer les liens de galaxies",
     "signInRequired": "Connexion requise"

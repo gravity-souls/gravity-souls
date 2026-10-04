@@ -20,6 +20,9 @@
     "main": "主要",
     "mySpace": "我的空间",
     "account": "账户",
+    "collapse": "收起",
+    "collapseSidebar": "收起侧栏",
+    "expandSidebar": "展开侧栏",
     "collapseGalaxyLinks": "收起星系链接",
     "expandGalaxyLinks": "展开星系链接",
     "signInRequired": "需要登录"
