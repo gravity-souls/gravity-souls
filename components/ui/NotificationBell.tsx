@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Bell, MessageCircle } from 'lucide-react'
+import { INBOX_CHANGED, notifyInboxChanged } from '@/lib/inbox-client'
 import { authClient } from '@/lib/auth-client'
 import NotificationItem, { type SerializedNotification } from '@/components/ui/NotificationItem'
 
@@ -60,7 +61,7 @@ export default function NotificationBell() {
     void fetchNotifications()
     // TODO: replace polling with SSE/WebSocket when realtime infrastructure exists.
     const intervalId = window.setInterval(() => {
-      void fetchNotifications()
+      if (!document.hidden) void fetchNotifications()
     }, 60000)
 
     return () => window.clearInterval(intervalId)
@@ -71,6 +72,13 @@ export default function NotificationBell() {
 
     void fetchNotifications()
   }, [fetchNotifications, isOpen, session?.user])
+
+  useEffect(() => {
+    const sync = () => { if (!document.hidden) void fetchNotifications() }
+    window.addEventListener(INBOX_CHANGED, sync)
+    window.addEventListener('focus', sync)
+    return () => { window.removeEventListener(INBOX_CHANGED, sync); window.removeEventListener('focus', sync) }
+  }, [fetchNotifications])
 
   useEffect(() => {
     if (!isOpen) return
@@ -113,6 +121,7 @@ export default function NotificationBell() {
     }
 
     setIsOpen(false)
+    notifyInboxChanged()
     if (notification.actionUrl) router.push(notification.actionUrl)
   }
 
@@ -127,6 +136,7 @@ export default function NotificationBell() {
       return
     }
 
+    notifyInboxChanged()
     setNotifications((current) => current.filter((item) => item.id !== id))
     if (notification && !notification.read) {
       setUnreadCount((current) => Math.max(0, current - 1))

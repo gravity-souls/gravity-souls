@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { tNotification } from '@/lib/notification-i18n'
 import type { Locale } from '@/lib/i18n-locales'
 
-export async function createNotification({
+export function createNotification({
   userId,
   type,
   title,
@@ -20,72 +20,80 @@ export async function createNotification({
     data: { userId, type, title, body, actionUrl },
   })
 }
-
+async function localized(
+  type: NotificationType,
+  key: string,
+  locale: Locale,
+  actionUrl: string,
+  params: Record<string, string> = {},
+) {
+  return {
+    type,
+    title: await tNotification(locale, key + 'Title', params),
+    body: await tNotification(locale, key + 'Body', params),
+    actionUrl,
+  }
+}
 export const NotificationTemplates = {
-  resonanceReceived: (senderName: string, actionUrl: string) => ({
-    type: NotificationType.RESONANCE_RECEIVED,
-    title: 'A planet has entered your orbit',
-    body: `${senderName} sent you a resonance signal`,
-    actionUrl,
-  }),
-  resonanceAccepted: (senderName: string, actionUrl: string) => ({
-    type: NotificationType.RESONANCE_ACCEPTED,
-    title: 'Your signal was received',
-    body: `${senderName} responded to your resonance`,
-    actionUrl,
-  }),
-  galaxyNewPost: (galaxyName: string, actionUrl: string) => ({
-    type: NotificationType.GALAXY_NEW_POST,
-    title: `New signal in ${galaxyName}`,
-    body: 'A new post was shared in your galaxy',
-    actionUrl,
-  }),
-  galaxyNewEvent: async (galaxyName: string, eventName: string, actionUrl: string, locale: Locale) => ({
+  resonanceReceived: (name: string, url: string, locale: Locale) =>
+    localized(
+      NotificationType.RESONANCE_RECEIVED,
+      'resonanceReceived',
+      locale,
+      url,
+      { name },
+    ),
+  resonanceAccepted: (name: string, url: string, locale: Locale) =>
+    localized(
+      NotificationType.RESONANCE_ACCEPTED,
+      'resonanceAccepted',
+      locale,
+      url,
+      { name },
+    ),
+  galaxyNewPost: (galaxy: string, url: string, locale: Locale) =>
+    localized(NotificationType.GALAXY_NEW_POST, 'galaxyPost', locale, url, {
+      galaxy,
+    }),
+  galaxyNewEvent: async (
+    galaxy: string,
+    event: string,
+    url: string,
+    locale: Locale,
+  ) => ({
     type: NotificationType.GALAXY_NEW_EVENT,
-    title: await tNotification(locale, 'eventNewTitle', { galaxy: galaxyName }),
-    body: eventName,
-    actionUrl,
+    title: await tNotification(locale, 'eventNewTitle', { galaxy }),
+    body: event,
+    actionUrl: url,
   }),
-  eventReminder: (eventName: string, actionUrl: string) => ({
-    type: NotificationType.EVENT_REMINDER,
-    title: 'Event starting soon',
-    body: `${eventName} is happening in 24 hours`,
-    actionUrl,
-  }),
-  levelUp: (newLevel: number, levelName: string) => ({
-    type: NotificationType.LEVEL_UP,
-    title: 'You have evolved',
-    body: `You are now ${levelName}`,
-    actionUrl: '/my-planet',
-  }),
-  newMatch: () => ({
-    type: NotificationType.NEW_MATCH,
-    title: 'New planets in your orbit',
-    body: 'Your daily resonance matches are ready',
-    actionUrl: '/resonance',
-  }),
-  commentReceived: (commenterName: string, actionUrl: string) => ({
-    type: NotificationType.COMMENT_RECEIVED,
-    title: 'Someone resonated with your signal',
-    body: `${commenterName} left a comment`,
-    actionUrl,
-  }),
-  commentReplyReceived: (commenterName: string, actionUrl: string) => ({
-    type: NotificationType.COMMENT_RECEIVED,
-    title: 'Someone replied to your comment',
-    body: `${commenterName} replied to you`,
-    actionUrl,
-  }),
-  newFollower: (followerName: string, actionUrl: string) => ({
-    type: NotificationType.NEW_FOLLOWER,
-    title: 'A new planet is following yours',
-    body: `${followerName} started following you`,
-    actionUrl,
-  }),
-  newMessage: async (senderName: string, actionUrl: string, locale: Locale) => ({
-    type: NotificationType.NEW_MESSAGE,
-    title: await tNotification(locale, 'newMessageTitle', { name: senderName }),
-    body: await tNotification(locale, 'newMessageBody', { name: senderName }),
-    actionUrl,
-  }),
+  eventReminder: (event: string, url: string, locale: Locale) =>
+    localized(NotificationType.EVENT_REMINDER, 'eventReminder', locale, url, {
+      event,
+    }),
+  levelUp: (level: number, _name: string, locale: Locale) =>
+    localized(NotificationType.LEVEL_UP, 'levelUp', locale, '/my-planet', {
+      level: String(level),
+    }),
+  newMatch: (locale: Locale) =>
+    localized(NotificationType.NEW_MATCH, 'newMatch', locale, '/resonance'),
+  commentReceived: (name: string, url: string, locale: Locale) =>
+    localized(
+      NotificationType.COMMENT_RECEIVED,
+      'commentReceived',
+      locale,
+      url,
+      { name },
+    ),
+  commentReplyReceived: (name: string, url: string, locale: Locale) =>
+    localized(NotificationType.COMMENT_RECEIVED, 'commentReply', locale, url, {
+      name,
+    }),
+  newFollower: (name: string, url: string, locale: Locale) =>
+    localized(NotificationType.NEW_FOLLOWER, 'newFollower', locale, url, {
+      name,
+    }),
+  newMessage: (name: string, url: string, locale: Locale) =>
+    localized(NotificationType.NEW_MESSAGE, 'newMessage', locale, url, {
+      name,
+    }),
 }

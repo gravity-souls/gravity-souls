@@ -164,6 +164,7 @@ function FogVeil({
 function SendSignalButton({ planet }: { planet: PlanetProfile }) {
   const router = useRouter()
   const t = useTranslations('planetPage')
+  const tw = useTranslations('inboxWorkflow')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -187,7 +188,8 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
         return
       }
 
-      setError(t('demoInboxError'))
+      const data=await res.json().catch(()=>null)
+      setError(res.status===403&&data?.error?.includes('follow each other')?tw('mutualRequired'):t('openSignalError'))
     } catch {
       setError(t('openSignalError'))
     }
@@ -204,6 +206,7 @@ function SendSignalButton({ planet }: { planet: PlanetProfile }) {
       >
         {sending ? t('sendingSignal') : t('sendSignal')}
       </GlowButton>
+      <p className="text-xs text-slate-400">{tw('openOnly')}</p>
       {error && (
         <p className="text-xs" style={{ color: 'var(--ghost)' }}>
           {error}

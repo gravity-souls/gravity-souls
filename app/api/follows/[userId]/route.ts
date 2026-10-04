@@ -1,3 +1,4 @@
+import { canContact } from '@/lib/visibility'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { safeApiError } from '@/lib/api-input'
@@ -12,6 +13,7 @@ export async function GET(
     const { userId: otherUserId } = await params
     const viewerId = session.user.id
 
+    if(!await canContact(viewerId,otherUserId)) return Response.json({following:false,followedBy:false})
     const [amFollowing, followsMe] = await Promise.all([
       prisma.follow.findUnique({
         where: { followerId_followingId: { followerId: viewerId, followingId: otherUserId } },

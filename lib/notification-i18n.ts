@@ -5,10 +5,8 @@
 // string from the same messages/*.json files next-intl uses client-side,
 // under the flat `notifications.*` namespace.
 //
-// Scope: only notification templates this fix touches (newMessage, the
-// galaxy-event approval/rejection notices) go through this. The rest of
-// lib/createNotification.ts's NotificationTemplates are still hardcoded
-// English — a separate, pre-existing gap, not fixed here.
+// NotificationTemplates resolve recipient-language copy for every template.
+// Previously stored notifications retain their original text.
 
 import { defaultLocale, resolveLocale, type Locale } from '@/lib/i18n-locales'
 import { prisma } from '@/lib/prisma'
