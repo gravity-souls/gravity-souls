@@ -43,7 +43,6 @@ export default function PlanetAvatar({
   const resolvedGlowColor = planetConfig?.tintColor ?? glowColor
   const textureSrc = planetConfig?.customTextureUrl ?? `/textures/${resolvedTexture}`
   const failed = failedSrc === textureSrc
-  const ringColor = planetConfig?.ringColor || resolvedGlowColor
 
   return (
     <div
@@ -113,20 +112,6 @@ export default function PlanetAvatar({
         />
       )}
       </div>
-
-      {planetConfig?.hasRing && size >= 24 && (
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 rounded-full border"
-          style={{
-            width: size * 1.22,
-            height: size * 0.42,
-            transform: 'translate(-50%, -50%) rotate(-22deg)',
-            borderColor: `${ringColor}a8`,
-            boxShadow: `0 0 ${Math.max(3, Math.round(size * 0.1))}px ${ringColor}88`,
-          }}
-          aria-hidden="true"
-        />
-      )}
 
       {/* Terminator shadow for depth */}
       <div

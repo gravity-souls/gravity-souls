@@ -5,3 +5,6 @@ loadModule('./database-safety.test.cts')
 loadModule('./api-input.test.cts')
 loadModule('./safety-schemas.test.cts')
 loadModule('./require-level.test.cts')
+
+import './resonance-layout.test.mjs'
+import './planet-rings-removed.test.mjs'

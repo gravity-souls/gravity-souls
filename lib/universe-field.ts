@@ -56,7 +56,7 @@ export const ORBIT_PATHS = [
 export function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
   const v = (p.visual && typeof p.visual === 'object') ? p.visual as PlanetVisualConfig : {
     coreColor: '#a78bfa', accentColor: '#6366f1',
-    ringStyle: 'single' as const, surfaceStyle: 'smooth' as const,
+    ringStyle: 'none' as const, surfaceStyle: 'smooth' as const,
     satelliteCount: 1, size: 'md' as const,
   }
   const profile: PlanetProfile = {

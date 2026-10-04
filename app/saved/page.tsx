@@ -47,7 +47,7 @@ function savedPlanetToProfile(data: ApiSavedPlanetRow['planet']): PlanetProfile 
     visual: {
       coreColor:      (v.coreColor as string)  ?? '#a78bfa',
       accentColor:    (v.accentColor as string) ?? '#6366f1',
-      ringStyle:      'single',
+      ringStyle:      'none',
       surfaceStyle:   'smooth',
       satelliteCount: 0,
       size:           'lg',

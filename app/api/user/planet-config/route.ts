@@ -9,8 +9,6 @@ interface PlanetConfigBody {
   tintColor?: unknown
   atmosphereColor?: unknown
   atmosphereDensity?: unknown
-  hasRing?: unknown
-  ringColor?: unknown
   rotationSpeed?: unknown
   cloudOpacity?: unknown
   customTextureUrl?: unknown
@@ -65,8 +63,6 @@ export async function PATCH(request: Request) {
     tintColor,
     atmosphereColor,
     atmosphereDensity = 0.12,
-    hasRing,
-    ringColor,
     rotationSpeed = 0.018,
     cloudOpacity = 0,
     customTextureUrl,
@@ -84,12 +80,6 @@ export async function PATCH(request: Request) {
   if (!isNumberInRange(atmosphereDensity, 0, 0.3)) {
     return NextResponse.json({ error: 'atmosphereDensity must be between 0 and 0.3' }, { status: 400 })
   }
-  if (typeof hasRing !== 'boolean') {
-    return NextResponse.json({ error: 'hasRing must be a boolean' }, { status: 400 })
-  }
-  if (typeof ringColor !== 'string' || (ringColor !== '' && !isHexColor(ringColor))) {
-    return NextResponse.json({ error: 'ringColor must be empty or a hex color' }, { status: 400 })
-  }
   if (!isNumberInRange(rotationSpeed, 0.005, 0.03)) {
     return NextResponse.json({ error: 'rotationSpeed must be between 0.005 and 0.03' }, { status: 400 })
   }
@@ -106,8 +96,6 @@ export async function PATCH(request: Request) {
       planetTint: true,
       planetAtmoColor: true,
       planetAtmoDensity: true,
-      planetHasRing: true,
-      planetRingColor: true,
       planetRotationSpeed: true,
       planetCloudOpacity: true,
       planetCustomTexture: true,
@@ -135,10 +123,8 @@ export async function PATCH(request: Request) {
   if (
     atmosphereColor !== currentUserConfig.planetAtmoColor
     || atmosphereDensity !== currentUserConfig.planetAtmoDensity
-    || hasRing !== currentUserConfig.planetHasRing
-    || ringColor !== currentUserConfig.planetRingColor
   ) {
-    const response = await requireConfigLevel(3, 'Atmosphere and rings unlock at Lv.3')
+    const response = await requireConfigLevel(3, 'Atmosphere unlocks at Lv.3')
     if (response) return response
   }
 
@@ -167,8 +153,8 @@ export async function PATCH(request: Request) {
       planetTint: tintColor,
       planetAtmoColor: atmosphereColor,
       planetAtmoDensity: atmosphereDensity,
-      planetHasRing: hasRing,
-      planetRingColor: ringColor,
+      planetHasRing: false,
+      planetRingColor: '',
       planetRotationSpeed: rotationSpeed,
       planetCloudOpacity: cloudOpacity,
       planetCustomTexture: customTextureUrl || null,

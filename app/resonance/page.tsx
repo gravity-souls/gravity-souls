@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import ResonanceOrbitSystem from '@/components/resonance/ResonanceOrbitSystem'
+import ResonanceHeader from '@/components/resonance/ResonanceHeader'
 import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
 import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
@@ -149,7 +150,7 @@ export default function ResonancePage() {
         lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
         coreThemes: (data.coreThemes as string[]) ?? [],
         contentFragments: (data.contentFragments as string[]) ?? [],
-        visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+        visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'none' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
         planetConfig: (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
         cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
         emotionalBars: [],
@@ -176,7 +177,7 @@ export default function ResonancePage() {
             lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
             coreThemes: (d.coreThemes as string[]) ?? [],
             contentFragments: (d.contentFragments as string[]) ?? [],
-            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'single' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
+            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'none' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
             planetConfig: (d.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
             cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
             emotionalBars: [],
@@ -216,29 +217,8 @@ export default function ResonancePage() {
         <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.07} double={false} />
         <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-5xl mx-auto">
 
-          {/* Header */}
-          <div className="flex flex-col gap-2 mb-10">
-            <p
-              className="text-xs uppercase tracking-[0.25em] font-medium"
-              style={{ color: 'var(--star)', opacity: 0.65 }}
-            >
-              {t('daily')}
-            </p>
-            <h1
-              className="text-4xl sm:text-5xl font-bold"
-              style={{
-                background: 'linear-gradient(135deg, #e8e0ff 0%, #a78bfa 60%, #818cf8 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                color: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              {tNav('resonance')}
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-              {t('orbitSubtitle')}
-            </p>
+          <div className="mb-10">
+            <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} />
           </div>
 
           {unformed ? (
@@ -263,29 +243,8 @@ export default function ResonancePage() {
 
       <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-6xl mx-auto">
 
-        {/* Header */}
-        <div className="flex flex-col gap-2 mb-8">
-          <p
-            className="text-xs uppercase tracking-[0.25em] font-medium"
-            style={{ color: accentColor, opacity: 0.7 }}
-          >
-            {t('daily')}
-          </p>
-          <h1
-            className="text-4xl sm:text-5xl font-bold"
-            style={{
-              background: `linear-gradient(135deg, #e8e0ff 0%, ${accentColor} 60%, #818cf8 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              color: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {tNav('resonance')}
-          </h1>
-          <p className="text-sm max-w-xl" style={{ color: 'var(--ink)', opacity: 0.55 }}>
-            {t('orbitSubtitle')}
-          </p>
+        <div className="mb-8">
+          <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} accentColor={accentColor} />
         </div>
 
         {/* Session stats */}

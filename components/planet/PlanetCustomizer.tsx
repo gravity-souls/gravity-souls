@@ -48,6 +48,8 @@ function readNumber(value: string, min: number, max: number) {
 function normalizeConfig(config: PlanetConfig): PlanetConfig {
   return {
     ...config,
+    hasRing: false,
+    ringColor: '',
     atmosphereDensity: clamp(config.atmosphereDensity, 0, 0.3),
     rotationSpeed: clamp(config.rotationSpeed, 0.005, 0.03),
     cloudOpacity: clamp(config.cloudOpacity, 0, 0.5),
@@ -148,49 +150,6 @@ function ColorControl({
         })}
       </div>
     </div>
-  )
-}
-
-function CosmicToggle({
-  label,
-  checked,
-  onChange,
-  accentColor,
-}: {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-  accentColor: string
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex items-center justify-between gap-4 rounded-lg border px-3 py-2.5 text-sm transition"
-      style={{
-        color: checked ? 'var(--foreground)' : 'var(--ink)',
-        background: checked ? `${accentColor}18` : 'rgba(255,255,255,0.04)',
-        borderColor: checked ? `${accentColor}66` : 'rgba(255,255,255,0.10)',
-      }}
-    >
-      <span>{label}</span>
-      <span
-        className="relative h-6 w-11 rounded-full border transition"
-        style={{ background: checked ? `${accentColor}55` : 'rgba(255,255,255,0.08)', borderColor: checked ? `${accentColor}99` : 'rgba(255,255,255,0.12)' }}
-        aria-hidden="true"
-      >
-        <span
-          className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full transition"
-          style={{
-            left: checked ? 22 : 4,
-            background: checked ? '#fff' : 'rgba(232,224,255,0.65)',
-            boxShadow: checked ? `0 0 14px ${accentColor}` : 'none',
-          }}
-        />
-      </span>
-    </button>
   )
 }
 
@@ -427,19 +386,13 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           <ColorControl label={t('planetTint')} value={localConfig.tintColor} onChange={(tintColor) => updateConfig({ tintColor })} />
         </ControlSection>
 
-        <ControlSection title={t('atmosphereRing')} level={3} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        <ControlSection title={t('atmosphere')} level={3} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
             <ColorControl label={t('atmosphere')} value={localConfig.atmosphereColor} onChange={(atmosphereColor) => updateConfig({ atmosphereColor })} />
-            <CosmicToggle label={t('ring')} checked={localConfig.hasRing} accentColor={localConfig.ringColor || localConfig.tintColor} onChange={(hasRing) => updateConfig({ hasRing })} />
             <label className="md:col-span-2 text-sm" style={{ color: 'var(--ink)' }}>
               <span className="mb-2 flex justify-between"><span>{t('atmosphereDensity')}</span><span>{localConfig.atmosphereDensity.toFixed(2)}</span></span>
               <input type="range" min={0} max={0.3} step={0.01} value={localConfig.atmosphereDensity} onChange={(event) => updateConfig({ atmosphereDensity: readNumber(event.target.value, 0, 0.3) })} className="w-full accent-violet-400" />
             </label>
-            {localConfig.hasRing && (
-              <div className="md:col-span-2">
-                <ColorControl label={t('ringColor')} value={localConfig.ringColor || localConfig.tintColor} onChange={(ringColor) => updateConfig({ ringColor })} />
-              </div>
-            )}
           </div>
         </ControlSection>
 

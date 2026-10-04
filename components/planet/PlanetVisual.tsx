@@ -1,4 +1,4 @@
-import type { PlanetVisualConfig, RingStyle } from '@/types/planet'
+import type { PlanetVisualConfig } from '@/types/planet'
 
 // --- Size map -----------------------------------------------------------------
 
@@ -7,96 +7,6 @@ const SIZE_PX: Record<PlanetVisualConfig['size'], number> = {
   md: 120,
   lg: 160,
   xl: 200,
-}
-
-// --- Ring component -----------------------------------------------------------
-
-function Ring({
-  style,
-  index,
-  coreColor,
-  planetSize,
-}: {
-  style: RingStyle
-  index: number
-  coreColor: string
-  planetSize: number
-}) {
-  if (style === 'none') return null
-
-  const gap = 12 + index * 14
-  const w = planetSize + gap * 2
-  const h = planetSize * 0.28 + index * 6
-
-  if (style === 'broken') {
-    // Broken ring: two SVG arcs with a gap
-    const rx = w / 2
-    const ry = h / 2
-    return (
-      <svg
-        className="absolute pointer-events-none"
-        width={w}
-        height={h}
-        viewBox={`0 0 ${w} ${h}`}
-        style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-      >
-        <defs>
-          <filter id={`ring-glow-${index}`}>
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        {/* Left arc */}
-        <ellipse
-          cx={w / 2} cy={h / 2} rx={rx - 2} ry={ry - 1}
-          fill="none"
-          stroke={coreColor}
-          strokeWidth="1.2"
-          strokeOpacity="0.55"
-          strokeDasharray={`${Math.PI * rx * 0.6} ${Math.PI * rx * 1.4}`}
-          strokeDashoffset="0"
-          filter={`url(#ring-glow-${index})`}
-        />
-        {/* Right arc */}
-        <ellipse
-          cx={w / 2} cy={h / 2} rx={rx - 2} ry={ry - 1}
-          fill="none"
-          stroke={coreColor}
-          strokeWidth="1.2"
-          strokeOpacity="0.3"
-          strokeDasharray={`${Math.PI * rx * 0.35} ${Math.PI * rx * 1.65}`}
-          strokeDashoffset={Math.PI * rx * 0.7}
-          filter={`url(#ring-glow-${index})`}
-        />
-      </svg>
-    )
-  }
-
-  // Single or double: full ellipse
-  return (
-    <svg
-      className="absolute pointer-events-none"
-      width={w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-    >
-      <defs>
-        <filter id={`ring-glow-${index}`}>
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-      <ellipse
-        cx={w / 2} cy={h / 2} rx={w / 2 - 2} ry={h / 2 - 1}
-        fill="none"
-        stroke={coreColor}
-        strokeWidth="1.5"
-        strokeOpacity={index === 0 ? 0.6 : 0.3}
-        filter={`url(#ring-glow-${index})`}
-      />
-    </svg>
-  )
 }
 
 // --- Satellite ----------------------------------------------------------------
@@ -161,26 +71,14 @@ interface Props {
 
 export default function PlanetVisual({ visual, symbol, className = '' }: Props) {
   const size = SIZE_PX[visual.size]
-  const { coreColor, accentColor, ringStyle, satelliteCount } = visual
+  const { coreColor, accentColor, satelliteCount } = visual
 
-  const ringCount = ringStyle === 'double' ? 2 : ringStyle === 'none' ? 0 : 1
 
   return (
     <div
       className={`relative flex items-center justify-center ${className}`}
       style={{ width: size + 120, height: size + 120 }}
     >
-      {/* Rings  -  rendered behind the planet (z-index order) */}
-      {Array.from({ length: ringCount }).map((_, i) => (
-        <Ring
-          key={i}
-          index={i}
-          style={ringStyle}
-          coreColor={coreColor}
-          planetSize={size}
-        />
-      ))}
-
       {/* Planet orb */}
       <div
         className="relative flex items-center justify-center shrink-0 rounded-full animate-nebula-breathe"

@@ -36,17 +36,17 @@ const catalogue = JSON.parse(readFileSync(resolve(__dirname, 'warmup-planets.jso
 const appearance: Record<string, {
   mood: string; style: string; lifestyle: string; communicationStyle: string
   abstractAxis: number; introspectiveAxis: number; texture: string
-  coreColor: string; accentColor: string; ringStyle: string
+  coreColor: string; accentColor: string
   category: PostCategory
 }> = {
-  'mira-27':  { mood: 'calm', style: 'minimal', lifestyle: 'solitary', communicationStyle: 'reflective', abstractAxis: 78, introspectiveAxis: 85, texture: 'neptune.jpg', coreColor: '#6366f1', accentColor: '#a78bfa', ringStyle: 'none', category: PostCategory.THOUGHTS },
-  'iora-42':  { mood: 'mixed', style: 'fluid', lifestyle: 'communal', communicationStyle: 'direct', abstractAxis: 42, introspectiveAxis: 35, texture: 'venus_surface.jpg', coreColor: '#fb923c', accentColor: '#fbbf24', ringStyle: 'single', category: PostCategory.GENERAL },
-  'veyr-31':  { mood: 'intense', style: 'fractured', lifestyle: 'nomadic', communicationStyle: 'reflective', abstractAxis: 60, introspectiveAxis: 58, texture: 'mars.jpg', coreColor: '#64748b', accentColor: '#93c5fd', ringStyle: 'single', category: PostCategory.TRAVEL },
-  'celyn-58': { mood: 'intense', style: 'minimal', lifestyle: 'rooted', communicationStyle: 'analytical', abstractAxis: 77, introspectiveAxis: 40, texture: 'mercury.jpg', coreColor: '#60a5fa', accentColor: '#22d3ee', ringStyle: 'none', category: PostCategory.THOUGHTS },
-  'sora-46':  { mood: 'melancholic', style: 'dense', lifestyle: 'solitary', communicationStyle: 'poetic', abstractAxis: 82, introspectiveAxis: 80, texture: 'moon.jpg', coreColor: '#9f1239', accentColor: '#fbbf24', ringStyle: 'none', category: PostCategory.ART },
-  'nalo-19':  { mood: 'calm', style: 'fluid', lifestyle: 'rooted', communicationStyle: 'direct', abstractAxis: 38, introspectiveAxis: 50, texture: 'earth_day.jpg', coreColor: '#059669', accentColor: '#6ee7b7', ringStyle: 'none', category: PostCategory.NATURE },
-  'elyn-73':  { mood: 'mixed', style: 'fluid', lifestyle: 'nomadic', communicationStyle: 'playful', abstractAxis: 64, introspectiveAxis: 42, texture: 'saturn.jpg', coreColor: '#a78bfa', accentColor: '#f9a8d4', ringStyle: 'double', category: PostCategory.ART },
-  'oren-24':  { mood: 'cold', style: 'dense', lifestyle: 'rooted', communicationStyle: 'analytical', abstractAxis: 73, introspectiveAxis: 62, texture: 'jupiter.jpg', coreColor: '#1e3a8a', accentColor: '#d97706', ringStyle: 'single', category: PostCategory.THOUGHTS },
+  'mira-27':  { mood: 'calm', style: 'minimal', lifestyle: 'solitary', communicationStyle: 'reflective', abstractAxis: 78, introspectiveAxis: 85, texture: 'neptune.jpg', coreColor: '#6366f1', accentColor: '#a78bfa', category: PostCategory.THOUGHTS },
+  'iora-42':  { mood: 'mixed', style: 'fluid', lifestyle: 'communal', communicationStyle: 'direct', abstractAxis: 42, introspectiveAxis: 35, texture: 'venus_surface.jpg', coreColor: '#fb923c', accentColor: '#fbbf24', category: PostCategory.GENERAL },
+  'veyr-31':  { mood: 'intense', style: 'fractured', lifestyle: 'nomadic', communicationStyle: 'reflective', abstractAxis: 60, introspectiveAxis: 58, texture: 'mars.jpg', coreColor: '#64748b', accentColor: '#93c5fd', category: PostCategory.TRAVEL },
+  'celyn-58': { mood: 'intense', style: 'minimal', lifestyle: 'rooted', communicationStyle: 'analytical', abstractAxis: 77, introspectiveAxis: 40, texture: 'mercury.jpg', coreColor: '#60a5fa', accentColor: '#22d3ee', category: PostCategory.THOUGHTS },
+  'sora-46':  { mood: 'melancholic', style: 'dense', lifestyle: 'solitary', communicationStyle: 'poetic', abstractAxis: 82, introspectiveAxis: 80, texture: 'moon.jpg', coreColor: '#9f1239', accentColor: '#fbbf24', category: PostCategory.ART },
+  'nalo-19':  { mood: 'calm', style: 'fluid', lifestyle: 'rooted', communicationStyle: 'direct', abstractAxis: 38, introspectiveAxis: 50, texture: 'earth_day.jpg', coreColor: '#059669', accentColor: '#6ee7b7', category: PostCategory.NATURE },
+  'elyn-73':  { mood: 'mixed', style: 'fluid', lifestyle: 'nomadic', communicationStyle: 'playful', abstractAxis: 64, introspectiveAxis: 42, texture: 'saturn.jpg', coreColor: '#a78bfa', accentColor: '#f9a8d4', category: PostCategory.ART },
+  'oren-24':  { mood: 'cold', style: 'dense', lifestyle: 'rooted', communicationStyle: 'analytical', abstractAxis: 73, introspectiveAxis: 62, texture: 'jupiter.jpg', coreColor: '#1e3a8a', accentColor: '#d97706', category: PostCategory.THOUGHTS },
 }
 
 function credentialsFromCsv(path: string): Map<string, Credentials> {
@@ -133,9 +133,9 @@ async function main() {
           if (!existingUser) await tx.user.create({
             data: { id: userId, name: planet.name.split('-')[0], email: credential.email,
               emailVerified: false, planetTexture: visual.texture, planetTint: visual.coreColor,
-              planetAtmoColor: visual.accentColor, planetHasRing: visual.ringStyle !== 'none',
-              planetRingColor: visual.accentColor,
-              planetAtmoDensity: visual.ringStyle === 'none' ? 0.1 : 0.16,
+              planetAtmoColor: visual.accentColor, planetHasRing: false,
+              planetRingColor: '',
+              planetAtmoDensity: 0.12,
               planetRotationSpeed: 0.011 + (visual.abstractAxis % 8) * 0.002,
               planetCloudOpacity: visual.lifestyle === 'nomadic' ? 0.16 : 0.04,
               planetCustomTexture: `/textures/warmup/${planet.seedKey}.png` },
@@ -163,7 +163,7 @@ async function main() {
             coreThemes: planet.themes, contentFragments: [planet.about, planet.conversationStarter],
             abstractAxis: visual.abstractAxis, introspectiveAxis: visual.introspectiveAxis,
             visual: { coreColor: visual.coreColor, accentColor: visual.accentColor,
-              textureFile: visual.texture, ringStyle: visual.ringStyle,
+              textureFile: visual.texture, ringStyle: 'none',
               surfaceStyle: 'smooth', satelliteCount: visual.lifestyle === 'communal' ? 3 : 1, size: 'lg' },
             active: true,
           } })

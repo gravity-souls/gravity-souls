@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
-import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
@@ -128,8 +128,8 @@ function DrawerContent({
     tintColor: planet.visual.coreColor,
     atmosphereColor: planet.visual.accentColor,
     atmosphereDensity: 0.12,
-    hasRing: resolvePlanetHasRing(),
-    ringColor: planet.visual.accentColor,
+    hasRing: false,
+    ringColor: '',
     rotationSpeed: 0.018,
     cloudOpacity: 0,
   }

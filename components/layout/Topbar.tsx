@@ -17,7 +17,7 @@ const FALLBACK_PLANET_CONFIG: PlanetConfig = PRESET_PLANETS[0] ?? {
   tintColor: '#7c4dbf',
   atmosphereColor: '#b39ddb',
   atmosphereDensity: 0.12,
-  hasRing: true,
+  hasRing: false,
   ringColor: '#9b7de0',
   rotationSpeed: 0.018,
   cloudOpacity: 0,

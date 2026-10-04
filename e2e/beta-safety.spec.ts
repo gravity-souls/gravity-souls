@@ -86,7 +86,7 @@ test.describe('authenticated API protections', () => {
 
       const list = await viewer.get('/api/planets')
       expect((await list.json()).planets.find((item: { id: string }) => item.id === planet.id).planetConfig).toMatchObject({
-        baseTexture: 'mars.jpg', customTextureUrl, tintColor: '#ec4899', hasRing: true,
+        baseTexture: 'mars.jpg', customTextureUrl, tintColor: '#ec4899', hasRing: false, ringColor: '',
       })
       const search = await viewer.get(`/api/search?q=${encodeURIComponent(planet.name)}`)
       expect((await search.json()).planets.find((item: { id: string }) => item.id === planet.id).planetConfig.customTextureUrl).toBe(customTextureUrl)
