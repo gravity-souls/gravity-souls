@@ -1868,5 +1868,30 @@
       "celebrate": "Fête",
       "hug": "Câlin"
     }
+  },
+  "chatShares": {
+    "share": "Partager une planète, une galaxie ou une activité",
+    "picker": "Partager dans cette conversation",
+    "explanation": "Choisissez un élément actuellement accessible aux deux personnes. Le partage ne donne aucun accès ni aucune adhésion.",
+    "planet": "Planète",
+    "galaxy": "Galaxie",
+    "event": "Activité",
+    "kinds": "Types de contenu",
+    "search": "Rechercher par nom",
+    "loading": "Chargement…",
+    "empty": "Aucun élément disponible sur cette page.",
+    "more": "Autres éléments",
+    "selected": "Sélection : {title}",
+    "send": "Envoyer la carte",
+    "sending": "Envoi…",
+    "close": "Fermer le partage",
+    "loadFailed": "Impossible de charger les éléments.",
+    "sendFailed": "Envoi non confirmé. Votre sélection est conservée ; réessayez.",
+    "retry": "Réessayer",
+    "unavailable": "Contenu partagé indisponible",
+    "unavailableHint": "Il a pu changer, être supprimé ou devenir inaccessible.",
+    "open": "Ouvrir le contenu partagé",
+    "backChat": "Retour à la conversation",
+    "messagePreview": "Une carte a été partagée"
   }
 }

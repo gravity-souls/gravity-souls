@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
+import ChatReturnLink from '@/components/messages/ChatReturnLink'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
@@ -300,6 +301,7 @@ function PlanetPageInner() {
   if (!planet) {
     return (
       <AppShell>
+      <ChatReturnLink />
         <EmptyState
           symbol="◌"
           title={t('planetNotFound')}
@@ -317,6 +319,7 @@ function PlanetPageInner() {
 
   return (
     <AppShell>
+      <ChatReturnLink />
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-6xl mx-auto">

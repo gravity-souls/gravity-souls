@@ -1868,5 +1868,30 @@
       "celebrate": "Celebrate",
       "hug": "Hug"
     }
+  },
+  "chatShares": {
+    "share": "Share a planet, galaxy or activity",
+    "picker": "Share in this chat",
+    "explanation": "Choose an item both participants can currently access. Sharing does not grant access or join anything.",
+    "planet": "Planet",
+    "galaxy": "Galaxy",
+    "event": "Activity",
+    "kinds": "Content types",
+    "search": "Search by name",
+    "loading": "Loading…",
+    "empty": "No available items on this page.",
+    "more": "More items",
+    "selected": "Selected: {title}",
+    "send": "Send card",
+    "sending": "Sending…",
+    "close": "Close sharing",
+    "loadFailed": "Unable to load items.",
+    "sendFailed": "Unable to confirm delivery. Your selection is kept; retry sending.",
+    "retry": "Retry",
+    "unavailable": "Shared content unavailable",
+    "unavailableHint": "It may have changed, been removed, or become inaccessible.",
+    "open": "Open shared content",
+    "backChat": "Back to chat",
+    "messagePreview": "Shared a card"
   }
 }

@@ -132,7 +132,7 @@ export async function GET() {
       lastMessageAt: c.lastMessageAt,
       messages: c.messages.map((m) => ({
         id: m.id, senderId: m.senderId, content: m.content, type: m.type,
-        readAt: m.readAt, createdAt: m.createdAt,
+        readAt: m.readAt, createdAt: m.createdAt, shareKind: m.shareKind, shareTargetId: m.shareTargetId,
       })),
     }));
 

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { serializeMessage } from '@/lib/inbox'
+import { hydrateSharedMessages } from '@/lib/chat-shares'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { messageSchema } from '@/lib/input-schemas'
 import { NextResponse } from 'next/server'
@@ -91,7 +91,7 @@ export async function GET(
               }
             : null,
         otherUser: { id: other.id, name: other.name },
-        messages: rows.reverse().map(serializeMessage),
+        messages: await hydrateSharedMessages(rows.reverse(), user),
         olderCursor,
       },
       { headers: { 'Cache-Control': 'private, no-store' } },
