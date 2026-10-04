@@ -57,6 +57,7 @@ model user {
   proposedEvents Event[] @relation("ProposedEvents")
   eventRSVPs EventRSVP[]
   createdCommunities Community[] @relation("CommunityCreator")
+  communityRequests CommunityJoinRequest[]
   posts        Post[]
   postLikes    PostLike[]
   postComments PostComment[]
@@ -284,6 +285,7 @@ model Community {
   mood        String   @default("vibrant")
   accentColor String   @default("#6366f1")
   maturity    String   @default("forming")
+  joinPolicy  GalaxyJoinPolicy @default(OPEN)
   creatorId   String?
   creator     user?    @relation("CommunityCreator", fields: [creatorId], references: [id], onDelete: SetNull)
 
@@ -291,6 +293,7 @@ model Community {
   updatedAt   DateTime @updatedAt
 
   memberships CommunityMembership[]
+  requests    CommunityJoinRequest[]
   posts       CommunityPost[]
   discussions CommunityDiscussion[]
   events      Event[]
@@ -301,6 +304,34 @@ model Community {
 enum CommunityRole {
   MEMBER
   ADMIN
+}
+
+enum GalaxyJoinPolicy {
+  OPEN
+  APPROVAL
+}
+
+enum AttendanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model CommunityJoinRequest {
+  id          String @id @default(cuid())
+  userId      String
+  communityId String
+  status      AttendanceStatus @default(PENDING)
+  rewarded    Boolean @default(false)
+  user        user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, communityId])
+  @@index([communityId, status])
+  @@map("community_join_request")
 }
 
 model CommunityMembership {
@@ -329,6 +360,9 @@ model Event {
   maxAttendees Int?
   category     EventCategory
   status       EventStatus   @default(PENDING)
+  requiresApproval Boolean @default(false)
+  approvalRewarded Boolean @default(false)
+  rejectionReason String?
   coverImage   String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -346,6 +380,8 @@ model EventRSVP {
   id        String   @id @default(cuid())
   eventId   String
   userId    String
+  status    AttendanceStatus @default(APPROVED)
+  rewarded  Boolean @default(false)
   createdAt DateTime @default(now())
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -360,6 +396,7 @@ enum EventStatus {
   APPROVED
   REJECTED
   PASSED
+  CANCELLED
 }
 
 enum EventCategory {

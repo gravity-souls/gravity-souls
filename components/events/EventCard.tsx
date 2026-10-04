@@ -3,17 +3,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { CalendarDays, MapPin, Monitor, Users } from 'lucide-react'
+import { useTranslations, useLocale } from 'next-intl'
 import RSVPButton from '@/components/events/RSVPButton'
 import type { GalaxyEventSummary } from '@/types/event'
-
-const CATEGORY_LABELS: Record<GalaxyEventSummary['category'], string> = {
-  MEETUP: 'Meetup',
-  ONLINE: 'Online',
-  WORKSHOP: 'Workshop',
-  STARGAZING: 'Stargazing',
-  DISCUSSION: 'Discussion',
-  OTHER: 'Other',
-}
 
 const CATEGORY_GRADIENTS: Record<GalaxyEventSummary['category'], string> = {
   MEETUP: 'linear-gradient(135deg, rgba(251,146,60,0.34), rgba(124,58,237,0.18))',
@@ -24,14 +16,14 @@ const CATEGORY_GRADIENTS: Record<GalaxyEventSummary['category'], string> = {
   OTHER: 'linear-gradient(135deg, rgba(148,163,184,0.26), rgba(99,102,241,0.16))',
 }
 
-function formatEventDate(value: string) {
+function formatEventDate(value: string, locale: string) {
   const date = new Date(value)
-  const day = new Intl.DateTimeFormat('en-US', {
+  const day = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
   }).format(date)
-  const time = new Intl.DateTimeFormat('en-US', {
+  const time = new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date)
@@ -48,6 +40,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, isProposer = false, compact = false, onOpen, onRSVPChange }: EventCardProps) {
+  const t = useTranslations('galaxyWorkflow'), te = useTranslations('eventForms'), locale = useLocale()
   const spotsLeft = event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - event.rsvpCount)
   const isPassed = event.status === 'PASSED'
   const showPending = event.status === 'PENDING' && isProposer
@@ -78,7 +71,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
           className="absolute left-3 top-3 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]"
           style={{ background: 'rgba(3,3,15,0.64)', color: 'rgba(255,255,255,0.82)', border: '1px solid rgba(255,255,255,0.10)' }}
         >
-          {CATEGORY_LABELS[event.category]}
+          {te(`categories.${event.category.toLowerCase()}`)}
         </span>
       </div>
 
@@ -96,12 +89,14 @@ export default function EventCard({ event, isProposer = false, compact = false, 
           </div>
           {showPending && (
             <span className="rounded-full px-2 py-1 text-[10px] font-semibold" style={{ color: '#fde68a', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.28)' }}>
-              PENDING
+              {t('pending')}
             </span>
           )}
+          {event.status === 'REJECTED' && <span className="text-xs text-red-300">{t('rejected')}</span>}
+          {event.status === 'CANCELLED' && <span className="text-xs text-white/50">{t('cancelled')}</span>}
           {isPassed && (
             <span className="rounded-full px-2 py-1 text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.48)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              PASSED
+              {t('passed')}
             </span>
           )}
         </div>
@@ -115,18 +110,18 @@ export default function EventCard({ event, isProposer = false, compact = false, 
         <div className="grid gap-2 text-xs" style={{ color: 'var(--ghost)' }}>
           <span className="flex items-center gap-2">
             <CalendarDays size={14} />
-            {formatEventDate(event.date)}
+            {formatEventDate(event.date, locale)}
           </span>
           <span className="flex items-center gap-2">
             {event.onlineUrl || event.category === 'ONLINE' ? <Monitor size={14} /> : <MapPin size={14} />}
-            {event.location || (event.onlineUrl ? 'Online' : 'Online')}
+            {event.location || te('online')}
           </span>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2 text-xs" style={{ color: 'var(--ghost)' }}>
             <Users size={14} />
-            {event.rsvpCount} going{spotsLeft !== null ? ` · ${spotsLeft} spots left` : ''}
+            {t('goingCount', { count: event.rsvpCount })}{spotsLeft !== null ? ` · ${te('spotsRemaining', { count: spotsLeft })}` : ''}
           </span>
           <span onClick={(clickEvent) => clickEvent.stopPropagation()}>
             <RSVPButton
@@ -134,6 +129,8 @@ export default function EventCard({ event, isProposer = false, compact = false, 
               galaxyId={event.galaxyId}
               initialRSVPed={event.userHasRSVPed}
               initialCount={event.rsvpCount}
+              initialAttendance={event.userAttendance}
+              requiresApproval={event.requiresApproval}
               maxAttendees={event.maxAttendees}
               status={event.status}
               onChange={(state) => onRSVPChange?.(event.id, state)}

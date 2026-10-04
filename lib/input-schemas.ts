@@ -85,6 +85,7 @@ const optionalUrl = z.union([z.literal(''), z.url().max(2048).refine((value) => 
 })]).nullable().optional()
 export const eventSchema = z.object({
   title: text(80).min(1), description: text(500).min(1), date: text(100).min(1),
+  requiresApproval: z.boolean().optional(),
   category: z.enum(['MEETUP', 'ONLINE', 'WORKSHOP', 'STARGAZING', 'DISCUSSION', 'OTHER']),
   location: text(200).nullable().optional(), onlineUrl: optionalUrl,
   coverImage: z.union([z.literal(''), z.string().max(2048).regex(/^\/uploads\/event-covers\/[a-z0-9-]+\.(jpg|png|webp)$/i), z.url().max(2048).refine((value) => {
@@ -109,3 +110,18 @@ export const policyAcceptanceSchema = z.object({}).strict()
 export const passwordResetRequestSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
 }).strict()
+
+
+export const galaxySchema = z.object({
+  name: text(80).min(2), symbol: text(12).min(1), tagline: text(160),
+  description: text(2000), keywords: z.array(text(50).min(1)).max(12),
+  mood: z.enum(['contemplative', 'creative', 'intimate', 'technical', 'vibrant']),
+  accentColor: color, joinPolicy: z.enum(['OPEN', 'APPROVAL']),
+}).strict()
+export const galaxyMemberSchema = z.object({
+  action: z.enum(['approveJoin', 'rejectJoin', 'promote', 'demote', 'remove', 'transfer', 'claim']),
+  userId: resourceId.optional(),
+}).strict()
+export const attendanceReviewSchema = z.object({ userId: resourceId, status: z.enum(['APPROVED', 'REJECTED']) }).strict()
+
+export const discussionSchema = z.object({ title: text(160).min(2), content: text(1000).min(2) }).strict()

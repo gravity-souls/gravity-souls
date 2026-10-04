@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -23,9 +24,11 @@ interface CommunityRow {
   memberCount: number
   maturity: string
   accentColor: string
+  joined?: boolean
+  isAdmin?: boolean
 }
 
-function toGalaxyPreview(row: CommunityRow): GalaxyPreview {
+function toGalaxyPreview(row: CommunityRow): GalaxyPreview & { joined?: boolean; isAdmin?: boolean } {
   return {
     id: row.id,
     slug: row.slug,
@@ -37,6 +40,8 @@ function toGalaxyPreview(row: CommunityRow): GalaxyPreview {
     memberCount: row.memberCount,
     maturity: row.maturity as GalaxyPreview['maturity'],
     accentColor: row.accentColor,
+    joined: row.joined,
+    isAdmin: row.isAdmin,
   }
 }
 
@@ -65,6 +70,7 @@ export default function GalaxiesPage() {
 }
 
 function GalaxiesInner() {
+  const tw = useTranslations('galaxyWorkflow')
   const tNav = useTranslations('nav')
   const tHome = useTranslations('home')
   const tGalaxies = useTranslations('galaxies')
@@ -72,9 +78,10 @@ function GalaxiesInner() {
   const searchParams = useSearchParams()
   const initialQ = searchParams.get('q') ?? ''
 
+  const [scope, setScope] = useState<'all' | 'joined' | 'managed'>('all')
   const [query, setQuery] = useState(initialQ)
   const [moodFilter, setMoodFilter] = useState<MoodFilter>('all')
-  const [galaxies, setGalaxies] = useState<GalaxyPreview[]>([])
+  const [galaxies, setGalaxies] = useState<(GalaxyPreview & { joined?: boolean; isAdmin?: boolean })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
@@ -107,9 +114,10 @@ function GalaxiesInner() {
         g.keywords.some((k) => k.toLowerCase().includes(q)) ||
         g.tagline?.toLowerCase().includes(q)
       const matchesMood = moodFilter === 'all' || g.mood === moodFilter
-      return matchesQuery && matchesMood
+      const matchesScope = scope === 'all' || (scope === 'joined' ? g.joined : g.isAdmin)
+      return matchesQuery && matchesMood && matchesScope
     })
-  }, [galaxies, query, moodFilter])
+  }, [galaxies, query, moodFilter, scope])
 
   if (loading) return <GalaxiesLoading />
 
@@ -124,6 +132,8 @@ function GalaxiesInner() {
           title={tNav('galaxies')}
           subtitle={tGalaxies('subtitle')}
         />
+
+        <div className="mt-5 flex flex-wrap gap-3"><Link href="/galaxies/create" className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium">{tw('createGalaxy')}</Link>{(['all','joined','managed'] as const).map(value=><button key={value} type="button" onClick={()=>setScope(value)} className={`rounded-xl border border-white/15 px-4 py-2 text-sm ${scope===value?'bg-white/10':''}`}>{tw(`${value}Galaxies`)}</button>)}</div>
 
         {/* -- Search + filters -------------------------------------------- */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">

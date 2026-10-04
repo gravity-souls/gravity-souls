@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import type { GalaxyPreview } from '@/types/galaxy'
 
@@ -21,31 +22,18 @@ interface Props {
 
 // --- Mood label display -----------------------------------------------------
 
-const MOOD_LABEL: Record<GalaxyPreview['mood'], string> = {
-  vibrant:       'Vibrant',
-  contemplative: 'Contemplative',
-  technical:     'Technical',
-  creative:      'Creative',
-  intimate:      'Intimate',
-}
-
-const MATURITY_LABEL: Record<GalaxyPreview['maturity'], string> = {
-  forming:     'New',
-  active:      'Active',
-  established: 'Landmark',
-}
-
 // --- GalaxyCard -------------------------------------------------------------
 
 export default function GalaxyCard({ galaxy, variant = 'full', joined, onJoin, joinLoading }: Props) {
   const t = useTranslations('galaxies')
+  const tw = useTranslations('galaxyWorkflow')
   const { slug, name, symbol, tagline, keywords, mood, memberCount, maturity, accentColor } = galaxy
 
   if (variant === 'compact') {
     return <CompactCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords.slice(0, 3)} memberCount={memberCount} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} joinLabel={t('join')} joinedLabel={t('joined')} membersLabel={t('members', { count: memberCount })} />
   }
 
-  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} joinLabel={t('join')} joinedLabel={t('joined')} membersLabel={t('members', { count: memberCount })} />
+  return <FullCard slug={slug} name={name} symbol={symbol} tagline={tagline} keywords={keywords} mood={mood} memberCount={memberCount} maturity={maturity} accentColor={accentColor} joined={joined} onJoin={onJoin} joinLoading={joinLoading} joinLabel={t('join')} joinedLabel={t('joined')} membersLabel={t('members', { count: memberCount })} moodLabel={tw(`moods.${mood}`)} maturityLabel={tw(`maturity.${maturity}`)} />
 }
 
 // --- Compact variant  -  strip card -------------------------------------------
@@ -68,6 +56,7 @@ function CompactCard({
     transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
   } as const
 
+  const router = useRouter()
   const handleMouseEnter = (e: React.MouseEvent) => {
     const el = e.currentTarget as HTMLElement
     el.style.transform = 'translateY(-3px)'
@@ -155,7 +144,7 @@ function CompactCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+        onClick={() => { router.push(`/galaxy/${slug}`) }}
       >
         {cardBody}
 
@@ -205,12 +194,12 @@ function CompactCard({
 // --- Full variant  -  directory card ------------------------------------------
 
 function FullCard({
-  slug, name, symbol, tagline, keywords, mood, maturity, accentColor, joined, onJoin, joinLoading, joinLabel, joinedLabel, membersLabel,
+  slug, name, symbol, tagline, keywords, accentColor, joined, onJoin, joinLoading, joinLabel, joinedLabel, membersLabel, moodLabel, maturityLabel,
 }: {
   slug: string; name: string; symbol: string; tagline?: string; keywords: string[]
   mood: GalaxyPreview['mood']; memberCount: number; maturity: GalaxyPreview['maturity']; accentColor: string
   joined?: boolean; onJoin?: () => void; joinLoading?: boolean
-  joinLabel: string; joinedLabel: string; membersLabel: string
+  joinLabel: string; joinedLabel: string; membersLabel: string; moodLabel: string; maturityLabel: string
 }) {
   const t = useTranslations('galaxies')
   const cardStyle = {
@@ -222,6 +211,7 @@ function FullCard({
     transition: 'transform 300ms cubic-bezier(0.16,1,0.3,1), box-shadow 300ms ease, border-color 300ms ease',
   } as const
 
+  const router = useRouter()
   const handleMouseEnter = (e: React.MouseEvent) => {
     const el = e.currentTarget as HTMLElement
     el.style.transform = 'translateY(-4px)'
@@ -316,11 +306,11 @@ function FullCard({
           {membersLabel}
         </span>
         <span className="text-xs" style={{ color: 'var(--ghost)' }}>·</span>
-        <span className="text-xs" style={{ color: MOOD_LABEL[mood] ? accentColor : 'var(--ghost)', opacity: 0.8 }}>
-          {MOOD_LABEL[mood]}
+        <span className="text-xs" style={{ color: accentColor, opacity: 0.8 }}>
+          {moodLabel}
         </span>
         <span className="ml-auto text-[9px] px-2 py-0.5 rounded-md tracking-widest uppercase" style={{ color: 'var(--ghost)', background: 'var(--surface)' }}>
-          {MATURITY_LABEL[maturity]}
+          {maturityLabel}
         </span>
       </div>
     </>
@@ -334,7 +324,7 @@ function FullCard({
         style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => { window.location.href = `/galaxy/${slug}` }}
+        onClick={() => { router.push(`/galaxy/${slug}`) }}
       >
         {cardBody}
 

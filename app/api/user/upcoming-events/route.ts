@@ -21,15 +21,15 @@ export async function GET(request: Request) {
   const baseInclude = {
     galaxy: { select: { id: true, name: true, slug: true, accentColor: true } },
     proposer: { select: { id: true, name: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
-    rsvps: { where: { userId }, select: { userId: true } },
-    _count: { select: { rsvps: true } },
+    rsvps: { where: { userId }, select: { userId: true, status: true } },
+    _count: { select: { rsvps: { where: { status: 'APPROVED' } } } },
   } as const
 
   const rsvpedEvent = await prisma.event.findFirst({
     where: {
       status: EventStatus.APPROVED,
       date: { gte: new Date() },
-      rsvps: { some: { userId } },
+      rsvps: { some: { userId, status: 'APPROVED' } },
     },
     orderBy: { date: 'asc' },
     include: baseInclude,
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       status: EventStatus.APPROVED,
       date: { gte: new Date() },
       OR: [
-        { rsvps: { some: { userId } } },
+        { rsvps: { some: { userId, status: 'APPROVED' } } },
         { galaxy: { memberships: { some: { userId } } } },
       ],
     },

@@ -20,7 +20,7 @@ const COVER_IMAGES: Record<string, string> = {
 }
 
 interface Props {
-  galaxies: (GalaxyPreview & { joined?: boolean })[]
+  galaxies: (GalaxyPreview & { joined?: boolean; requestStatus?: string | null; joinPolicy?: string })[]
   className?: string
 }
 
@@ -29,6 +29,8 @@ interface Props {
  * Each card has a real cover image with dark overlay, text overlay, and join button.
  */
 export default function RecommendedCommunities({ galaxies, className = '' }: Props) {
+  const tw = useTranslations('galaxyWorkflow')
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
   const t = useTranslations('myPlanet')
   const tGalaxy = useTranslations('galaxies')
   const tGalaxyPage = useTranslations('galaxyPage')
@@ -61,6 +63,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
       <HorizontalCarousel label={tHome('recommendedCommunities')}>
         {galaxies.map((g) => {
           const joined = g.joined || joinedIds.has(g.id)
+          const pending = g.requestStatus === 'PENDING' || pendingIds.has(g.id)
           const coverUrl = COVER_IMAGES[g.slug]
 
           return (
@@ -146,14 +149,16 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
                     try {
                       const response = await fetch('/api/communities/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ communityId: g.id }) })
                       if (!response.ok) throw new Error('Join failed')
-                      setJoinedIds((prev) => new Set(prev).add(g.id))
+                      const result = await response.json()
+                      if (result.joined) setJoinedIds((prev) => new Set(prev).add(g.id))
+                      else setPendingIds(prev => new Set(prev).add(g.id))
                     } catch {
                       setJoinError(tGalaxyPage('joinFailed'))
                     } finally {
                       setJoiningId(null)
                     }
                   }}
-                  disabled={joined || joiningId !== null}
+                  disabled={joined || pending || joiningId !== null}
                   className="text-[10px] font-semibold px-4 py-1.5 rounded-lg transition-all duration-200"
                   style={{
                     background: joined
@@ -165,7 +170,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
                     boxShadow: joined ? 'none' : '0 0 8px rgba(124,58,237,0.15)',
                   }}
                 >
-                  {tGalaxy(joined ? 'joined' : 'join')}
+                  {pending ? tw('pending') : joined ? tGalaxy('joined') : g.joinPolicy === 'APPROVAL' ? tw('requestJoin') : tGalaxy('join')}
                 </button>
               </div>
             </div>

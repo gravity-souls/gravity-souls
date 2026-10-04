@@ -1,6 +1,6 @@
 import type { PlanetConfig } from '@/types/planet'
 
-export type EventStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PASSED'
+export type EventStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PASSED' | 'CANCELLED'
 
 export type EventCategory = 'MEETUP' | 'ONLINE' | 'WORKSHOP' | 'STARGAZING' | 'DISCUSSION' | 'OTHER'
 
@@ -36,6 +36,10 @@ export interface GalaxyEventSummary {
   updatedAt: string
   rsvpCount: number
   userHasRSVPed: boolean
+  userAttendance?: string | null
+  requiresApproval?: boolean
+  rejectionReason?: string | null
+  canManage?: boolean
   proposer: EventProposer
   galaxy?: {
     id: string

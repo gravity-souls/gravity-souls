@@ -91,10 +91,12 @@ type EventSummaryInput = {
   category: EventCategory
   status: EventStatus
   coverImage: string | null
+  requiresApproval?: boolean
+  rejectionReason?: string | null
   createdAt: Date
   updatedAt: Date
   proposer: UserPlanetConfigSource & { id: string; name: string; planetTexture: string | null; userLevel?: number | null }
-  rsvps?: { userId: string }[]
+  rsvps?: { userId: string; status?: string }[]
   _count: { rsvps: number }
   userHasRSVPed?: boolean
 }
@@ -119,10 +121,13 @@ export function serializeEventSummary(event: EventSummaryInput) {
     category: event.category,
     status: event.status,
     coverImage: event.coverImage,
+    requiresApproval: event.requiresApproval ?? false,
+    rejectionReason: event.rejectionReason ?? null,
+    userAttendance: event.rsvps?.[0]?.status ?? null,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
     rsvpCount: event._count.rsvps,
-    userHasRSVPed: event.userHasRSVPed ?? (event.rsvps?.length ?? 0) > 0,
+    userHasRSVPed: event.userHasRSVPed ?? (event.rsvps?.some(r => !r.status || r.status === 'APPROVED') ?? false),
     proposer: {
       id: event.proposer.id,
       name: event.proposer.name,

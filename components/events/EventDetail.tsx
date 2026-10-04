@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { CalendarDays, Check, MapPin, Monitor, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import EventManagement from '@/components/events/EventManagement'
 import RSVPButton from '@/components/events/RSVPButton'
 import type { GalaxyEventDetail } from '@/types/event'
 
@@ -27,11 +28,12 @@ interface EventDetailProps {
   open: boolean
   isAdmin: boolean
   onClose: () => void
+  onUpdated?: () => void
   onStatusChange?: (eventId: string, status: 'APPROVED' | 'REJECTED') => void
   onRSVPChange?: (eventId: string, state: { rsvpCount: number; userHasRSVPed: boolean }) => void
 }
 
-export default function EventDetail({ event, open, isAdmin, onClose, onStatusChange, onRSVPChange }: EventDetailProps) {
+export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, onStatusChange, onRSVPChange }: EventDetailProps) {
   const t = useTranslations('galaxies')
   const tEvents = useTranslations('eventForms')
   const locale = useLocale()
@@ -101,6 +103,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onStatusCha
           </span>
         </div>
 
+        {event.onlineUrl && event.userHasRSVPed && <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm text-violet-200 underline">{tEvents('online')}</a>}
         <p className="mt-5 text-sm leading-7" style={{ color: 'var(--ink)', opacity: 0.78 }}>
           {event.description}
         </p>
@@ -146,6 +149,8 @@ export default function EventDetail({ event, open, isAdmin, onClose, onStatusCha
             galaxyId={event.galaxyId}
             initialRSVPed={event.userHasRSVPed}
             initialCount={event.rsvpCount}
+            initialAttendance={event.userAttendance}
+            requiresApproval={event.requiresApproval}
             maxAttendees={event.maxAttendees}
             status={event.status}
             onChange={(state) => onRSVPChange?.(event.id, state)}
@@ -155,6 +160,8 @@ export default function EventDetail({ event, open, isAdmin, onClose, onStatusCha
           )}
         </div>
 
+        {event.rejectionReason && <p className="mt-4 text-sm text-red-200">{event.rejectionReason}</p>}
+        {event.canManage && <EventManagement key={event.id} event={event} onChanged={() => { onUpdated?.(); onClose() }} />}
         {isAdmin && event.status === 'PENDING' && (
           <div className="mt-6 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <p className="text-data-label mb-3">{tEvents('adminReview')}</p>

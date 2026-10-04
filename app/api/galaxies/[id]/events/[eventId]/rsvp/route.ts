@@ -1,90 +1,87 @@
-import { EventStatus, NotificationType, Prisma } from '@prisma/client'
-import { createNotification } from '@/lib/createNotification'
-import { getCommunityAccess, jsonError } from '@/lib/galaxy-events'
-import { grantXP } from '@/lib/grantXP'
-import { requireUser } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-
+import { requireUser } from '@/lib/session'
+import { safeApiError } from '@/lib/api-input'
+import {
+  lockedEvent,
+  deny,
+  activeEvent,
+  capacity,
+  notify,
+  reward,
+} from '@/lib/galaxy-workflow'
+async function change(
+  params: Promise<{ id: string; eventId: string }>,
+  cancel: boolean,
+) {
+  try {
+    const { user } = await requireUser()
+    const { id, eventId } = await params
+    const result = await prisma.$transaction(async (tx) => {
+      const access = await lockedEvent(tx, id, eventId, user)
+      if (!access.membership && !access.isAdmin) deny('joinFirst')
+      const previous = await tx.eventRSVP.findUnique({
+        where: { eventId_userId: { eventId, userId: user.id } },
+      })
+      if (cancel) {
+        if (previous)
+          await tx.eventRSVP.update({
+            where: { id: previous.id },
+            data: { status: 'CANCELLED' },
+          })
+      } else {
+        activeEvent(access.event)
+        if (previous?.status !== 'APPROVED' && previous?.status !== 'PENDING') {
+          const pending = access.event.requiresApproval
+          if (!pending) await capacity(tx, eventId, access.event.maxAttendees)
+          await tx.eventRSVP.upsert({
+            where: { eventId_userId: { eventId, userId: user.id } },
+            create: {
+              eventId,
+              userId: user.id,
+              status: pending ? 'PENDING' : 'APPROVED',
+              rewarded: !pending,
+            },
+            update: {
+              status: pending ? 'PENDING' : 'APPROVED',
+              rewarded: !pending || previous?.rewarded,
+            },
+          })
+          if (!pending && !previous?.rewarded)
+            await reward(tx, user.id, 'EVENT_RSVP')
+          await notify(
+            tx,
+            [access.event.proposerId],
+            pending ? 'galaxyAttendanceRequested' : 'galaxyAttendanceJoined',
+            `/galaxy/${access.galaxy.slug}?event=${eventId}#events`,
+            { title: access.event.title },
+          )
+        }
+      }
+      const attendance = await tx.eventRSVP.findUnique({
+        where: { eventId_userId: { eventId, userId: user.id } },
+      })
+      return {
+        rsvpCount: await tx.eventRSVP.count({
+          where: { eventId, status: 'APPROVED' },
+        }),
+        userHasRSVPed: attendance?.status === 'APPROVED',
+        userAttendance: attendance?.status ?? null,
+      }
+    })
+    return Response.json(result)
+  } catch (error) {
+    return safeApiError(error)
+  }
+}
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string; eventId: string }> },
 ) {
-  let session
-  try {
-    session = await requireUser()
-  } catch (res) {
-    return res as Response
-  }
-
-  const { id, eventId } = await params
-  const userId = session.user.id
-  const access = await getCommunityAccess(id, userId)
-
-  if (!access) return jsonError('Galaxy not found', 404)
-  if (!access.isMember && !access.isAdmin) return jsonError('Join this galaxy before RSVPing', 403)
-
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    include: {
-      proposer: { select: { id: true } },
-      _count: { select: { rsvps: true } },
-    },
-  })
-
-  if (!event || event.galaxyId !== id) return jsonError('Event not found', 404)
-  if (event.status !== EventStatus.APPROVED) return jsonError('Only approved events accept RSVPs', 400)
-  if (event.maxAttendees !== null && event._count.rsvps >= event.maxAttendees) {
-    return jsonError('Event is full', 409)
-  }
-
-  let created = false
-  try {
-    await prisma.eventRSVP.create({ data: { eventId, userId } })
-    created = true
-  } catch (error) {
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
-      throw error
-    }
-  }
-
-  if (created) {
-    await grantXP(userId, 'EVENT_RSVP')
-    await createNotification({
-      userId: event.proposerId,
-      type: NotificationType.GALAXY_NEW_EVENT,
-      title: 'Someone is joining your event',
-      body: `${session.user.name ?? 'A planet'} will attend "${event.title}"`,
-      actionUrl: `/galaxies/${id}/events/${event.id}`,
-    })
-  }
-
-  const rsvpCount = await prisma.eventRSVP.count({ where: { eventId } })
-  return Response.json({ rsvpCount, userHasRSVPed: true })
+  return change(params, false)
 }
-
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string; eventId: string }> },
 ) {
-  let session
-  try {
-    session = await requireUser()
-  } catch (res) {
-    return res as Response
-  }
-
-  const { id, eventId } = await params
-  const userId = session.user.id
-  const access = await getCommunityAccess(id, userId)
-
-  if (!access) return jsonError('Galaxy not found', 404)
-  if (!access.isMember && !access.isAdmin) return jsonError('Join this galaxy before changing RSVPs', 403)
-
-  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { galaxyId: true } })
-  if (!event || event.galaxyId !== id) return jsonError('Event not found', 404)
-
-  await prisma.eventRSVP.deleteMany({ where: { eventId, userId } })
-  const rsvpCount = await prisma.eventRSVP.count({ where: { eventId } })
-
-  return Response.json({ rsvpCount, userHasRSVPed: false })
+  return change(params, true)
 }

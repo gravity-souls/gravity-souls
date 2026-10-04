@@ -3,8 +3,11 @@
 import { useState, useEffect, use } from 'react'
 import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
+import { galaxyRequest } from '@/lib/galaxy-client'
+import { useTranslations, useLocale } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
+import DiscussionComposer from '@/components/galaxy/DiscussionComposer'
 import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
@@ -32,6 +35,10 @@ interface CommunityRow {
   memberCount: number
   joined: boolean
   isAdmin?: boolean
+  canManage?: boolean
+  creatorId?: string | null
+  joinPolicy?: string
+  requestStatus?: string | null
 }
 
 function toGalaxy(row: CommunityRow): Galaxy {
@@ -66,6 +73,7 @@ function toGalaxyPreview(row: CommunityRow): GalaxyPreview {
 }
 
 interface CommunityPost {
+  canDelete?: boolean
   id: string
   authorName: string
   authorPlanetId?: string
@@ -97,6 +105,7 @@ interface ApiCommunityReply {
 }
 
 interface ApiCommunityPost {
+  canDelete?: boolean
   id: string
   content: string
   createdAt: string
@@ -112,6 +121,7 @@ interface ApiCommunityPost {
 }
 
 interface DiscussionTopic {
+  canDelete?: boolean
   id: string
   title: string
   replies: number
@@ -127,6 +137,7 @@ interface DiscussionReply {
 }
 
 interface ApiCommunityDiscussion {
+  canDelete?: boolean
   id: string
   title: string
   heat: number
@@ -150,6 +161,7 @@ function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
     authorName: post.author.planet?.name ?? post.author.name,
     authorPlanetId: post.author.planet?.id,
     content: post.content,
+    canDelete: post.canDelete,
     createdAt: post.createdAt,
     likes: post.likes,
     replies: post.replies,
@@ -162,6 +174,7 @@ function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTop
   return {
     id: discussion.id,
     title: discussion.title,
+    canDelete: discussion.canDelete,
     heat: discussion.heat,
     replies: discussion.replies,
     replyItems: (discussion.replyItems ?? []).map(apiReplyToCommunityReply),
@@ -176,6 +189,8 @@ interface Props {
 
 export default function GalaxyPage({ params }: Props) {
   const router = useRouter()
+  const locale = useLocale()
+  const tw = useTranslations('galaxyWorkflow')
   const t = useTranslations('galaxyPage')
   const tCommon = useTranslations('common')
   const tGalaxies = useTranslations('galaxies')
@@ -188,6 +203,9 @@ export default function GalaxyPage({ params }: Props) {
   const [community, setCommunity] = useState<CommunityRow | null>(null)
   const [allCommunities, setAllCommunities] = useState<CommunityRow[]>([])
   const [slugMissing, setSlugMissing] = useState(false)
+  const [memberPlanets, setMemberPlanets] = useState<PlanetProfile[]>([])
+  const [membersError, setMembersError] = useState('')
+  const [requestStatus, setRequestStatus] = useState<string | null>(null)
   const [communityJoined, setCommunityJoined] = useState(false)
   const [joiningCommunity, setJoiningCommunity] = useState(false)
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([])
@@ -263,6 +281,7 @@ export default function GalaxyPage({ params }: Props) {
         }
         setCommunity(match)
         setCommunityJoined(match.joined)
+        setRequestStatus(match.requestStatus ?? null)
       })
       .catch(() => { if (!cancelled) setCommunityError(t('communityUnavailable')) })
       .finally(() => { if (!cancelled) setCommunityLoading(false) })
@@ -322,6 +341,29 @@ export default function GalaxyPage({ params }: Props) {
     return () => cancelAnimationFrame(frame)
   }, [communityLoading])
 
+  useEffect(() => {
+    if (!community) return
+    let alive = true
+    galaxyRequest<{ members: { planet: Record<string, unknown> | null }[] }>(`/api/communities/${community.id}/members`)
+      .then(data => { if (alive) { setMemberPlanets(data.members.flatMap(m => m.planet ? [planetProfileFromApi(m.planet)] : [])); setMembersError('') } })
+      .catch(() => { if (alive) setMembersError(tw('failed')) })
+    return () => { alive = false }
+  }, [community, communityJoined, tw])
+
+  async function leaveGalaxy() {
+    if (!community || !window.confirm(tw('leaveConfirm'))) return
+    setJoiningCommunity(true); setPostError('')
+    try { await galaxyRequest(`/api/communities/${community.id}/leave`, 'POST'); setCommunityJoined(false); setRequestStatus(null); setReload(v => v + 1) }
+    catch (err) { const key = err instanceof Error ? err.message : 'failed'; setPostError(tw.has(key) ? tw(key) : tw('failed')) }
+    finally { setJoiningCommunity(false) }
+  }
+
+  async function deleteContent(kind: 'posts' | 'discussions', id: string) {
+    if (!community || !window.confirm(tw('deleteContentConfirm'))) return
+    try { await galaxyRequest(`/api/communities/${community.id}/${kind}/${id}`, 'DELETE'); setSelectedTopic(null); setReload(v=>v+1) }
+    catch { setPostError(tw('failed')) }
+  }
+
   async function handleJoinCommunity() {
     if (!community) {
       setPostError(t('communityUnavailable'))
@@ -341,8 +383,9 @@ export default function GalaxyPage({ params }: Props) {
         return
       }
 
-      if (res.ok) setCommunityJoined(true)
-      else setPostError(t('joinFailed'))
+      const result = await res.json()
+      if (res.ok) { setCommunityJoined(result.joined); setRequestStatus(result.requestStatus); setReload(v => v + 1) }
+      else setPostError(tw.has(result.error) ? tw(result.error) : t('joinFailed'))
     } catch {
       setPostError(t('joinFailed'))
     } finally {
@@ -602,9 +645,6 @@ export default function GalaxyPage({ params }: Props) {
 
   const galaxy = toGalaxy(community)
 
-  // No real per-galaxy "active planet" source exists yet (Community carries
-  // no such relation) — an empty state is correct here, not invented content.
-  const memberPlanets: PlanetProfile[] = []
 
   const relatedPreviews = allCommunities
     .filter((row) => row.id !== community.id)
@@ -713,7 +753,7 @@ export default function GalaxyPage({ params }: Props) {
                     className="px-3 py-1 rounded-xl text-xs capitalize"
                     style={{ background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--border-soft)' }}
                   >
-                    {galaxy.maturity}
+                    {tw(`maturity.${galaxy.maturity}`)}
                   </span>
                 </div>
               </div>
@@ -731,6 +771,8 @@ export default function GalaxyPage({ params }: Props) {
                   >
                     {t('joined')}
                   </span>
+                ) : requestStatus === 'PENDING' ? (
+                  <button disabled={joiningCommunity} className="rounded-xl border border-white/15 px-4 py-2 text-sm" onClick={leaveGalaxy}>{tw('cancelJoinRequest')}</button>
                 ) : userRole === 'resonator' ? (
                   <button
                     type="button"
@@ -746,7 +788,7 @@ export default function GalaxyPage({ params }: Props) {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${accentColor}30` }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
                   >
-                    {joiningCommunity ? t('joining') : t('joinGalaxy')}
+                    {joiningCommunity ? t('joining') : community.joinPolicy === 'APPROVAL' ? tw('requestJoin') : t('joinGalaxy')}
                   </button>
                 ) : (
                   <Link
@@ -764,6 +806,13 @@ export default function GalaxyPage({ params }: Props) {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="mx-auto flex max-w-5xl flex-wrap gap-3 px-4 pt-4">
+            {community.canManage && <Link href={`/galaxy/${slug}/manage`} className="rounded-xl border border-white/15 px-4 py-2 text-sm">{tw('manageGalaxy')}</Link>}
+            {communityJoined && <button disabled={joiningCommunity} onClick={leaveGalaxy} className="rounded-xl border border-white/15 px-4 py-2 text-sm">{tw('leaveGalaxy')}</button>}
+            {!community.creatorId && <p className="w-full text-xs text-amber-200">{tw('unowned')}</p>}
+            {requestStatus === 'REJECTED' && <p className="w-full text-xs text-white/60">{tw('joinRejected')}</p>}
           </div>
 
           {(communityLoading || communityError || postError) && (
@@ -851,7 +900,7 @@ export default function GalaxyPage({ params }: Props) {
                       className="rounded-2xl p-8 text-center"
                       style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                     >
-                      <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('noActivePlanets')}</p>
+                      <p className="text-sm" style={{ color: 'var(--ghost)' }}>{membersError || (!communityJoined ? tw('joinToSeeMembers') : t('noActivePlanets'))}</p>
                     </div>
                   )}
                 </section>
@@ -865,6 +914,7 @@ export default function GalaxyPage({ params }: Props) {
                   <EventsTab galaxyId={community?.id ?? null} isAdmin={isGalaxyAdmin} canPropose={communityJoined || isGalaxyAdmin} />
                 </section>
 
+                {communityJoined && <DiscussionComposer galaxyId={community.id} onCreated={()=>setReload(v=>v+1)} />}
                 {/* Discussions */}
                 {(communityLoading || discussionsLoading || discussionsError || discussions.length === 0) && (
                   <section aria-label={t('recentDiscussions')}>
@@ -916,7 +966,7 @@ export default function GalaxyPage({ params }: Props) {
                                 {topic.title}
                               </p>
                               <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                                {topic.replies} replies
+                                {tw('replyCount', { count: topic.replies })}
                               </p>
                             </div>
                           </button>
@@ -924,7 +974,7 @@ export default function GalaxyPage({ params }: Props) {
                       </div>
                     ) : (
                       <LockedLayer
-                        reason="Create your planet to join discussions and see the full community"
+                        reason={tw('createPlanetFirst')}
                         ctaLabel="Begin formation"
                         ctaHref="/onboarding"
                       >
@@ -991,7 +1041,7 @@ export default function GalaxyPage({ params }: Props) {
                               opacity: postDraft.trim() && !posting ? 1 : 0.55,
                             }}
                           >
-                            {posting ? 'Posting...' : 'Post'}
+                            {posting ? tw('saving') : tw('post')}
                           </button>
                         </div>
                       </div>
@@ -1002,10 +1052,10 @@ export default function GalaxyPage({ params }: Props) {
                       >
                         <div>
                           <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                            Join to post in {galaxy.name}
+                            {tw('joinToPost', { name: galaxy.name })}
                           </p>
                           <p className="text-xs mt-1" style={{ color: 'var(--ghost)' }}>
-                            You can read public posts now. Posting unlocks after joining.
+                            {tw('publicPostsHint')}
                           </p>
                         </div>
                         <button
@@ -1015,7 +1065,7 @@ export default function GalaxyPage({ params }: Props) {
                           className="px-4 py-2 rounded-xl text-xs font-medium shrink-0 w-full sm:w-auto"
                           style={{ color: accentColor, background: `${accentColor}14`, border: `1px solid ${accentColor}32`, cursor: 'pointer' }}
                         >
-                          {joiningCommunity ? 'Joining...' : 'Join to post'}
+                          {joiningCommunity ? t('joining') : requestStatus === 'PENDING' ? tw('pending') : tw('joinToPostButton')}
                         </button>
                       </div>
                     )}
@@ -1053,11 +1103,12 @@ export default function GalaxyPage({ params }: Props) {
                                 </p>
                               )}
                               <time className="text-[10px]" style={{ color: 'var(--ghost)' }} dateTime={post.createdAt}>
-                                {new Date(post.createdAt).toLocaleDateString()}
+                                {new Date(post.createdAt).toLocaleDateString(locale)}
                               </time>
                             </div>
                             <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
                               {post.content}
+                              {post.canDelete && <button type="button" onClick={()=>deleteContent('posts',post.id)} className="ml-3 text-xs text-red-200">{tw('deleteContent')}</button>}
                             </p>
                             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 text-[10px]">
                               <button
@@ -1088,7 +1139,7 @@ export default function GalaxyPage({ params }: Props) {
                                   opacity: loadingReplies ? 0.65 : 1,
                                 }}
                               >
-                                {loadingReplies ? 'Loading...' : 'Reply'} · {post.replies}
+                                {loadingReplies ? tw('loading') : tw('reply')} · {post.replies}
                               </button>
                             </div>
 
@@ -1119,7 +1170,7 @@ export default function GalaxyPage({ params }: Props) {
                                             </p>
                                           )}
                                           <time className="text-[9px]" style={{ color: 'var(--ghost)' }} dateTime={reply.createdAt}>
-                                            {new Date(reply.createdAt).toLocaleDateString()}
+                                            {new Date(reply.createdAt).toLocaleDateString(locale)}
                                           </time>
                                         </div>
                                         <p className="text-xs leading-relaxed mt-1" style={{ color: 'var(--ink)', opacity: 0.74 }}>
@@ -1132,7 +1183,7 @@ export default function GalaxyPage({ params }: Props) {
                                             className="mt-1 text-[10px] bg-transparent border-none p-0"
                                             style={{ color: accentColor, cursor: 'pointer' }}
                                           >
-                                            Reply
+                                            {tw('reply')}
                                           </button>
                                         )}
                                       </div>
@@ -1152,7 +1203,7 @@ export default function GalaxyPage({ params }: Props) {
                                       value={replyDraft}
                                       onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [post.id]: event.target.value }))}
                                       rows={2}
-                                      placeholder={`Reply to ${post.authorName}...`}
+                                      placeholder={tw('replyTo', { name: post.authorName })}
                                       className="w-full resize-none rounded-xl px-3 py-2 text-base sm:text-xs outline-none"
                                       style={{
                                         background: 'rgba(255,255,255,0.03)',
@@ -1174,7 +1225,7 @@ export default function GalaxyPage({ params }: Props) {
                                           opacity: replyDraft.trim() && replyingPostId !== post.id ? 1 : 0.55,
                                         }}
                                       >
-                                        {replyingPostId === post.id ? 'Replying...' : 'Send reply'}
+                                        {replyingPostId === post.id ? tw('saving') : tw('sendReply')}
                                       </button>
                                     </div>
                                   </div>
@@ -1333,6 +1384,7 @@ export default function GalaxyPage({ params }: Props) {
                   </h2>
                   <p className="text-xs sm:text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
                     {t('discussionIntro', { name: galaxy.name })}
+                    {selectedTopic?.canDelete && <button type="button" onClick={()=>deleteContent('discussions',selectedTopic.id)} className="ml-3 text-xs text-red-200">{tw('deleteContent')}</button>}
                   </p>
                 </div>
               </div>
@@ -1358,7 +1410,7 @@ export default function GalaxyPage({ params }: Props) {
                         {reply.authorName}
                       </p>
                       <time className="text-[9px]" style={{ color: 'var(--ghost)' }} dateTime={reply.createdAt}>
-                        {new Date(reply.createdAt).toLocaleDateString()}
+                        {new Date(reply.createdAt).toLocaleDateString(locale)}
                       </time>
                     </div>
                     <p className="text-xs leading-relaxed mt-2" style={{ color: 'var(--ink)', opacity: 0.76 }}>
