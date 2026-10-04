@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import EventCard from '@/components/events/EventCard'
 import EventDetail from '@/components/events/EventDetail'
+import type { AttendanceState } from '@/components/events/RSVPButton'
 import SectionHeader from '@/components/ui/SectionHeader'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 
@@ -111,9 +112,17 @@ export default function GalaxyEventsPage() {
     } catch { setError(tw('failed')) }
   }
 
-  function applyRSVPChange(eventId: string, state: { rsvpCount: number; userHasRSVPed: boolean }) {
+  async function applyRSVPChange(eventId: string, state: AttendanceState) {
     setEvents((prev) => prev.map((event) => event.id === eventId ? { ...event, ...state } : event))
     setSelectedEvent((event) => event?.id === eventId ? { ...event, ...state, spotsRemaining: event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - state.rsvpCount) } : event)
+    const summary = events.find(event => event.id === eventId)
+    if (!summary) return
+    try {
+      const response = await fetch(`/api/galaxies/${summary.galaxyId}/events/${eventId}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error('failed')
+      const data = await response.json() as { event: GalaxyEventDetail }
+      setSelectedEvent(previous => previous?.id === eventId && previous.rsvpCount === state.rsvpCount && previous.userHasRSVPed === state.userHasRSVPed ? data.event : previous)
+    } catch { setError(tw('failed')) }
   }
 
   return (

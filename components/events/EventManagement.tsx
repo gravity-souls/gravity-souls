@@ -32,7 +32,7 @@ export default function EventManagement({
     return () => {
       alive = false
     }
-  }, [endpoint, revision, t])
+  }, [endpoint, revision, t, event.rsvpCount, event.userHasRSVPed, event.userAttendance])
   async function review(userId: string, status: string) {
     if (status === 'REJECTED' && !window.confirm(t('rejectAttendanceConfirm')))
       return
