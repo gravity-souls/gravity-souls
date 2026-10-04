@@ -1,7 +1,10 @@
 import { register } from 'ts-node'
 import Module from 'node:module'
 import path from 'node:path'
-register({ compilerOptions: { module: 'CommonJS', moduleResolution: 'node' } })
+register({
+  files: true,
+  compilerOptions: { module: 'CommonJS', moduleResolution: 'node' },
+})
 const resolve = Module._resolveFilename
 Module._resolveFilename = function (id, parent, ...rest) {
   return resolve.call(
@@ -10,4 +13,9 @@ Module._resolveFilename = function (id, parent, ...rest) {
     parent,
     ...rest,
   )
+}
+
+// CSS modules affect styling only; server rendering checks exercise real text/components.
+Module._extensions['.css'] = (module) => {
+  module.exports = new Proxy({}, { get: (_, name) => String(name) })
 }

@@ -76,3 +76,16 @@ export async function mutualFollow(userIdA: string, userIdB: string): Promise<bo
   ])
   return !!aFollowsB && !!bFollowsA
 }
+
+/** Conservative discovery boundary, shared by star-map counts and node queries.
+ * Private planets remain accessible through permitted detail paths, not discovery.
+ */
+export async function discoveryPlanetWhere(viewerId: string): Promise<import('@prisma/client').Prisma.PlanetWhereInput> {
+  const excluded = await blockedUserIds(viewerId)
+  excluded.add(viewerId)
+  return {
+    active: true,
+    userId: { notIn: [...excluded] },
+    user: { OR: [{ profile: null }, { profile: { is: { visibility: { not: 'PRIVATE' } } } }] },
+  }
+}

@@ -52,6 +52,7 @@ const discussionDelete = require('../app/api/communities/[id]/discussions/[discu
 const postDelete = require('../app/api/communities/[id]/posts/[postId]/route.ts')
 const account = require('../app/api/me/route.ts')
 const summary = require('../app/api/galaxies/events/route.ts')
+const starMap = require('../app/api/star-map/route.ts')
 const request = (data = {}, url = 'https://example.com/api') =>
   new Request(url, {
     method: 'POST',
@@ -113,6 +114,54 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       if (id !== 'noPlanet')
         await db.planet.create({ data: { userId: id, name: `${id} planet` } })
     }
+    await t.test('star map rejects anonymous viewers and invalid queries', async () => {
+      as(null)
+      assert.equal((await starMap.GET(new Request('https://example.com/api?mode=discover'))).status,401)
+      as('owner')
+      assert.equal((await starMap.GET(new Request('https://example.com/api?mode=wrong'))).status,400)
+      assert.equal((await starMap.GET(new Request('https://example.com/api?search='+ 'a'.repeat(81)))).status,400)
+    })
+    await t.test('star map counts and nodes share privacy/block boundaries and custom avatars', async () => {
+      as('owner')
+      await db.user.update({where:{id:'member'},data:{planetCustomTexture:'https://example.test/custom-map.png'}})
+      await db.profile.create({data:{userId:'outsider',visibility:'PRIVATE'}})
+      await db.block.create({data:{blockerId:'applicant',blockedId:'owner'}})
+      const data=await (await starMap.GET(new Request('https://example.com/api?mode=discover'))).json()
+      assert.equal(data.total,2)
+      assert.equal(data.groups.reduce((sum,g)=>sum+g.count,0),data.total)
+      assert.equal(data.nodes.length,2)
+      assert.ok(data.nodes.every(n=>!['owner planet','outsider planet','applicant planet'].includes(n.name)))
+      assert.equal(data.nodes.find(n=>n.name==='member planet').planetConfig.customTextureUrl,'https://example.test/custom-map.png')
+      const search=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=member'))).json()
+      assert.equal(search.total,1);assert.equal(search.nodes.length,1)
+      const resonance=await (await starMap.GET(new Request('https://example.com/api?mode=resonance'))).json()
+      assert.equal(resonance.scope,'batch');assert.equal(resonance.nodes.length,2)
+      assert.ok(resonance.nodes.every(n=>Number.isFinite(n.score)&&n.score>=0&&n.score<=100))
+      as('noPlanet')
+      assert.equal((await (await starMap.GET(new Request('https://example.com/api?mode=resonance'))).json()).requiresPlanet,true)
+      await db.block.deleteMany({where:{blockerId:'applicant',blockedId:'owner'}})
+      await db.profile.delete({where:{userId:'outsider'}})
+      await db.user.update({where:{id:'member'},data:{planetCustomTexture:null}})
+    })
+    await t.test('star map bounded pages have no missing or duplicate planet nodes', async () => {
+      as('owner')
+      for(let i=0;i<40;i++) {
+        await db.user.create({data:{id:'map-'+i,name:'Map '+i,email:'map-'+i+'@example.test'}})
+        await db.planet.create({data:{userId:'map-'+i,name:'Map fixture '+i,mood:'calm'}})
+      }
+      const first=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=Map%20fixture&group=calm'))).json()
+      assert.equal(first.total,40);assert.equal(first.nodes.length,36);assert.ok(first.nextCursor)
+      const second=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=Map%20fixture&group=calm&cursor='+first.nextCursor))).json()
+      assert.equal(second.nodes.length,4);assert.equal(second.nextCursor,null)
+      assert.equal(new Set([...first.nodes,...second.nodes].map(n=>n.id)).size,40)
+      await db.user.deleteMany({where:{id:{startsWith:'map-'}}})
+    })
+    await t.test('galaxy star map points to real galaxy identities with real member counts',async()=>{
+      as('owner')
+      const data=await (await starMap.GET(new Request('https://example.com/api?mode=galaxies&search=Existing'))).json()
+      assert.equal(data.total,1);assert.equal(data.nodes[0].href,'/galaxy/legacy-existing')
+      assert.equal(data.groups[0].count,0);assert.equal(data.nodes[0].memberCount,0)
+    })
     await t.test('migration preserves existing events and approved attendance', async () => {
       const oldEvent=await db.event.findUnique({where:{id:'legacy-event'}})
       const oldRSVP=await db.eventRSVP.findUnique({where:{id:'legacy-rsvp'}})

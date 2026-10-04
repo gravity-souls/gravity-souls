@@ -1,4 +1,6 @@
-# Star map reference preview
+# Star map reference preview (superseded)
+
+The illustrative preview has been replaced by `/star-map`; see `star-map-production.md`. The old demo URL redirects to the real-data map. The notes below describe the earlier prototype.
 
 Date: 2026-10-04. Route: `/demo/star-map` (public, illustrative data only).
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -90,6 +91,7 @@ function HintStrip({ hasActive }: { hasActive: boolean }) {
 export default function ResonancePage() {
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
+  const tMap = useTranslations('starMap')
   const tCommon = useTranslations('common')
   const [mounted, setMounted]     = useState(false)
   const [role, setRole]           = useState<'explorer' | 'resonator'>('explorer')
@@ -218,6 +220,7 @@ export default function ResonancePage() {
         <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-5xl mx-auto">
 
           <div className="mb-10">
+            <div className="mb-5"><Link href="/star-map?mode=resonance" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link></div>
             <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} />
           </div>
 
@@ -243,6 +246,7 @@ export default function ResonancePage() {
 
       <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-6xl mx-auto">
 
+        <div className="mb-5"><Link href="/star-map?mode=resonance" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link></div>
         <div className="mb-8">
           <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} accentColor={accentColor} />
         </div>
