@@ -149,6 +149,9 @@
     "loadingCommunity": "Chargement de la communauté…",
     "loadingDiscussions": "Chargement des discussions…",
     "noDiscussions": "Aucune discussion pour le moment.",
+    "loadingPosts": "Chargement des publications de la communauté…",
+    "loadingReplies": "Chargement des réponses…",
+    "noPosts": "Aucune publication pour le moment. Rejoignez la galaxie et envoyez le premier signal.",
     "retryLoad": "Réessayer",
     "publicPostNotice": "Ces publications sont accessibles à tous, même sans compte."
   },

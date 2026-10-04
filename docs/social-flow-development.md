@@ -117,6 +117,34 @@ not establish deployed multi-account acceptance for either slice.
 
 ## Verification limits
 
+### Current next-development queue — 2026-10-05
+
+The earlier "pending" entries describe their delivery dates, not the current state.
+Core message/notification, planet actions, activity interest and linked Post flows
+are implemented. MR30 deployed desktop recheck closes duplicated event sections,
+stale attendee/management lists and unavailable-Post copy in en/fr/zh; see the
+2026-10-05 section proposed in MR31. Full acceptance remains incomplete.
+
+Development still remains beyond acceptance:
+
+1. Recommended next slice: permitted saved/following/mutual/existing-conversation
+   status in star-map previews and lists, with state synchronization when returning
+   from detail or chat. This is proposed work, not claimed implemented or started.
+2. Independent beam invitations (send, receive, accept/reject, then chat) remain a
+   product decision. Current beams open chat; new chats require mutual follows.
+   Define privacy, notification, anti-spam and lifecycle rules before introducing
+   invitation storage. Recording this queue does not authorize a new invitation model.
+3. Personal exploration routes and temporary activity clusters remain gameplay
+   proposals. Define the actual objects, permissions and destinations first; decorative
+   links must never be presented as real social relationships.
+
+Current maintenance slice replaces hardcoded galaxy post/reply loading and empty
+copy in all three locales, and translates the stats maturity value. The isolated
+database/locale suite now passes 77 checks, including added three-language request,
+full-capacity, pending withdrawal and approved withdrawal button cases. This does
+not close live attendance-approval/capacity, fresh incoming-only chat, Miro's access
+after approval, physical mobile/Safari, or complete avatar/language acceptance.
+
 The embedded PostgreSQL test harness uses real migrations, Prisma, permissions, transaction
 logic, notifications and rate-limit buckets; authentication alone uses fixture identities.
 It covers messaging retries, concurrent-arrival read preservation, outsiders/blocks, private

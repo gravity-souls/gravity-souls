@@ -46,6 +46,27 @@ function render(locale, child) {
   )
 }
 for (const locale of ['en', 'zh', 'fr']) {
+  test(`attendance request, capacity and withdrawal controls remain usable in ${locale}`, () => {
+    const messages = require(`../messages/${locale}.json`)
+    const attendance = (state, count = 2) => render(locale, React.createElement(RSVP, {
+      eventId: 'evt', galaxyId: 'g', initialRSVPed: state === 'APPROVED',
+      initialAttendance: state, initialCount: count, maxAttendees: 2,
+      requiresApproval: true,
+    }))
+    const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)
+    const full = attendance(null)
+    assert.ok(full.includes(escaped(messages.galaxies.eventFull)))
+    assert.match(full, /<button[^>]*disabled=""/)
+    const available = attendance(null, 1)
+    assert.ok(available.includes(escaped(messages.galaxyWorkflow.requestAttendance)))
+    assert.doesNotMatch(available, /<button[^>]*disabled=""/)
+    const pending = attendance('PENDING')
+    assert.ok(pending.includes(escaped(messages.galaxyWorkflow.cancelAttendanceRequest)))
+    assert.doesNotMatch(pending, /<button[^>]*disabled=""/)
+    const approved = attendance('APPROVED')
+    assert.ok(approved.includes(escaped(messages.galaxyWorkflow.cancelAttendance)))
+    assert.doesNotMatch(approved, /<button[^>]*disabled=""/)
+  })
   test(`galaxy creation, discussion and attendance UI translate in ${locale}`, () => {
     const m = require(`../messages/${locale}.json`).galaxyWorkflow
     const form = render(locale, React.createElement(Form))

@@ -149,6 +149,9 @@
     "loadingCommunity": "Loading community…",
     "loadingDiscussions": "Loading discussions…",
     "noDiscussions": "No discussions yet.",
+    "loadingPosts": "Loading community posts...",
+    "loadingReplies": "Loading replies...",
+    "noPosts": "No posts yet. Join and start the first signal.",
     "retryLoad": "Try again",
     "publicPostNotice": "These posts can be read by anyone, including people without an account."
   },
