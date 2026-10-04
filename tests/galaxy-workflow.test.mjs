@@ -214,6 +214,60 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
         assert.equal((await summary.GET(new Request('https://example.test/api?' + query))).status, 400)
       }
     })
+    await t.test('saved status and relationship guidance persist and respect visibility changes', async () => {
+      for (const id of ['action-viewer', 'action-target', 'action-other']) await db.user.create({ data: { id, name: id, email: `${id}@example.test` } })
+      const planet = await db.planet.create({ data: { userId: 'action-target', name: 'Action test' } })
+      const savedContext = { params: Promise.resolve({ planetId: planet.id }) }
+      const followContext = { params: Promise.resolve({ userId: 'action-target' }) }
+      as(null)
+      assert.equal((await removeSaved.GET(request(), savedContext)).status, 401)
+      as('action-viewer')
+      assert.deepEqual(await (await removeSaved.GET(request(), savedContext)).json(), { saved: false })
+      const before = await db.notification.count()
+      assert.equal((await saved.POST(request({ planetId: planet.id }))).status, 200)
+      const savedState = await removeSaved.GET(request(), savedContext)
+      assert.equal(savedState.headers.get('cache-control'), 'private, no-store')
+      assert.deepEqual(await savedState.json(), { saved: true })
+      assert.equal(await db.notification.count(), before)
+      as('action-other')
+      assert.deepEqual(await (await removeSaved.GET(request(), savedContext)).json(), { saved: false })
+      assert.equal((await removeSaved.DELETE(request(), savedContext)).status, 204)
+      as('action-viewer')
+      assert.deepEqual(await (await removeSaved.GET(request(), savedContext)).json(), { saved: true })
+      const guidance = await inbox.POST(request({ recipientId: 'action-target' }))
+      assert.equal(guidance.status, 403)
+      assert.equal((await guidance.json()).code, 'mutualFollowRequired')
+      await follows.POST(request({ userId: 'action-target' }))
+      assert.deepEqual(await (await followStatus.GET(request(), followContext)).json(), { following: true, followedBy: false, available: true })
+      as('action-target')
+      await follows.POST(request({ userId: 'action-viewer' }))
+      as('action-viewer')
+      assert.deepEqual(await (await followStatus.GET(request(), followContext)).json(), { following: true, followedBy: true, available: true })
+      const opened = await inbox.POST(request({ recipientId: 'action-target' }))
+      assert.equal(opened.status, 201)
+      const thread = (await opened.json()).conversationId
+      assert.equal(await db.directMessage.count({ where: { conversationId: thread } }), 0)
+      await followStatus.DELETE(request(), followContext)
+      assert.equal((await inbox.POST(request({ recipientId: 'action-target' }))).status, 200)
+      await db.block.create({ data: { blockerId: 'action-target', blockedId: 'action-viewer' } })
+      assert.equal((await removeSaved.GET(request(), savedContext)).status, 404)
+      assert.deepEqual(await (await followStatus.GET(request(), followContext)).json(), { following: false, followedBy: false, available: false })
+      assert.equal((await inbox.POST(request({ recipientId: 'action-target' }))).status, 403)
+      assert.equal((await removeSaved.DELETE(request(), savedContext)).status, 204)
+      await db.block.deleteMany({ where: { blockerId: 'action-target' } })
+      await db.follow.deleteMany({ where: { followerId: 'action-target' } })
+      await db.profile.create({ data: { userId: 'action-target', visibility: 'PRIVATE' } })
+      assert.equal((await removeSaved.GET(request(), savedContext)).status, 404)
+      await db.profile.delete({ where: { userId: 'action-target' } })
+      await db.planet.update({ where: { id: planet.id }, data: { active: false } })
+      assert.equal((await removeSaved.GET(request(), savedContext)).status, 404)
+      await db.planet.update({ where: { id: planet.id }, data: { active: true } })
+      await db.user.update({ where: { id: 'action-target' }, data: { deletedAt: new Date() } })
+      assert.equal((await removeSaved.GET(request(), savedContext)).status, 404)
+      assert.equal((await followStatus.GET(request(), followContext)).status, 200)
+      assert.equal((await followStatus.GET(request(), followContext).then(r => r.json())).available, false)
+      await db.user.deleteMany({ where: { id: { in: ['action-viewer', 'action-target', 'action-other'] } } })
+    })
     let threadId, firstMessageId, secondMessageId
     const threadContext = () => ({ params: Promise.resolve({ id: threadId }) })
     const getRequest = (query = '') =>
@@ -440,7 +494,7 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
               params: Promise.resolve({ userId: 'owner' }),
             })
           ).json(),
-          { following: false, followedBy: false },
+          { following: false, followedBy: false, available: false },
         )
         await db.block.deleteMany({
           where: { blockerId: 'owner', blockedId: 'member' },

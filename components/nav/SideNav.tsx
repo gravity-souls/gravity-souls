@@ -175,7 +175,8 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
   const galaxiesActive = isRouteActive(pathname, '/galaxies')
   const myPlanetActive = isRouteActive(pathname, '/my-planet')
-  const showMyPlanetSubItems = !collapsed && myPlanetActive
+  const mySpaceActive = myPlanetActive || pathname === '/saved' || pathname === '/relationships'
+  const showMyPlanetSubItems = !collapsed && mySpaceActive
 
   useEffect(() => {
     const root = document.documentElement
@@ -252,6 +253,8 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               lockLabel={lockLabel}
             />
             <SubMenu open={showMyPlanetSubItems}>
+              <SubLink href="/saved" label={tNav('savedOrbit')} active={isRouteActive(pathname, '/saved')} Icon={Orbit} />
+              <SubLink href="/relationships" label={tNav('relationships')} active={isRouteActive(pathname, '/relationships')} Icon={Globe2} />
               <SubLink href="/my-planet/customize" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/my-planet/customize')} Icon={Orbit} />
               <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
             </SubMenu>

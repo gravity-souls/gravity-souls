@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import SavePlanetButton from '@/components/social/SavePlanetButton'
+import BeamButton from '@/components/social/BeamButton'
+import FollowButton from '@/components/social/FollowButton'
+import { useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
@@ -119,7 +121,6 @@ function DrawerContent({
 }) {
   const t = useTranslations('planetPage')
   const tCreation = useTranslations('creationSteps')
-  const router = useRouter()
   const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
   const fragment = planet.contentFragments[0]
   const textureFile = resolvePlanetTexture(planet)
@@ -132,81 +133,6 @@ function DrawerContent({
     ringColor: '',
     rotationSpeed: 0.018,
     cloudOpacity: 0,
-  }
-
-  // savedPlanetIds: null = parent loading, undefined = prop not provided (treat as empty), Set = loaded
-  const deriveState = (ids: Set<string> | null | undefined): boolean | undefined => {
-    if (ids === null) return undefined       // loading → show ···
-    if (ids === undefined) return false      // prop not provided → treat as unsaved
-    return ids.has(planet.id)
-  }
-
-  const [savedState, setSavedState] = useState<boolean | undefined>(() => deriveState(savedPlanetIds))
-  const [authPrompt, setAuthPrompt] = useState(false)
-  const [sending, setSending] = useState(false)
-
-  // Update when planet changes or parent finishes loading
-  useEffect(() => {
-    setSavedState(deriveState(savedPlanetIds))
-    setAuthPrompt(false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planet.id, savedPlanetIds])
-
-  async function handleSave() {
-    setSavedState(true)   // optimistic
-    setAuthPrompt(false)
-    try {
-      const res = await fetch('/api/saved-planets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planetId: planet.id }),
-      })
-      if (res.status === 401) {
-        setSavedState(false)
-        setAuthPrompt(true)
-        return
-      }
-      if (!res.ok) {
-        // 404 = mock planet; other errors — silently revert
-        setSavedState(false)
-      }
-      // 200: optimistic confirmed
-    } catch {
-      setSavedState(false)
-    }
-  }
-
-  async function handleSendBeam() {
-    if (!planet.userId) {
-      router.push(`/planet/${planet.id}`)
-      return
-    }
-
-    setSending(true)
-    try {
-      const res = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientId: planet.userId }),
-      })
-
-      if (res.status === 401) {
-        router.push('/sign-in')
-        return
-      }
-
-      if (res.ok) {
-        const data = await res.json()
-        router.push(`/messages/${data.conversationId}`)
-        return
-      }
-
-      router.push(`/planet/${planet.id}`)
-    } catch {
-      router.push(`/planet/${planet.id}`)
-    } finally {
-      setSending(false)
-    }
   }
 
   return (
@@ -417,38 +343,10 @@ function DrawerContent({
 
         {/* Resonator-only actions */}
         {isResonator ? (
-          <div className="flex gap-2">
-            {/* Save button — tri-state */}
-            <button
-              type="button"
-              className="flex-1 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
-              style={{
-                color:      savedState ? coreColor : 'var(--ink)',
-                background: savedState ? `${coreColor}14` : 'var(--surface)',
-                border:     savedState ? `1px solid ${coreColor}32` : '1px solid var(--border-soft)',
-                cursor:     savedState !== false ? 'default' : 'pointer',
-                opacity:    savedState === undefined ? 0.5 : 1,
-              }}
-              onClick={handleSave}
-              disabled={savedState !== false}
-            >
-              {savedState === undefined ? '···' : savedState ? t('saved') : t('savePlanet')}
-            </button>
-            <button
-              type="button"
-              className="flex-1 py-2.5 rounded-xl text-xs font-medium tracking-wide transition-all duration-200"
-              style={{
-                color:      'var(--star)',
-                background: 'rgba(167,139,250,0.08)',
-                border:     '1px solid var(--border-accent)',
-                cursor:     sending ? 'default' : 'pointer',
-                opacity:    sending ? 0.65 : 1,
-              }}
-              onClick={handleSendBeam}
-              disabled={sending}
-            >
-              {sending ? t('sending') : t('sendBeam')}
-            </button>
+          <div className="flex flex-wrap items-start gap-3">
+            <SavePlanetButton key={planet.id} planetId={planet.id} initialSaved={savedPlanetIds?.has(planet.id)} />
+            <BeamButton hasFollowControl key={planet.id} planetId={planet.id} userId={planet.userId} />
+            {planet.userId && <FollowButton key={planet.userId} userId={planet.userId} />}
           </div>
         ) : (
           <p className="text-center text-xs" style={{ color: 'var(--ghost)' }}>
@@ -456,15 +354,7 @@ function DrawerContent({
           </p>
         )}
 
-        {/* Auth prompt — shown when save fails with 401 */}
-        {authPrompt && (
-          <p className="text-center text-xs leading-relaxed" style={{ color: 'var(--ghost)' }}>
-            <Link href="/sign-in" style={{ color: 'var(--star)', textDecoration: 'underline' }}>
-              Sign in
-            </Link>
-            {' '}to save planets to your star chart.
-          </p>
-        )}
+
       </div>
     </div>
   )

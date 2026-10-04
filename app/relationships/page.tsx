@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { PLANET_ACTION_CHANGED, setUserFollowing } from '@/lib/planet-actions'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -34,56 +35,50 @@ interface FollowsResponse {
 export default function RelationshipsPage() {
   const t = useTranslations('relationshipsPage')
   const tCommon = useTranslations('common')
+  const generation = useRef(0)
+  const invalidate = useCallback(() => { generation.current++ }, [])
+  const ta = useTranslations('planetActions')
+  const [loading, setLoading] = useState(true), [error, setError] = useState('')
   const [hasPlanet, setHasPlanet] = useState<boolean | null>(null)
   const [data, setData] = useState<FollowsResponse | null>(null)
+  const [failedAction, setFailedAction] = useState<{ userId: string; following: boolean } | null>(null)
   const [busyUserId, setBusyUserId] = useState<string | null>(null)
 
-  const load = useCallback(() => {
-    fetch('/api/follows')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json: FollowsResponse | null) => setData(json))
-      .catch(() => setData(null))
+  const load = useCallback(async () => {
+    const current = ++generation.current
+    try {
+      const response = await fetch('/api/follows', { cache: 'no-store' })
+      if (!response.ok) throw new Error(response.status === 401 ? 'auth' : 'failed')
+      const json = await response.json() as FollowsResponse
+      if (current === generation.current) { setData({ following: json.following.filter(row => row.planet), followers: json.followers.filter(row => row.planet) }); setError('') }
+    } catch (cause) { if (current === generation.current) setError(cause instanceof Error ? cause.message : 'failed') }
+    finally { if (current === generation.current) setLoading(false) }
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/my-planet').then(res => {
-      if (!cancelled) setHasPlanet(res.ok)
-    }).catch(() => {
-      if (!cancelled) setHasPlanet(false)
-    })
-    return () => { cancelled = true }
+  const checkRole = useCallback(async () => {
+    try {
+      const response = await fetch('/api/my-planet', { cache: 'no-store' })
+      if (!response.ok && response.status !== 404) throw new Error(response.status === 401 ? 'auth' : 'failed')
+      setHasPlanet(response.ok)
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'failed'); setLoading(false) }
   }, [])
+  useEffect(() => { void checkRole() }, [checkRole])
 
   useEffect(() => {
-    if (hasPlanet) load()
-  }, [hasPlanet, load])
+    if (!hasPlanet) { if (hasPlanet === false) Promise.resolve().then(() => setLoading(false)); return }
+    function refresh() { void load() }
+    refresh()
+    window.addEventListener('focus', refresh)
+    window.addEventListener(PLANET_ACTION_CHANGED, refresh)
+    return () => { invalidate(); window.removeEventListener('focus', refresh); window.removeEventListener(PLANET_ACTION_CHANGED, refresh) }
+  }, [hasPlanet, load, invalidate])
 
-  async function unfollow(userId: string) {
-    setBusyUserId(userId)
-    try {
-      await fetch(`/api/follows/${encodeURIComponent(userId)}`, { method: 'DELETE' })
-      load()
-    } finally {
-      setBusyUserId(null)
-    }
+  async function changeFollow(userId: string, following: boolean) {
+    setBusyUserId(userId); setError(''); setFailedAction(null)
+    try { await setUserFollowing(userId, following); await load() }
+    catch (cause) { setFailedAction({ userId, following }); setError(cause instanceof Error ? cause.message : 'failed') }
+    finally { setBusyUserId(null) }
   }
-
-  async function followBack(userId: string) {
-    setBusyUserId(userId)
-    try {
-      await fetch('/api/follows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      })
-      load()
-    } finally {
-      setBusyUserId(null)
-    }
-  }
-
-  if (hasPlanet === null) return null
 
   const followingIds = new Set((data?.following ?? []).map((f) => f.userId))
   const mutual = (data?.following ?? []).filter((f) => (data?.followers ?? []).some((g) => g.userId === f.userId))
@@ -102,6 +97,9 @@ export default function RelationshipsPage() {
           subtitle={t('subtitle')}
         />
 
+        {error && <p role="alert" className="mt-4 text-sm text-red-300">{ta(error === 'auth' ? 'signInRequired' : 'failed')} <button type="button" className="underline" disabled={!!busyUserId} onClick={() => failedAction ? void changeFollow(failedAction.userId, failedAction.following) : hasPlanet === null ? void checkRole() : void load()}>{ta('retry')}</button></p>}
+        {loading && <p role="status" className="mt-4 text-sm text-white/50">{ta('loading')}</p>}
+
         {hasPlanet === false && (
           <EmptyState
             symbol="◌"
@@ -112,7 +110,7 @@ export default function RelationshipsPage() {
           />
         )}
 
-        {hasPlanet === true && !hasAny && (
+        {hasPlanet === true && data && !loading && !hasAny && (
           <EmptyState
             symbol="◍"
             title={t('emptyTitle')}
@@ -133,7 +131,7 @@ export default function RelationshipsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {mutual.map((f) => f.planet && (
-                    <RelationshipCard key={f.userId} status="mutual" since={f.since} planet={f.planet} onUnfollow={() => unfollow(f.userId)} busy={busyUserId === f.userId} />
+                    <RelationshipCard key={f.userId} status="mutual" since={f.since} planet={f.planet} onUnfollow={() => changeFollow(f.userId, false)} busy={busyUserId === f.userId} />
                   ))}
                 </div>
               </section>
@@ -148,7 +146,7 @@ export default function RelationshipsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {followingOnly.map((f) => f.planet && (
-                    <RelationshipCard key={f.userId} status="following" since={f.since} planet={f.planet} onUnfollow={() => unfollow(f.userId)} busy={busyUserId === f.userId} />
+                    <RelationshipCard key={f.userId} status="following" since={f.since} planet={f.planet} onUnfollow={() => changeFollow(f.userId, false)} busy={busyUserId === f.userId} />
                   ))}
                 </div>
               </section>
@@ -163,7 +161,7 @@ export default function RelationshipsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {followersOnly.map((f) => f.planet && (
-                    <RelationshipCard key={f.userId} status="follows-you" since={f.since} planet={f.planet} onFollowBack={() => followBack(f.userId)} busy={busyUserId === f.userId} />
+                    <RelationshipCard key={f.userId} status="follows-you" since={f.since} planet={f.planet} onFollowBack={() => changeFollow(f.userId, true)} busy={busyUserId === f.userId} />
                   ))}
                 </div>
               </section>

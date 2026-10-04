@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import SavePlanetButton from '@/components/social/SavePlanetButton'
+import { PLANET_ACTION_CHANGED } from '@/lib/planet-actions'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -18,6 +21,7 @@ interface ApiSavedPlanetRow {
   label: string | null
   planet: {
     id: string
+    userId: string
     name: string
     avatarSymbol: string
     tagline: string | null
@@ -56,7 +60,7 @@ function savedPlanetToProfile(data: ApiSavedPlanetRow['planet']): PlanetProfile 
     cognitiveAxes: { abstract: 50, introspective: 50 },
     emotionalBars: [],
     createdAt: new Date().toISOString(),
-    userId: '',
+    userId: data.userId,
   }
 }
 
@@ -64,6 +68,10 @@ function savedPlanetToProfile(data: ApiSavedPlanetRow['planet']): PlanetProfile 
 
 export default function SavedPage() {
   const t = useTranslations('savedPage')
+  const ta = useTranslations('planetActions')
+  const [legacyAdd, setLegacyAdd] = useState<string | null>(null)
+  const generation = useRef(0)
+  const invalidate = useCallback(() => { generation.current++ }, [])
   const tCommon = useTranslations('common')
   const [hasPlanet, setHasPlanet] = useState<boolean | null>(null)
   const [items, setItems] = useState<{ saved: SavedPlanet; planet: PlanetProfile }[] | null>(null)
@@ -80,47 +88,40 @@ export default function SavedPage() {
     return () => { cancelled = true }
   }, [])
 
-  // Saved list loading via API
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/saved-planets')
-      .then(async res => {
-        if (cancelled) return
-        if (res.status === 401) {
-          setLoadError('unauthorized')
-          return
-        }
-        if (!res.ok) {
-          setLoadError('network')
-          return
-        }
-        const { savedPlanets }: { savedPlanets: ApiSavedPlanetRow[] } = await res.json()
-        setItems(
-          savedPlanets.map(row => ({
-            saved: {
-              planetId: row.planetId,
-              savedAt:  row.savedAt,
-              label:    row.label ?? undefined,
-            },
-            planet: savedPlanetToProfile(row.planet),
-          }))
-        )
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError('network')
-      })
-    return () => { cancelled = true }
+  const load = useCallback(async () => {
+    const current = ++generation.current
+    try {
+      const response = await fetch('/api/saved-planets', { cache: 'no-store' })
+      if (!response.ok) throw new Error(response.status === 401 ? 'unauthorized' : 'network')
+      const { savedPlanets } = await response.json() as { savedPlanets: ApiSavedPlanetRow[] }
+      if (current !== generation.current) return
+      setItems(savedPlanets.map(row => ({ saved: { planetId: row.planetId, savedAt: row.savedAt, label: row.label ?? undefined }, planet: savedPlanetToProfile(row.planet) })))
+      setLoadError(null)
+    } catch (cause) { if (current === generation.current) setLoadError(cause instanceof Error && cause.message === 'unauthorized' ? 'unauthorized' : 'network') }
   }, [])
+  useEffect(() => {
+    function refresh() { void load() }
+    const add = new URLSearchParams(window.location.search).get('add')
+    if (add && add.length <= 100) Promise.resolve().then(() => setLegacyAdd(add))
+    refresh()
+    window.addEventListener('focus', refresh); window.addEventListener(PLANET_ACTION_CHANGED, refresh)
+    return () => { invalidate(); window.removeEventListener('focus', refresh); window.removeEventListener(PLANET_ACTION_CHANGED, refresh) }
+  }, [load, invalidate])
 
   function handleUnsave(planetId: string) {
     setItems(prev => prev?.filter(x => x.planet.id !== planetId) ?? prev)
   }
 
-  if (hasPlanet === null) return null
-
   return (
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-5xl mx-auto">
+
+        {loadError && items && <p role="alert" className="mt-4 text-sm text-red-300">{ta('failed')} <button type="button" className="underline" onClick={() => void load()}>{ta('retry')}</button></p>}
+        {legacyAdd && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 p-4">
+          <p className="text-sm text-white/60">{ta('confirmLegacySave')}</p>
+          <SavePlanetButton planetId={legacyAdd} onChange={saved => { if (saved) { setLegacyAdd(null); const url = new URL(window.location.href); url.searchParams.delete('add'); window.history.replaceState(null, '', url) } }} />
+          <Link className="text-xs text-violet-300 underline" href={`/planet/${encodeURIComponent(legacyAdd)}`}>{ta('viewPlanet')}</Link>
+        </div>}
         <SectionHeader
           eyebrow={t('eyebrow')}
           level={1}
@@ -129,25 +130,27 @@ export default function SavedPage() {
         />
 
         {/* 401 — session expired */}
-        {loadError === 'unauthorized' && (
+        {loadError === 'unauthorized' && !items && (
           <div className="mt-16 flex flex-col items-center gap-5 text-center max-w-sm mx-auto">
             <p className="text-sm" style={{ color: 'var(--ghost)', opacity: 0.7 }}>
-              Your session has expired. Sign in to see your star chart.
+              {ta('signInRequired')}
             </p>
             <GlowButton href="/sign-in" variant="primary" className="text-sm px-5 py-2">
-              Sign in
+              {ta('signIn')}
             </GlowButton>
           </div>
         )}
 
         {/* Network / other error */}
-        {loadError === 'network' && (
+        {loadError === 'network' && !items && (
           <div className="mt-16 flex flex-col items-center gap-4 text-center max-w-sm mx-auto">
             <p className="text-sm" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-              Couldn&apos;t load your star chart. Check your connection and try again.
+              {ta('failed')}
             </p>
           </div>
         )}
+
+        {loadError && !items && <button type="button" className="mt-4 text-sm text-violet-300 underline" onClick={() => void load()}>{ta('retry')}</button>}
 
         {/* Loading skeleton */}
         {!loadError && items === null && (
@@ -193,7 +196,7 @@ export default function SavedPage() {
         )}
 
         {/* Saved list */}
-        {!loadError && items !== null && items.length > 0 && (
+        {items !== null && items.length > 0 && (
           <>
             <p className="mt-2 text-[11px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
               {t('charted', { count: items.length })}

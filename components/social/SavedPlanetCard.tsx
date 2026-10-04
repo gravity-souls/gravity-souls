@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import SavePlanetButton from '@/components/social/SavePlanetButton'
+import BeamButton from '@/components/social/BeamButton'
+import { useLocale, useTranslations } from 'next-intl'
 import { moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import GlowButton from '@/components/ui/GlowButton'
-import { relativeTime } from '@/lib/time'
 
 // --- SavedPlanetCard ----------------------------------------------------------
 
@@ -21,22 +21,8 @@ interface Props {
 
 export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }: Props) {
   const t = useTranslations('creationSteps')
-  const [removing, setRemoving] = useState(false)
+  const ta = useTranslations('planetActions'), locale = useLocale()
   const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
-
-  async function handleUnsave() {
-    setRemoving(true)
-    try {
-      const res = await fetch(`/api/saved-planets/${planet.id}`, { method: 'DELETE' })
-      if (res.status === 204) {
-        setTimeout(() => onUnsave(planet.id), 300)
-      } else {
-        setRemoving(false)
-      }
-    } catch {
-      setRemoving(false)
-    }
-  }
 
   return (
     <div
@@ -44,8 +30,7 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
       style={{
         background: 'rgba(255,255,255,0.025)',
         border: `1px solid ${coreColor}18`,
-        opacity: removing ? 0 : 1,
-        transform: removing ? 'scale(0.97)' : 'scale(1)',
+
       }}
     >
       {/* Planet orb + name */}
@@ -104,35 +89,19 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
 
       {/* Saved date */}
       <p className="text-[10px]" style={{ color: 'var(--ghost)', opacity: 0.4 }}>
-        Saved {relativeTime(saved.savedAt)}
+        {ta('savedAt', { date: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(saved.savedAt)) })}
       </p>
 
       {/* Actions */}
       <div className="flex gap-2 flex-wrap">
         <GlowButton href={`/planet/${planet.id}`} variant="secondary" className="flex-1 text-xs py-2 text-center">
-          View planet
+          {ta('viewPlanet')}
         </GlowButton>
-        {isResonator && (
-          <GlowButton href={`/messages?to=${encodeURIComponent(planet.id)}`} variant="ghost" className="flex-1 text-xs py-2 text-center">
-            Send beam
-          </GlowButton>
-        )}
+        {isResonator && <BeamButton key={planet.id} planetId={planet.id} userId={planet.userId || undefined} />}
+        <SavePlanetButton key={planet.id} planetId={planet.id} initialSaved onChange={saved => { if (!saved) onUnsave(planet.id) }} />
       </div>
 
-      {/* Unsave button */}
-      <button
-        type="button"
-        onClick={handleUnsave}
-        className="absolute top-3 right-3 w-6 h-6 rounded-lg flex items-center justify-center text-xs transition-all opacity-0 hover:opacity-100 focus:opacity-100"
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: 'var(--ghost)',
-        }}
-        aria-label={`Remove ${planet.name} from star chart`}
-      >
-        ×
-      </button>
+
     </div>
   )
 }

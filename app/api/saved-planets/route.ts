@@ -11,12 +11,8 @@ import { canViewProfile } from '@/lib/visibility'
 
 // GET /api/saved-planets — return the authenticated user's saved planets (newest first)
 export async function GET() {
-  let session
   try {
-    session = await requireUser()
-  } catch (res) {
-    return res as Response
-  }
+  const session = await requireUser()
 
   const savedPlanets = await prisma.savedPlanet.findMany({
     where: {
@@ -60,7 +56,8 @@ export async function GET() {
           },
         }
       }),
-  })
+  }, { headers: { 'Cache-Control': 'private, no-store' } })
+  } catch (error) { return safeApiError(error) }
 }
 
 // POST /api/saved-planets — save a planet for the authenticated user (idempotent, always 200)
