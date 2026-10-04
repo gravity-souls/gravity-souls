@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -5,9 +6,9 @@ import { prisma } from '@/lib/prisma'
  * follow or a match score (approved). All checks here are server-side;
  * never filter for this on the client.
  */
-export async function isBlocked(userIdA: string, userIdB: string): Promise<boolean> {
+export async function isBlocked(userIdA: string, userIdB: string, db: Pick<Prisma.TransactionClient, 'block'> = prisma): Promise<boolean> {
   if (userIdA === userIdB) return false
-  const block = await prisma.block.findFirst({
+  const block = await db.block.findFirst({
     where: {
       OR: [
         { blockerId: userIdA, blockedId: userIdB },

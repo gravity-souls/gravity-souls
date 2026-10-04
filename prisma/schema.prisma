@@ -55,6 +55,7 @@ model user {
   xpEvents XPEvent[]
   notifications Notification[]
   proposedEvents Event[] @relation("ProposedEvents")
+  eventInterests EventInterest[]
   eventRSVPs EventRSVP[]
   createdCommunities Community[] @relation("CommunityCreator")
   communityRequests CommunityJoinRequest[]
@@ -370,6 +371,7 @@ model Event {
   galaxy       Community     @relation(fields: [galaxyId], references: [id], onDelete: Cascade)
   proposer     user          @relation("ProposedEvents", fields: [proposerId], references: [id], onDelete: Cascade)
   rsvps        EventRSVP[]
+  interests    EventInterest[]
 
   @@index([galaxyId, status, date])
   @@index([proposerId, createdAt])
@@ -752,4 +754,17 @@ model RateLimitBucket {
 
   @@index([windowStart])
   @@map("rate_limit_bucket")
+}
+
+model EventInterest {
+  id String @id @default(cuid())
+  userId String
+  eventId String
+  createdAt DateTime @default(now())
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@unique([userId, eventId])
+  @@index([userId, createdAt])
+  @@index([eventId])
+  @@map("event_interest")
 }

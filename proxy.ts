@@ -21,6 +21,7 @@ export function proxy(request: NextRequest) {
 // and e2e/beta-safety.spec.ts.
 export const config = {
   matcher: [
+    '/activities',
     '/resonance',
     '/my-planet/:path*',
     '/discover',

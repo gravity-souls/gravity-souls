@@ -5,6 +5,7 @@
 import { CalendarDays, MapPin, Monitor, Users } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import RSVPButton from '@/components/events/RSVPButton'
+import InterestButton from '@/components/events/InterestButton'
 import type { GalaxyEventSummary } from '@/types/event'
 
 const CATEGORY_GRADIENTS: Record<GalaxyEventSummary['category'], string> = {
@@ -51,7 +52,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
       tabIndex={0}
       onClick={() => onOpen?.(event)}
       onKeyDown={(eventKey) => {
-        if (eventKey.key === 'Enter' || eventKey.key === ' ') onOpen?.(event)
+        if (eventKey.target === eventKey.currentTarget && (eventKey.key === 'Enter' || eventKey.key === ' ')) { eventKey.preventDefault(); onOpen?.(event) }
       }}
       className="group grid gap-4 rounded-2xl p-3 text-left transition-all duration-200 sm:grid-cols-[148px_1fr]"
       style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)', cursor: onOpen ? 'pointer' : 'default' }}
@@ -123,7 +124,8 @@ export default function EventCard({ event, isProposer = false, compact = false, 
             <Users size={14} />
             {t('goingCount', { count: event.rsvpCount })}{spotsLeft !== null ? ` · ${te('spotsRemaining', { count: spotsLeft })}` : ''}
           </span>
-          <span onClick={(clickEvent) => clickEvent.stopPropagation()}>
+          <span className="flex flex-wrap gap-2" onClick={(clickEvent) => clickEvent.stopPropagation()}>
+            {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={event} />}
             <RSVPButton
               eventId={event.id}
               galaxyId={event.galaxyId}

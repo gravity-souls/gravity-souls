@@ -751,21 +751,22 @@
   },
   "eventsPage": {
     "eyebrow": "Galaxies",
-    "title": "Joined galaxy events",
-    "subtitle": "Member-only events from galaxies you have joined. Use Galaxies to discover and join more.",
+    "title": "Activities",
+    "subtitle": "Explore activities in your galaxies, save your interests, and manage your participation. Join a galaxy to see its activities.",
     "discoverGalaxies": "Discover galaxies",
     "searchPlaceholder": "Search events",
     "loading": "Loading events...",
     "signInRequired": "Sign in to see upcoming events from galaxies you have joined.",
     "emptyUpcoming": "No upcoming events in your joined galaxies yet.",
     "emptyGoing": "You have not RSVPed to any upcoming events yet.",
-    "emptyPassed": "No passed events in your joined galaxies yet.",
+    "emptyPassed": "No past or cancelled activities you participated in or organized.",
     "tabs": {
       "upcoming": "Upcoming",
       "going": "Going",
-      "passed": "Passed",
+      "passed": "History",
       "mine": "My proposals",
-      "requests": "Pending attendance"
+      "requests": "Pending attendance",
+      "interested": "Interested"
     },
     "categories": {
       "all": "All",
@@ -777,7 +778,8 @@
       "other": "Other"
     },
     "emptyMine": "No event proposals yet.",
-    "emptyRequests": "No attendance requests awaiting review."
+    "emptyRequests": "No attendance requests awaiting review.",
+    "emptyInterested": "No saved activities yet. Save an activity to find it here."
   },
   "eventForms": {
     "databaseLocked": "Events unlock once this galaxy is connected to the database.",
@@ -1727,5 +1729,13 @@
     "readError": "Read status could not sync yet. It will retry when this conversation updates.",
     "mutualRequired": "You can open a new conversation once you follow each other.",
     "openOnly": "Opening this conversation does not send a beam or message. Send from the composer to deliver it."
+  },
+  "eventInterest": {
+    "save": "Interested",
+    "saved": "Saved · Interested",
+    "saving": "Saving…",
+    "failed": "Unable to update your saved activity. Please try again.",
+    "closed": "This activity is no longer accepting new saves.",
+    "retry": "Retry"
   }
 }

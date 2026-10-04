@@ -102,6 +102,7 @@ export const eventInclude = {
   galaxy: { select: { slug: true, name: true } },
   proposer: {
     select: {
+      deletedAt: true,
       id: true,
       name: true,
       userLevel: true,

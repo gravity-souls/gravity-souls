@@ -751,21 +751,22 @@
   },
   "eventsPage": {
     "eyebrow": "星系",
-    "title": "已加入星系的活动",
-    "subtitle": "来自你已加入星系的成员专属活动。前往星系页面可以发现并加入更多星系。",
+    "title": "活动",
+    "subtitle": "查看已加入星系的活动、收藏感兴趣的活动，并管理报名。加入星系后即可查看它的活动。",
     "discoverGalaxies": "发现星系",
     "searchPlaceholder": "搜索活动",
     "loading": "正在加载活动...",
     "signInRequired": "登录后查看你已加入星系的即将举行活动。",
     "emptyUpcoming": "你加入的星系暂时没有即将举行的活动。",
     "emptyGoing": "你还没有报名任何即将举行的活动。",
-    "emptyPassed": "你加入的星系暂时没有已结束的活动。",
+    "emptyPassed": "暂无你参与或发起的已结束、已取消活动。",
     "tabs": {
       "upcoming": "即将举行",
       "going": "已报名",
-      "passed": "已结束",
+      "passed": "历史活动",
       "mine": "我的活动提案",
-      "requests": "待审核报名"
+      "requests": "待审核报名",
+      "interested": "感兴趣"
     },
     "categories": {
       "all": "全部",
@@ -777,7 +778,8 @@
       "other": "其他"
     },
     "emptyMine": "你还没有提交活动提案。",
-    "emptyRequests": "没有待审核的报名申请。"
+    "emptyRequests": "没有待审核的报名申请。",
+    "emptyInterested": "还没有收藏活动。点击“感兴趣”后，可以在这里找到。"
   },
   "eventForms": {
     "databaseLocked": "该星系连接数据库后会解锁活动。",
@@ -1727,5 +1729,13 @@
     "readError": "已读状态暂未同步，会在会话更新时重试。",
     "mutualRequired": "互相关注后才可以建立新会话。",
     "openOnly": "打开会话不会发送光束或消息，需要在输入框确认发送。"
+  },
+  "eventInterest": {
+    "save": "感兴趣",
+    "saved": "已收藏 · 感兴趣",
+    "saving": "保存中…",
+    "failed": "无法更新活动收藏，请重试。",
+    "closed": "该活动已结束或取消，无法新增收藏。",
+    "retry": "重试"
   }
 }

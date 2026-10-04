@@ -36,6 +36,7 @@ export interface GalaxyEventSummary {
   updatedAt: string
   rsvpCount: number
   userHasRSVPed: boolean
+  userInterested?: boolean
   userAttendance?: string | null
   requiresApproval?: boolean
   rejectionReason?: string | null

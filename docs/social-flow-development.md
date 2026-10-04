@@ -11,7 +11,7 @@ Updated: 2026-10-04 (Europe/Paris). Canonical backlog:
 | 1 | Conversations, notifications and unread synchronization | Implemented in this change | Real Prisma/PostgreSQL fixture workflow checks; browser/multi-account checks pending |
 | 2 | Discovery → planet → message/beam, orbit save, follow | Contact, follow and save server boundaries improved; current beam meaning clarified | Route lifecycle exercised; discovery UI/real multi-account/device acceptance pending |
 | 3 | Star-map exploration and return navigation | First real-data version merged in MR #23 | Browser gestures, visual clarity and physical iPhone performance pending |
-| 4 | Activity entry, interested collection and feed associations | Planned; not implemented by this change | Pending |
+| 4 | Activity entry, interested collection and feed associations | Entry and private interests implemented; feed associations next | 65 database/locale tests; migration deployment and browser/multi-account acceptance pending |
 
 ### Stage 1: concrete behavior
 
@@ -55,6 +55,14 @@ is not delivery and mutual following is required to start. A separate unsolicite
 invitation and accept/reject flow would require an explicit product/model decision; it is
 not silently invented here. Existing independent routes for discovery, orbit and follows
 still need desktop/mobile end-to-end acceptance.
+
+### Stage 4: current delivery
+
+Steps 1–2 are implemented in `activity-interest-review.md`: canonical `/activities`, private
+interest saves independent of attendance, lifecycle retention and personal history. The
+user reports the previous unified resonance release deployed; this does not establish
+browser acceptance for the new activity slice. Next is optional Post association, then
+related detail cards and deployed multi-account acceptance.
 
 ### Stage 4: implementation sequence
 

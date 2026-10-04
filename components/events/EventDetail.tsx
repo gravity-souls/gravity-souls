@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import EventManagement from '@/components/events/EventManagement'
 import RSVPButton from '@/components/events/RSVPButton'
+import InterestButton from '@/components/events/InterestButton'
 import type { GalaxyEventDetail } from '@/types/event'
 
 function formatEventDate(value: string, locale: string) {
@@ -144,6 +145,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
         )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={event} />}
           <RSVPButton
             eventId={event.id}
             galaxyId={event.galaxyId}

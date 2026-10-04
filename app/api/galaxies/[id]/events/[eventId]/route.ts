@@ -1,3 +1,5 @@
+import { assertEventProposerVisible } from '@/lib/event-visibility'
+import { canViewProfile, blockedUserIds } from '@/lib/visibility'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { eventSchema } from '@/lib/input-schemas'
 import { prisma } from '@/lib/prisma'
@@ -32,15 +34,22 @@ export async function GET(
         !['APPROVED', 'PASSED', 'CANCELLED'].includes(event.status))
     )
       deny('notFound', 404)
+    await assertEventProposerVisible(user.id, event.proposer)
+    const interested = await prisma.eventInterest.findUnique({ where: { userId_eventId: { userId: user.id, eventId } } })
+    const hidden = await blockedUserIds(user.id)
+    const safeEvent = { ...event, rsvps: event.rsvps.filter(r => !hidden.has(r.userId)) }
+    const detail = serializeEventDetail(safeEvent)
+    detail.proposer = await canViewProfile(user.id, event.proposerId) ? detail.proposer : { ...detail.proposer, planetTexture: null, planetConfig: null }
+    detail.rsvps = await Promise.all(detail.rsvps.map(async r => await canViewProfile(user.id, r.id) ? r : { ...r, planetTexture: null, planetConfig: null }))
     const attendance = await prisma.eventRSVP.findUnique({
       where: { eventId_userId: { eventId, userId: user.id } },
     })
     return Response.json({
       event: {
-        ...serializeEventDetail({
-          ...event,
-          userHasRSVPed: attendance?.status === 'APPROVED',
-        }),
+        ...detail,
+        userHasRSVPed: attendance?.status === 'APPROVED',
+        userInterested: !!interested,
+        onlineUrl: attendance?.status === 'APPROVED' || access.isAdmin || isProposer ? event.onlineUrl : null,
         userAttendance: attendance?.status ?? null,
         canManage: access.isAdmin || isProposer,
       },
