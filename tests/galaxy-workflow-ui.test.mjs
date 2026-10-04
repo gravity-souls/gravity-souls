@@ -127,3 +127,29 @@ for (const locale of ['en', 'zh', 'fr']) {
     }
   })
 }
+
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`mobile full navigation and compact map translate in ${locale}`, () => {
+    const Menu = require('../components/layout/MobileExploreMenu.tsx').default
+    const html = render(
+      locale,
+      React.createElement(Menu, { onNavigate: () => {} }),
+    )
+    for (const href of [
+      '/star-map',
+      '/discover',
+      '/resonance',
+      '/galaxies/events',
+      '/saved',
+      '/my-planet/customize',
+      '/my-planet/report',
+    ])
+      assert.ok(html.includes(`href="${href}"`))
+    assert.ok(html.includes('type="submit"'))
+    assert.ok(!html.includes('nav.'))
+    const map = render(locale, React.createElement(StarMap, { compact: true }))
+    assert.ok(map.includes('star-map-sidebar'))
+    assert.ok(map.includes('aria-controls'))
+    assert.ok(!map.includes('starMap.'))
+  })
+}

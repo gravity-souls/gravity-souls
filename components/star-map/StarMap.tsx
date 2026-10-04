@@ -19,8 +19,15 @@ const EMPTY: StarMapData = {
   scope: 'batch',
 }
 
-export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
+export default function StarMap({
+  mode = 'discover',
+  compact = false,
+}: {
+  mode?: StarMapMode
+  compact?: boolean
+}) {
   const t = useTranslations('starMap')
+  const storageKey = compact ? `star-map:home:${mode}` : `star-map:${mode}`
   const [data, setData] = useState(EMPTY)
   const [focus, setFocus] = useState<string | null>(null)
   const [selected, setSelected] = useState<StarMapNode | null>(null)
@@ -45,9 +52,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const saved = JSON.parse(
-          sessionStorage.getItem(`star-map:${mode}`) ?? 'null',
-        )
+        const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
         if (
           saved &&
           typeof saved.query === 'string' &&
@@ -78,14 +83,14 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
       }
       setRestored(true)
     })
-  }, [mode])
+  }, [storageKey])
 
   useEffect(() => {
     if (!restored) return
     const save = () => {
       try {
         sessionStorage.setItem(
-          `star-map:${mode}`,
+          storageKey,
           JSON.stringify({
             query,
             cursor,
@@ -103,7 +108,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
       save()
       window.removeEventListener('pagehide', save)
     }
-  }, [mode, query, cursor, focus, selected, restored])
+  }, [storageKey, query, cursor, focus, selected, restored])
 
   const queryGroup = mode === 'discover' ? focus : null
 
@@ -225,9 +230,9 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
         return
       }
       if (!reduced && pointers.current.size === 0 && !focused)
-        view.current.yaw += Math.min(time - (last || time), 45) * 0.000018
+        view.current.yaw += Math.min(time - (last || time), 45) * 0.00007
       if (!reduced && pointers.current.size === 0)
-        spin.current += Math.min(time - (last || time), 45) * 0.00009
+        spin.current += Math.min(time - (last || time), 45) * 0.00032
       last = time
       ctx.clearRect(0, 0, width, height)
       ctx.globalCompositeOperation = 'lighter'
@@ -385,7 +390,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
     ? data.nodes.filter((node) => node.groupId === focus)
     : []
   return (
-    <div className={styles.map}>
+    <div className={`${styles.map} ${compact ? styles.compact : ''}`}>
       <div className={styles.mapToolbar}>
         <form
           onSubmit={(event) => {
@@ -646,7 +651,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
                     rotating={
                       !reduced && !selected.planetConfig.customTextureUrl
                     }
-                    rotationDuration={48}
+                    rotationDuration={24}
                     level={selected.level}
                   />
                 )}

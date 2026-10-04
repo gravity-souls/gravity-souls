@@ -26,7 +26,11 @@
     "collapseGalaxyLinks": "Réduire les liens de galaxies",
     "expandGalaxyLinks": "Développer les liens de galaxies",
     "signInRequired": "Connexion requise",
-    "starMap": "Carte stellaire"
+    "starMap": "Carte stellaire",
+    "discover": "Découvrir les planètes",
+    "savedOrbit": "Orbite enregistrée",
+    "search": "Rechercher",
+    "allSections": "Toutes les rubriques"
   },
   "topbar": {
     "searchPlaceholder": "Chercher planètes, galaxies, événements...",
@@ -97,7 +101,9 @@
     "nebulaEmotional": "Émotion / Chaleur",
     "nebulaWandering": "Errance / Frontières",
     "exploreExperience": "Explorer l’expérience",
-    "exploreExperienceCaption": "Une visite guidée du globe cosmique, illustrée en 3D."
+    "exploreExperienceCaption": "Une visite guidée du globe cosmique, illustrée en 3D.",
+    "homeStarMapTitle": "Explorer la carte stellaire",
+    "openFullMap": "Ouvrir la carte complète"
   },
   "galaxyPage": {
     "galaxy": "Galaxie",
@@ -1671,7 +1677,9 @@
     "browseObjects": "Constellations et planètes",
     "closeSidebar": "Fermer le panneau",
     "viewMode": "Affichage",
-    "mapView": "Carte stellaire"
+    "mapView": "Carte stellaire",
+    "resonancePurpose": "La carte regroupe les planètes chargées selon leur principale raison de résonance. La rubrique Résonance propose jusqu’à cinq recommandations et leurs scores détaillés.",
+    "openRecommendations": "Voir les recommandations de résonance"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",

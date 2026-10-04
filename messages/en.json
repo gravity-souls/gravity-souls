@@ -26,7 +26,11 @@
     "collapseGalaxyLinks": "Collapse galaxy links",
     "expandGalaxyLinks": "Expand galaxy links",
     "signInRequired": "Sign in required",
-    "starMap": "Star map"
+    "starMap": "Star map",
+    "discover": "Discover planets",
+    "savedOrbit": "Saved orbit",
+    "search": "Search",
+    "allSections": "All sections"
   },
   "topbar": {
     "searchPlaceholder": "Search planets, galaxies, events...",
@@ -97,7 +101,9 @@
     "nebulaEmotional": "Feeling / Warmth",
     "nebulaWandering": "Wandering / Edges",
     "exploreExperience": "Explore the experience",
-    "exploreExperienceCaption": "A guided tour of the cosmic globe, illustrated in 3D."
+    "exploreExperienceCaption": "A guided tour of the cosmic globe, illustrated in 3D.",
+    "homeStarMapTitle": "Explore the star map",
+    "openFullMap": "Open full map"
   },
   "galaxyPage": {
     "galaxy": "Galaxy",
@@ -1671,7 +1677,9 @@
     "browseObjects": "Constellations & planets",
     "closeSidebar": "Close panel",
     "viewMode": "View format",
-    "mapView": "Star map"
+    "mapView": "Star map",
+    "resonancePurpose": "Map exploration groups the loaded planets by their strongest resonance reason. Open Resonance for up to five recommendations and detailed scores.",
+    "openRecommendations": "Open resonance recommendations"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

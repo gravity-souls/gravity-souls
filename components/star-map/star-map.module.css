@@ -353,3 +353,36 @@
     padding: 8px;
   }
 }
+/* Home embeds the same real-data map; its object list opens beside the canvas. */
+.compact .explorer {
+  grid-template-columns: minmax(0, 1fr);
+}
+.compact .stage {
+  height: 460px;
+  min-height: 0;
+}
+.compact .mapToolbar {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.compact .mapToolbar p {
+  flex-basis: 100%;
+}
+.map.compact .sidebarToggle {
+  display: inline-flex;
+}
+.compact .sidebar {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(290px, calc(100% - 32px));
+  max-height: 460px;
+  min-height: 0;
+  box-shadow: -16px 0 40px #0008;
+}
+.compact .sidebar[data-open='true'] {
+  display: block;
+}

@@ -53,6 +53,17 @@ function StarMapPageContent() {
             {t('listView')}
           </Link>
         </div>
+        {mode === 'resonance' && (
+          <div className="mt-4 max-w-2xl rounded-xl border border-violet-300/15 bg-violet-400/5 p-4 text-xs leading-relaxed text-slate-300">
+            <p>{t('resonancePurpose')}</p>
+            <Link
+              href="/resonance"
+              className="mt-2 inline-block text-violet-200"
+            >
+              {t('openRecommendations')} →
+            </Link>
+          </div>
+        )}
         <StarMap key={mode} mode={mode} />
         <p className="mt-5 text-xs text-slate-400">{t('paths')}</p>
       </main>
