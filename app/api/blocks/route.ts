@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { blockSchema } from '@/lib/input-schemas'
+import { lockContactPair } from '@/lib/beam-invitations'
 
 // GET /api/blocks - list the users I have blocked (owner-only; never discloses who blocked me)
 export async function GET() {
@@ -36,21 +37,22 @@ export async function POST(request: Request) {
     const target = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
     if (!target) return Response.json({ error: 'Planet not found' }, { status: 404 })
 
-    await prisma.$transaction([
-      prisma.block.upsert({
+    await prisma.$transaction(async tx => {
+      await lockContactPair(tx, userId, targetUserId)
+      await tx.block.upsert({
         where: { blockerId_blockedId: { blockerId: userId, blockedId: targetUserId } },
         create: { blockerId: userId, blockedId: targetUserId },
         update: {},
-      }),
-      prisma.follow.deleteMany({
+      })
+      await tx.follow.deleteMany({
         where: {
           OR: [
             { followerId: userId, followingId: targetUserId },
             { followerId: targetUserId, followingId: userId },
           ],
         },
-      }),
-    ])
+      })
+    })
 
     return Response.json({ blocked: true }, { status: 201 })
   } catch (error) {

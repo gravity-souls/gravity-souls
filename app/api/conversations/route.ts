@@ -172,7 +172,8 @@ export async function POST(request: Request) {
       select: { id: true },
     })
 
-    // Starting a brand-new thread requires a mutual follow (approved); an
+    // Starting via this endpoint requires mutual follows. A separate explicit
+    // recipient acceptance can create a thread through /api/beam-invitations/[id]. An
     // already-established thread can continue even if a follow later lapses.
     if (!existingThread && !(await mutualFollow(userId, recipientId))) {
       return NextResponse.json(

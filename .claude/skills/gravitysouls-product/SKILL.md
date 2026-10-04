@@ -1,6 +1,6 @@
 ---
 name: gravitysouls-product
-description: Canonical GravitySouls product vocabulary and founder-approved decisions (planet=profile, galaxy=Community presentation, one-way follows, mutual-follow-gated DMs, 18+ minimum age). Use whenever a task names product concepts, proposes new user-facing behavior, or touches onboarding/discovery/messaging copy or flow. Do not use for pure styling/CSS tweaks, dependency bumps, or CI-only changes.
+description: Canonical GravitySouls product vocabulary and founder-approved decisions (planet=profile, galaxy=Community presentation, one-way follows, consent-gated DMs, 18+ minimum age). Use whenever a task names product concepts, proposes new user-facing behavior, or touches onboarding/discovery/messaging copy or flow. Do not use for pure styling/CSS tweaks, dependency bumps, or CI-only changes.
 ---
 
 # GravitySouls product model
@@ -23,7 +23,8 @@ contains the founder's actual approved decisions, not just aspirations.
 
 - Beta minimum age: 18+.
 - Follows are one-way and belong to the user, not a replaceable planet record.
-- A new DM thread requires mutual follow; an existing thread survives a lapsed follow.
+- A new DM thread requires mutual follow or recipient acceptance of a beam invitation
+  (ADR 0002); an existing thread survives a lapsed follow. Acceptance never sends a message.
 - Profiles/posts are member-visible by default; community content follows community
   access; `Profile.visibility` can be `PRIVATE` (gated on a real follow edge either way).
 - Matching/calibration is optional, not mandatory.

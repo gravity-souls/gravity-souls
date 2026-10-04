@@ -11,6 +11,9 @@ import EmptyState from '@/components/ui/EmptyState'
 import GlowButton from '@/components/ui/GlowButton'
 import OrbitCard from '@/components/ui/OrbitCard'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import BeamInvitations from '@/components/social/BeamInvitations'
+import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
+import { explorationOrigin } from '@/lib/exploration-return'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types for API response ---
 
@@ -168,6 +171,7 @@ function MessagesInner() {
   const tAuth = useTranslations('auth')
   const router = useRouter()
   const searchParams = useSearchParams()
+  const origin = explorationOrigin(searchParams.get('from'))
   const targetPlanetId = searchParams.get('to')
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
@@ -347,6 +351,8 @@ function MessagesInner() {
         >
           {tw('notifications')} →
         </Link>
+        <ExplorationReturnLink origin={origin} />
+        {!loading && authed && <BeamInvitations key={searchParams.get('invitations') === 'sent' ? 'sent' : 'received'} initialDirection={searchParams.get('invitations') === 'sent' ? 'sent' : 'received'} selectedId={searchParams.get('invite')} origin={origin} />}
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div

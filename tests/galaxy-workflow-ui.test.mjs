@@ -16,6 +16,8 @@ const StarMap = require('../components/star-map/StarMap.tsx').default
 const RelationshipStatus = require('../components/social/PlanetRelationshipStatus.tsx').default
 const ReturnLink = require('../components/social/ExplorationReturnLink.tsx').default
 const Beam = require('../components/social/BeamButton.tsx').default
+const { BeamInvitationCard } = require('../components/social/BeamInvitations.tsx')
+const SendInvitation = require('../components/social/SendBeamInvitationButton.tsx').default
 const { explorationOrigin, explorationReturnHref, withExplorationOrigin } = require('../lib/exploration-return.ts')
 const event = {
   id: 'evt',
@@ -50,6 +52,23 @@ function render(locale, child) {
   )
 }
 for (const locale of ['en', 'zh', 'fr']) {
+  test(`beam invitation decisions and existing chat distinguish sender and recipient in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`).beamInvitations
+    const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)
+    const row = { id: 'invite', status: 'PENDING', createdAt: '2030-01-01T12:00:00Z', otherUser: { id: 'other', name: 'Other' }, planet: null, conversationId: null }
+    const card = (direction, data = row) => render(locale, React.createElement(BeamInvitationCard, { direction, row: data, onAction: () => {} }))
+    const incoming = card('received'), outgoing = card('sent')
+    for (const key of ['accept', 'reject']) assert.ok(incoming.includes(escaped(m[key])))
+    assert.ok(!incoming.includes(`>${escaped(m.cancel)}<`))
+    assert.ok(outgoing.includes(escaped(m.cancel)))
+    for (const key of ['accept', 'reject']) assert.ok(!outgoing.includes(`>${escaped(m[key])}<`))
+    const accepted = card('received', { ...row, status: 'ACCEPTED', conversationId: 'thread' })
+    assert.ok(accepted.includes('href="/messages/thread"'))
+    assert.ok(!accepted.includes('<button'))
+    const send = render(locale, React.createElement(SendInvitation, { userId: 'other' }))
+    assert.ok(send.includes(escaped(m.sendExplanation)))
+    assert.ok(send.includes(escaped(m.send)))
+  })
   test(`star-map relationship labels and chat return links translate in ${locale}`, () => {
     const m = require(`../messages/${locale}.json`).starMap
     const text = key => renderToStaticMarkup(React.createElement('span', null, m[key])).slice(6, -7)
