@@ -22,6 +22,7 @@
     "db:deploy": "prisma migrate deploy",
     "test": "node --test tests/unit.test.mjs",
     "test:models": "ts-node --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' prisma/test-models.ts",
+    "test:chat": "node --import ./tests/register.mjs --test tests/chat-content.test.mjs",
     "test:galaxy": "node --import ./tests/register.mjs --test tests/galaxy-workflow.test.mjs tests/galaxy-workflow-ui.test.mjs",
     "build:deploy": "prisma migrate deploy && npm run build"
   },
