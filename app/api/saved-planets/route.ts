@@ -1,21 +1,29 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
-import { resolveUserPlanetConfig, USER_PLANET_CONFIG_SELECT } from "@/lib/user-planet-config";
-import { canViewProfile } from "@/lib/visibility";
+import { z } from 'zod'
+import { readJson, safeApiError } from '@/lib/api-input'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { requireUser } from '@/lib/session'
+import {
+  resolveUserPlanetConfig,
+  USER_PLANET_CONFIG_SELECT,
+} from '@/lib/user-planet-config'
+import { canViewProfile } from '@/lib/visibility'
 
 // GET /api/saved-planets — return the authenticated user's saved planets (newest first)
 export async function GET() {
-  let session;
+  let session
   try {
-    session = await requireUser();
+    session = await requireUser()
   } catch (res) {
-    return res as Response;
+    return res as Response
   }
 
   const savedPlanets = await prisma.savedPlanet.findMany({
-    where: { userId: session.user.id },
-    orderBy: { savedAt: "desc" },
+    where: {
+      userId: session.user.id,
+      planet: { active: true, user: { deletedAt: null } },
+    },
+    orderBy: { savedAt: 'desc' },
     include: {
       planet: {
         select: {
@@ -32,46 +40,64 @@ export async function GET() {
         },
       },
     },
-  });
+  })
 
-  const visibility = await Promise.all(savedPlanets.map(({ planet }) => canViewProfile(session.user.id, planet.userId)));
+  const visibility = await Promise.all(
+    savedPlanets.map(({ planet }) =>
+      canViewProfile(session.user.id, planet.userId),
+    ),
+  )
   return NextResponse.json({
-    savedPlanets: savedPlanets.filter((_, index) => visibility[index]).map(({ planet, ...saved }) => {
-      const { user, ...planetData } = planet;
-      return { ...saved, planet: { ...planetData, planetConfig: resolveUserPlanetConfig(user, planet) } };
-    }),
-  });
+    savedPlanets: savedPlanets
+      .filter((_, index) => visibility[index])
+      .map(({ planet, ...saved }) => {
+        const { user, ...planetData } = planet
+        return {
+          ...saved,
+          planet: {
+            ...planetData,
+            planetConfig: resolveUserPlanetConfig(user, planet),
+          },
+        }
+      }),
+  })
 }
 
 // POST /api/saved-planets — save a planet for the authenticated user (idempotent, always 200)
 export async function POST(request: Request) {
-  let session;
+  let session
   try {
-    session = await requireUser();
+    session = await requireUser()
   } catch (res) {
-    return res as Response;
+    return res as Response
   }
 
-  const body = await request.json();
-  const { planetId } = body;
+  try {
+    const input = await readJson(
+      request,
+      z.object({ planetId: z.string().min(1).max(100) }).strict(),
+    )
+    if (!input.ok) return input.response
+    const { planetId } = input.data
+    const planet = await prisma.planet.findFirst({
+      where: { id: planetId, active: true, user: { deletedAt: null } },
+    })
+    if (!planet || !(await canViewProfile(session.user.id, planet.userId)))
+      return NextResponse.json({ error: 'Planet not found' }, { status: 404 })
+    if (planet.userId === session.user.id)
+      return NextResponse.json(
+        { error: 'Cannot save your own planet' },
+        { status: 400 },
+      )
 
-  if (!planetId || typeof planetId !== "string") {
-    return NextResponse.json({ error: "planetId is required" }, { status: 400 });
+    const saved = await prisma.savedPlanet.upsert({
+      where: { userId_planetId: { userId: session.user.id, planetId } },
+      create: { userId: session.user.id, planetId },
+      update: {},
+    })
+
+    return NextResponse.json(saved)
+  } catch (error) {
+    return safeApiError(error)
   }
-
-  const planet = await prisma.planet.findUnique({ where: { id: planetId } });
-  if (!planet) {
-    return NextResponse.json({ error: "Planet not found" }, { status: 404 });
-  }
-  if (!(await canViewProfile(session.user.id, planet.userId))) {
-    return NextResponse.json({ error: "Planet not found" }, { status: 404 });
-  }
-
-  const saved = await prisma.savedPlanet.upsert({
-    where: { userId_planetId: { userId: session.user.id, planetId } },
-    create: { userId: session.user.id, planetId },
-    update: {},
-  });
-
-  return NextResponse.json(saved);
 }

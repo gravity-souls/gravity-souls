@@ -1,3 +1,4 @@
+import { getUserLocale } from '@/lib/notification-i18n'
 import { NotificationTemplates, createNotification } from '@/lib/createNotification'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
@@ -104,12 +105,12 @@ export async function POST(
   if (parentComment && parentComment.authorId !== session.user.id) {
     await createNotification({
       userId: parentComment.authorId,
-      ...NotificationTemplates.commentReplyReceived(session.user.name ?? 'Someone', `/stream/${id}`),
+      ...await NotificationTemplates.commentReplyReceived(session.user.name ?? 'Someone', `/stream/${id}`, await getUserLocale(parentComment.authorId)),
     })
   } else if (!parentComment && post.authorId !== session.user.id) {
     await createNotification({
       userId: post.authorId,
-      ...NotificationTemplates.commentReceived(session.user.name ?? 'Someone', `/stream/${id}`),
+      ...await NotificationTemplates.commentReceived(session.user.name ?? 'Someone', `/stream/${id}`, await getUserLocale(post.authorId)),
     })
   }
 

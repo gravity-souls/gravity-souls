@@ -1,3 +1,4 @@
+import { getUserLocale } from '@/lib/notification-i18n'
 import { prisma } from '@/lib/prisma'
 import { NotificationTemplates, createNotification } from '@/lib/createNotification'
 import { LEVEL_NAMES, XP_EVENTS, type XPEventType, calculateLevel, clampLevel } from '@/lib/xp'
@@ -50,7 +51,7 @@ export async function grantXP(
 
     await createNotification({
       userId,
-      ...NotificationTemplates.levelUp(newLevel, LEVEL_NAMES[clampLevel(newLevel)]),
+      ...await NotificationTemplates.levelUp(newLevel, LEVEL_NAMES[clampLevel(newLevel)], await getUserLocale(userId)),
     })
   }
 

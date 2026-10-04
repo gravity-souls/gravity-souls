@@ -53,6 +53,15 @@ const postDelete = require('../app/api/communities/[id]/posts/[postId]/route.ts'
 const account = require('../app/api/me/route.ts')
 const summary = require('../app/api/galaxies/events/route.ts')
 const starMap = require('../app/api/star-map/route.ts')
+const inbox = require('../app/api/conversations/route.ts')
+const messages = require('../app/api/conversations/[id]/route.ts')
+const notifications = require('../app/api/notifications/route.ts')
+const notificationRead = require('../app/api/notifications/read/route.ts')
+const notificationDelete = require('../app/api/notifications/[id]/route.ts')
+const follows = require('../app/api/follows/route.ts')
+const followStatus = require('../app/api/follows/[userId]/route.ts')
+const saved = require('../app/api/saved-planets/route.ts')
+const removeSaved = require('../app/api/saved-planets/[planetId]/route.ts')
 const request = (data = {}, url = 'https://example.com/api') =>
   new Request(url, {
     method: 'POST',
@@ -88,7 +97,8 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       const file = path.join('prisma/migrations', dir, 'migration.sql')
       if (dir === 'migration_lock.toml') continue
       if (dir === '20261004140000_complete_galaxy_workflows') {
-        await pool.db.exec(`INSERT INTO "user" (id,name,email,"updatedAt") VALUES ('legacy-user','Legacy','legacy@example.test',NOW());
+        await pool.db
+          .exec(`INSERT INTO "user" (id,name,email,"updatedAt") VALUES ('legacy-user','Legacy','legacy@example.test',NOW());
           INSERT INTO community (id,slug,name,"updatedAt") VALUES ('legacy-community','legacy-existing','Existing',NOW());
           INSERT INTO event (id,"galaxyId","proposerId",title,description,date,category,status,"updatedAt") VALUES ('legacy-event','legacy-community','legacy-user','Existing event','Existing','2030-01-01','MEETUP','APPROVED',NOW());
           INSERT INTO event_rsvp (id,"eventId","userId") VALUES ('legacy-rsvp','legacy-event','legacy-user');`)
@@ -114,61 +124,700 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       if (id !== 'noPlanet')
         await db.planet.create({ data: { userId: id, name: `${id} planet` } })
     }
-    await t.test('star map rejects anonymous viewers and invalid queries', async () => {
-      as(null)
-      assert.equal((await starMap.GET(new Request('https://example.com/api?mode=discover'))).status,401)
-      as('owner')
-      assert.equal((await starMap.GET(new Request('https://example.com/api?mode=wrong'))).status,400)
-      assert.equal((await starMap.GET(new Request('https://example.com/api?search='+ 'a'.repeat(81)))).status,400)
-    })
-    await t.test('star map counts and nodes share privacy/block boundaries and custom avatars', async () => {
-      as('owner')
-      await db.user.update({where:{id:'member'},data:{planetCustomTexture:'https://example.test/custom-map.png'}})
-      await db.profile.create({data:{userId:'outsider',visibility:'PRIVATE'}})
-      await db.block.create({data:{blockerId:'applicant',blockedId:'owner'}})
-      const data=await (await starMap.GET(new Request('https://example.com/api?mode=discover'))).json()
-      assert.equal(data.total,2)
-      assert.equal(data.groups.reduce((sum,g)=>sum+g.count,0),data.total)
-      assert.equal(data.nodes.length,2)
-      assert.ok(data.nodes.every(n=>!['owner planet','outsider planet','applicant planet'].includes(n.name)))
-      assert.equal(data.nodes.find(n=>n.name==='member planet').planetConfig.customTextureUrl,'https://example.test/custom-map.png')
-      const search=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=member'))).json()
-      assert.equal(search.total,1);assert.equal(search.nodes.length,1)
-      const resonance=await (await starMap.GET(new Request('https://example.com/api?mode=resonance'))).json()
-      assert.equal(resonance.scope,'batch');assert.equal(resonance.nodes.length,2)
-      assert.ok(resonance.nodes.every(n=>Number.isFinite(n.score)&&n.score>=0&&n.score<=100))
-      as('noPlanet')
-      assert.equal((await (await starMap.GET(new Request('https://example.com/api?mode=resonance'))).json()).requiresPlanet,true)
-      await db.block.deleteMany({where:{blockerId:'applicant',blockedId:'owner'}})
-      await db.profile.delete({where:{userId:'outsider'}})
-      await db.user.update({where:{id:'member'},data:{planetCustomTexture:null}})
-    })
-    await t.test('star map bounded pages have no missing or duplicate planet nodes', async () => {
-      as('owner')
-      for(let i=0;i<40;i++) {
-        await db.user.create({data:{id:'map-'+i,name:'Map '+i,email:'map-'+i+'@example.test'}})
-        await db.planet.create({data:{userId:'map-'+i,name:'Map fixture '+i,mood:'calm'}})
-      }
-      const first=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=Map%20fixture&group=calm'))).json()
-      assert.equal(first.total,40);assert.equal(first.nodes.length,36);assert.ok(first.nextCursor)
-      const second=await (await starMap.GET(new Request('https://example.com/api?mode=discover&search=Map%20fixture&group=calm&cursor='+first.nextCursor))).json()
-      assert.equal(second.nodes.length,4);assert.equal(second.nextCursor,null)
-      assert.equal(new Set([...first.nodes,...second.nodes].map(n=>n.id)).size,40)
-      await db.user.deleteMany({where:{id:{startsWith:'map-'}}})
-    })
-    await t.test('galaxy star map points to real galaxy identities with real member counts',async()=>{
-      as('owner')
-      const data=await (await starMap.GET(new Request('https://example.com/api?mode=galaxies&search=Existing'))).json()
-      assert.equal(data.total,1);assert.equal(data.nodes[0].href,'/galaxy/legacy-existing')
-      assert.equal(data.groups[0].count,0);assert.equal(data.nodes[0].memberCount,0)
-    })
-    await t.test('migration preserves existing events and approved attendance', async () => {
-      const oldEvent=await db.event.findUnique({where:{id:'legacy-event'}})
-      const oldRSVP=await db.eventRSVP.findUnique({where:{id:'legacy-rsvp'}})
-      assert.equal(oldEvent.status,'APPROVED');assert.equal(oldEvent.approvalRewarded,true);assert.equal(oldEvent.requiresApproval,false)
-      assert.equal(oldRSVP.status,'APPROVED');assert.equal(oldRSVP.rewarded,true)
-      assert.equal((await db.community.findUnique({where:{id:'legacy-community'}})).joinPolicy,'OPEN')
-    })
+    let threadId, firstMessageId, secondMessageId
+    const threadContext = () => ({ params: Promise.resolve({ id: threadId }) })
+    const getRequest = (query = '') =>
+      new Request('https://example.test/api' + query)
+    await t.test(
+      'mutual-follow contact opens a thread without silently sending a message',
+      async () => {
+        as(null)
+        assert.equal((await inbox.GET(getRequest())).status, 401)
+        as('owner')
+        assert.equal(
+          (await inbox.POST(request({ recipientId: 'member' }))).status,
+          403,
+        )
+        assert.equal(
+          (await follows.POST(request({ userId: 'member' }))).status,
+          201,
+        )
+        assert.equal(
+          (await follows.POST(request({ userId: 'member' }))).status,
+          200,
+        )
+        assert.equal(
+          await db.notification.count({
+            where: { userId: 'member', type: 'NEW_FOLLOWER' },
+          }),
+          1,
+        )
+        assert.ok(
+          (
+            await db.notification.findFirst({
+              where: { userId: 'member', type: 'NEW_FOLLOWER' },
+            })
+          ).body.includes('关注'),
+        )
+        as('member')
+        assert.equal(
+          (await follows.POST(request({ userId: 'owner' }))).status,
+          201,
+        )
+        as('owner')
+        const response = await inbox.POST(request({ recipientId: 'member' }))
+        assert.equal(response.status, 201)
+        threadId = (await response.json()).conversationId
+        assert.equal(
+          await db.directMessage.count({ where: { conversationId: threadId } }),
+          0,
+        )
+        assert.equal(
+          (await inbox.POST(request({ recipientId: 'member' }))).status,
+          200,
+        )
+      },
+    )
+    await t.test(
+      'message retries are idempotent and notify in the recipient language',
+      async () => {
+        as('owner')
+        const clientMessageId = crypto.randomUUID()
+        const first = await messages.POST(
+          request({ content: 'Hello from owner', clientMessageId }),
+          threadContext(),
+        )
+        assert.equal(first.status, 201)
+        firstMessageId = (await first.json()).id
+        const retry = await messages.POST(
+          request({ content: 'Hello from owner', clientMessageId }),
+          threadContext(),
+        )
+        assert.equal(retry.status, 200)
+        assert.equal((await retry.json()).id, firstMessageId)
+        assert.equal(
+          (
+            await messages.POST(
+              request({ content: 'Different draft', clientMessageId }),
+              threadContext(),
+            )
+          ).status,
+          409,
+        )
+        assert.equal(
+          await db.directMessage.count({ where: { conversationId: threadId } }),
+          1,
+        )
+        const notices = await db.notification.findMany({
+          where: { userId: 'member', type: 'NEW_MESSAGE' },
+        })
+        assert.equal(notices.length, 1)
+        assert.equal(notices[0].actionUrl, '/messages/' + threadId)
+        assert.ok(notices[0].body.includes('owner'))
+      },
+    )
+    await t.test(
+      'fetch does not mark unseen messages read and acknowledgement preserves a concurrent arrival',
+      async () => {
+        as('member')
+        const response = await messages.GET(getRequest(), threadContext())
+        assert.equal(response.status, 200)
+        const data = await response.json()
+        assert.equal(data.viewerId, 'member')
+        assert.equal(data.messages.length, 1)
+        assert.equal(
+          (await db.directMessage.findUnique({ where: { id: firstMessageId } }))
+            .readAt,
+          null,
+        )
+        assert.equal(
+          (await (await notifications.GET(getRequest())).json())
+            .unreadMessagesCount,
+          1,
+        )
+        as('owner')
+        const second = await messages.POST(
+          request({
+            content: 'Concurrent arrival',
+            clientMessageId: crypto.randomUUID(),
+          }),
+          threadContext(),
+        )
+        secondMessageId = (await second.json()).id
+        as('member')
+        const partial = await (
+          await messages.PATCH(
+            request({ ids: [firstMessageId] }),
+            threadContext(),
+          )
+        ).json()
+        assert.equal(partial.updated, 1)
+        assert.equal(partial.unread, 1)
+        assert.equal(
+          await db.notification.count({
+            where: { userId: 'member', type: 'NEW_MESSAGE', read: false },
+          }),
+          2,
+        )
+        const complete = await (
+          await messages.PATCH(
+            request({ ids: [secondMessageId] }),
+            threadContext(),
+          )
+        ).json()
+        assert.equal(complete.unread, 0)
+        assert.equal(
+          await db.notification.count({
+            where: { userId: 'member', type: 'NEW_MESSAGE', read: false },
+          }),
+          0,
+        )
+        assert.equal(
+          (await (await notifications.GET(getRequest())).json())
+            .unreadMessagesCount,
+          0,
+        )
+        assert.equal(
+          (
+            await (
+              await messages.PATCH(
+                request({ ids: [firstMessageId] }),
+                threadContext(),
+              )
+            ).json()
+          ).updated,
+          0,
+        )
+      },
+    )
+    await t.test(
+      'message read/send and inbox prevent outsider and blocked access',
+      async () => {
+        as('outsider')
+        assert.equal(
+          (await messages.GET(getRequest(), threadContext())).status,
+          404,
+        )
+        assert.equal(
+          (
+            await messages.PATCH(
+              request({ ids: [firstMessageId] }),
+              threadContext(),
+            )
+          ).status,
+          404,
+        )
+        assert.equal(
+          (await messages.POST(request({ content: 'forged' }), threadContext()))
+            .status,
+          403,
+        )
+        await db.block.create({
+          data: { blockerId: 'owner', blockedId: 'member' },
+        })
+        as('member')
+        assert.equal((await (await inbox.GET(getRequest())).json()).length, 0)
+        assert.equal(
+          (await messages.GET(getRequest(), threadContext())).status,
+          404,
+        )
+        assert.equal(
+          (
+            await messages.PATCH(
+              request({ ids: [firstMessageId] }),
+              threadContext(),
+            )
+          ).status,
+          404,
+        )
+        assert.equal(
+          (
+            await messages.POST(
+              request({ content: 'blocked send' }),
+              threadContext(),
+            )
+          ).status,
+          403,
+        )
+        assert.equal(
+          (await (await notifications.GET(getRequest())).json())
+            .unreadMessagesCount,
+          0,
+        )
+        assert.deepEqual(
+          await (
+            await followStatus.GET(getRequest(), {
+              params: Promise.resolve({ userId: 'owner' }),
+            })
+          ).json(),
+          { following: false, followedBy: false },
+        )
+        await db.block.deleteMany({
+          where: { blockerId: 'owner', blockedId: 'member' },
+        })
+      },
+    )
+    await t.test(
+      'private planet appearance stays hidden and deleted accounts become read-only history',
+      async () => {
+        await db.follow.deleteMany({
+          where: {
+            OR: [
+              { followerId: 'owner', followingId: 'member' },
+              { followerId: 'member', followingId: 'owner' },
+            ],
+          },
+        })
+        await db.profile.create({
+          data: { userId: 'owner', visibility: 'PRIVATE' },
+        })
+        as('member')
+        assert.equal(
+          (await (await messages.GET(getRequest(), threadContext())).json())
+            .otherPlanet,
+          null,
+        )
+        assert.equal(
+          (await (await inbox.GET(getRequest())).json())[0].otherPlanet,
+          null,
+        )
+        assert.equal(
+          (await inbox.POST(request({ recipientId: 'owner' }))).status,
+          200,
+        )
+        await db.user.update({
+          where: { id: 'owner' },
+          data: { deletedAt: new Date() },
+        })
+        assert.equal(
+          (
+            await messages.POST(
+              request({ content: 'deleted target' }),
+              threadContext(),
+            )
+          ).status,
+          404,
+        )
+        assert.equal(
+          (await (await messages.GET(getRequest(), threadContext())).json())
+            .canSend,
+          false,
+        )
+        await db.user.update({
+          where: { id: 'owner' },
+          data: { deletedAt: null },
+        })
+        await db.profile.delete({ where: { userId: 'owner' } })
+      },
+    )
+    await t.test(
+      'message history pages have no skipped lookahead row or duplicate messages',
+      async () => {
+        await db.directMessage.deleteMany({
+          where: { conversationId: threadId },
+        })
+        for (let i = 0; i < 45; i++)
+          await db.directMessage.create({
+            data: {
+              conversationId: threadId,
+              senderId: 'owner',
+              content: 'History ' + i,
+              createdAt: new Date(1900000000000 + i),
+            },
+          })
+        as('member')
+        const first = await (
+          await messages.GET(getRequest(), threadContext())
+        ).json()
+        assert.equal(first.messages.length, 40)
+        assert.ok(first.olderCursor)
+        const second = await (
+          await messages.GET(
+            getRequest('?before=' + first.olderCursor),
+            threadContext(),
+          )
+        ).json()
+        assert.equal(second.messages.length, 5)
+        assert.equal(second.olderCursor, null)
+        assert.equal(
+          new Set([...first.messages, ...second.messages].map((m) => m.id))
+            .size,
+          45,
+        )
+        assert.equal(
+          (await messages.GET(getRequest('?before=foreign'), threadContext()))
+            .status,
+          400,
+        )
+      },
+    )
+    await t.test(
+      'notification pages, owner-only mutations and safe internal targets work',
+      async () => {
+        await db.notification.deleteMany({
+          where: { userId: { in: ['owner', 'member'] } },
+        })
+        for (let i = 0; i < 35; i++)
+          await db.notification.create({
+            data: {
+              userId: 'owner',
+              type: 'NEW_MESSAGE',
+              title: 'Page ' + i,
+              body: 'Test',
+              actionUrl:
+                i === 34 ? '//external.example' : '/messages/' + threadId,
+              createdAt: new Date(1900000000000 + i),
+            },
+          })
+        as('owner')
+        const first = await (await notifications.GET(getRequest())).json()
+        assert.equal(first.notifications.length, 30)
+        assert.equal(first.notifications[0].actionUrl, null)
+        assert.ok(first.nextCursor)
+        const second = await (
+          await notifications.GET(getRequest('?cursor=' + first.nextCursor))
+        ).json()
+        assert.equal(second.notifications.length, 5)
+        assert.equal(
+          new Set(
+            [...first.notifications, ...second.notifications].map((n) => n.id),
+          ).size,
+          35,
+        )
+        const ids = first.notifications.map((n) => n.id)
+        as('member')
+        assert.equal(
+          (await (await notificationRead.PATCH(request({ ids }))).json())
+            .updated,
+          0,
+        )
+        assert.equal(
+          (
+            await notificationDelete.DELETE(getRequest(), {
+              params: Promise.resolve({ id: ids[0] }),
+            })
+          ).status,
+          403,
+        )
+        assert.equal(
+          (await notifications.GET(getRequest('?cursor=' + first.nextCursor)))
+            .status,
+          400,
+        )
+        as('owner')
+        assert.equal(
+          (await notificationRead.PATCH(request({ ids, all: true }))).status,
+          400,
+        )
+        const marked = await (
+          await notificationRead.PATCH(request({ ids }))
+        ).json()
+        assert.equal(marked.updated, 30)
+        assert.equal(marked.unreadCount, 5)
+        assert.equal(
+          (await (await notificationRead.PATCH(request({ all: true }))).json())
+            .updated,
+          5,
+        )
+        assert.equal(
+          (await (await notificationRead.PATCH(request({ all: true }))).json())
+            .updated,
+          0,
+        )
+        await db.conversationThread.delete({ where: { id: threadId } })
+        await db.notification.deleteMany({
+          where: { userId: { in: ['owner', 'member'] } },
+        })
+        await db.rateLimitBucket.deleteMany()
+        await db.xPEvent.deleteMany({ where: { type: 'RESONANCE_SENT' } })
+      },
+    )
+    await t.test(
+      'orbit saves validate bodies, persist once and enforce owner/privacy/inactive boundaries',
+      async () => {
+        as('owner')
+        const mine = await db.planet.findFirst({ where: { userId: 'owner' } })
+        const target = await db.planet.findFirst({
+          where: { userId: 'member' },
+        })
+        assert.equal(
+          (
+            await saved.POST(
+              new Request('https://example.test/api', {
+                method: 'POST',
+                body: 'bad JSON',
+              }),
+            )
+          ).status,
+          400,
+        )
+        assert.equal(
+          (await saved.POST(request({ planetId: mine.id }))).status,
+          400,
+        )
+        assert.equal(
+          (await saved.POST(request({ planetId: target.id }))).status,
+          200,
+        )
+        assert.equal(
+          (await saved.POST(request({ planetId: target.id }))).status,
+          200,
+        )
+        assert.equal(
+          await db.savedPlanet.count({
+            where: { userId: 'owner', planetId: target.id },
+          }),
+          1,
+        )
+        as('member')
+        assert.equal(
+          (
+            await removeSaved.DELETE(getRequest(), {
+              params: Promise.resolve({ planetId: target.id }),
+            })
+          ).status,
+          204,
+        )
+        assert.equal(
+          await db.savedPlanet.count({
+            where: { userId: 'owner', planetId: target.id },
+          }),
+          1,
+        )
+        await db.planet.update({
+          where: { id: target.id },
+          data: { active: false },
+        })
+        as('owner')
+        assert.equal(
+          (await saved.POST(request({ planetId: target.id }))).status,
+          404,
+        )
+        assert.equal((await (await saved.GET()).json()).savedPlanets.length, 0)
+        await db.planet.update({
+          where: { id: target.id },
+          data: { active: true },
+        })
+        await db.block.create({
+          data: { blockerId: 'member', blockedId: 'owner' },
+        })
+        assert.equal(
+          (await saved.POST(request({ planetId: target.id }))).status,
+          404,
+        )
+        assert.equal((await (await saved.GET()).json()).savedPlanets.length, 0)
+        await db.block.deleteMany({
+          where: { blockerId: 'member', blockedId: 'owner' },
+        })
+        assert.equal(
+          (
+            await removeSaved.DELETE(getRequest(), {
+              params: Promise.resolve({ planetId: target.id }),
+            })
+          ).status,
+          204,
+        )
+        assert.equal(
+          (
+            await removeSaved.DELETE(getRequest(), {
+              params: Promise.resolve({ planetId: target.id }),
+            })
+          ).status,
+          204,
+        )
+      },
+    )
+    await t.test(
+      'star map rejects anonymous viewers and invalid queries',
+      async () => {
+        as(null)
+        assert.equal(
+          (
+            await starMap.GET(
+              new Request('https://example.com/api?mode=discover'),
+            )
+          ).status,
+          401,
+        )
+        as('owner')
+        assert.equal(
+          (await starMap.GET(new Request('https://example.com/api?mode=wrong')))
+            .status,
+          400,
+        )
+        assert.equal(
+          (
+            await starMap.GET(
+              new Request('https://example.com/api?search=' + 'a'.repeat(81)),
+            )
+          ).status,
+          400,
+        )
+      },
+    )
+    await t.test(
+      'star map counts and nodes share privacy/block boundaries and custom avatars',
+      async () => {
+        as('owner')
+        await db.user.update({
+          where: { id: 'member' },
+          data: { planetCustomTexture: 'https://example.test/custom-map.png' },
+        })
+        await db.profile.create({
+          data: { userId: 'outsider', visibility: 'PRIVATE' },
+        })
+        await db.block.create({
+          data: { blockerId: 'applicant', blockedId: 'owner' },
+        })
+        const data = await (
+          await starMap.GET(
+            new Request('https://example.com/api?mode=discover'),
+          )
+        ).json()
+        assert.equal(data.total, 2)
+        assert.equal(
+          data.groups.reduce((sum, g) => sum + g.count, 0),
+          data.total,
+        )
+        assert.equal(data.nodes.length, 2)
+        assert.ok(
+          data.nodes.every(
+            (n) =>
+              !['owner planet', 'outsider planet', 'applicant planet'].includes(
+                n.name,
+              ),
+          ),
+        )
+        assert.equal(
+          data.nodes.find((n) => n.name === 'member planet').planetConfig
+            .customTextureUrl,
+          'https://example.test/custom-map.png',
+        )
+        const search = await (
+          await starMap.GET(
+            new Request('https://example.com/api?mode=discover&search=member'),
+          )
+        ).json()
+        assert.equal(search.total, 1)
+        assert.equal(search.nodes.length, 1)
+        const resonance = await (
+          await starMap.GET(
+            new Request('https://example.com/api?mode=resonance'),
+          )
+        ).json()
+        assert.equal(resonance.scope, 'batch')
+        assert.equal(resonance.nodes.length, 2)
+        assert.ok(
+          resonance.nodes.every(
+            (n) => Number.isFinite(n.score) && n.score >= 0 && n.score <= 100,
+          ),
+        )
+        as('noPlanet')
+        assert.equal(
+          (
+            await (
+              await starMap.GET(
+                new Request('https://example.com/api?mode=resonance'),
+              )
+            ).json()
+          ).requiresPlanet,
+          true,
+        )
+        await db.block.deleteMany({
+          where: { blockerId: 'applicant', blockedId: 'owner' },
+        })
+        await db.profile.delete({ where: { userId: 'outsider' } })
+        await db.user.update({
+          where: { id: 'member' },
+          data: { planetCustomTexture: null },
+        })
+      },
+    )
+    await t.test(
+      'star map bounded pages have no missing or duplicate planet nodes',
+      async () => {
+        as('owner')
+        for (let i = 0; i < 40; i++) {
+          await db.user.create({
+            data: {
+              id: 'map-' + i,
+              name: 'Map ' + i,
+              email: 'map-' + i + '@example.test',
+            },
+          })
+          await db.planet.create({
+            data: {
+              userId: 'map-' + i,
+              name: 'Map fixture ' + i,
+              mood: 'calm',
+            },
+          })
+        }
+        const first = await (
+          await starMap.GET(
+            new Request(
+              'https://example.com/api?mode=discover&search=Map%20fixture&group=calm',
+            ),
+          )
+        ).json()
+        assert.equal(first.total, 40)
+        assert.equal(first.nodes.length, 36)
+        assert.ok(first.nextCursor)
+        const second = await (
+          await starMap.GET(
+            new Request(
+              'https://example.com/api?mode=discover&search=Map%20fixture&group=calm&cursor=' +
+                first.nextCursor,
+            ),
+          )
+        ).json()
+        assert.equal(second.nodes.length, 4)
+        assert.equal(second.nextCursor, null)
+        assert.equal(
+          new Set([...first.nodes, ...second.nodes].map((n) => n.id)).size,
+          40,
+        )
+        await db.user.deleteMany({ where: { id: { startsWith: 'map-' } } })
+      },
+    )
+    await t.test(
+      'galaxy star map points to real galaxy identities with real member counts',
+      async () => {
+        as('owner')
+        const data = await (
+          await starMap.GET(
+            new Request(
+              'https://example.com/api?mode=galaxies&search=Existing',
+            ),
+          )
+        ).json()
+        assert.equal(data.total, 1)
+        assert.equal(data.nodes[0].href, '/galaxy/legacy-existing')
+        assert.equal(data.groups[0].count, 0)
+        assert.equal(data.nodes[0].memberCount, 0)
+      },
+    )
+    await t.test(
+      'migration preserves existing events and approved attendance',
+      async () => {
+        const oldEvent = await db.event.findUnique({
+          where: { id: 'legacy-event' },
+        })
+        const oldRSVP = await db.eventRSVP.findUnique({
+          where: { id: 'legacy-rsvp' },
+        })
+        assert.equal(oldEvent.status, 'APPROVED')
+        assert.equal(oldEvent.approvalRewarded, true)
+        assert.equal(oldEvent.requiresApproval, false)
+        assert.equal(oldRSVP.status, 'APPROVED')
+        assert.equal(oldRSVP.rewarded, true)
+        assert.equal(
+          (await db.community.findUnique({ where: { id: 'legacy-community' } }))
+            .joinPolicy,
+          'OPEN',
+        )
+      },
+    )
     let galaxyId, eventId
     await t.test(
       'signed-out and no-planet accounts cannot create galaxies',

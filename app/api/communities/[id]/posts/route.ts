@@ -1,3 +1,4 @@
+import { getUserLocale } from '@/lib/notification-i18n'
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -241,14 +242,8 @@ export async function POST(
   });
 
   if (community && community.memberships.length > 0) {
-    const template = NotificationTemplates.galaxyNewPost(community.name, `/galaxy/${community.slug}`);
-
-    await prisma.notification.createMany({
-      data: community.memberships.map((member) => ({
-        userId: member.userId,
-        ...template,
-      })),
-    });
+    const notices=await Promise.all(community.memberships.map(async member=>({userId:member.userId,...await NotificationTemplates.galaxyNewPost(community.name, `/galaxy/${community.slug}`,await getUserLocale(member.userId))})))
+    await prisma.notification.createMany({data:notices})
   }
 
   return NextResponse.json({ post: serializePost(post), xpEvent, leveledUp: xpEvent.leveledUp }, { status: 201 });

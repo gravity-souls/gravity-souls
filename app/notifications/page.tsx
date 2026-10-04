@@ -1,284 +1,237 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useFormatter, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
-import GlowButton from '@/components/ui/GlowButton'
-import LightCone from '@/components/fx/LightCone'
-
-// --- Types -------------------------------------------------------------------
+import { notifyInboxChanged } from '@/lib/inbox-client'
 
 interface NotificationItem {
-  id:        string
-  type:      string
-  title:     string
-  body:      string
-  read:      boolean
+  id: string
+  type: string
+  title: string
+  body: string
+  read: boolean
   actionUrl: string | null
   createdAt: string
 }
-
-// --- Icon map (no external import) -------------------------------------------
-
-const TYPE_ICON: Record<string, string> = {
-  RESONANCE_RECEIVED: '◎',
-  RESONANCE_ACCEPTED: '✦',
-  GALAXY_NEW_POST:    '◈',
-  GALAXY_NEW_EVENT:   '◇',
-  EVENT_REMINDER:     '◬',
-  LEVEL_UP:           '▲',
-  NEW_MATCH:          '⊛',
-  COMMENT_RECEIVED:   '◌',
-  NEW_MESSAGE:        '✉',
-}
-
-// --- Relative time helper ----------------------------------------------------
-
-function formatRelativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins  = Math.floor(diff / 60_000)
-  if (mins < 1)  return 'Just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days  = Math.floor(hours / 24)
-  if (days < 7)  return `${days}d ago`
-  return new Date(iso).toLocaleDateString()
-}
-
-// --- Page --------------------------------------------------------------------
-
 export default function NotificationsPage() {
-  const [items, setItems]             = useState<NotificationItem[]>([])
+  const t = useTranslations('inboxWorkflow')
+  const formatter = useFormatter()
+  const router = useRouter()
+  const [items, setItems] = useState<NotificationItem[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [loading, setLoading]         = useState(true)
-
-  useEffect(() => {
-    fetch('/api/notifications')
-      .then(async (res) => {
-        if (res.status === 401) {
-          window.location.href = '/sign-in?next=/notifications'
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const load = useCallback(
+    async (cursor?: string) => {
+      setLoading(true)
+      try {
+        const response = await fetch(
+          `/api/notifications${cursor ? '?cursor=' + encodeURIComponent(cursor) : ''}`,
+          { cache: 'no-store' },
+        )
+        if (response.status === 401) {
+          router.replace('/sign-in?next=/notifications')
           return
         }
-        if (!res.ok) { setLoading(false); return }
-        const data = await res.json() as { notifications: NotificationItem[]; unreadCount: number }
-        setItems(data.notifications)
-        setUnreadCount(data.unreadCount)
+        if (!response.ok) throw new Error('failed')
+        const result = await response.json()
+        setItems((previous) =>
+          cursor
+            ? [
+                ...new Map(
+                  [...previous, ...result.notifications].map(
+                    (item: NotificationItem) => [item.id, item],
+                  ),
+                ).values(),
+              ]
+            : result.notifications,
+        )
+        setNextCursor(result.nextCursor)
+        setUnreadCount(result.unreadCount)
+        setError('')
+      } catch {
+        setError(t('loadError'))
+      } finally {
         setLoading(false)
+      }
+    },
+    [router, t],
+  )
+  useEffect(() => {
+    let alive = true
+    queueMicrotask(() => {
+      if (alive) void load()
+    })
+    // Mutation actions update this page directly. Focus catches changes elsewhere.
+    const focus = () => {
+      if (!document.hidden) void load()
+    }
+    window.addEventListener('focus', focus)
+    return () => {
+      alive = false
+      window.removeEventListener('focus', focus)
+    }
+  }, [load])
+  async function markRead(ids?: string[]) {
+    setBusy(true)
+    try {
+      const response = await fetch('/api/notifications/read', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids ? { ids } : { all: true }),
       })
-      .catch(() => setLoading(false))
-  }, [])
-
-  async function markRead(ids: string[]) {
-    await fetch('/api/notifications/read', {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ ids }),
-    })
-    setItems((prev) => prev.map((n) => ids.includes(n.id) ? { ...n, read: true } : n))
-    setUnreadCount((prev) => Math.max(0, prev - ids.length))
+      if (!response.ok) throw new Error('failed')
+      const result = await response.json()
+      setItems((previous) =>
+        previous.map((item) =>
+          !ids || ids.includes(item.id) ? { ...item, read: true } : item,
+        ),
+      )
+      setUnreadCount(result.unreadCount)
+      setError('')
+      notifyInboxChanged()
+      return true
+    } catch {
+      setError(t('updateError'))
+      return false
+    } finally {
+      setBusy(false)
+    }
   }
-
-  async function markAllRead() {
-    await fetch('/api/notifications/read', {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ all: true }),
-    })
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })))
-    setUnreadCount(0)
+  async function remove(id: string) {
+    setBusy(true)
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) throw new Error('failed')
+      setItems((previous) => previous.filter((item) => item.id !== id))
+      await load()
+      notifyInboxChanged()
+    } catch {
+      setError(t('updateError'))
+    } finally {
+      setBusy(false)
+    }
   }
-
-  async function deleteOne(id: string) {
-    const wasUnread = items.find((n) => n.id === id)?.read === false
-    await fetch(`/api/notifications/${id}`, { method: 'DELETE' })
-    setItems((prev) => prev.filter((n) => n.id !== id))
-    if (wasUnread) setUnreadCount((prev) => Math.max(0, prev - 1))
-  }
-
   return (
     <AppShell>
-      <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.06} double={false} />
-
-      <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-2xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8">
-          <div className="flex flex-col gap-1.5">
-            <span
-              className="text-xs uppercase tracking-[0.25em] font-medium"
-              style={{ color: 'var(--star)', opacity: 0.65 }}
-            >
-              Inbox
-            </span>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-              Notifications
+      <main className="mx-auto max-w-2xl px-4 pb-20 pt-8 sm:px-6">
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs text-violet-300">
+              {t('systemAndInteractions')}
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold text-white">
+              {t('notifications')}
             </h1>
+            <Link
+              href="/messages"
+              className="mt-3 inline-block text-sm text-violet-200"
+            >
+              {t('openMessages')} →
+            </Link>
           </div>
-
           {unreadCount > 0 && (
-            <GlowButton
-              variant="ghost"
-              className="shrink-0 mt-1 text-xs px-3 py-2"
-              onClick={markAllRead}
+            <button
+              disabled={busy}
+              onClick={() => void markRead()}
+              className="rounded-lg border border-white/10 px-3 py-2 text-xs text-violet-200"
             >
-              Mark all as read
-            </GlowButton>
+              {t('markAll')}
+            </button>
           )}
-        </div>
-
-        {/* Loading skeleton */}
+        </header>
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-rose-200">
+            {error}
+          </p>
+        )}
         {loading && (
-          <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading notifications">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl animate-pulse"
-                style={{
-                  height: 76,
-                  background: 'rgba(255,255,255,0.025)',
-                  border: '1px solid rgba(167,139,250,0.08)',
-                }}
-              />
-            ))}
+          <p role="status" className="py-5 text-sm text-slate-400">
+            {t('loading')}
+          </p>
+        )}
+        {!loading && !error && items.length === 0 && (
+          <div className="py-16 text-center text-slate-400">
+            <p>{t('empty')}</p>
+            <p className="mt-3 text-sm">{t('emptyHint')}</p>
           </div>
         )}
-
-        {/* Empty state */}
-        {!loading && items.length === 0 && (
-          <div className="flex flex-col items-center gap-5 text-center py-20">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl"
-              style={{
-                background: 'rgba(167,139,250,0.06)',
-                border: '1px solid rgba(167,139,250,0.12)',
-              }}
-              aria-hidden="true"
+        <ol className="space-y-3" aria-label={t('notifications')}>
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className={`rounded-xl border p-4 ${item.read ? 'border-white/5 bg-white/2' : 'border-violet-400/25 bg-violet-400/5'}`}
             >
-              ◌
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                No notifications yet
-              </p>
-              <p
-                className="text-xs leading-relaxed max-w-xs"
-                style={{ color: 'var(--ghost)', opacity: 0.55 }}
-              >
-                Signals from your orbit will appear here — resonances, replies, and galaxy activity.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Notification list */}
-        {!loading && items.length > 0 && (
-          <ol className="flex flex-col gap-2" aria-label="Notifications">
-            {items.map((n) => {
-              const icon = TYPE_ICON[n.type] ?? '◌'
-              return (
-                <li
-                  key={n.id}
-                  className="group relative flex items-start gap-3 px-4 py-4 rounded-2xl transition-colors duration-200"
-                  style={{
-                    background: n.read
-                      ? 'rgba(255,255,255,0.015)'
-                      : 'rgba(167,139,250,0.07)',
-                    border: n.read
-                      ? '1px solid rgba(167,139,250,0.06)'
-                      : '1px solid rgba(167,139,250,0.2)',
-                  }}
-                >
-                  {/* Unread indicator */}
-                  {!n.read && (
-                    <div
-                      className="absolute top-4 right-10 w-1.5 h-1.5 rounded-full"
-                      style={{ background: 'var(--star)' }}
-                      aria-label="Unread"
-                    />
-                  )}
-
-                  {/* Type icon */}
-                  <div
-                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base mt-0.5"
-                    style={{
-                      background: 'rgba(167,139,250,0.08)',
-                      border: '1px solid rgba(167,139,250,0.15)',
-                      color: 'var(--star)',
-                    }}
-                    aria-hidden="true"
-                  >
-                    {icon}
-                  </div>
-
-                  {/* Content — link if actionUrl, div otherwise */}
-                  {n.actionUrl ? (
+              <div className="flex items-start gap-4">
+                <div className="min-w-0 flex-1">
+                  {item.actionUrl ? (
                     <Link
-                      href={n.actionUrl}
-                      prefetch={false}
-                      className="flex-1 min-w-0"
-                      onClick={() => { if (!n.read) markRead([n.id]) }}
+                      href={item.actionUrl}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        void (async () => {
+                          if (!item.read) await markRead([item.id])
+                          router.push(item.actionUrl!)
+                        })()
+                      }}
+                      className="block text-sm font-medium text-white"
                     >
-                      <NotificationBody title={n.title} body={n.body} createdAt={n.createdAt} />
+                      {item.title}
                     </Link>
                   ) : (
-                    <div
-                      className="flex-1 min-w-0"
-                      onClick={() => { if (!n.read) markRead([n.id]) }}
-                    >
-                      <NotificationBody title={n.title} body={n.body} createdAt={n.createdAt} />
-                    </div>
+                    <p className="text-sm font-medium text-white">
+                      {item.title}
+                    </p>
                   )}
-
-                  {/* Delete */}
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); deleteOne(n.id) }}
-                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-60 focus:opacity-60 transition-opacity duration-150"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'var(--ghost)',
-                    }}
-                    aria-label="Delete notification"
+                  <p className="mt-2 text-sm text-slate-400">{item.body}</p>
+                  <time
+                    dateTime={item.createdAt}
+                    className="mt-2 block text-xs text-slate-500"
                   >
-                    ×
-                  </button>
-                </li>
-              )
-            })}
-          </ol>
+                    {formatter.relativeTime(
+                      new Date(item.createdAt),
+                      new Date(),
+                    )}
+                  </time>
+                </div>
+                <button
+                  disabled={busy}
+                  onClick={() => void remove(item.id)}
+                  aria-label={t('delete')}
+                  className="min-h-10 min-w-10 text-slate-400"
+                >
+                  ×
+                </button>
+              </div>
+              {!item.read && (
+                <button
+                  disabled={busy}
+                  onClick={() => void markRead([item.id])}
+                  className="mt-3 text-xs text-violet-200"
+                >
+                  {t('markRead')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ol>
+        {nextCursor && (
+          <button
+            disabled={loading}
+            onClick={() => void load(nextCursor)}
+            className="mt-5 rounded-lg border border-white/10 px-4 py-2 text-sm text-violet-200"
+          >
+            {t('loadMore')}
+          </button>
         )}
-      </div>
+      </main>
     </AppShell>
-  )
-}
-
-// --- Shared notification body ------------------------------------------------
-
-function NotificationBody({
-  title,
-  body,
-  createdAt,
-}: {
-  title: string
-  body: string
-  createdAt: string
-}) {
-  return (
-    <>
-      <p className="text-xs font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
-        {title}
-      </p>
-      <p className="text-xs leading-relaxed mt-0.5" style={{ color: 'var(--ink)', opacity: 0.7 }}>
-        {body}
-      </p>
-      <p
-        className="text-[10px] mt-1.5 tabular-nums"
-        style={{ color: 'var(--ghost)', opacity: 0.45 }}
-      >
-        {formatRelativeTime(createdAt)}
-      </p>
-    </>
   )
 }

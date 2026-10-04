@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { INBOX_CHANGED } from '@/lib/inbox-client'
+import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
@@ -57,21 +58,41 @@ interface ConversationItem {
 
 function ConversationCard({ conv }: { conv: ConversationItem }) {
   const t = useTranslations('messagesPage')
+  const locale = useLocale()
   const planet = conv.otherPlanet
-  const color = planet?.planetConfig?.tintColor ?? planet?.visual?.coreColor ?? '#a78bfa'
+  const color =
+    planet?.planetConfig?.tintColor ?? planet?.visual?.coreColor ?? '#a78bfa'
   const preview = conv.lastMessage?.content ?? t('noMessagesYet')
 
   return (
     <Link href={`/messages/${conv.id}`}>
-      <OrbitCard hoverable glowColor={color} className="flex items-center gap-4 p-4">
+      <OrbitCard
+        hoverable
+        glowColor={color}
+        className="flex items-center gap-4 p-4"
+      >
         {/* Planet avatar */}
-        {planet ? <PlanetAvatar planetConfig={planet.planetConfig ?? undefined} size={40} glowColor={color} /> : (
-          <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ color, background: `${color}20` }}>?</div>
+        {planet ? (
+          <PlanetAvatar
+            planetConfig={planet.planetConfig ?? undefined}
+            size={40}
+            glowColor={color}
+          />
+        ) : (
+          <div
+            className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg"
+            style={{ color, background: `${color}20` }}
+          >
+            ?
+          </div>
         )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>
+            <h3
+              className="text-sm font-semibold truncate"
+              style={{ color: 'var(--foreground)' }}
+            >
               {planet?.name ?? conv.otherUser.name}
             </h3>
             {conv.unreadCount > 0 && (
@@ -92,8 +113,11 @@ function ConversationCard({ conv }: { conv: ConversationItem }) {
         </div>
 
         {conv.lastMessageAt && (
-          <span className="shrink-0 text-[10px]" style={{ color: 'var(--ghost)' }}>
-            {new Date(conv.lastMessageAt).toLocaleDateString()}
+          <span
+            className="shrink-0 text-[10px]"
+            style={{ color: 'var(--ghost)' }}
+          >
+            {new Date(conv.lastMessageAt).toLocaleDateString(locale)}
           </span>
         )}
       </OrbitCard>
@@ -105,7 +129,7 @@ function ConversationCard({ conv }: { conv: ConversationItem }) {
 
 export default function MessagesPage() {
   return (
-    <Suspense fallback={<MessagesLoading />}> 
+    <Suspense fallback={<MessagesLoading />}>
       <MessagesInner />
     </Suspense>
   )
@@ -126,7 +150,10 @@ function MessagesLoading() {
         <div className="flex items-center justify-center py-20">
           <div
             className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--star)', borderTopColor: 'transparent' }}
+            style={{
+              borderColor: 'var(--star)',
+              borderTopColor: 'transparent',
+            }}
           />
         </div>
       </div>
@@ -136,11 +163,14 @@ function MessagesLoading() {
 
 function MessagesInner() {
   const t = useTranslations('messagesPage')
+  const tw = useTranslations('inboxWorkflow')
   const tAuth = useTranslations('auth')
   const router = useRouter()
   const searchParams = useSearchParams()
   const targetPlanetId = searchParams.get('to')
   const [conversations, setConversations] = useState<ConversationItem[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [authed, setAuthed] = useState(true)
   const [openError, setOpenError] = useState<OpenErrorState | null>(null)
@@ -154,7 +184,9 @@ function MessagesInner() {
         setOpenError(null)
 
         if (targetPlanetId) {
-          const planetRes = await fetch(`/api/planets/${encodeURIComponent(targetPlanetId)}`)
+          const planetRes = await fetch(
+            `/api/planets/${encodeURIComponent(targetPlanetId)}`,
+          )
           if (cancelled) return
 
           if (!planetRes.ok) {
@@ -167,7 +199,7 @@ function MessagesInner() {
             return
           }
 
-          const planet = await planetRes.json() as PlanetTarget
+          const planet = (await planetRes.json()) as PlanetTarget
           const recipientId = planet.user?.id ?? planet.userId
 
           if (!recipientId) {
@@ -199,9 +231,15 @@ function MessagesInner() {
             return
           }
 
-          const errorBody = await res.json().catch(() => null) as { error?: string } | null
+          const errorBody = (await res.json().catch(() => null)) as {
+            error?: string
+          } | null
           setOpenError({
-            message: (res.status === 403 && errorBody?.error) ? errorBody.error : t('openSignalError'),
+            message:
+              res.status === 403 &&
+              errorBody?.error?.includes('follow each other')
+                ? tw('mutualRequired')
+                : t('openSignalError'),
             actionHref: '/discover',
             actionLabel: t('explorePlanets'),
           })
@@ -215,8 +253,11 @@ function MessagesInner() {
         if (res.ok) {
           const data = await res.json()
           setConversations(data)
+          setNextCursor(res.headers.get('X-Next-Cursor') || null)
         } else if (res.status === 401) {
           setAuthed(false)
+        } else {
+          throw new Error('unavailable')
         }
       } catch {
         if (!cancelled) {
@@ -235,8 +276,61 @@ function MessagesInner() {
       if (!cancelled) void load()
     })
 
-    return () => { cancelled = true }
-  }, [router, targetPlanetId, t])
+    return () => {
+      cancelled = true
+    }
+  }, [router, targetPlanetId, t, tw])
+
+  useEffect(() => {
+    if (targetPlanetId) return
+    const sync = async () => {
+      if (document.hidden) return
+      try {
+        const response = await fetch('/api/conversations', {
+          cache: 'no-store',
+        })
+        if (!response.ok) return
+        setConversations(await response.json())
+        setNextCursor(response.headers.get('X-Next-Cursor') || null)
+      } catch {
+        /* Keep previously loaded inbox on a transient poll failure. */
+      }
+    }
+    window.addEventListener(INBOX_CHANGED, sync)
+    window.addEventListener('focus', sync)
+    const interval = window.setInterval(sync, 15000)
+    return () => {
+      window.removeEventListener(INBOX_CHANGED, sync)
+      window.removeEventListener('focus', sync)
+      window.clearInterval(interval)
+    }
+  }, [targetPlanetId])
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const response = await fetch(
+        '/api/conversations?cursor=' + encodeURIComponent(nextCursor),
+        { cache: 'no-store' },
+      )
+      if (!response.ok) throw new Error('failed')
+      const rows = await response.json()
+      setConversations((previous) => [
+        ...new Map(
+          [...previous, ...rows].map((row: ConversationItem) => [row.id, row]),
+        ).values(),
+      ])
+      setNextCursor(response.headers.get('X-Next-Cursor') || null)
+    } catch {
+      setOpenError({
+        message: tw('loadError'),
+        actionHref: '/messages',
+        actionLabel: tw('backInbox'),
+      })
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   return (
     <AppShell>
@@ -248,11 +342,20 @@ function MessagesInner() {
           subtitle={t('subtitle')}
         />
 
+        <Link
+          href="/notifications"
+          className="mt-4 inline-block text-sm text-violet-200"
+        >
+          {tw('notifications')} →
+        </Link>
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div
               className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'var(--star)', borderTopColor: 'transparent' }}
+              style={{
+                borderColor: 'var(--star)',
+                borderTopColor: 'transparent',
+              }}
             />
           </div>
         )}
@@ -262,7 +365,11 @@ function MessagesInner() {
             symbol="&#9676;"
             title={t('signInRequiredTitle')}
             subtitle={t('signInRequiredSubtitle')}
-            action={<GlowButton href="/sign-in" variant="primary">{tAuth('signIn')}</GlowButton>}
+            action={
+              <GlowButton href="/sign-in" variant="primary">
+                {tAuth('signIn')}
+              </GlowButton>
+            }
             className="mt-8"
           />
         )}
@@ -272,7 +379,11 @@ function MessagesInner() {
             symbol="&#9676;"
             title={t('signalUnavailable')}
             subtitle={openError.message}
-            action={<GlowButton href={openError.actionHref} variant="secondary">{openError.actionLabel}</GlowButton>}
+            action={
+              <GlowButton href={openError.actionHref} variant="secondary">
+                {openError.actionLabel}
+              </GlowButton>
+            }
             className="mt-8"
           />
         )}
@@ -282,7 +393,11 @@ function MessagesInner() {
             symbol="&#8599;"
             title={t('emptyTitle')}
             subtitle={t('emptySubtitle')}
-            action={<GlowButton href="/discover" variant="secondary">{t('exploreCosmos')}</GlowButton>}
+            action={
+              <GlowButton href="/discover" variant="secondary">
+                {t('exploreCosmos')}
+              </GlowButton>
+            }
             className="mt-8"
           />
         )}
@@ -293,6 +408,15 @@ function MessagesInner() {
               <ConversationCard key={conv.id} conv={conv} />
             ))}
           </div>
+        )}
+        {nextCursor && !openError && (
+          <button
+            disabled={loadingMore}
+            onClick={() => void loadMore()}
+            className="mt-5 rounded-lg border border-white/10 px-4 py-2 text-sm text-violet-200"
+          >
+            {tw('loadMore')}
+          </button>
         )}
       </div>
     </AppShell>
