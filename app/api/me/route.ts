@@ -1,3 +1,4 @@
+import { notify } from '@/lib/galaxy-workflow'
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -103,6 +104,24 @@ export async function DELETE(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const owned = await tx.community.findMany({ where: { creatorId: userId }, orderBy: { id: 'asc' } })
+      for (const galaxy of owned) {
+        await tx.$queryRaw`SELECT id FROM community WHERE id = ${galaxy.id} FOR UPDATE`
+        const successor = await tx.communityMembership.findFirst({ where: { communityId: galaxy.id, userId: { not: userId }, user: { deletedAt: null } }, orderBy: [{ role: 'desc' }, { joinedAt: 'asc' }] })
+        await tx.community.update({ where: { id: galaxy.id }, data: { creatorId: successor?.userId ?? null } })
+        if (successor) {
+          await tx.communityMembership.update({ where: { id: successor.id }, data: { role: 'ADMIN' } })
+          await notify(tx, [successor.userId], 'galaxyOwnership', `/galaxy/${galaxy.slug}/manage`, { galaxy: galaxy.name })
+        }
+      }
+      const upcoming = await tx.event.findMany({ where: { proposerId: userId, date: { gt: new Date() }, status: { in: ['PENDING','APPROVED'] } }, include: { galaxy: { select: { slug: true } }, rsvps: { where: { status: { in: ['PENDING','APPROVED'] } }, select: { userId: true } } } })
+      for (const event of upcoming) {
+        await tx.event.update({ where: { id: event.id }, data: { status: 'CANCELLED' } })
+        await tx.eventRSVP.updateMany({ where: { eventId: event.id }, data: { status: 'CANCELLED' } })
+        await notify(tx, event.rsvps.map(r=>r.userId), 'galaxyEventCancelled', `/galaxy/${event.galaxy.slug}?event=${event.id}#events`, { title: event.title })
+      }
+      await tx.communityJoinRequest.deleteMany({ where: { userId } })
+
       // --- Own low-value interaction records: delete, and correctly
       // decrement the denormalized counters they contributed to (matching
       // the like/unlike endpoints' pattern in app/api/posts/[id]/like and

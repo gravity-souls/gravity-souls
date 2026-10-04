@@ -89,7 +89,7 @@ export async function GET(
   const [community, posts] = await Promise.all([
     prisma.community.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, creatorId: true },
     }),
     prisma.communityPost.findMany({
       where: { communityId: id },
@@ -140,13 +140,13 @@ export async function GET(
   const membership = userId
     ? await prisma.communityMembership.findUnique({
         where: { userId_communityId: { userId, communityId: id } },
-        select: { id: true },
+        select: { id: true, role: true },
       })
     : null;
 
   return NextResponse.json({
     joined: !!membership,
-    posts: posts.map(serializePost),
+    posts: posts.map(p => ({ ...serializePost(p), canDelete: p.authorId === userId || community.creatorId === userId || membership?.role === 'ADMIN' })),
   });
 }
 

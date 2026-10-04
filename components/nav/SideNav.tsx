@@ -313,11 +313,11 @@ export default function SideNav({ collapsed, onToggle }: Props) {
             type="button"
             onClick={onToggle}
             className="mb-1 flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-white/42 transition hover:bg-white/5 hover:text-white/72"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={tNav(collapsed ? 'expandSidebar' : 'collapseSidebar')}
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             <span style={{ opacity: collapsed ? 0 : 1, transition: 'opacity 150ms ease', whiteSpace: 'nowrap' }}>
-              Collapse
+              {tNav('collapse')}
             </span>
           </button>
         </nav>

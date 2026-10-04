@@ -118,7 +118,7 @@ function planetConfigFromSource(source: unknown, planet: PlanetProfile): PlanetC
 interface CommunityRaw {
   id: string; slug: string; name: string; symbol: string
   tagline: string | null; keywords: string[]; mood: string
-  accentColor: string; maturity: string; memberCount: number; joined?: boolean
+  accentColor: string; maturity: string; memberCount: number; joined?: boolean; requestStatus?: string | null; joinPolicy?: string
 }
 
 function fallbackResonanceScore(id: string): number {
@@ -160,7 +160,7 @@ export default function MyPlanetPage() {
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
-  const [communities, setCommunities] = useState<(GalaxyPreview & { joined?: boolean })[]>([])
+  const [communities, setCommunities] = useState<(GalaxyPreview & { joined?: boolean; requestStatus?: string | null; joinPolicy?: string })[]>([])
   const [createPostOpen, setCreatePostOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState<StreamPost | null>(null)
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
@@ -318,6 +318,8 @@ export default function MyPlanetPage() {
                   mood: c.mood as GalaxyPreview['mood'],
                   memberCount: c.memberCount,
                   joined: c.joined,
+                  requestStatus: c.requestStatus,
+                  joinPolicy: c.joinPolicy,
                   maturity: c.maturity as GalaxyPreview['maturity'],
                   accentColor: c.accentColor,
                 })))

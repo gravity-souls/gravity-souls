@@ -82,26 +82,30 @@ function isPastDate(date: Date) {
 
 interface CreateEventFormProps {
   galaxyId: string
+  initialEvent?: GalaxyEventSummary
   onCreated?: (event: GalaxyEventSummary) => void
 }
 
-export default function CreateEventForm({ galaxyId, onCreated }: CreateEventFormProps) {
+export default function CreateEventForm({ galaxyId, onCreated, initialEvent }: CreateEventFormProps) {
+  const tw = useTranslations('galaxyWorkflow')
+  const initialDate = initialEvent ? new Date(initialEvent.date) : null
   const t = useTranslations('eventForms')
   const tCommon = useTranslations('common')
   const locale = useLocale()
   const [step, setStep] = useState(1)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<EventCategory>('MEETUP')
+  const [title, setTitle] = useState(initialEvent?.title ?? '')
+  const [description, setDescription] = useState(initialEvent?.description ?? '')
+  const [category, setCategory] = useState<EventCategory>(initialEvent?.category ?? 'MEETUP')
+  const [requiresApproval, setRequiresApproval] = useState(initialEvent?.requiresApproval ?? false)
   const [coverFile, setCoverFile] = useState<File | null>(null)
-  const [dateValue, setDateValue] = useState('')
+  const [dateValue, setDateValue] = useState(initialDate ? toDateValue(initialDate) : '')
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [visibleMonth, setVisibleMonth] = useState(() => getMonthStart(new Date()))
-  const [hour, setHour] = useState('19')
-  const [minute, setMinute] = useState('00')
-  const [location, setLocation] = useState('')
-  const [onlineUrl, setOnlineUrl] = useState('')
-  const [maxAttendees, setMaxAttendees] = useState('')
+  const [hour, setHour] = useState(initialDate ? String(initialDate.getHours()).padStart(2,'0') : '19')
+  const [minute, setMinute] = useState(initialDate ? String(initialDate.getMinutes()).padStart(2,'0') : '00')
+  const [location, setLocation] = useState(initialEvent?.location ?? '')
+  const [onlineUrl, setOnlineUrl] = useState(initialEvent?.onlineUrl ?? '')
+  const [maxAttendees, setMaxAttendees] = useState(initialEvent?.maxAttendees?.toString() ?? '')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -134,7 +138,7 @@ export default function CreateEventForm({ galaxyId, onCreated }: CreateEventForm
   }
 
   async function uploadCover() {
-    if (!coverFile) return null
+    if (!coverFile) return initialEvent?.coverImage ?? null
     const formData = new FormData()
     formData.append('file', coverFile)
     const res = await fetch('/api/events/cover-image', { method: 'POST', body: formData })
@@ -154,13 +158,14 @@ export default function CreateEventForm({ galaxyId, onCreated }: CreateEventForm
     setError('')
     try {
       const coverImage = await uploadCover()
-      const res = await fetch(`/api/galaxies/${galaxyId}/events`, {
-        method: 'POST',
+      const res = await fetch(`/api/galaxies/${galaxyId}/events${initialEvent ? `/${initialEvent.id}` : ''}`, {
+        method: initialEvent ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
           category,
+          requiresApproval,
           date: new Date(dateTime).toISOString(),
           location: location.trim() || undefined,
           onlineUrl: category === 'ONLINE' ? onlineUrl.trim() || undefined : undefined,
@@ -169,9 +174,9 @@ export default function CreateEventForm({ galaxyId, onCreated }: CreateEventForm
         }),
       })
       const data = await res.json() as { event?: GalaxyEventSummary; error?: string }
-      if (!res.ok || !data.event) throw new Error(data.error ?? t('proposeError'))
+      if (!res.ok) throw new Error(data.error && tw.has(data.error) ? tw(data.error) : t('proposeError'))
       setSuccess(true)
-      onCreated?.(data.event)
+      onCreated?.(data.event ?? { ...initialEvent!, title, description, category, date: new Date(dateTime).toISOString(), status: 'PENDING' })
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : t('proposeError'))
     } finally {
@@ -306,6 +311,8 @@ export default function CreateEventForm({ galaxyId, onCreated }: CreateEventForm
         </div>
       )}
 
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={requiresApproval} onChange={e => setRequiresApproval(e.target.checked)} /><span>{tw('requireAttendanceApproval')}<span className="mt-1 block text-xs text-white/50">{tw('attendanceApprovalHint')}</span></span></label>
+      {initialEvent && <p className="text-xs text-amber-200">{tw('editResubmits')}</p>}
       {error && <p className="text-xs" style={{ color: '#fca5a5' }}>{error}</p>}
 
       <div className="flex flex-col gap-3 border-t border-white/8 pt-4 sm:flex-row sm:items-center sm:justify-between">

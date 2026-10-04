@@ -1,4 +1,7 @@
-import { safeApiError } from '@/lib/api-input'
+import { requireUser, getOptionalUserSession } from '@/lib/session'
+import { discussionSchema } from '@/lib/input-schemas'
+import { galaxyAccess, deny } from '@/lib/galaxy-workflow'
+import { readJson, safeApiError } from '@/lib/api-input'
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -47,6 +50,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const session = await getOptionalUserSession();
+    const access = session ? await galaxyAccess(prisma, id, session.user) : null;
 
     const community = await prisma.community.findUnique({
       where: { id },
@@ -81,9 +86,23 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ discussions: discussions.map(serializeDiscussion) });
+    return NextResponse.json({ discussions: discussions.map(d => ({ ...serializeDiscussion(d), canDelete: d.authorId === session?.user.id || !!access?.isAdmin })) });
 
   } catch (error) {
     return safeApiError(error)
   }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { user } = await requireUser(); const { id } = await params
+    const input = await readJson(request, discussionSchema); if (!input.ok) return input.response
+    const discussion = await prisma.$transaction(async tx => {
+      const access = await galaxyAccess(tx, id, user, true)
+      if (!access.membership && !access.isAdmin) deny('joinFirst')
+      if (await tx.communityDiscussion.findUnique({ where: { communityId_title: { communityId: id, title: input.data.title } } })) deny('duplicateDiscussion', 409)
+      return tx.communityDiscussion.create({ data: { communityId: id, authorId: user.id, title: input.data.title, heat: 0.5, replies: { create: { content: input.data.content, authorId: user.id, authorName: user.name } } } })
+    })
+    return Response.json({ discussion }, { status: 201 })
+  } catch (error) { return safeApiError(error) }
 }

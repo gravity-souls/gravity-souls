@@ -1,104 +1,153 @@
 'use client'
-
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { galaxyRequest } from '@/lib/galaxy-client'
 import type { GalaxyEventSummary } from '@/types/event'
-
-interface PendingEventsPanelProps {
+export default function PendingEventsPanel({
+  galaxyId,
+  enabled = true,
+  onReviewed,
+}: {
   galaxyId: string
   enabled?: boolean
-  onReviewed?: (eventId: string, status: 'APPROVED' | 'REJECTED') => void
-}
-
-export default function PendingEventsPanel({ galaxyId, enabled = true, onReviewed }: PendingEventsPanelProps) {
-  const t = useTranslations('galaxies')
-  const tCommon = useTranslations('common')
-  const [events, setEvents] = useState<GalaxyEventSummary[]>([])
-  const [loading, setLoading] = useState(true)
-  const [reviewingId, setReviewingId] = useState<string | null>(null)
-  const [rejectingId, setRejectingId] = useState<string | null>(null)
-  const [reasons, setReasons] = useState<Record<string, string>>({})
-
+  onReviewed?: (id: string, status: 'APPROVED' | 'REJECTED') => void
+}) {
+  const locale = useLocale()
+  const t = useTranslations('galaxyWorkflow'),
+    te = useTranslations('eventForms')
+  const [events, setEvents] = useState<GalaxyEventSummary[]>([]),
+    [loading, setLoading] = useState(true),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(''),
+    [page, setPage] = useState(1),
+    [total, setTotal] = useState(0),
+    [size, setSize] = useState(20),
+    [revision, setRevision] = useState(0),
+    [reasons, setReasons] = useState<Record<string, string>>({})
   useEffect(() => {
     if (!enabled) return
-    let cancelled = false
-    setLoading(true)
-    fetch(`/api/galaxies/${galaxyId}/events?status=pending`)
-      .then((res) => res.ok ? res.json() : { events: [] })
-      .then((data: { events?: GalaxyEventSummary[] }) => {
-        if (!cancelled) setEvents(data.events ?? [])
+    let alive = true
+    Promise.resolve().then(() => {
+      if (alive) setLoading(true)
+    })
+    galaxyRequest<{
+      events: GalaxyEventSummary[]
+      total: number
+      pageSize: number
+    }>(`/api/galaxies/${galaxyId}/events?status=pending&page=${page}`)
+      .then((data) => {
+        if (alive) {
+          setEvents(data.events)
+          setTotal(data.total)
+          setSize(data.pageSize)
+          setError('')
+          if (!data.events.length && page > 1) setPage((p) => p - 1)
+        }
       })
-      .catch(() => {
-        if (!cancelled) setEvents([])
+      .catch((err) => {
+        if (alive) setError(t.has(err.message) ? t(err.message) : t('failed'))
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (alive) setLoading(false)
       })
-    return () => { cancelled = true }
-  }, [enabled, galaxyId])
-
-  async function review(eventId: string, status: 'APPROVED' | 'REJECTED') {
-    setReviewingId(eventId)
+    return () => {
+      alive = false
+    }
+  }, [enabled, galaxyId, page, revision, t])
+  async function review(id: string, status: 'APPROVED' | 'REJECTED') {
+    setBusy(true)
+    setError('')
     try {
-      const res = await fetch(`/api/galaxies/${galaxyId}/events/${eventId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectionReason: reasons[eventId]?.trim() || undefined }),
-      })
-      if (!res.ok) return
-      setEvents((prev) => prev.filter((event) => event.id !== eventId))
-      onReviewed?.(eventId, status)
+      await galaxyRequest(
+        `/api/galaxies/${galaxyId}/events/${id}/status`,
+        'PATCH',
+        { status, rejectionReason: reasons[id] || undefined },
+      )
+      setRevision((v) => v + 1)
+      onReviewed?.(id, status)
+    } catch (err) {
+      const key = err instanceof Error ? err.message : 'failed'
+      setError(t.has(key) ? t(key) : t('failed'))
     } finally {
-      setReviewingId(null)
+      setBusy(false)
     }
   }
-
   if (!enabled) return null
-
-  if (loading) {
-    return <p className="text-sm" style={{ color: 'var(--ghost)' }}>{tCommon('loading')}</p>
-  }
-
-  if (events.length === 0) {
-    return (
-      <div className="rounded-2xl p-6 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-        <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('noPendingEvents')}</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-3">
-      {events.map((event) => (
-        <article key={event.id} className="rounded-2xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{event.title}</h3>
-              <p className="mt-1 text-xs" style={{ color: 'var(--ghost)' }}>
-                {event.proposer.name} · {new Date(event.date).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => review(event.id, 'APPROVED')} disabled={reviewingId === event.id} className="rounded-xl px-3 py-2 text-xs font-semibold" style={{ color: '#bbf7d0', background: 'rgba(34,197,94,0.13)', border: '1px solid rgba(74,222,128,0.35)' }}>
+    <div className="grid gap-4">
+      {error && (
+        <p role="alert" className="text-red-300">
+          {error}
+          <button
+            className="ml-2 underline"
+            onClick={() => setRevision((v) => v + 1)}
+          >
+            {t('retry')}
+          </button>
+        </p>
+      )}
+      {loading ? (
+        <p>{t('loading')}</p>
+      ) : !events.length ? (
+        <p>{t('noRequests')}</p>
+      ) : (
+        events.map((event) => (
+          <article
+            key={event.id}
+            className="grid gap-3 rounded-xl border border-white/10 p-4"
+          >
+            <h3 className="font-semibold">{event.title}</h3>
+            <p className="text-sm text-white/60">{event.description}</p>
+            <p className="text-xs text-white/50">
+              {event.proposer.name} ·{' '}
+              {new Date(event.date).toLocaleString(locale)}
+            </p>
+            <textarea
+              className="rounded-lg border border-white/15 bg-white/5 p-2 text-sm"
+              placeholder={te('optionalRejectionReason')}
+              value={reasons[event.id] ?? ''}
+              onChange={(e) =>
+                setReasons({ ...reasons, [event.id]: e.target.value })
+              }
+            />
+            <div className="flex gap-4">
+              <button
+                disabled={busy}
+                className="text-sm text-green-200"
+                onClick={() => review(event.id, 'APPROVED')}
+              >
                 {t('approve')}
               </button>
-              <button type="button" onClick={() => rejectingId === event.id ? review(event.id, 'REJECTED') : setRejectingId(event.id)} disabled={reviewingId === event.id} className="rounded-xl px-3 py-2 text-xs font-semibold" style={{ color: '#fecaca', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(248,113,113,0.32)' }}>
+              <button
+                disabled={busy}
+                className="text-sm text-red-200"
+                onClick={() => review(event.id, 'REJECTED')}
+              >
                 {t('reject')}
               </button>
             </div>
-          </div>
-          {rejectingId === event.id && (
-            <textarea
-              value={reasons[event.id] ?? ''}
-              onChange={(changeEvent) => setReasons((prev) => ({ ...prev, [event.id]: changeEvent.target.value }))}
-              rows={2}
-              className="mt-3 w-full resize-none rounded-xl px-3 py-2 text-sm outline-none"
-              placeholder={t('optionalRejectionReason')}
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }}
-            />
-          )}
-        </article>
-      ))}
+          </article>
+        ))
+      )}
+      {total > size && (
+        <div className="flex justify-between">
+          <button
+            disabled={page === 1 || loading}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            {t('previous')}
+          </button>
+          <span>
+            {page} / {Math.ceil(total / size)}
+          </span>
+          <button
+            disabled={page * size >= total || loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            {t('next')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

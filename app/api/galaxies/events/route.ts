@@ -27,12 +27,19 @@ export async function GET(request: Request) {
     galaxy: { memberships: { some: { userId } } },
   }
 
-  if (status === 'passed') {
+  if (status === 'mine') {
+    where.galaxy = undefined
+    where.proposerId = userId
+  } else if (status === 'requests') {
+    where.status = EventStatus.APPROVED
+    where.date = { gt: new Date() }
+    where.rsvps = { some: { userId, status: 'PENDING' } }
+  } else if (status === 'passed') {
     where.status = EventStatus.PASSED
   } else if (status === 'going') {
     where.status = EventStatus.APPROVED
     where.date = { gte: new Date() }
-    where.rsvps = { some: { userId } }
+    where.rsvps = { some: { userId, status: 'APPROVED' } }
   } else {
     where.status = EventStatus.APPROVED
     where.date = { gte: new Date() }
@@ -55,8 +62,8 @@ export async function GET(request: Request) {
       include: {
         galaxy: { select: { id: true, name: true, slug: true, accentColor: true } },
         proposer: { select: { id: true, name: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
-        rsvps: { where: { userId }, select: { userId: true } },
-        _count: { select: { rsvps: true } },
+        rsvps: { where: { userId }, select: { userId: true, status: true } },
+        _count: { select: { rsvps: { where: { status: 'APPROVED' } } } },
       },
     }),
     prisma.event.count({ where }),
