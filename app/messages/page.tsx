@@ -164,6 +164,7 @@ function MessagesLoading() {
 function MessagesInner() {
   const t = useTranslations('messagesPage')
   const tw = useTranslations('inboxWorkflow')
+  const ta = useTranslations('planetActions')
   const tAuth = useTranslations('auth')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -233,15 +234,13 @@ function MessagesInner() {
 
           const errorBody = (await res.json().catch(() => null)) as {
             error?: string
+            code?: string
           } | null
+          const needsMutual = res.status === 403 && (errorBody?.code === 'mutualFollowRequired' || errorBody?.error?.includes('follow each other'))
           setOpenError({
-            message:
-              res.status === 403 &&
-              errorBody?.error?.includes('follow each other')
-                ? tw('mutualRequired')
-                : t('openSignalError'),
-            actionHref: '/discover',
-            actionLabel: t('explorePlanets'),
+            message: needsMutual ? tw('mutualRequired') : t('openSignalError'),
+            actionHref: needsMutual ? `/planet/${encodeURIComponent(targetPlanetId)}` : '/discover',
+            actionLabel: needsMutual ? ta('viewPlanet') : t('explorePlanets'),
           })
           setLoading(false)
           return
@@ -279,7 +278,7 @@ function MessagesInner() {
     return () => {
       cancelled = true
     }
-  }, [router, targetPlanetId, t, tw])
+  }, [router, targetPlanetId, t, tw, ta])
 
   useEffect(() => {
     if (targetPlanetId) return

@@ -24,7 +24,7 @@ async function planetSummaries(userIds: string[]) {
     userIds.length === 0
       ? []
       : await prisma.planet.findMany({
-          where: { userId: { in: userIds }, active: true },
+          where: { userId: { in: userIds }, active: true, user: { deletedAt: null } },
           select: {
             ...PLANET_SUMMARY_SELECT,
             userId: true,
@@ -59,12 +59,12 @@ export async function GET() {
     const excluded = [...(await blockedUserIds(userId))]
     const [following, followers] = await Promise.all([
       prisma.follow.findMany({
-        where: { followerId: userId, followingId: { notIn: excluded } },
+        where: { followerId: userId, followingId: { notIn: excluded }, following: { deletedAt: null } },
         orderBy: { createdAt: 'desc' },
         select: { followingId: true, createdAt: true },
       }),
       prisma.follow.findMany({
-        where: { followingId: userId, followerId: { notIn: excluded } },
+        where: { followingId: userId, followerId: { notIn: excluded }, follower: { deletedAt: null } },
         orderBy: { createdAt: 'desc' },
         select: { followerId: true, createdAt: true },
       }),
@@ -90,7 +90,7 @@ export async function GET() {
         since: f.createdAt,
         planet: summaries.get(f.followerId) ?? null,
       })),
-    })
+    }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     return safeApiError(error)
   }

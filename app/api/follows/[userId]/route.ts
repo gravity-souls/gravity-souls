@@ -13,7 +13,8 @@ export async function GET(
     const { userId: otherUserId } = await params
     const viewerId = session.user.id
 
-    if(!await canContact(viewerId,otherUserId)) return Response.json({following:false,followedBy:false})
+    const target = await prisma.user.findFirst({ where: { id: otherUserId, deletedAt: null }, select: { id: true } })
+    if (!target || !await canContact(viewerId,otherUserId)) return Response.json({ following: false, followedBy: false, available: false }, { headers: { 'Cache-Control': 'private, no-store' } })
     const [amFollowing, followsMe] = await Promise.all([
       prisma.follow.findUnique({
         where: { followerId_followingId: { followerId: viewerId, followingId: otherUserId } },
@@ -25,7 +26,7 @@ export async function GET(
       }),
     ])
 
-    return Response.json({ following: !!amFollowing, followedBy: !!followsMe })
+    return Response.json({ following: !!amFollowing, followedBy: !!followsMe, available: true }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     return safeApiError(error)
   }

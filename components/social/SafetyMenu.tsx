@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import FollowButton from '@/components/social/FollowButton'
 import { useRouter } from 'next/navigation'
 
 // --- SafetyMenu ---------------------------------------------------------------
@@ -16,24 +17,12 @@ interface Props {
 export default function SafetyMenu({ targetUserId, className }: Props) {
   const t = useTranslations('safety')
   const router = useRouter()
-  const [following, setFollowing] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportSent, setReportSent] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/api/follows/${encodeURIComponent(targetUserId)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { following: boolean } | null) => {
-        if (!cancelled) setFollowing(data?.following ?? false)
-      })
-      .catch(() => { if (!cancelled) setFollowing(false) })
-    return () => { cancelled = true }
-  }, [targetUserId])
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -44,25 +33,6 @@ export default function SafetyMenu({ targetUserId, className }: Props) {
     document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
-
-  async function toggleFollow() {
-    setBusy(true)
-    try {
-      if (following) {
-        await fetch(`/api/follows/${encodeURIComponent(targetUserId)}`, { method: 'DELETE' })
-        setFollowing(false)
-      } else {
-        const res = await fetch('/api/follows', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: targetUserId }),
-        })
-        if (res.ok) setFollowing(true)
-      }
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function handleBlock() {
     if (!window.confirm(t('blockConfirm'))) return
@@ -108,19 +78,7 @@ export default function SafetyMenu({ targetUserId, className }: Props) {
 
   return (
     <div ref={containerRef} className={`relative flex items-center gap-2 ${className ?? ''}`}>
-      <button
-        onClick={toggleFollow}
-        disabled={busy || following === null}
-        className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
-        style={{
-          background: following ? 'rgba(255,255,255,0.04)' : 'rgba(124,58,237,0.18)',
-          border: following ? '1px solid var(--border-soft)' : '1px solid var(--border-accent)',
-          color: following ? 'var(--ink)' : 'var(--star)',
-          opacity: busy || following === null ? 0.6 : 1,
-        }}
-      >
-        {following ? t('unfollow') : t('follow')}
-      </button>
+      <FollowButton userId={targetUserId} />
 
       <button
         onClick={() => setMenuOpen((v) => !v)}

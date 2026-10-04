@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -11,6 +11,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import EmptyState from '@/components/ui/EmptyState'
 import LockedLayer from '@/components/ui/LockedLayer'
 import PlanetLoading from '@/app/planet/[id]/loading'
+import BeamButton from '@/components/social/BeamButton'
 import PlanetHero from '@/components/planet/PlanetHero'
 import MatchReasonPanel from '@/components/planet/MatchReasonPanel'
 import PlanetResonancePanel from '@/components/planet/PlanetResonancePanel'
@@ -162,58 +163,7 @@ function FogVeil({
 // --- Send signal button (starts a conversation) ----------------------------
 
 function SendSignalButton({ planet }: { planet: PlanetProfile }) {
-  const router = useRouter()
-  const t = useTranslations('planetPage')
-  const tw = useTranslations('inboxWorkflow')
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState('')
-
-  async function handleSend() {
-    setError('')
-    setSending(true)
-    try {
-      const res = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientId: planet.userId }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        router.push(`/messages/${data.conversationId}`)
-        return
-      }
-
-      if (res.status === 401) {
-        router.push('/sign-in')
-        return
-      }
-
-      const data=await res.json().catch(()=>null)
-      setError(res.status===403&&data?.error?.includes('follow each other')?tw('mutualRequired'):t('openSignalError'))
-    } catch {
-      setError(t('openSignalError'))
-    }
-    setSending(false)
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <GlowButton
-        variant="primary"
-        className="py-3 text-sm"
-        onClick={handleSend}
-        disabled={sending}
-      >
-        {sending ? t('sendingSignal') : t('sendSignal')}
-      </GlowButton>
-      <p className="text-xs text-slate-400">{tw('openOnly')}</p>
-      {error && (
-        <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-          {error}
-        </p>
-      )}
-    </div>
-  )
+  return <BeamButton key={planet.id} userId={planet.userId} planetId={planet.id} />
 }
 
 // --- Helper: convert DB planet to PlanetProfile ------------------------------

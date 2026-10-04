@@ -238,3 +238,61 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(!saved.includes('disabled=""'))
   })
 }
+
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`planet saves, beam guidance and relationship badges translate in ${locale}`, () => {
+    const messages = require(`../messages/${locale}.json`).planetActions
+    const Save = require('../components/social/SavePlanetButton.tsx').default
+    const Beam = require('../components/social/BeamButton.tsx').default
+    const Badge = require('../components/social/RelationshipStateBadge.tsx').default
+    const escaped = value => value.replaceAll('&', '&amp;')
+    const unsaved = render(locale, React.createElement(Save, { planetId: 'target', initialSaved: false }))
+    assert.ok(unsaved.includes(escaped(messages.save)))
+    assert.ok(unsaved.includes('aria-pressed="false"'))
+    const saved = render(locale, React.createElement(Save, { planetId: 'target', initialSaved: true }))
+    assert.ok(saved.includes(escaped(messages.removeSave)))
+    assert.ok(saved.includes('href="/saved"'))
+    const beam = render(locale, React.createElement(Beam, { planetId: 'target', userId: 'target-user' }))
+    assert.ok(beam.includes(escaped(messages.beam)))
+    assert.ok(beam.includes(escaped(messages.openOnly)))
+    assert.ok(render(locale, React.createElement(Badge, { status: 'mutual' })).includes(escaped(messages.mutualLabel)))
+    const menu = render(locale, React.createElement(require('../components/layout/MobileExploreMenu.tsx').default, { onNavigate: () => {} }))
+    assert.ok(menu.includes('href="/relationships"'))
+  })
+}
+
+test('planet action transport announces only successful writes and exposes retryable failures', async () => {
+  const { setPlanetSaved, setUserFollowing, PLANET_ACTION_CHANGED } = require('../lib/planet-actions.ts')
+  const previousWindow = globalThis.window, previousFetch = globalThis.fetch
+  const changes = [], requests = []
+  globalThis.window = new EventTarget()
+  globalThis.window.addEventListener(PLANET_ACTION_CHANGED, event => changes.push(event.detail))
+  let responseStatus = 500
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options })
+    return new Response(null, { status: responseStatus })
+  }
+  try {
+    await assert.rejects(setPlanetSaved('target', true), /failed/)
+    await assert.rejects(setUserFollowing('target-user', false), /failed/)
+    assert.equal(changes.length, 0)
+    responseStatus = 401
+    await assert.rejects(setPlanetSaved('target', false), /auth/)
+    assert.equal(changes.length, 0)
+    responseStatus = 200
+    await setPlanetSaved('target', true)
+    assert.equal(requests.at(-1).url, '/api/saved-planets')
+    assert.deepEqual(JSON.parse(requests.at(-1).options.body), { planetId: 'target' })
+    await setUserFollowing('target-user', true)
+    assert.deepEqual(JSON.parse(requests.at(-1).options.body), { userId: 'target-user' })
+    responseStatus = 204
+    await setPlanetSaved('target', false)
+    await setUserFollowing('target-user', false)
+    assert.deepEqual(changes, [
+      { kind: 'saved', planetId: 'target', saved: true },
+      { kind: 'follow', userId: 'target-user', following: true },
+      { kind: 'saved', planetId: 'target', saved: false },
+      { kind: 'follow', userId: 'target-user', following: false },
+    ])
+  } finally { globalThis.window = previousWindow; globalThis.fetch = previousFetch }
+})

@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import GlowButton from '@/components/ui/GlowButton'
+import SavePlanetButton from '@/components/social/SavePlanetButton'
+import BeamButton from '@/components/social/BeamButton'
 import SafetyMenu from '@/components/social/SafetyMenu'
 import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -47,25 +49,11 @@ function ExplorerActions() {
 }
 
 function ResonatorActions({ planet }: { planet: PlanetProfile }) {
-  const t = useTranslations('planetPage')
-
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <GlowButton
-        href={`/messages?to=${encodeURIComponent(planet.id)}`}
-        variant="primary"
-        className="px-5 py-2.5 text-sm"
-      >
-        {t('sendBeam')}
-      </GlowButton>
-      <GlowButton
-        href={`/saved?add=${planet.id}`}
-        variant="secondary"
-        className="px-5 py-2.5 text-sm"
-      >
-        {t('saveOrbit')}
-      </GlowButton>
-      {planet.userId && <SafetyMenu targetUserId={planet.userId} />}
+    <div className="flex flex-wrap items-start gap-3">
+      <BeamButton hasFollowControl key={planet.id} userId={planet.userId} planetId={planet.id} />
+      <SavePlanetButton key={planet.id} planetId={planet.id} />
+      {planet.userId && <SafetyMenu key={planet.userId} targetUserId={planet.userId} />}
     </div>
   )
 }

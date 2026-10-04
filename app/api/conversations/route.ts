@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     // already-established thread can continue even if a follow later lapses.
     if (!existingThread && !(await mutualFollow(userId, recipientId))) {
       return NextResponse.json(
-        { error: 'You can message this planet once you follow each other' },
+        { error: 'You can message this planet once you follow each other', code: 'mutualFollowRequired' },
         { status: 403 },
       )
     }

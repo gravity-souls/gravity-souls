@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 export type FollowState = 'following' | 'mutual' | 'follows-you'
 
 const STATUS_CONFIG: Record<FollowState, {
@@ -18,6 +19,8 @@ interface Props {
 
 export default function RelationshipStateBadge({ status, compact = false }: Props) {
   const cfg = STATUS_CONFIG[status]
+  const t = useTranslations('planetActions')
+  const label = t(status === 'mutual' ? 'mutualLabel' : status === 'follows-you' ? 'followersLabel' : 'followingLabel')
 
   if (compact) {
     return (
@@ -32,7 +35,7 @@ export default function RelationshipStateBadge({ status, compact = false }: Prop
           }}
         />
         <span className="text-[10px] uppercase tracking-widest" style={{ color: cfg.color }}>
-          {cfg.label}
+          {label}
         </span>
       </div>
     )
@@ -50,7 +53,7 @@ export default function RelationshipStateBadge({ status, compact = false }: Prop
         {cfg.symbol}
       </span>
       <span className="text-[10px] uppercase tracking-widest font-medium" style={{ color: cfg.color }}>
-        {cfg.label}
+        {label}
       </span>
     </div>
   )

@@ -922,6 +922,10 @@ export default function MyPlanetPage() {
           </div>
         )}
 
+        <div className="mb-4 flex flex-wrap gap-3">
+          <Link href="/saved" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('savedOrbit')}</Link>
+          <Link href="/relationships" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('relationships')}</Link>
+        </div>
         <InboxPreview />
 
         {/* ================================================================
