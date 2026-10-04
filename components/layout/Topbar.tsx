@@ -5,13 +5,23 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ChevronDown, LogOut, MessageCircle, Search, Settings, UserCircle } from 'lucide-react'
+import {
+  ChevronDown,
+  LogOut,
+  MessageCircle,
+  Search,
+  Settings,
+  UserCircle,
+} from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { PRESET_PLANETS, type PlanetConfig } from '@/types/planet'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
+import MobileExploreMenu from './MobileExploreMenu'
 import NotificationBell from '@/components/ui/NotificationBell'
 
-const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), {
+  ssr: false,
+})
 const FALLBACK_PLANET_CONFIG: PlanetConfig = PRESET_PLANETS[0] ?? {
   baseTexture: 'jupiter.jpg',
   tintColor: '#7c4dbf',
@@ -56,7 +66,8 @@ export default function Topbar() {
       if (!response.ok) return
 
       const data = (await response.json()) as MeResponse
-      if (!cancelled && version === planetConfigVersion.current) setPlanetConfig(data.user?.planetConfig ?? null)
+      if (!cancelled && version === planetConfigVersion.current)
+        setPlanetConfig(data.user?.planetConfig ?? null)
     }
 
     void loadProfile()
@@ -75,7 +86,11 @@ export default function Topbar() {
       }
     }
     window.addEventListener('planet-config:updated', handlePlanetConfigUpdated)
-    return () => window.removeEventListener('planet-config:updated', handlePlanetConfigUpdated)
+    return () =>
+      window.removeEventListener(
+        'planet-config:updated',
+        handlePlanetConfigUpdated,
+      )
   }, [])
 
   useEffect(() => {
@@ -122,7 +137,11 @@ export default function Topbar() {
       style={{ height: 'var(--nav-h)' }}
     >
       <div className="grid h-full w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-4 md:grid-cols-[220px_minmax(280px,1fr)_auto] lg:px-5">
-        <Link href="/" aria-label={tA11y('homeNav')} className="flex min-w-0 items-center gap-2 justify-self-start text-white no-underline">
+        <Link
+          href="/"
+          aria-label={tA11y('homeNav')}
+          className="flex min-w-0 items-center gap-2 justify-self-start text-white no-underline"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, no optimization needed */}
           <img
             src="/gravity-souls-icon.svg"
@@ -131,10 +150,15 @@ export default function Topbar() {
             height={36}
             className="h-9 w-9 shrink-0 rounded-xl shadow-[0_0_24px_rgba(124,58,237,0.18)]"
           />
-          <span className="hidden text-sm font-semibold tracking-wide text-white/90 sm:block">Gravity Souls</span>
+          <span className="hidden text-sm font-semibold tracking-wide text-white/90 sm:block">
+            Gravity Souls
+          </span>
         </Link>
 
-        <form onSubmit={handleSearch} className="hidden w-full max-w-2xl items-center justify-self-center md:flex">
+        <form
+          onSubmit={handleSearch}
+          className="hidden w-full max-w-2xl items-center justify-self-center md:flex"
+        >
           <label className="relative w-full">
             <span className="sr-only">{tTopbar('searchPlaceholder')}</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/34" />
@@ -149,7 +173,7 @@ export default function Topbar() {
 
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
           <NotificationBell />
-          <LanguageSwitcher variant="desktop" />
+          <LanguageSwitcher variant="compact" />
 
           <Link
             href="/messages"
@@ -160,7 +184,7 @@ export default function Topbar() {
           </Link>
 
           {session?.user ? (
-            <div className="relative hidden md:block" ref={menuRef}>
+            <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setIsMenuOpen((current) => !current)}
@@ -168,13 +192,20 @@ export default function Topbar() {
                 aria-expanded={isMenuOpen}
                 className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/4.5 py-1 pl-1 pr-3 text-white/80 transition hover:bg-white/8 hover:text-white"
               >
-                <PlanetGlobe planetConfig={topbarPlanetConfig} size={32} framing="avatar" />
-                <span className="max-w-32 truncate text-sm font-semibold">{userName}</span>
+                <PlanetGlobe
+                  planetConfig={topbarPlanetConfig}
+                  size={32}
+                  framing="avatar"
+                />
+                <span className="hidden max-w-32 truncate text-sm font-semibold md:inline">
+                  {userName}
+                </span>
                 <ChevronDown className="h-4 w-4 text-white/38" />
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[#090d18]/95 py-1 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                <div className="absolute right-0 top-12 max-h-[calc(100dvh-100px-env(safe-area-inset-bottom))] w-56 max-w-[calc(100vw-32px)] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#090d18]/95 py-1 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                  <MobileExploreMenu onNavigate={() => setIsMenuOpen(false)} />
                   <Link
                     href="/my-planet"
                     onClick={() => setIsMenuOpen(false)}
@@ -183,7 +214,11 @@ export default function Topbar() {
                     <UserCircle className="h-4 w-4" />
                     {tNav('myPlanet')}
                   </Link>
-                  <Link href="/messages" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm text-white/76 no-underline transition hover:bg-white/6 hover:text-white">
+                  <Link
+                    href="/messages"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-white/76 no-underline transition hover:bg-white/6 hover:text-white"
+                  >
                     <MessageCircle className="h-4 w-4" />
                     {tNav('messages')}
                   </Link>

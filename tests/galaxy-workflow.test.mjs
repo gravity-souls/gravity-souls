@@ -700,28 +700,13 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
         ).json()
         assert.equal(search.total, 1)
         assert.equal(search.nodes.length, 1)
-        const resonance = await (
-          await starMap.GET(
-            new Request('https://example.com/api?mode=resonance'),
-          )
-        ).json()
-        assert.equal(resonance.scope, 'batch')
-        assert.equal(resonance.nodes.length, 2)
-        assert.ok(
-          resonance.nodes.every(
-            (n) => Number.isFinite(n.score) && n.score >= 0 && n.score <= 100,
-          ),
-        )
-        as('noPlanet')
         assert.equal(
           (
-            await (
-              await starMap.GET(
-                new Request('https://example.com/api?mode=resonance'),
-              )
-            ).json()
-          ).requiresPlanet,
-          true,
+            await starMap.GET(
+              new Request('https://example.com/api?mode=resonance'),
+            )
+          ).status,
+          400,
         )
         await db.block.deleteMany({
           where: { blockerId: 'applicant', blockedId: 'owner' },

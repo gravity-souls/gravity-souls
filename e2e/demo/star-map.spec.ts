@@ -180,3 +180,48 @@ test('view switch stays above the map and objects occupy a side panel', async ({
   }
   await expect(page.getByText('Planet textures by')).toHaveCount(0)
 })
+
+test('phone exposes language and complete navigation from the account menu', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.route('**/api/auth/get-session**', (route) =>
+    route.fulfill({
+      json: {
+        session: {
+          id: 'fixture',
+          userId: 'fixture-user',
+          expiresAt: '2035-01-01T00:00:00Z',
+        },
+        user: {
+          id: 'fixture-user',
+          name: 'Fixture navigator',
+          email: 'fixture@example.invalid',
+        },
+      },
+    }),
+  )
+  await page.goto('/star-map')
+  await expect(
+    page.getByRole('button', { name: 'Language', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Language', exact: true }).click()
+  await expect(page.getByRole('button', { name: /Français/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Language', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Open user menu', exact: true })
+    .click()
+  const menu = page.getByRole('navigation', { name: 'All sections' })
+  for (const href of ['/star-map', '/discover', '/galaxies/events', '/saved'])
+    await expect(menu.locator(`a[href="${href}"]`)).toBeVisible()
+  await expect(menu.getByRole('textbox')).toBeVisible()
+  await menu.locator('a[href="/star-map"]').click()
+  await expect(
+    page.getByRole('button', { name: 'Open user menu', exact: true }),
+  ).toHaveAttribute('aria-expanded', 'false')
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true)
+})

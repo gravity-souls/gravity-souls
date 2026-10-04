@@ -9,7 +9,7 @@ import EventDetail from '@/components/events/EventDetail'
 import LightCone from '@/components/fx/LightCone'
 import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
 import AppShell from '@/components/layout/AppShell'
-import PlanetCard from '@/components/planet/PlanetCard'
+import StarMap from '@/components/star-map/StarMap'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
 import GalaxyCard from '@/components/galaxy/GalaxyCard'
 import PostCard from '@/components/stream/PostCard'
@@ -21,8 +21,6 @@ import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import {
-  NEBULA_ZONES,
-  ORBIT_PATHS,
   buildRealPositionedPlanets,
   type UniversePlanet,
 } from '@/lib/universe-field'
@@ -167,15 +165,10 @@ export default function HomeDashboard() {
 
   // --- Nearby planets state ---------------------------------------------------
   const [nearbyPlanets, setNearbyPlanets] = useState<ReturnType<typeof buildRealPositionedPlanets>>([])
-  const [nearbyLoading, setNearbyLoading] = useState(true)
   const [orbitTeaserCount, setOrbitTeaserCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-
-    Promise.resolve().then(() => {
-      if (!cancelled) setNearbyLoading(true)
-    })
 
     fetch('/api/universe')
       .then((r) => r.ok ? r.json() : [])
@@ -186,7 +179,7 @@ export default function HomeDashboard() {
       .catch(() => {
         if (!cancelled) setNearbyPlanets([])
       })
-      .finally(() => { if (!cancelled) setNearbyLoading(false) })
+
     return () => { cancelled = true }
   }, [session])
 
@@ -396,90 +389,13 @@ export default function HomeDashboard() {
             </div>
 
             <div className="min-w-0">
-            <div data-testid="universe-field" className="relative min-h-140 lg:min-h-170" aria-label={tHome('universeFieldLabel')}>
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: 'radial-gradient(ellipse at 48% 44%, rgba(167,139,250,0.10) 0%, rgba(52,211,153,0.05) 34%, transparent 68%)',
-                  maskImage: 'radial-gradient(ellipse at center, black 0%, black 68%, transparent 100%)',
-                }}
-                aria-hidden="true"
-              />
-
-              {NEBULA_ZONES.map((zone) => (
-                <Link
-                  key={zone.id}
-                  href={`/galaxy/${zone.galaxySlug}`}
-                  className="absolute group flex items-center gap-2 transition-opacity duration-300"
-                  style={{
-                    left: `${zone.x}%`,
-                    top: `${zone.y - 8}%`,
-                    transform: 'translate(-50%, -50%)',
-                    textDecoration: 'none',
-                    opacity: 0.72,
-                    zIndex: 7,
-                  }}
-                >
-                  <span style={{ width: 26, height: 1, background: `linear-gradient(90deg, transparent, ${zone.color})`, display: 'inline-block' }} aria-hidden="true" />
-                  <span
-                    style={{
-                      fontSize: 10,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
-                      color: zone.color,
-                      whiteSpace: 'nowrap',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {tHome(zone.labelKey)}
-                  </span>
-                </Link>
-              ))}
-
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ zIndex: 2 }} aria-hidden="true">
-                {ORBIT_PATHS.map((path) => (
-                  <path
-                    key={path.d}
-                    d={path.d}
-                    fill="none"
-                    stroke={path.color}
-                    strokeWidth="0.16"
-                    strokeDasharray="1.8 2.8"
-                    opacity={path.opacity}
-                  />
-                ))}
-              </svg>
-
-              {nearbyLoading && nearbyPlanets.length === 0 ? (
-                <div className="absolute inset-0 grid grid-cols-4 gap-6 place-content-center px-10">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="rounded-full animate-pulse" style={{ width: 42 + (i % 3) * 8, height: 42 + (i % 3) * 8, background: 'rgba(167,139,250,0.08)' }} />
-                  ))}
-                </div>
-              ) : (
-                nearbyPlanets.map(({ position: pos, planet }) => (
-                  <div
-                    key={planet.id}
-                    className="absolute transition-transform duration-500 hover:scale-110"
-                    style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      transform: 'translate(-50%, -50%)',
-                      zIndex: Math.round(10 + pos.depth * 10),
-                      opacity: 0.78 + pos.depth * 0.22,
-                    }}
-                  >
-                    <PlanetCard
-                      planet={planet}
-                      size={pos.size}
-                      rotating
-                      onClick={() => setSelectedPlanet(planet)}
-                    />
-                  </div>
-                ))
-              )}
-
-            </div>
+            <section data-testid="universe-field" aria-label={tHome('homeStarMapTitle')}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-white">{tHome('homeStarMapTitle')}</h2>
+                <Link href="/star-map" className="text-xs text-violet-200">{tHome('openFullMap')} →</Link>
+              </div>
+              <StarMap compact />
+            </section>
               {featuredPlanet && (
                 <button
                   type="button"

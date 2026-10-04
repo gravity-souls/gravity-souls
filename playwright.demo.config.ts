@@ -23,7 +23,7 @@ export default defineConfig({
     { name: 'iphone-safari', use: { ...devices['iPhone 14'] } },
   ],
   webServer: {
-    command: 'npm run start -- --port 3100',
+    command: 'npm run start -- --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100/cosmic-globe',
     reuseExistingServer: false,
     timeout: 60_000,

@@ -1,0 +1,142 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+.field {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid #ffffff15;
+  background: radial-gradient(ellipse at center, #141329, #050810 75%);
+}
+.field canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.source,
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.source {
+  left: 50%;
+  top: 48%;
+}
+.node {
+  padding: 8px;
+  border-radius: 12px;
+  max-width: 135px;
+}
+.node[aria-pressed='true'] {
+  background: #ffffff0d;
+}
+.node span,
+.source span {
+  max-width: 130px;
+  font-size: 11px;
+  color: #c7c6dd;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.node strong {
+  font-size: 12px;
+  color: #e0d3ff;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 520px;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #ffffff16;
+  border-radius: 18px;
+  background: #0b101c;
+}
+.panelHeader {
+  padding: 16px;
+  flex-shrink: 0;
+  color: #cad1df;
+  font-size: 12px;
+  border-bottom: 1px solid #ffffff10;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  border-bottom: 1px solid #ffffff0b;
+  color: #d7d9e4;
+}
+.row[aria-pressed='true'] {
+  background: #a78bfa14;
+}
+.row span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.row strong {
+  font-size: 14px;
+  color: #c7b3ff;
+}
+.switch {
+  display: inline-flex;
+  border: 1px solid #ffffff22;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 20px 0 14px;
+}
+.switch button {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #acaabd;
+}
+.switch button[aria-pressed='true'] {
+  background: #a78bfa22;
+  color: #e0d3ff;
+}
+.layout button:focus-visible,
+.switch button:focus-visible {
+  outline: 2px solid #c0a0ff;
+  outline-offset: -2px;
+}
+.mobileDetails {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel {
+    display: none;
+  }
+  .mobileDetails {
+    display: block;
+  }
+  .field {
+    height: 460px;
+  }
+  .node {
+    max-width: 110px;
+  }
+}
+.node span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

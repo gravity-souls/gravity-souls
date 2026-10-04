@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { mapCenter, stableUnit } from '@/lib/star-map'
@@ -19,8 +20,15 @@ const EMPTY: StarMapData = {
   scope: 'batch',
 }
 
-export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
+export default function StarMap({
+  mode = 'discover',
+  compact = false,
+}: {
+  mode?: StarMapMode
+  compact?: boolean
+}) {
   const t = useTranslations('starMap')
+  const storageKey = compact ? `star-map:home:${mode}` : `star-map:${mode}`
   const [data, setData] = useState(EMPTY)
   const [focus, setFocus] = useState<string | null>(null)
   const [selected, setSelected] = useState<StarMapNode | null>(null)
@@ -45,9 +53,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const saved = JSON.parse(
-          sessionStorage.getItem(`star-map:${mode}`) ?? 'null',
-        )
+        const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
         if (
           saved &&
           typeof saved.query === 'string' &&
@@ -78,14 +84,14 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
       }
       setRestored(true)
     })
-  }, [mode])
+  }, [storageKey])
 
   useEffect(() => {
     if (!restored) return
     const save = () => {
       try {
         sessionStorage.setItem(
-          `star-map:${mode}`,
+          storageKey,
           JSON.stringify({
             query,
             cursor,
@@ -103,7 +109,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
       save()
       window.removeEventListener('pagehide', save)
     }
-  }, [mode, query, cursor, focus, selected, restored])
+  }, [storageKey, query, cursor, focus, selected, restored])
 
   const queryGroup = mode === 'discover' ? focus : null
 
@@ -225,9 +231,9 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
         return
       }
       if (!reduced && pointers.current.size === 0 && !focused)
-        view.current.yaw += Math.min(time - (last || time), 45) * 0.000018
+        view.current.yaw += Math.min(time - (last || time), 45) * 0.00007
       if (!reduced && pointers.current.size === 0)
-        spin.current += Math.min(time - (last || time), 45) * 0.00009
+        spin.current += Math.min(time - (last || time), 45) * 0.00032
       last = time
       ctx.clearRect(0, 0, width, height)
       ctx.globalCompositeOperation = 'lighter'
@@ -385,7 +391,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
     ? data.nodes.filter((node) => node.groupId === focus)
     : []
   return (
-    <div className={styles.map}>
+    <div className={`${styles.map} ${compact ? styles.compact : ''}`}>
       <div className={styles.mapToolbar}>
         <form
           onSubmit={(event) => {
@@ -589,50 +595,84 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
               {t('closeSidebar')}
             </button>
           </div>
-          <nav className={styles.clusters} aria-label={t('chooseGroup')}>
-            {clusters.map((group) => (
-              <button
-                key={group.id}
-                aria-pressed={focus === group.id}
-                onClick={() =>
-                  mode === 'galaxies'
-                    ? (enter(group.id),
-                      setSelected(
-                        data.nodes.find((node) => node.id === group.id) ?? null,
-                      ))
-                    : enter(group.id)
-                }
-                style={
-                  { '--cluster-color': group.color } as React.CSSProperties
-                }
-              >
-                <span className={styles.dot} />
-                <span>{groupLabel(group.id, group.name)}</span>
-                <span className={styles.clusterCaption}>
-                  {t(mode === 'galaxies' ? 'members' : 'planets', {
-                    count: group.count,
-                  })}
-                </span>
-              </button>
-            ))}
-          </nav>
-          {focus && (
-            <div className={styles.nodeList} aria-label={t('choosePlanet')}>
-              {visibleNodes.map((node) => (
-                <button
-                  key={node.id}
-                  aria-pressed={selected?.id === node.id}
-                  onClick={() => setSelected(node)}
-                >
-                  {node.planetConfig && (
-                    <PlanetAvatar planetConfig={node.planetConfig} size={28} />
+          <ScrollRegion label={t('browseObjects')}>
+            <nav className={styles.clusters} aria-label={t('chooseGroup')}>
+              {clusters.map((group) => (
+                <div key={group.id}>
+                  <button
+                    aria-pressed={focus === group.id}
+                    aria-expanded={focus === group.id}
+                    onClick={() =>
+                      focus === group.id
+                        ? (setFocus(null),
+                          setSelected(null),
+                          setCursor(null),
+                          (view.current.zoom = 1))
+                        : mode === 'galaxies'
+                          ? (enter(group.id),
+                            setSelected(
+                              data.nodes.find((node) => node.id === group.id) ??
+                                null,
+                            ))
+                          : enter(group.id)
+                    }
+                    style={
+                      { '--cluster-color': group.color } as React.CSSProperties
+                    }
+                  >
+                    <span className={styles.dot} />
+                    <span>{groupLabel(group.id, group.name)}</span>
+                    <span className={styles.clusterCaption}>
+                      {t(mode === 'galaxies' ? 'members' : 'planets', {
+                        count: group.count,
+                      })}
+                    </span>
+                  </button>
+                  {focus === group.id && (
+                    <div
+                      className={styles.nodeList}
+                      aria-label={t('choosePlanet')}
+                    >
+                      {visibleNodes.map((node) => (
+                        <button
+                          key={node.id}
+                          aria-pressed={selected?.id === node.id}
+                          onClick={() => setSelected(node)}
+                        >
+                          {node.planetConfig && (
+                            <PlanetAvatar
+                              planetConfig={node.planetConfig}
+                              size={28}
+                            />
+                          )}
+                          <span>{node.name}</span>
+                          {node.score !== undefined && (
+                            <span>{node.score}%</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <span>{node.name}</span>
-                  {node.score !== undefined && <span>{node.score}%</span>}
-                </button>
+                </div>
               ))}
-            </div>
-          )}
+            </nav>
+            {data.nextCursor && (
+              <button
+                className={styles.next}
+                disabled={loading}
+                onClick={() => {
+                  setCursor(data.nextCursor)
+                  setSelected(null)
+                  if (mode === 'galaxies') {
+                    setFocus(null)
+                    view.current.zoom = 1
+                  }
+                }}
+              >
+                {t('nextBatch')}
+              </button>
+            )}
+          </ScrollRegion>
           {selected && (
             <div
               className={`${styles.card} ${styles.liveCard}`}
@@ -646,7 +686,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
                     rotating={
                       !reduced && !selected.planetConfig.customTextureUrl
                     }
-                    rotationDuration={48}
+                    rotationDuration={24}
                     level={selected.level}
                   />
                 )}
@@ -663,22 +703,6 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
                 {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
               </Link>
             </div>
-          )}
-          {data.nextCursor && (
-            <button
-              className={styles.next}
-              disabled={loading}
-              onClick={() => {
-                setCursor(data.nextCursor)
-                setSelected(null)
-                if (mode === 'galaxies') {
-                  setFocus(null)
-                  view.current.zoom = 1
-                }
-              }}
-            >
-              {t('nextBatch')}
-            </button>
           )}
         </aside>
       </div>

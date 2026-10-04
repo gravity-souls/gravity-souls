@@ -353,3 +353,92 @@
     padding: 8px;
   }
 }
+/* Home embeds the same real-data map; its object list opens beside the canvas. */
+.compact .explorer {
+  grid-template-columns: minmax(0, 1fr);
+}
+.compact .stage {
+  height: 460px;
+  min-height: 0;
+}
+.compact .mapToolbar {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.compact .mapToolbar p {
+  flex-basis: 100%;
+}
+.map.compact .sidebarToggle {
+  display: inline-flex;
+}
+.compact .sidebar {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(290px, calc(100% - 32px));
+  max-height: 460px;
+  min-height: 0;
+  box-shadow: -16px 0 40px #0008;
+}
+.compact .sidebar[data-open='true'] {
+  display: block;
+}
+/* Fixed identity/detail zones frame an independently scrolling object list. */
+.sidebar,
+.sidebar[data-open='true'],
+.compact .sidebar[data-open='true'] {
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar {
+  display: flex;
+}
+.sidebarHeader {
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+.sidebar .card {
+  flex-shrink: 0;
+  max-height: 42%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.sidebar .card::-webkit-scrollbar {
+  display: none;
+}
+.sidebar .nodeList {
+  margin: 8px 0 14px 12px;
+}
+.sidebar .clusters > div > button {
+  width: 100%;
+}
+.sidebar .clusters {
+  margin-top: 0;
+}
+.compact .sidebar {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+}
+.sidebar[data-open='true'],
+.compact .sidebar[data-open='true'] {
+  display: flex;
+}
+/* Keep the selected identity visible without a second scrolling list. */
+.sidebar .card {
+  max-height: none;
+  overflow: visible;
+}
+.sidebar .card h2,
+.sidebar .card p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

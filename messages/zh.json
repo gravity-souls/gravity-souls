@@ -26,7 +26,11 @@
     "collapseGalaxyLinks": "收起星系链接",
     "expandGalaxyLinks": "展开星系链接",
     "signInRequired": "需要登录",
-    "starMap": "星图"
+    "starMap": "星图",
+    "discover": "发现星球",
+    "savedOrbit": "保存的轨道",
+    "search": "搜索",
+    "allSections": "全部板块"
   },
   "topbar": {
     "searchPlaceholder": "搜索星球、星系、活动...",
@@ -97,7 +101,9 @@
     "nebulaEmotional": "情感 / 温暖",
     "nebulaWandering": "流浪 / 边界",
     "exploreExperience": "探索体验",
-    "exploreExperienceCaption": "宇宙球的 3D 图解导览。"
+    "exploreExperienceCaption": "宇宙球的 3D 图解导览。",
+    "homeStarMapTitle": "探索星图",
+    "openFullMap": "打开完整星图"
   },
   "galaxyPage": {
     "galaxy": "星系",
@@ -193,7 +199,32 @@
       "cultureTravel": "文化与旅行",
       "artBooksMusic": "艺术与音乐",
       "worldviewComplement": "世界观对照"
-    }
+    },
+    "yourPlanet": "你的星球",
+    "mapView": "星图",
+    "listView": "列表",
+    "viewFormat": "推荐展示方式",
+    "recommendations": "推荐星球",
+    "oneRecommendationSet": "一套推荐，两种视图。分数和选中状态保持一致；连线表示匹配原因，并非已发送的光束。",
+    "gravitationalPull": "共同吸引力",
+    "productiveContrast": "互补差异",
+    "sharedThemes": "共同主题：{values}",
+    "sameMood": "相近的情绪基调：{value}",
+    "sharedCities": "共同城市：{values}",
+    "sharedCulture": "共同文化兴趣：{values}",
+    "sharedMusic": "共同音乐：{values}",
+    "sharedBooks": "共同书籍：{values}",
+    "sharedFilms": "共同电影：{values}",
+    "differentLifestyle": "{source}与{target}：互补的生活方式。",
+    "differentCognition": "不同的认知视角：抽象与具体。",
+    "differentCommunication": "互补的表达方式：{source}与{target}。",
+    "differentMood": "不同的情绪基调：{source}与{target}。",
+    "note_shared-interest": "{source}与{target}有相通的兴趣。",
+    "note_emotional-theme": "你们的情绪主题相互呼应。",
+    "note_expression-style": "你们的表达方式相互呼应。",
+    "note_culture-travel": "你们在文化与旅行兴趣中相遇。",
+    "note_art-books-music": "艺术、书籍或音乐连接着你们。",
+    "note_worldview-complement": "你们的世界观带来互补视角。"
   },
   "stream": {
     "searchPlaceholder": "搜索动态...",
@@ -1671,7 +1702,9 @@
     "browseObjects": "星团与星球",
     "closeSidebar": "收起面板",
     "viewMode": "展示方式",
-    "mapView": "星图视图"
+    "mapView": "星图视图",
+    "resonancePurpose": "这里按最强共鸣原因对当前加载的星球分组。独立共鸣页提供最多五个推荐及详细评分；候选批次不同，推荐可能不同。",
+    "openRecommendations": "查看共鸣推荐"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",

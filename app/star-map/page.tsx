@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import StarMap from '@/components/star-map/StarMap'
@@ -12,17 +12,19 @@ function StarMapPageContent() {
   const t = useTranslations('starMap')
   const params = useSearchParams()
   const requested = params.get('mode')
-  const mode: StarMapMode =
-    requested === 'galaxies' || requested === 'resonance'
-      ? requested
-      : 'discover'
+  const router = useRouter()
+  useEffect(() => {
+    if (requested === 'resonance') router.replace('/resonance')
+  }, [requested, router])
+  const mode: StarMapMode = requested === 'galaxies' ? 'galaxies' : 'discover'
+  if (requested === 'resonance') return null
   return (
     <AppShell>
       <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6">
         <h1 className="text-3xl font-semibold text-white">{t('title')}</h1>
         <p className="mt-3 text-sm text-slate-400">{t('subtitle')}</p>
         <nav className="mt-5 flex flex-wrap gap-3" aria-label={t('modes')}>
-          {(['discover', 'galaxies', 'resonance'] as const).map((value) => (
+          {(['discover', 'galaxies'] as const).map((value) => (
             <Link
               key={value}
               href={`/star-map?mode=${value}`}
@@ -42,13 +44,7 @@ function StarMapPageContent() {
           </span>
           <Link
             className="px-4 py-2 hover:bg-white/5"
-            href={
-              mode === 'galaxies'
-                ? '/galaxies'
-                : mode === 'resonance'
-                  ? '/resonance'
-                  : '/discover'
-            }
+            href={mode === 'galaxies' ? '/galaxies' : '/discover'}
           >
             {t('listView')}
           </Link>

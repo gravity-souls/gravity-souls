@@ -26,7 +26,11 @@
     "collapseGalaxyLinks": "Collapse galaxy links",
     "expandGalaxyLinks": "Expand galaxy links",
     "signInRequired": "Sign in required",
-    "starMap": "Star map"
+    "starMap": "Star map",
+    "discover": "Discover planets",
+    "savedOrbit": "Saved orbit",
+    "search": "Search",
+    "allSections": "All sections"
   },
   "topbar": {
     "searchPlaceholder": "Search planets, galaxies, events...",
@@ -97,7 +101,9 @@
     "nebulaEmotional": "Feeling / Warmth",
     "nebulaWandering": "Wandering / Edges",
     "exploreExperience": "Explore the experience",
-    "exploreExperienceCaption": "A guided tour of the cosmic globe, illustrated in 3D."
+    "exploreExperienceCaption": "A guided tour of the cosmic globe, illustrated in 3D.",
+    "homeStarMapTitle": "Explore the star map",
+    "openFullMap": "Open full map"
   },
   "galaxyPage": {
     "galaxy": "Galaxy",
@@ -193,7 +199,32 @@
       "cultureTravel": "Culture & travel",
       "artBooksMusic": "Arts & music",
       "worldviewComplement": "Worldview contrast"
-    }
+    },
+    "yourPlanet": "Your planet",
+    "mapView": "Star map",
+    "listView": "List",
+    "viewFormat": "Recommendation view",
+    "recommendations": "Recommended planets",
+    "oneRecommendationSet": "One set of recommendations, two views. Scores and selection stay the same. Lines show match reasons, not sent beams.",
+    "gravitationalPull": "Shared pull",
+    "productiveContrast": "Complementary differences",
+    "sharedThemes": "Shared themes: {values}",
+    "sameMood": "A shared emotional register: {value}",
+    "sharedCities": "Shared cities: {values}",
+    "sharedCulture": "Shared cultural interests: {values}",
+    "sharedMusic": "Shared music: {values}",
+    "sharedBooks": "Shared books: {values}",
+    "sharedFilms": "Shared films: {values}",
+    "differentLifestyle": "{source} and {target}: complementary ways of living.",
+    "differentCognition": "Different cognitive perspectives: abstract and concrete.",
+    "differentCommunication": "Complementary expression: {source} and {target}.",
+    "differentMood": "Different emotional registers: {source} and {target}.",
+    "note_shared-interest": "{source} and {target} share meaningful interests.",
+    "note_emotional-theme": "Your emotional themes resonate.",
+    "note_expression-style": "Your ways of expressing yourselves resonate.",
+    "note_culture-travel": "Your cultural and travel interests meet.",
+    "note_art-books-music": "You connect through art, books or music.",
+    "note_worldview-complement": "Your worldviews offer complementary perspectives."
   },
   "stream": {
     "searchPlaceholder": "Search signals...",
@@ -1671,7 +1702,9 @@
     "browseObjects": "Constellations & planets",
     "closeSidebar": "Close panel",
     "viewMode": "View format",
-    "mapView": "Star map"
+    "mapView": "Star map",
+    "resonancePurpose": "Map exploration groups the loaded planets by their strongest resonance reason. Open Resonance for up to five recommendations and detailed scores.",
+    "openRecommendations": "Open resonance recommendations"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

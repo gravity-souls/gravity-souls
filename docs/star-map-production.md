@@ -1,6 +1,6 @@
 # Real-data star map: first production implementation
 
-Date: 2026-10-04. Route: `/star-map?mode=discover|galaxies|resonance`.
+Date: 2026-10-04. Route: `/star-map?mode=discover|galaxies`.
 The old `/demo/star-map` URL redirects to the authenticated real-data map.
 No migration, account mutation or production deployment is required by this change.
 
@@ -12,9 +12,10 @@ No migration, account mutation or production deployment is required by this chan
   remain governed by existing profile visibility rules.
 - Galaxies: each cluster is one Community, with its real membership count. A constellation
   does not imply that its members are publicly listed. The map returns no member roster.
-- Resonance: six groups and their colours reuse the existing orbit reasons. Scores reuse
-  `buildOrbitMatches`; the source and candidates use actual stored mood/style/themes,
-  lifestyle and cognitive axes. Scores rank the loaded batch, not the entire population.
+- Resonance lives only at `/resonance`: the same up-to-five recommendation session
+  powers its star-map and list views. Both share selected identity, score and reasons.
+  Legacy `/star-map?mode=resonance` links redirect there; the exploration API rejects
+  resonance mode rather than providing a separate batch of recommendations.
 - Ambient particles are decorative, not one particle per user. Selectable nodes are real
   entities. Lines guide discovery; they never imply a sent beam or established connection.
 - Enter a cluster, choose a node, read its actual name/avatar/description, then open the
@@ -32,7 +33,7 @@ No migration, account mutation or production deployment is required by this chan
   Selected built-in planet textures drift slowly; custom uploaded images retain their framing.
 - At most 36 planets or 24 galaxies per batch; no growing in-memory universe. Search
   and discovery climate selection narrow queries. Climate counts aggregate in the DB;
-  resonance counts describe the current batch. Cursor pagination uses the final returned
+  recommendation counts describe the canonical resonance session. Cursor pagination uses the final returned
   ID, not the excluded lookahead row. No per-node telemetry queries.
 - Decorative particles are capped at 2,000. Labels show only for small groups or a selected
   node, with a full selectable HTML list. Pixel ratio caps at 1/mobile and 1.5/desktop;
@@ -44,8 +45,8 @@ No migration, account mutation or production deployment is required by this chan
 
 ## Reuse and possible play
 
-Desktop navigation exposes the map. Discover, Galaxies and Resonance have contextual links
-into the corresponding mode. They share one renderer/API contract and preserve existing
+Desktop navigation exposes the map. Discover and Galaxies have contextual links
+into the corresponding exploration mode. Resonance owns its own map/list switch. They share one renderer/API contract and preserve existing
 list/detail pages; the mobile bottom bar remains five items.
 
 The current loop is exploration → common traits → real detail → existing social action.
@@ -76,3 +77,23 @@ browser tests are not a substitute for deployed multi-account acceptance with re
 - Type/route/locale regression checks and production build are required; browser drawer/overflow/view-switch specifications updated. Local browser/device execution remains separately reported.
 
 Validation for this refinement: 53 database/locale workflow tests passed; TypeScript, production webpack build and lint for changed TS/TSX files passed. The added drawer/layout browser specifications were not executed because the local browser engines remain unavailable.
+
+## Mobile navigation and home reuse — 2026-10-04
+
+The language picker and account menu now remain visible on mobile. The menu provides a bounded-height, scrollable collection of discovery, map, resonance, galaxies, events, saved orbit, search, customization and report routes while keeping five bottom tabs. Search has a real input in that menu.
+
+The authenticated home dashboard replaces its positioned planet field with the real-data map in compact mode, with a side drawer at all widths and a separate per-tab view-state key. The full map and own-planet links remain explicit. Signed-out onboarding showcase remains unchanged.
+
+Decorative local rotation increases to 0.00032 rad/ms (~20 seconds/revolution); overview yaw increases to 0.00007 rad/ms. Selected built-in surface drift uses 24 seconds. Focused node targets stay stationary; reduced-motion and hidden/offscreen guards remain. This is Canvas 2D, with no new WebGL resources. DPR caps and pointer cleanup remain; the canvas captures map gestures, surrounding areas scroll normally. Physical-device performance and visual acceptance remain pending.
+
+Resonance map guidance explains grouping vs up-to-five recommendations. Both use buildOrbitMatches but different loaded candidates; the standalone page's date label does not prove a persisted daily snapshot.
+
+本轮验证：24 项基础测试、56 项数据库/语言流程测试、TypeScript、生产 webpack 构建及变更文件 lint 通过。手机完整菜单与顶部语言入口的浏览器用例已新增；本地没有浏览器引擎，未执行这些用例，部署后及物理 iPhone 验收待完成。
+
+## Canonical resonance and panel refinement — 2026-10-04
+
+Resonance map and list use the same in-memory session from the existing authenticated planet routes; the map never fetches a second recommendation batch. Selection and scores persist across view changes. The source planet sits at the center, with actual custom/built-in avatars on stable selectable nodes. Decorative particles rotate, while selectable targets remain fixed. Detail scores, notes and traits use one localized presentation for both desktop and mobile.
+
+Exploration clusters are expandable/collapsible, with contained planet selectors. Headers and selected detail cards remain outside the scrolling list. Shared ScrollRegion hides the thin thumb at rest, reveals it during scrolling or keyboard focus, and shows a bottom fade only when more content exists. Resonance desktop has a fixed detail column; mobile uses the existing drawer with focus restoration/trapping, inert hidden content and safe-area padding.
+
+Supersedes the earlier three-mode and separate-batch descriptions in this development history. Physical iPhone and deployed visual acceptance remain pending.
