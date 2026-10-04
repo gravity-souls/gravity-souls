@@ -33,10 +33,15 @@ function StarMapPageContent() {
             </Link>
           ))}
         </nav>
-        <StarMap key={mode} mode={mode} />
-        <p className="mt-5 text-xs text-slate-400">{t('paths')}</p>
-        <div className="mt-3 flex gap-5 text-sm text-violet-200">
+        <div
+          className="mt-5 inline-flex overflow-hidden rounded-lg border border-white/15 text-sm text-violet-200"
+          aria-label={t('viewMode')}
+        >
+          <span className="bg-violet-400/20 px-4 py-2" aria-current="true">
+            {t('mapView')}
+          </span>
           <Link
+            className="px-4 py-2 hover:bg-white/5"
             href={
               mode === 'galaxies'
                 ? '/galaxies'
@@ -48,6 +53,8 @@ function StarMapPageContent() {
             {t('listView')}
           </Link>
         </div>
+        <StarMap key={mode} mode={mode} />
+        <p className="mt-5 text-xs text-slate-400">{t('paths')}</p>
       </main>
     </AppShell>
   )

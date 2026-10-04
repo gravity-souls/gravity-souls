@@ -108,12 +108,18 @@ test('all workflow and notification keys exist in three languages', () => {
 for (const locale of ['en', 'zh', 'fr']) {
   test(`production star map explains real data and gestures in ${locale} without playback controls`, () => {
     const messages = require(`../messages/${locale}.json`).starMap
-    assert.deepEqual(Object.keys(messages).sort(),Object.keys(require('../messages/en.json').starMap).sort())
-    for (const mode of ['discover','galaxies','resonance']) {
-      const html = render(locale,React.createElement(StarMap,{mode}))
-      assert.ok(html.includes(messages['meaning_'+mode]))
+    assert.deepEqual(
+      Object.keys(messages).sort(),
+      Object.keys(require('../messages/en.json').starMap).sort(),
+    )
+    for (const mode of ['discover', 'galaxies', 'resonance']) {
+      const html = render(locale, React.createElement(StarMap, { mode }))
+      assert.ok(html.includes(messages['meaning_' + mode]))
       assert.ok(html.includes(messages.gestures))
-      assert.ok(html.includes(messages.decoration.replaceAll('&','&amp;')))
+      assert.ok(html.includes('aria-controls="star-map-sidebar"'))
+      assert.ok(html.includes('id="star-map-sidebar"'))
+      assert.ok(html.includes(messages.browseObjects.replaceAll('&', '&amp;')))
+      assert.ok(html.includes(messages.decoration.replaceAll('&', '&amp;')))
       assert.ok(!html.includes('starMap.'))
       assert.ok(!html.includes('Reset view'))
       assert.ok(!html.includes('Zoom in'))

@@ -28,8 +28,8 @@ No migration, account mutation or production deployment is required by this chan
   A semantic Back to overview action and keyboard/list alternatives remain available.
 - The interactive canvas owns touch gestures. Surrounding page areas remain scrollable.
   Canvas +/− keyboard controls provide zoom; Escape returns to overview.
-- System reduced motion is respected, with no playback override. Focused views stop
-  ambient rotation so users can accurately choose objects.
+- System reduced motion is respected, with no playback override. Focused views keep selectable objects stable while decorative particles rotate locally.
+  Selected built-in planet textures drift slowly; custom uploaded images retain their framing.
 - At most 36 planets or 24 galaxies per batch; no growing in-memory universe. Search
   and discovery climate selection narrow queries. Climate counts aggregate in the DB;
   resonance counts describe the current batch. Cursor pagination uses the final returned
@@ -66,3 +66,13 @@ reduced motion, translations, failure cleanup and overflow using clearly isolate
 Browser execution, visual acceptance and physical iPhone gesture/performance checks are still
 pending: the current environment lacks browser engines and their download failed. Fixture
 browser tests are not a substitute for deployed multi-account acceptance with real data.
+
+## Layout and motion refinement — 2026-10-04
+
+- Desktop cluster and loaded planet selectors now occupy a right sidebar, including the selected object detail. Mobile uses a collapsible right drawer, with an explicit close action.
+- Map/list presentation choices sit above the search and canvas, separately from Discover/Galaxies/Resonance content modes. The list action opens the existing corresponding list page.
+- Decorative cluster particles rotate around their local centers, alongside the existing slow overview rotation. Hit targets remain stable in focused views. Reduced motion disables autonomous motion; hidden/offscreen canvas stops rendering. No pause/reset controls added.
+- The global texture footer is removed. Asset attribution, the CC BY 4.0 license link and adaptation disclosure live at `/legal/credits`, linked from settings.
+- Type/route/locale regression checks and production build are required; browser drawer/overflow/view-switch specifications updated. Local browser/device execution remains separately reported.
+
+Validation for this refinement: 53 database/locale workflow tests passed; TypeScript, production webpack build and lint for changed TS/TSX files passed. The added drawer/layout browser specifications were not executed because the local browser engines remain unavailable.

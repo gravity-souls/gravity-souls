@@ -31,6 +31,8 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
   const [error, setError] = useState<string | null>(null)
   const [zoomTick, setZoomTick] = useState(0)
   const [canvasAvailable, setCanvasAvailable] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const spin = useRef(0)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const hits = useRef<Hit[]>([])
   const pointers = useRef(new Map<number, { x: number; y: number }>())
@@ -200,6 +202,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
     let visible = true
     let last = 0
     const focused = clusters.find((group) => group.id === focus)
+    const centers = new Map(clusters.map((group) => [group.id, group.center]))
     const project = (x: number, y: number, z: number) => {
       if (focused) {
         x -= focused.center[0]
@@ -223,14 +226,25 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
       }
       if (!reduced && pointers.current.size === 0 && !focused)
         view.current.yaw += Math.min(time - (last || time), 45) * 0.000018
+      if (!reduced && pointers.current.size === 0)
+        spin.current += Math.min(time - (last || time), 45) * 0.00009
       last = time
       ctx.clearRect(0, 0, width, height)
       ctx.globalCompositeOperation = 'lighter'
       const hub = project(0, 0, 0)
+      const cos = Math.cos(spin.current)
+      const sin = Math.sin(spin.current)
       for (let i = 0; i < dots.length; i++) {
         const dot = dots[i]
         if (focused && dot.groupId !== focus) continue
-        const p = project(dot.x, dot.y, dot.z)
+        const center = centers.get(dot.groupId)!
+        const dx = dot.x - center[0]
+        const dy = (dot.y - center[1]) / 0.7
+        const p = project(
+          center[0] + dx * cos - dy * sin,
+          center[1] + (dx * sin + dy * cos) * 0.7,
+          dot.z,
+        )
         ctx.fillStyle = dot.color + 'a0'
         ctx.fillRect(p.x, p.y, Math.max(0.6, p.p), Math.max(0.6, p.p))
         if (!focused && i % 40 === 0) {
@@ -289,7 +303,7 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
         })
       }
       ctx.globalCompositeOperation = 'source-over'
-      if (!reduced && !focused) frame = requestAnimationFrame(render)
+      if (!reduced) frame = requestAnimationFrame(render)
     }
     const redraw = () => {
       if (!frame && !disposed) frame = requestAnimationFrame(render)
@@ -393,6 +407,15 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
           <button type="submit">{t('searchAction')}</button>
         </form>
         <p>{t(`meaning_${mode}`)}</p>
+        <button
+          type="button"
+          className={styles.sidebarToggle}
+          aria-expanded={sidebarOpen}
+          aria-controls="star-map-sidebar"
+          onClick={() => setSidebarOpen((open) => !open)}
+        >
+          {t('browseObjects')}
+        </button>
       </div>
       {focus && (
         <button
@@ -408,221 +431,261 @@ export default function StarMap({ mode = 'discover' }: { mode?: StarMapMode }) {
           {focusedGroup ? groupLabel(focusedGroup.id, focusedGroup.name) : ''}
         </button>
       )}
-      <section
-        className={styles.stage}
-        aria-label={t('title')}
-        aria-busy={loading}
-      >
-        <div className={styles.stageTop}>
-          <span>
-            {loading ? t('loading') : t('visibleTotal', { count: data.total })}
-          </span>
-          <span>{t('gestures')}</span>
-        </div>
-        <canvas
-          ref={canvasRef}
-          className={`${styles.canvas} ${styles.interactiveCanvas}`}
-          tabIndex={0}
-          aria-label={t('canvasLabel')}
-          onKeyDown={(event) => {
-            if (event.key === '+' || event.key === '=') {
-              event.preventDefault()
-              view.current.zoom = Math.min(4, view.current.zoom * 1.15)
-              setZoomTick((value) => value + 1)
-            } else if (event.key === '-') {
-              event.preventDefault()
-              view.current.zoom = Math.max(0.65, view.current.zoom / 1.15)
-              setZoomTick((value) => value + 1)
-            } else if (event.key === 'Escape') {
-              setFocus(null)
-              setSelected(null)
-              setCursor(null)
-              view.current.zoom = 1
-            }
-          }}
-          onPointerDown={(event) => {
-            event.currentTarget.setPointerCapture(event.pointerId)
-            pointers.current.set(event.pointerId, {
-              x: event.clientX,
-              y: event.clientY,
-            })
-            moved.current = false
-          }}
-          onPointerMove={(event) => {
-            const before = pointers.current.get(event.pointerId)
-            if (!before) return
-            const next = { x: event.clientX, y: event.clientY }
-            if (pointers.current.size === 2) {
-              const other = [...pointers.current.entries()].find(
-                ([id]) => id !== event.pointerId,
-              )![1]
-              const oldDistance = Math.hypot(
-                before.x - other.x,
-                before.y - other.y,
-              )
-              const newDistance = Math.hypot(next.x - other.x, next.y - other.y)
-              if (oldDistance > 8)
-                view.current.zoom = Math.max(
-                  0.65,
-                  Math.min(4, (view.current.zoom * newDistance) / oldDistance),
-                )
-              moved.current = true
-            } else {
-              const dx = next.x - before.x
-              const dy = next.y - before.y
-              if (Math.abs(dx) + Math.abs(dy) > 2) moved.current = true
-              view.current.yaw += dx * 0.004
-              view.current.pitch = Math.max(
-                -0.65,
-                Math.min(0.65, view.current.pitch + dy * 0.003),
-              )
-            }
-            pointers.current.set(event.pointerId, next)
-            if (pointers.current.size === 2) {
-              if (!focus && view.current.zoom >= 1.8) {
-                const rect = event.currentTarget.getBoundingClientRect()
-                const pair = [...pointers.current.values()]
-                const x = (pair[0].x + pair[1].x) / 2 - rect.left
-                const y = (pair[0].y + pair[1].y) / 2 - rect.top
-                const nearest = [...hits.current].sort(
-                  (a, b) =>
-                    Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-                )[0]
-                if (nearest) enter(nearest.groupId)
-              } else if (focus && view.current.zoom <= 1.2) {
+      <div className={styles.explorer}>
+        <section
+          className={styles.stage}
+          aria-label={t('title')}
+          aria-busy={loading}
+        >
+          <div className={styles.stageTop}>
+            <span>
+              {loading
+                ? t('loading')
+                : t('visibleTotal', { count: data.total })}
+            </span>
+            <span>{t('gestures')}</span>
+          </div>
+          <canvas
+            ref={canvasRef}
+            className={`${styles.canvas} ${styles.interactiveCanvas}`}
+            tabIndex={0}
+            aria-label={t('canvasLabel')}
+            onKeyDown={(event) => {
+              if (event.key === '+' || event.key === '=') {
+                event.preventDefault()
+                view.current.zoom = Math.min(4, view.current.zoom * 1.15)
+                setZoomTick((value) => value + 1)
+              } else if (event.key === '-') {
+                event.preventDefault()
+                view.current.zoom = Math.max(0.65, view.current.zoom / 1.15)
+                setZoomTick((value) => value + 1)
+              } else if (event.key === 'Escape') {
                 setFocus(null)
                 setSelected(null)
                 setCursor(null)
                 view.current.zoom = 1
               }
-            }
-          }}
-          onPointerUp={(event) => {
-            if (!moved.current && pointers.current.size === 1) {
-              const rect = event.currentTarget.getBoundingClientRect()
-              const x = event.clientX - rect.left
-              const y = event.clientY - rect.top
-              const hit = [...hits.current].sort(
-                (a, b) =>
-                  Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-              )[0]
-              if (hit && Math.hypot(hit.x - x, hit.y - y) < 36) {
-                if (hit.node) setSelected(hit.node)
-                else enter(hit.groupId)
+            }}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId)
+              pointers.current.set(event.pointerId, {
+                x: event.clientX,
+                y: event.clientY,
+              })
+              moved.current = false
+            }}
+            onPointerMove={(event) => {
+              const before = pointers.current.get(event.pointerId)
+              if (!before) return
+              const next = { x: event.clientX, y: event.clientY }
+              if (pointers.current.size === 2) {
+                const other = [...pointers.current.entries()].find(
+                  ([id]) => id !== event.pointerId,
+                )![1]
+                const oldDistance = Math.hypot(
+                  before.x - other.x,
+                  before.y - other.y,
+                )
+                const newDistance = Math.hypot(
+                  next.x - other.x,
+                  next.y - other.y,
+                )
+                if (oldDistance > 8)
+                  view.current.zoom = Math.max(
+                    0.65,
+                    Math.min(
+                      4,
+                      (view.current.zoom * newDistance) / oldDistance,
+                    ),
+                  )
+                moved.current = true
+              } else {
+                const dx = next.x - before.x
+                const dy = next.y - before.y
+                if (Math.abs(dx) + Math.abs(dy) > 2) moved.current = true
+                view.current.yaw += dx * 0.004
+                view.current.pitch = Math.max(
+                  -0.65,
+                  Math.min(0.65, view.current.pitch + dy * 0.003),
+                )
               }
+              pointers.current.set(event.pointerId, next)
+              if (pointers.current.size === 2) {
+                if (!focus && view.current.zoom >= 1.8) {
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  const pair = [...pointers.current.values()]
+                  const x = (pair[0].x + pair[1].x) / 2 - rect.left
+                  const y = (pair[0].y + pair[1].y) / 2 - rect.top
+                  const nearest = [...hits.current].sort(
+                    (a, b) =>
+                      Math.hypot(a.x - x, a.y - y) -
+                      Math.hypot(b.x - x, b.y - y),
+                  )[0]
+                  if (nearest) enter(nearest.groupId)
+                } else if (focus && view.current.zoom <= 1.2) {
+                  setFocus(null)
+                  setSelected(null)
+                  setCursor(null)
+                  view.current.zoom = 1
+                }
+              }
+            }}
+            onPointerUp={(event) => {
+              if (!moved.current && pointers.current.size === 1) {
+                const rect = event.currentTarget.getBoundingClientRect()
+                const x = event.clientX - rect.left
+                const y = event.clientY - rect.top
+                const hit = [...hits.current].sort(
+                  (a, b) =>
+                    Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
+                )[0]
+                if (hit && Math.hypot(hit.x - x, hit.y - y) < 36) {
+                  if (hit.node) {
+                    setSelected(hit.node)
+                    setSidebarOpen(true)
+                  } else enter(hit.groupId)
+                }
+              }
+              pointers.current.delete(event.pointerId)
+            }}
+            onPointerCancel={(event) =>
+              pointers.current.delete(event.pointerId)
             }
-            pointers.current.delete(event.pointerId)
-          }}
-          onPointerCancel={(event) => pointers.current.delete(event.pointerId)}
-        />
-        {!canvasAvailable && <p className={styles.fallback}>{t('fallback')}</p>}
-        {!loading && error && (
-          <div className={styles.fallback} role="alert">
-            {t(error)}
-            {error === 'signIn' && (
-              <Link href="/sign-in?next=/star-map">{t('signInAction')}</Link>
-            )}
-          </div>
-        )}
-        {!loading && !error && data.requiresPlanet && (
-          <div className={styles.fallback}>
-            <p>{t('requiresPlanet')}</p>
-            <Link href="/onboarding">{t('createPlanet')}</Link>
-          </div>
-        )}
-        {!loading && !error && !data.requiresPlanet && !clusters.length && (
-          <p className={styles.fallback}>{t('empty')}</p>
-        )}
-        {selected && (
-          <aside
-            className={`${styles.card} ${styles.liveCard}`}
-            aria-live="polite"
-          >
-            <div className={styles.nodeHeading}>
-              {selected.planetConfig && (
-                <PlanetAvatar
-                  planetConfig={selected.planetConfig}
-                  size={38}
-                  level={selected.level}
-                />
+          />
+          {!canvasAvailable && (
+            <p className={styles.fallback}>{t('fallback')}</p>
+          )}
+          {!loading && error && (
+            <div className={styles.fallback} role="alert">
+              {t(error)}
+              {error === 'signIn' && (
+                <Link href="/sign-in?next=/star-map">{t('signInAction')}</Link>
               )}
-              <h2>{selected.name}</h2>
             </div>
-            <p>{selected.tagline}</p>
-            {selected.score !== undefined && (
-              <p>{t('score', { score: selected.score })}</p>
-            )}
-            {selected.memberCount !== undefined && (
-              <p>{t('members', { count: selected.memberCount })}</p>
-            )}
-            <Link href={selected.href}>
-              {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
-            </Link>
-          </aside>
-        )}
-      </section>
+          )}
+          {!loading && !error && data.requiresPlanet && (
+            <div className={styles.fallback}>
+              <p>{t('requiresPlanet')}</p>
+              <Link href="/onboarding">{t('createPlanet')}</Link>
+            </div>
+          )}
+          {!loading && !error && !data.requiresPlanet && !clusters.length && (
+            <p className={styles.fallback}>{t('empty')}</p>
+          )}
+        </section>
+        <aside
+          id="star-map-sidebar"
+          className={styles.sidebar}
+          data-open={sidebarOpen}
+          aria-label={t('browseObjects')}
+        >
+          <div className={styles.sidebarHeader}>
+            <h2>{t('browseObjects')}</h2>
+            <button
+              type="button"
+              className={styles.sidebarToggle}
+              onClick={() => setSidebarOpen(false)}
+            >
+              {t('closeSidebar')}
+            </button>
+          </div>
+          <nav className={styles.clusters} aria-label={t('chooseGroup')}>
+            {clusters.map((group) => (
+              <button
+                key={group.id}
+                aria-pressed={focus === group.id}
+                onClick={() =>
+                  mode === 'galaxies'
+                    ? (enter(group.id),
+                      setSelected(
+                        data.nodes.find((node) => node.id === group.id) ?? null,
+                      ))
+                    : enter(group.id)
+                }
+                style={
+                  { '--cluster-color': group.color } as React.CSSProperties
+                }
+              >
+                <span className={styles.dot} />
+                <span>{groupLabel(group.id, group.name)}</span>
+                <span className={styles.clusterCaption}>
+                  {t(mode === 'galaxies' ? 'members' : 'planets', {
+                    count: group.count,
+                  })}
+                </span>
+              </button>
+            ))}
+          </nav>
+          {focus && (
+            <div className={styles.nodeList} aria-label={t('choosePlanet')}>
+              {visibleNodes.map((node) => (
+                <button
+                  key={node.id}
+                  aria-pressed={selected?.id === node.id}
+                  onClick={() => setSelected(node)}
+                >
+                  {node.planetConfig && (
+                    <PlanetAvatar planetConfig={node.planetConfig} size={28} />
+                  )}
+                  <span>{node.name}</span>
+                  {node.score !== undefined && <span>{node.score}%</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          {selected && (
+            <div
+              className={`${styles.card} ${styles.liveCard}`}
+              aria-live="polite"
+            >
+              <div className={styles.nodeHeading}>
+                {selected.planetConfig && (
+                  <PlanetAvatar
+                    planetConfig={selected.planetConfig}
+                    size={48}
+                    rotating={
+                      !reduced && !selected.planetConfig.customTextureUrl
+                    }
+                    rotationDuration={48}
+                    level={selected.level}
+                  />
+                )}
+                <h2>{selected.name}</h2>
+              </div>
+              <p>{selected.tagline}</p>
+              {selected.score !== undefined && (
+                <p>{t('score', { score: selected.score })}</p>
+              )}
+              {selected.memberCount !== undefined && (
+                <p>{t('members', { count: selected.memberCount })}</p>
+              )}
+              <Link href={selected.href}>
+                {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
+              </Link>
+            </div>
+          )}
+          {data.nextCursor && (
+            <button
+              className={styles.next}
+              disabled={loading}
+              onClick={() => {
+                setCursor(data.nextCursor)
+                setSelected(null)
+                if (mode === 'galaxies') {
+                  setFocus(null)
+                  view.current.zoom = 1
+                }
+              }}
+            >
+              {t('nextBatch')}
+            </button>
+          )}
+        </aside>
+      </div>
       <p className={styles.mapNote}>
         {t('decoration')}{' '}
         {t(data.scope === 'batch' ? 'batchScope' : 'allScope')}
       </p>
-      <nav className={styles.clusters} aria-label={t('chooseGroup')}>
-        {clusters.map((group) => (
-          <button
-            key={group.id}
-            aria-pressed={focus === group.id}
-            onClick={() =>
-              mode === 'galaxies'
-                ? (enter(group.id),
-                  setSelected(
-                    data.nodes.find((node) => node.id === group.id) ?? null,
-                  ))
-                : enter(group.id)
-            }
-            style={{ '--cluster-color': group.color } as React.CSSProperties}
-          >
-            <span className={styles.dot} />
-            <span>{groupLabel(group.id, group.name)}</span>
-            <span className={styles.clusterCaption}>
-              {t(mode === 'galaxies' ? 'members' : 'planets', {
-                count: group.count,
-              })}
-            </span>
-          </button>
-        ))}
-      </nav>
-      {focus && (
-        <div className={styles.nodeList} aria-label={t('choosePlanet')}>
-          {visibleNodes.map((node) => (
-            <button
-              key={node.id}
-              aria-pressed={selected?.id === node.id}
-              onClick={() => setSelected(node)}
-            >
-              {node.planetConfig && (
-                <PlanetAvatar planetConfig={node.planetConfig} size={28} />
-              )}
-              <span>{node.name}</span>
-              {node.score !== undefined && <span>{node.score}%</span>}
-            </button>
-          ))}
-        </div>
-      )}
-      {data.nextCursor && (
-        <button
-          className={styles.next}
-          disabled={loading}
-          onClick={() => {
-            setCursor(data.nextCursor)
-            setSelected(null)
-            if (mode === 'galaxies') {
-              setFocus(null)
-              view.current.zoom = 1
-            }
-          }}
-        >
-          {t('nextBatch')}
-        </button>
-      )}
     </div>
   )
 }
