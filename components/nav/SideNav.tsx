@@ -7,7 +7,6 @@ import { useTranslations } from 'next-intl'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarDays,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleDot,
@@ -49,7 +48,7 @@ interface MeResponse {
 
 interface NavItem {
   href: string
-  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'messages' | 'settings' | 'starMap'
+  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'messages' | 'settings' | 'starMap' | 'events'
   Icon: LucideIcon
   badge?: boolean
   // Requires an account — see proxy.ts's matcher, the actual source of truth
@@ -61,6 +60,7 @@ const MAIN_ITEMS: NavItem[] = [
   { href: '/', labelKey: 'home', Icon: Home },
   { href: '/stream', labelKey: 'stream', Icon: Waves, gated: true },
   { href: '/resonance', labelKey: 'resonance', Icon: CircleDot, gated: true },
+  { href: '/activities', labelKey: 'events', Icon: CalendarDays, gated: true },
   { href: '/star-map', labelKey: 'starMap', Icon: Sparkles, gated: true },
 ]
 
@@ -168,7 +168,6 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   const isAuthenticated = hydrated && !!session?.user
   const sessionLevel = (session?.user as { userLevel?: unknown } | undefined)?.userLevel
   const [userLevel, setUserLevel] = useState(typeof sessionLevel === 'number' ? sessionLevel : 1)
-  const [galaxiesExpanded, setGalaxiesExpanded] = useState(false)
 
   const currentUserLevel = clampLevel(isAuthenticated ? userLevel : 1)
   const levelDotColor = LEVEL_DOT_COLORS[currentUserLevel]
@@ -176,7 +175,6 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
   const galaxiesActive = isRouteActive(pathname, '/galaxies')
   const myPlanetActive = isRouteActive(pathname, '/my-planet')
-  const showGalaxiesSubItems = !collapsed && (galaxiesActive || galaxiesExpanded)
   const showMyPlanetSubItems = !collapsed && myPlanetActive
 
   useEffect(() => {
@@ -239,42 +237,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               />
             ))}
 
-            <div>
-              <div
-                className="grid h-10 grid-cols-[1fr_32px] items-center rounded-lg transition-colors hover:bg-white/5"
-                style={{
-                  background: galaxiesActive ? 'rgba(124,58,237,0.20)' : 'transparent',
-                  boxShadow: galaxiesActive ? 'inset 2px 0 0 rgba(167,139,250,0.95)' : 'none',
-                }}
-              >
-                <Link
-                  href={GALAXIES_ITEM.href}
-                  title={collapsed ? tNav(GALAXIES_ITEM.labelKey) : undefined}
-                  aria-current={galaxiesActive ? 'page' : undefined}
-                  className="flex min-w-0 items-center gap-3 px-2.5 text-sm font-medium no-underline"
-                  style={{ color: galaxiesActive ? '#fff' : 'rgba(255,255,255,0.62)' }}
-                >
-                  <Globe2 size={18} strokeWidth={galaxiesActive ? 2.1 : 1.7} className="shrink-0" />
-                  <span style={{ opacity: collapsed ? 0 : 1, transition: 'opacity 150ms ease', whiteSpace: 'nowrap' }}>
-                    {tNav('galaxies')}
-                  </span>
-                </Link>
-                {!collapsed && (
-                  <button
-                    type="button"
-                    onClick={() => setGalaxiesExpanded((value) => !value)}
-                    aria-label={showGalaxiesSubItems ? tNav('collapseGalaxyLinks') : tNav('expandGalaxyLinks')}
-                    aria-expanded={showGalaxiesSubItems}
-                    className="mr-1 flex h-7 w-7 items-center justify-center rounded-lg text-white/38 transition hover:bg-white/6 hover:text-white/72"
-                  >
-                    <ChevronDown size={15} className={showGalaxiesSubItems ? 'rotate-180 transition-transform' : 'transition-transform'} />
-                  </button>
-                )}
-              </div>
-              <SubMenu open={showGalaxiesSubItems}>
-                <SubLink href="/galaxies/events" label={tNav('events')} active={isRouteActive(pathname, '/galaxies/events')} Icon={CalendarDays} />
-              </SubMenu>
-            </div>
+            <NavLink item={GALAXIES_ITEM} label={tNav('galaxies')} active={galaxiesActive} collapsed={collapsed} level={currentUserLevel} showLock={false} lockLabel={lockLabel} />
           </div>
 
           <SectionLabel collapsed={collapsed}>{tNav('mySpace')}</SectionLabel>

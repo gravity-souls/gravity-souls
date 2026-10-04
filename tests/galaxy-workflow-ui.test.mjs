@@ -139,7 +139,7 @@ for (const locale of ['en', 'zh', 'fr']) {
       '/star-map',
       '/discover',
       '/resonance',
-      '/galaxies/events',
+      '/activities',
       '/saved',
       '/my-planet/customize',
       '/my-planet/report',
@@ -219,5 +219,22 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(html.includes('href="/planet/target"'))
     assert.ok(!html.includes('Old English copy'))
     assert.ok(!html.includes('resonance.'))
+  })
+}
+
+const InterestButton = require('../components/events/InterestButton.tsx').default
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`interest saves, removal and closed states translate in ${locale}`, () => {
+    const messages = require(`../messages/${locale}.json`).eventInterest
+    const active = render(locale, React.createElement(InterestButton, { event: { ...event, userInterested: false } }))
+    assert.ok(active.includes(messages.save))
+    assert.ok(active.includes('aria-pressed="false"'))
+    assert.ok(!active.includes('disabled=""'))
+    const closed = { ...event, status: 'CANCELLED', userInterested: false }
+    assert.ok(render(locale, React.createElement(InterestButton, { event: closed })).includes('disabled=""'))
+    const saved = render(locale, React.createElement(InterestButton, { event: { ...closed, userInterested: true } }))
+    assert.ok(saved.includes(messages.saved))
+    assert.ok(saved.includes('aria-pressed="true"'))
+    assert.ok(!saved.includes('disabled=""'))
   })
 }

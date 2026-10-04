@@ -11,7 +11,7 @@ export const MOBILE_EXPLORE_LINKS = [
   { href: '/star-map', key: 'starMap' },
   { href: '/resonance', key: 'resonance' },
   { href: '/galaxies', key: 'galaxies' },
-  { href: '/galaxies/events', key: 'events' },
+  { href: '/activities', key: 'events' },
   { href: '/saved', key: 'savedOrbit' },
   { href: '/search', key: 'search' },
   { href: '/my-planet/customize', key: 'customizePlanet' },

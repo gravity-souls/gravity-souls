@@ -751,21 +751,22 @@
   },
   "eventsPage": {
     "eyebrow": "Galaxies",
-    "title": "Événements des galaxies rejointes",
-    "subtitle": "Événements réservés aux membres des galaxies que vous avez rejointes. Utilisez Galaxies pour en découvrir et en rejoindre davantage.",
+    "title": "Activités",
+    "subtitle": "Découvrez les activités de vos galaxies, enregistrez vos intérêts et gérez vos participations. Rejoignez une galaxie pour voir ses activités.",
     "discoverGalaxies": "Découvrir des galaxies",
     "searchPlaceholder": "Rechercher des événements",
     "loading": "Chargement des événements...",
     "signInRequired": "Connectez-vous pour voir les prochains événements des galaxies que vous avez rejointes.",
     "emptyUpcoming": "Aucun événement à venir dans vos galaxies pour le moment.",
     "emptyGoing": "Vous n'avez répondu à aucun événement à venir.",
-    "emptyPassed": "Aucun événement passé dans vos galaxies pour le moment.",
+    "emptyPassed": "Aucune activité terminée ou annulée à laquelle vous avez participé ou que vous avez organisée.",
     "tabs": {
       "upcoming": "À venir",
       "going": "Inscrit",
-      "passed": "Passés",
+      "passed": "Historique",
       "mine": "Mes propositions",
-      "requests": "Inscriptions en attente"
+      "requests": "Inscriptions en attente",
+      "interested": "Mes intérêts"
     },
     "categories": {
       "all": "Tout",
@@ -777,7 +778,8 @@
       "other": "Autre"
     },
     "emptyMine": "Aucune proposition pour le moment.",
-    "emptyRequests": "Aucune inscription en attente."
+    "emptyRequests": "Aucune inscription en attente.",
+    "emptyInterested": "Aucune activité enregistrée. Enregistrez une activité pour la retrouver ici."
   },
   "eventForms": {
     "databaseLocked": "Les événements se déverrouillent quand cette galaxie est connectée à la base de données.",
@@ -1727,5 +1729,13 @@
     "readError": "La lecture n’a pas encore été synchronisée. Un nouvel essai aura lieu à la prochaine actualisation.",
     "mutualRequired": "Une nouvelle conversation nécessite un abonnement réciproque.",
     "openOnly": "Ouvrir une conversation n’envoie aucun faisceau ni message. Envoyez depuis le champ de saisie."
+  },
+  "eventInterest": {
+    "save": "Ça m’intéresse",
+    "saved": "Enregistré · Intéressé",
+    "saving": "Enregistrement…",
+    "failed": "Impossible de modifier cette activité enregistrée. Réessayez.",
+    "closed": "Cette activité ne peut plus être enregistrée.",
+    "retry": "Réessayer"
   }
 }
