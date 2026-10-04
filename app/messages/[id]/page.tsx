@@ -423,7 +423,7 @@ export default function ConversationPage({ params }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {messages.length > 0 && (
+      {myUserId && messages.some(message => message.fromId === myUserId) && (
         <div className="px-4 pb-2">
           <FirstTimeHint
             hintKey="messages-first-dm"

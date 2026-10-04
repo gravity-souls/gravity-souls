@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
@@ -9,6 +10,7 @@ import { authClient } from '@/lib/auth-client'
 import type { StreamPost } from '@/types/stream'
 
 export default function StreamPostPage() {
+  const t = useTranslations('postContext')
   const router = useRouter()
   const params = useParams<{ id: string }>()
   const { data: session } = authClient.useSession()
@@ -35,7 +37,7 @@ export default function StreamPostPage() {
     <AppShell>
       <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.07} double={false} />
       <div className="relative z-10 grid min-h-[calc(100vh-var(--nav-h))] place-items-center px-6 py-20">
-        <p className="text-sm" style={{ color: 'var(--ghost)' }}>{notFound ? 'Signal not found.' : 'Opening signal...'}</p>
+        <p className="text-sm" style={{ color: 'var(--ghost)' }}>{notFound ? t('unavailable') : t('loading')}</p>
       </div>
       <PostDetail
         post={post}

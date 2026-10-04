@@ -51,3 +51,39 @@ member visibility, follow-back, actual message receipt/read/reply and recipient
 notifications. Also pending: mobile/Safari and touch/performance, permission
 revocation/deletion and upload failure cases, full three-language and custom
 avatar consistency. This desktop partial result is not all-flow acceptance.
+
+## Second-account acceptance continuation
+
+- Miro Laurent was denied linked Post access before joining. Direct joining changed
+  the member count to 2, exposed permitted event/related signal, and enabled real
+  like/comment. No author edit/delete controls appeared.
+- Miro saved interest and RSVP; the Going list retained the activity. Leaving
+  removed member/event visibility and the linked Post became unavailable again.
+- Oren received Miro's comment, follow and RSVP notices in French (current recipient
+  locale). Follow notice opened the correct Miro planet. Oren followed back,
+  enabling a real empty conversation; opening it sent nothing.
+- Oren sent one QA message. Miro's message list displayed one unread, with matching
+  message notification. Notification deep link opened the right thread. Miro sent
+  a QA reply; returning to the list showed no unread, and the message notice was
+  read while the unrelated follow notice stayed unread. Thread:
+  cmuucigmh000204jsoculj4sr. Oren later received the reply via its French notification, saw the original
+  message marked read, and his own message unread cleared after viewing.
+- QA galaxy now requires administrator approval. Miro submitted a fresh join
+  request; Pending review appears and member/event content stays hidden. Oren opened the request notice, approved Miro and verified zero pending
+  requests and two members. Miro-side access after this approval is not yet rechecked.
+- Additional live copy failures: a received-only conversation showed the first
+  beam sent hint; it now requires an own sent message. The unavailable stream
+  deep-link page remained English in French; it now uses existing localized
+  loading/unavailable messages. Both corrections need deployed recheck.
+
+Current retained data: Miro's join request is approved, Oren and Miro mutually
+follow, the QA thread contains two messages; the QA galaxy/activity/post/comments
+are retained. No destructive cleanup was performed.
+
+Final desktop outcome: direct join/member read/interaction/leave denial, join request
+and Owner approval, follow-back, actual two-way chat, read receipts and independent
+notification unread states were exercised live. The corrective branch also fixes
+received-only first-send hint and localized unavailable Post-page copy; TypeScript,
+changed-file ESLint and production build pass after these changes. No mobile/Safari
+claim, no full avatar/localization claim, and no claimed live verification of an
+un-deployed fix. Test-only activity has no current attendees after Miro left.
