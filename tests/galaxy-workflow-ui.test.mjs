@@ -112,7 +112,7 @@ for (const locale of ['en', 'zh', 'fr']) {
       Object.keys(messages).sort(),
       Object.keys(require('../messages/en.json').starMap).sort(),
     )
-    for (const mode of ['discover', 'galaxies', 'resonance']) {
+    for (const mode of ['discover', 'galaxies']) {
       const html = render(locale, React.createElement(StarMap, { mode }))
       assert.ok(html.includes(messages['meaning_' + mode]))
       assert.ok(html.includes(messages.gestures))
@@ -151,5 +151,73 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(map.includes('star-map-sidebar'))
     assert.ok(map.includes('aria-controls'))
     assert.ok(!map.includes('starMap.'))
+  })
+}
+
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`canonical resonance views and pinned details render in ${locale}`, () => {
+    const Experience =
+      require('../components/resonance/ResonanceExperience.tsx').default
+    const localize =
+      require('../lib/resonance-presentation.ts').localizeResonanceMatch
+    const source = {
+      id: 'source',
+      name: 'Source',
+      mood: 'calm',
+      lifestyle: 'solitary',
+      coreThemes: ['connection'],
+      cognitiveAxes: { abstract: 50, introspective: 50 },
+      visual: { coreColor: '#a78bfa' },
+    }
+    const target = {
+      ...source,
+      id: 'target',
+      name: 'Target',
+      lifestyle: 'communal',
+    }
+    const match = {
+      planetId: 'target',
+      score: 82,
+      primaryReason: 'emotional-theme',
+      orbitColor: 'red',
+      dimensions: { emotion: 80 },
+      similarities: [],
+      differences: [],
+      suggestedTypes: ['chat'],
+      resonanceNote: 'Old English copy',
+    }
+    const { createTranslator } = require('next-intl')
+    const messages = require(`../messages/${locale}.json`)
+    const display = localize(
+      match,
+      source,
+      target,
+      createTranslator({ locale, messages, namespace: 'resonance' }),
+      createTranslator({ locale, messages, namespace: 'creationSteps' }),
+    )
+    assert.equal(display.score, match.score)
+    assert.equal(display.planetId, match.planetId)
+    assert.deepEqual(display.dimensions, match.dimensions)
+    const html = render(
+      locale,
+      React.createElement(Experience, {
+        source,
+        session: {
+          sourcePlanetId: 'source',
+          matches: [display],
+          date: '2026-10-04',
+        },
+        planets: { target },
+        activeId: 'target',
+        onSelect: () => {},
+        onClose: () => {},
+      }),
+    )
+    assert.ok(html.includes(messages.resonance.mapView))
+    assert.ok(html.includes(messages.resonance.listView))
+    assert.ok(html.includes('82'))
+    assert.ok(html.includes('href="/planet/target"'))
+    assert.ok(!html.includes('Old English copy'))
+    assert.ok(!html.includes('resonance.'))
   })
 }

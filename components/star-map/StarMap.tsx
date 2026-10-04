@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { mapCenter, stableUnit } from '@/lib/star-map'
@@ -594,50 +595,84 @@ export default function StarMap({
               {t('closeSidebar')}
             </button>
           </div>
-          <nav className={styles.clusters} aria-label={t('chooseGroup')}>
-            {clusters.map((group) => (
-              <button
-                key={group.id}
-                aria-pressed={focus === group.id}
-                onClick={() =>
-                  mode === 'galaxies'
-                    ? (enter(group.id),
-                      setSelected(
-                        data.nodes.find((node) => node.id === group.id) ?? null,
-                      ))
-                    : enter(group.id)
-                }
-                style={
-                  { '--cluster-color': group.color } as React.CSSProperties
-                }
-              >
-                <span className={styles.dot} />
-                <span>{groupLabel(group.id, group.name)}</span>
-                <span className={styles.clusterCaption}>
-                  {t(mode === 'galaxies' ? 'members' : 'planets', {
-                    count: group.count,
-                  })}
-                </span>
-              </button>
-            ))}
-          </nav>
-          {focus && (
-            <div className={styles.nodeList} aria-label={t('choosePlanet')}>
-              {visibleNodes.map((node) => (
-                <button
-                  key={node.id}
-                  aria-pressed={selected?.id === node.id}
-                  onClick={() => setSelected(node)}
-                >
-                  {node.planetConfig && (
-                    <PlanetAvatar planetConfig={node.planetConfig} size={28} />
+          <ScrollRegion label={t('browseObjects')}>
+            <nav className={styles.clusters} aria-label={t('chooseGroup')}>
+              {clusters.map((group) => (
+                <div key={group.id}>
+                  <button
+                    aria-pressed={focus === group.id}
+                    aria-expanded={focus === group.id}
+                    onClick={() =>
+                      focus === group.id
+                        ? (setFocus(null),
+                          setSelected(null),
+                          setCursor(null),
+                          (view.current.zoom = 1))
+                        : mode === 'galaxies'
+                          ? (enter(group.id),
+                            setSelected(
+                              data.nodes.find((node) => node.id === group.id) ??
+                                null,
+                            ))
+                          : enter(group.id)
+                    }
+                    style={
+                      { '--cluster-color': group.color } as React.CSSProperties
+                    }
+                  >
+                    <span className={styles.dot} />
+                    <span>{groupLabel(group.id, group.name)}</span>
+                    <span className={styles.clusterCaption}>
+                      {t(mode === 'galaxies' ? 'members' : 'planets', {
+                        count: group.count,
+                      })}
+                    </span>
+                  </button>
+                  {focus === group.id && (
+                    <div
+                      className={styles.nodeList}
+                      aria-label={t('choosePlanet')}
+                    >
+                      {visibleNodes.map((node) => (
+                        <button
+                          key={node.id}
+                          aria-pressed={selected?.id === node.id}
+                          onClick={() => setSelected(node)}
+                        >
+                          {node.planetConfig && (
+                            <PlanetAvatar
+                              planetConfig={node.planetConfig}
+                              size={28}
+                            />
+                          )}
+                          <span>{node.name}</span>
+                          {node.score !== undefined && (
+                            <span>{node.score}%</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <span>{node.name}</span>
-                  {node.score !== undefined && <span>{node.score}%</span>}
-                </button>
+                </div>
               ))}
-            </div>
-          )}
+            </nav>
+            {data.nextCursor && (
+              <button
+                className={styles.next}
+                disabled={loading}
+                onClick={() => {
+                  setCursor(data.nextCursor)
+                  setSelected(null)
+                  if (mode === 'galaxies') {
+                    setFocus(null)
+                    view.current.zoom = 1
+                  }
+                }}
+              >
+                {t('nextBatch')}
+              </button>
+            )}
+          </ScrollRegion>
           {selected && (
             <div
               className={`${styles.card} ${styles.liveCard}`}
@@ -668,22 +703,6 @@ export default function StarMap({
                 {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
               </Link>
             </div>
-          )}
-          {data.nextCursor && (
-            <button
-              className={styles.next}
-              disabled={loading}
-              onClick={() => {
-                setCursor(data.nextCursor)
-                setSelected(null)
-                if (mode === 'galaxies') {
-                  setFocus(null)
-                  view.current.zoom = 1
-                }
-              }}
-            >
-              {t('nextBatch')}
-            </button>
           )}
         </aside>
       </div>

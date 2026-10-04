@@ -1,5 +1,5 @@
 import type { PlanetConfig } from './planet'
-export type StarMapMode = 'discover' | 'galaxies' | 'resonance'
+export type StarMapMode = 'discover' | 'galaxies'
 export interface StarMapGroup {
   id: string
   name?: string

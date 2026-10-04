@@ -1,19 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
-import ResonanceOrbitSystem from '@/components/resonance/ResonanceOrbitSystem'
+import ResonanceExperience from '@/components/resonance/ResonanceExperience'
 import ResonanceHeader from '@/components/resonance/ResonanceHeader'
 import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
-import MatchReasonLegend from '@/components/resonance/MatchReasonLegend'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
 import FirstSessionHint from '@/components/resonance/FirstSessionHint'
 import FirstMatchCTA from '@/components/resonance/FirstMatchCTA'
 import { dismissHint } from '@/lib/hints-preferences'
 import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
+import { localizeResonanceMatch } from '@/lib/resonance-presentation'
 import { buildResonanceSession } from '@/lib/match'
 import type { ResonanceSession } from '@/types/match'
 import type { OrbitMatch } from '@/types/match'
@@ -25,11 +24,14 @@ function SessionStats({ session }: { session: ResonanceSession }) {
   const t = useTranslations('resonance')
   const locale = useLocale()
   const avg = Math.round(
-    session.matches.reduce((sum, m) => sum + m.score, 0) / session.matches.length,
+    session.matches.reduce((sum, m) => sum + m.score, 0) /
+      session.matches.length,
   )
   const topMatch = session.matches[0]
   const date = new Date(session.date).toLocaleDateString(locale, {
-    month: 'long', day: 'numeric', year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
   })
 
   return (
@@ -41,29 +43,50 @@ function SessionStats({ session }: { session: ResonanceSession }) {
       }}
     >
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
+        <span
+          className="text-[10px] uppercase tracking-widest"
+          style={{ color: 'var(--ghost)', opacity: 0.55 }}
+        >
           {t('sessionDate')}
         </span>
-        <span className="text-xs" style={{ color: 'var(--ink)' }}>{date}</span>
+        <span className="text-xs" style={{ color: 'var(--ink)' }}>
+          {date}
+        </span>
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
+        <span
+          className="text-[10px] uppercase tracking-widest"
+          style={{ color: 'var(--ghost)', opacity: 0.55 }}
+        >
           {t('planetsInOrbit', { count: session.matches.length })}
         </span>
-        <span className="text-xs" style={{ color: 'var(--ink)' }}>{session.matches.length}</span>
+        <span className="text-xs" style={{ color: 'var(--ink)' }}>
+          {session.matches.length}
+        </span>
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
+        <span
+          className="text-[10px] uppercase tracking-widest"
+          style={{ color: 'var(--ghost)', opacity: 0.55 }}
+        >
           {t('avgResonance')}
         </span>
-        <span className="text-xs font-medium" style={{ color: '#a78bfa' }}>{avg}</span>
+        <span className="text-xs font-medium" style={{ color: '#a78bfa' }}>
+          {avg}
+        </span>
       </div>
       {topMatch && (
         <div className="flex flex-col gap-0.5 ml-auto">
-          <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.55 }}>
+          <span
+            className="text-[10px] uppercase tracking-widest"
+            style={{ color: 'var(--ghost)', opacity: 0.55 }}
+          >
             {t('strongestPull')}
           </span>
-          <span className="text-xs font-medium" style={{ color: 'var(--star)' }}>
+          <span
+            className="text-xs font-medium"
+            style={{ color: 'var(--star)' }}
+          >
             {t('signalScore')} {topMatch.score}
           </span>
         </div>
@@ -72,33 +95,21 @@ function SessionStats({ session }: { session: ResonanceSession }) {
   )
 }
 
-// --- Hint strip --------------------------------------------------------------
-
-function HintStrip({ hasActive }: { hasActive: boolean }) {
-  const t = useTranslations('resonance')
-  return (
-    <p
-      className="text-center text-[11px] transition-opacity duration-300"
-      style={{ color: 'var(--ghost)', opacity: hasActive ? 0 : 0.45 }}
-    >
-      {t('selectPlanetHint')}
-    </p>
-  )
-}
-
 // --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
-  const tMap = useTranslations('starMap')
   const tCommon = useTranslations('common')
-  const [mounted, setMounted]     = useState(false)
-  const [role, setRole]           = useState<'explorer' | 'resonator'>('explorer')
-  const [myPlanet, setMyPlanet]   = useState<PlanetProfile | null>(null)
-  const [session, setSession]     = useState<ResonanceSession | null>(null)
-  const [planetById, setPlanetById] = useState<Record<string, PlanetProfile>>({})
-  const [activeId, setActiveId]   = useState<string | null>(null)
+  const tTraits = useTranslations('creationSteps')
+  const [mounted, setMounted] = useState(false)
+  const [role, setRole] = useState<'explorer' | 'resonator'>('explorer')
+  const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
+  const [session, setSession] = useState<ResonanceSession | null>(null)
+  const [planetById, setPlanetById] = useState<Record<string, PlanetProfile>>(
+    {},
+  )
+  const [activeId, setActiveId] = useState<string | null>(null)
   const firstMatchDone = useHintDismissed('resonance-first-match-viewed')
 
   function selectMatch(id: string | null) {
@@ -136,11 +147,17 @@ export default function ResonancePage() {
         if (cancelled) return
       }
 
-      if (res.status === 401) { window.location.href = '/sign-in?next=/resonance'; return }
-      if (res.status === 404) { window.location.href = '/onboarding'; return }
+      if (res.status === 401) {
+        window.location.href = '/sign-in?next=/resonance'
+        return
+      }
+      if (res.status === 404) {
+        window.location.href = '/onboarding'
+        return
+      }
       if (!res.ok) return
 
-      const data = await res.json() as Record<string, unknown>
+      const data = (await res.json()) as Record<string, unknown>
       const p: PlanetProfile = {
         id: data.id as string,
         name: (data.name as string) || 'Unknown',
@@ -152,9 +169,20 @@ export default function ResonancePage() {
         lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
         coreThemes: (data.coreThemes as string[]) ?? [],
         contentFragments: (data.contentFragments as string[]) ?? [],
-        visual: (data.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'none' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
-        planetConfig: (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
-        cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
+        visual: (data.visual as PlanetProfile['visual']) ?? {
+          coreColor: '#a78bfa',
+          accentColor: '#c4b5fd',
+          ringStyle: 'none' as const,
+          surfaceStyle: 'smooth' as const,
+          satelliteCount: 1,
+          size: 'lg' as const,
+        },
+        planetConfig:
+          (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
+        cognitiveAxes: {
+          abstract: (data.abstractAxis as number) ?? 50,
+          introspective: (data.introspectiveAxis as number) ?? 50,
+        },
         emotionalBars: [],
         createdAt: (data.createdAt as string) ?? new Date().toISOString(),
         userId: (data.userId as string) ?? '',
@@ -166,45 +194,88 @@ export default function ResonancePage() {
       // Fetch other planets for resonance session
       fetch('/api/planets')
         .then((r) => (r.ok ? r.json() : { planets: [] }))
-        .then(({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
-          if (cancelled) return
-          const planets = planetData.map((d) => ({
-            id: d.id as string,
-            name: (d.name as string) || 'Unknown',
-            avatarSymbol: (d.avatarSymbol as string) || '?',
-            tagline: (d.tagline as string) ?? undefined,
-            role: 'resonator' as const,
-            mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
-            style: (d.style as PlanetProfile['style']) ?? 'minimal',
-            lifestyle: (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-            coreThemes: (d.coreThemes as string[]) ?? [],
-            contentFragments: (d.contentFragments as string[]) ?? [],
-            visual: (d.visual as PlanetProfile['visual']) ?? { coreColor: '#a78bfa', accentColor: '#c4b5fd', ringStyle: 'none' as const, surfaceStyle: 'smooth' as const, satelliteCount: 1, size: 'lg' as const },
-            planetConfig: (d.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
-            cognitiveAxes: { abstract: (d.abstractAxis as number) ?? 50, introspective: (d.introspectiveAxis as number) ?? 50 },
-            emotionalBars: [],
-            createdAt: (d.createdAt as string) ?? new Date().toISOString(),
-            userId: (d.userId as string) ?? '',
-          } as PlanetProfile))
-          if (planets.length > 0) {
-            setSession(buildResonanceSession(p, planets))
-            const byId: Record<string, PlanetProfile> = {}
-            for (const pl of planets) byId[pl.id] = pl
-            setPlanetById(byId)
-          }
+        .then(
+          ({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
+            if (cancelled) return
+            const planets = planetData.map(
+              (d) =>
+                ({
+                  id: d.id as string,
+                  name: (d.name as string) || 'Unknown',
+                  avatarSymbol: (d.avatarSymbol as string) || '?',
+                  tagline: (d.tagline as string) ?? undefined,
+                  role: 'resonator' as const,
+                  mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
+                  style: (d.style as PlanetProfile['style']) ?? 'minimal',
+                  lifestyle:
+                    (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+                  coreThemes: (d.coreThemes as string[]) ?? [],
+                  contentFragments: (d.contentFragments as string[]) ?? [],
+                  visual: (d.visual as PlanetProfile['visual']) ?? {
+                    coreColor: '#a78bfa',
+                    accentColor: '#c4b5fd',
+                    ringStyle: 'none' as const,
+                    surfaceStyle: 'smooth' as const,
+                    satelliteCount: 1,
+                    size: 'lg' as const,
+                  },
+                  planetConfig:
+                    (d.planetConfig as PlanetProfile['planetConfig']) ??
+                    undefined,
+                  cognitiveAxes: {
+                    abstract: (d.abstractAxis as number) ?? 50,
+                    introspective: (d.introspectiveAxis as number) ?? 50,
+                  },
+                  emotionalBars: [],
+                  createdAt:
+                    (d.createdAt as string) ?? new Date().toISOString(),
+                  userId: (d.userId as string) ?? '',
+                }) as PlanetProfile,
+            )
+            if (planets.length > 0) {
+              setSession(buildResonanceSession(p, planets))
+              const byId: Record<string, PlanetProfile> = {}
+              for (const pl of planets) byId[pl.id] = pl
+              setPlanetById(byId)
+            }
+          },
+        )
+        .catch(() => {
+          /* no session */
         })
-        .catch(() => { /* no session */ })
     }
 
     load()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
+  const displaySession = useMemo(
+    () =>
+      session && myPlanet
+        ? {
+            ...session,
+            matches: session.matches.map((match) =>
+              planetById[match.planetId]
+                ? localizeResonanceMatch(
+                    match,
+                    myPlanet,
+                    planetById[match.planetId],
+                    t,
+                    tTraits,
+                  )
+                : match,
+            ),
+          }
+        : session,
+    [session, myPlanet, planetById, t, tTraits],
+  )
   if (!mounted) return null
 
   const activeMatch: OrbitMatch | null =
-    activeId && session
-      ? (session.matches.find((m) => m.planetId === activeId) ?? null)
+    activeId && displaySession
+      ? (displaySession.matches.find((m) => m.planetId === activeId) ?? null)
       : null
 
   const accentColor = myPlanet?.visual.coreColor ?? '#a78bfa'
@@ -216,12 +287,19 @@ export default function ResonancePage() {
   if (unformed || !session) {
     return (
       <AppShell>
-        <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.07} double={false} />
+        <LightCone
+          origin="top-center"
+          color="rgba(167,139,250,1)"
+          opacity={0.07}
+          double={false}
+        />
         <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-5xl mx-auto">
-
           <div className="mb-10">
-            <div className="mb-5"><Link href="/star-map?mode=resonance" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link></div>
-            <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} />
+            <ResonanceHeader
+              title={tNav('resonance')}
+              eyebrow={t('recommendations')}
+              subtitle={t('orbitSubtitle')}
+            />
           </div>
 
           {unformed ? (
@@ -242,13 +320,21 @@ export default function ResonancePage() {
   // -- Resonator: full orbital view ------------------------------------------
   return (
     <AppShell>
-      <LightCone origin="top-left" color={accentColor} opacity={0.06} double={false} />
+      <LightCone
+        origin="top-left"
+        color={accentColor}
+        opacity={0.06}
+        double={false}
+      />
 
       <div className="relative z-10 px-4 sm:px-6 pt-8 pb-20 max-w-6xl mx-auto">
-
-        <div className="mb-5"><Link href="/star-map?mode=resonance" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link></div>
         <div className="mb-8">
-          <ResonanceHeader title={tNav('resonance')} eyebrow={t('daily')} subtitle={t('orbitSubtitle')} accentColor={accentColor} />
+          <ResonanceHeader
+            title={tNav('resonance')}
+            eyebrow={t('recommendations')}
+            subtitle={t('orbitSubtitle')}
+            accentColor={accentColor}
+          />
         </div>
 
         {/* Session stats */}
@@ -256,74 +342,20 @@ export default function ResonancePage() {
         {firstMatchDone && <FirstSessionHint />}
         {!firstMatchDone && session.matches.length > 0 && (
           <FirstMatchCTA
-            topMatch={session.matches[0]}
+            topMatch={displaySession!.matches[0]}
             planet={planetById[session.matches[0].planetId]}
             onReveal={() => selectMatch(session.matches[0].planetId)}
           />
         )}
 
-        {/* Main layout: orbit system + drawer */}
-        <div className="mt-8 flex flex-col lg:flex-row gap-6 items-start">
-
-          {/* Orbit system */}
-          <div className="flex-1 flex flex-col items-center gap-5">
-
-            {/* Legend */}
-            <MatchReasonLegend
-              active={activeMatch?.primaryReason}
-              className="justify-center"
-            />
-
-            {/* The orbital visualization */}
-            <div
-              className="relative w-full flex items-center justify-center py-6 rounded-3xl overflow-hidden"
-              style={{
-                background: 'radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.04) 0%, transparent 70%), rgba(255,255,255,0.01)',
-                border: '1px solid rgba(167,139,250,0.07)',
-                minHeight: 400,
-              }}
-            >
-              {/* Ambient glow behind center */}
-              <div
-                className="absolute pointer-events-none"
-                aria-hidden="true"
-                style={{
-                  width: 200, height: 200,
-                  borderRadius: '50%',
-                  background: `radial-gradient(circle, ${accentColor}10 0%, transparent 70%)`,
-                  top: '50%', left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-              <ResonanceOrbitSystem
-                sourcePlanet={myPlanet}
-                matches={session.matches}
-                activeId={activeId}
-                onSelect={selectMatch}
-                size={480}
-                planetById={planetById}
-              />
-            </div>
-
-            <HintStrip hasActive={activeId !== null} />
-          </div>
-        </div>
-
-        {/* Mobile: selected match summary card when no drawer */}
-        {activeMatch && (
-          <div
-            className="lg:hidden mt-6 px-5 py-4 rounded-2xl"
-            style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(167,139,250,0.10)',
-            }}
-          >
-            <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-              {t('desktopDetailHint')}
-            </p>
-          </div>
-        )}
-
+        <ResonanceExperience
+          source={myPlanet}
+          session={displaySession!}
+          planets={planetById}
+          activeId={activeId}
+          onSelect={selectMatch}
+          onClose={() => setActiveId(null)}
+        />
       </div>
 
       {/* Rendered outside the "relative z-10" wrapper above on purpose: that
@@ -334,11 +366,13 @@ export default function ResonancePage() {
           context from the inside. Purely a DOM-position fix: the panel is
           `position: fixed` unconditionally, so it never occupied layout
           space in the flex row above regardless of where it's rendered. */}
-      <ResonanceDrawer
-        match={activeMatch}
-        onClose={() => setActiveId(null)}
-        planetById={planetById}
-      />
+      <div className="lg:hidden">
+        <ResonanceDrawer
+          match={activeMatch}
+          onClose={() => setActiveId(null)}
+          planetById={planetById}
+        />
+      </div>
     </AppShell>
   )
 }

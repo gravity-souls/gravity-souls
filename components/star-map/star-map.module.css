@@ -386,3 +386,59 @@
 .compact .sidebar[data-open='true'] {
   display: block;
 }
+/* Fixed identity/detail zones frame an independently scrolling object list. */
+.sidebar,
+.sidebar[data-open='true'],
+.compact .sidebar[data-open='true'] {
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar {
+  display: flex;
+}
+.sidebarHeader {
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+.sidebar .card {
+  flex-shrink: 0;
+  max-height: 42%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.sidebar .card::-webkit-scrollbar {
+  display: none;
+}
+.sidebar .nodeList {
+  margin: 8px 0 14px 12px;
+}
+.sidebar .clusters > div > button {
+  width: 100%;
+}
+.sidebar .clusters {
+  margin-top: 0;
+}
+.compact .sidebar {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sidebar {
+    display: none;
+  }
+}
+.sidebar[data-open='true'],
+.compact .sidebar[data-open='true'] {
+  display: flex;
+}
+/* Keep the selected identity visible without a second scrolling list. */
+.sidebar .card {
+  max-height: none;
+  overflow: visible;
+}
+.sidebar .card h2,
+.sidebar .card p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
