@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import HorizontalCarousel from '@/components/ui/HorizontalCarousel'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
@@ -25,63 +25,23 @@ interface Props {
  */
 export default function ResonantMatchesCarousel({ matches, className = '' }: Props) {
   const tA11y = useTranslations('a11y')
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [page, setPage] = useState(0)
-  const perPage = 6
-  const totalPages = Math.ceil(matches.length / perPage)
-
-  function scroll(dir: -1 | 1) {
-    if (!scrollRef.current) return
-    const next = Math.max(0, Math.min(page + dir, totalPages - 1))
-    setPage(next)
-    const cardW = 150 + 12 // card width + gap
-    scrollRef.current.scrollTo({ left: next * perPage * cardW, behavior: 'smooth' })
-  }
-
-  const startIdx = page * perPage + 1
-  const endIdx = Math.min((page + 1) * perPage, matches.length)
-
+  const t = useTranslations('myPlanet')
   return (
     <div className={className}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-            Resonant Matches
+            {t('resonantMatches')}
           </h3>
           <p className="text-[10px] mt-0.5" style={{ color: 'var(--ghost)' }}>
-            {matches.length} matches total
+            {t('matchCount', { count: matches.length })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] tabular-nums" style={{ color: 'var(--ghost)' }}>
-            {startIdx}–{endIdx} of {matches.length}
-          </span>
-          <button
-            onClick={() => scroll(-1)}
-            disabled={page === 0}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-xs disabled:opacity-30"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ink)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => scroll(1)}
-            disabled={page >= totalPages - 1}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-xs disabled:opacity-30"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ink)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            ›
-          </button>
-        </div>
+
       </div>
 
-      {/* Scrollable cards */}
-      <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
+      <HorizontalCarousel label={t('resonantMatches')} previousLabel={tA11y('previousMatches')} nextLabel={tA11y('nextMatches')}>
         {matches.map(({ planet, score, traits }) => {
           const color = planet.planetConfig?.tintColor ?? planet.visual?.coreColor ?? '#a78bfa'
           return (
@@ -150,38 +110,15 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
                     </span>
                   </div>
                   <p className="text-[9px] mt-0.5" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-                    compatible
+                    {t('compatible')}
                   </p>
                 </div>
               </Link>
             </div>
           )
         })}
-      </div>
+      </HorizontalCarousel>
 
-      {/* Dots */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setPage(i)
-                if (scrollRef.current) {
-                  const cardW = 150 + 12
-                  scrollRef.current.scrollTo({ left: i * perPage * cardW, behavior: 'smooth' })
-                }
-              }}
-              className="w-1.5 h-1.5 rounded-full transition-all"
-              style={{
-                background: i === page ? 'var(--star)' : 'rgba(255,255,255,0.15)',
-                boxShadow: i === page ? '0 0 4px var(--star)' : 'none',
-              }}
-              aria-label={`Page ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
     </div>
   )
 }

@@ -9,3 +9,4 @@ loadModule('./require-level.test.cts')
 import './resonance-layout.test.mjs'
 import './planet-rings-removed.test.mjs'
 import './navigation-polish.test.mjs'
+import './my-planet-audit.test.mjs'

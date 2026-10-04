@@ -293,7 +293,45 @@
     "xpToNext": "距下一级还需 {xp} XP",
     "coreThemes": "核心主题",
     "moodDrift": "情绪漂移",
-    "customizeYourPlanet": "定制你的星球"
+    "customizeYourPlanet": "定制你的星球",
+    "resonantMatches": "共鸣匹配",
+    "matchCount": "共 {count} 个匹配",
+    "compatible": "契合度",
+    "communityCount": "{count} 个社区",
+    "resonanceBalance": "共鸣平衡",
+    "emptyName": "星球名称不能为空",
+    "nameTooLong": "名称不能超过 60 个字符",
+    "taglineTooLong": "简介不能超过 100 个字符",
+    "renameFailed": "保存失败，请重试。",
+    "planetName": "星球名称",
+    "planetTagline": "星球简介",
+    "renamePlanet": "修改星球名称",
+    "taglinePlaceholder": "添加一句简介…",
+    "online": "线上",
+    "going": "已报名",
+    "eventOpen": "开放报名",
+    "eventDetails": "查看详情与报名",
+    "eventDetailsSoon": "详情即将公布",
+    "roles": {
+      "explorer": "探索者",
+      "resonator": "共鸣者"
+    },
+    "radar": {
+      "introvert": "内向",
+      "empathy": "共情",
+      "curious": "好奇",
+      "emotional": "情感",
+      "openminded": "开放思维",
+      "adventurous": "探索精神"
+    },
+    "eventCategories": {
+      "MEETUP": "聚会",
+      "ONLINE": "线上活动",
+      "WORKSHOP": "工作坊",
+      "STARGAZING": "观星",
+      "DISCUSSION": "讨论",
+      "OTHER": "其他"
+    }
   },
   "planetPage": {
     "culturalCoordinates": "文化坐标",
@@ -413,7 +451,55 @@
     "fileSizeError": "文件最大 5MB",
     "uploadFailed": "上传失败",
     "missingTextureUrl": "服务器未返回纹理 URL",
-    "uploadServerError": "上传失败。请检查应用服务器是否正在运行。"
+    "uploadServerError": "上传失败。请检查应用服务器是否正在运行。",
+    "swatches": {
+      "Nebula": {
+        "name": "星云",
+        "tone": "深紫"
+      },
+      "Lumen": {
+        "name": "微光",
+        "tone": "柔和淡紫"
+      },
+      "Orbit": {
+        "name": "轨道",
+        "tone": "清蓝"
+      },
+      "Aurora": {
+        "name": "极光",
+        "tone": "电光青"
+      },
+      "Verdant": {
+        "name": "翠绿",
+        "tone": "鲜绿"
+      },
+      "Solar": {
+        "name": "日光",
+        "tone": "暖金"
+      },
+      "Ember": {
+        "name": "余烬",
+        "tone": "明橙"
+      },
+      "Pulse": {
+        "name": "脉冲",
+        "tone": "信号红"
+      },
+      "Bloom": {
+        "name": "绽放",
+        "tone": "玫瑰光"
+      },
+      "Mist": {
+        "name": "薄雾",
+        "tone": "淡光"
+      },
+      "Custom": {
+        "name": "自定义",
+        "tone": "已保存的颜色"
+      }
+    },
+    "uploadSignIn": "请登录后上传定制纹理",
+    "uploadLocked": "此星球尚未解锁定制纹理"
   },
   "messagesPage": {
     "eyebrow": "信号",
@@ -560,7 +646,16 @@
     "firstJoinHintTitle": "你已加入这个星系",
     "firstJoinHintBody": "现在你可以发帖、回复，并看到这个星系分享的一切。",
     "firstDmHintTitle": "你的第一束信号已发送",
-    "firstDmHintBody": "回复会出现在这里。随时前往消息页面继续对话。"
+    "firstDmHintBody": "回复会出现在这里。随时前往消息页面继续对话。",
+    "levelNames": {
+      "1": "漂流岩石",
+      "2": "年轻星球",
+      "3": "轨道之星",
+      "4": "引力场",
+      "5": "奇点"
+    },
+    "saving": "保存中…",
+    "planetTexturesBy": "星球纹理来源"
   },
   "communities": {
     "eyebrow": "社区",
@@ -1071,7 +1166,9 @@
     "unread": "未读",
     "deleteNotification": "删除通知",
     "showPassword": "显示密码",
-    "hidePassword": "隐藏密码"
+    "hidePassword": "隐藏密码",
+    "previousMatches": "上一组匹配",
+    "nextMatches": "下一组匹配"
   },
   "planetActions": {
     "planetDepth": "星球深度",

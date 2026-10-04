@@ -154,7 +154,7 @@ export default function Topbar() {
           <Link
             href="/messages"
             aria-label={tA11y('messages')}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white md:hidden"
           >
             <MessageCircle className="h-4.5 w-4.5" />
           </Link>

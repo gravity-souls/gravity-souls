@@ -293,7 +293,45 @@
     "xpToNext": "{xp} XP avant le niveau suivant",
     "coreThemes": "Thèmes clés",
     "moodDrift": "Dérive d'humeur",
-    "customizeYourPlanet": "Personnaliser votre planète"
+    "customizeYourPlanet": "Personnaliser votre planète",
+    "resonantMatches": "Affinités",
+    "matchCount": "{count} affinités au total",
+    "compatible": "Compatibilité",
+    "communityCount": "{count} communautés",
+    "resonanceBalance": "Équilibre de résonance",
+    "emptyName": "Le nom de la planète ne peut pas être vide",
+    "nameTooLong": "Le nom ne doit pas dépasser 60 caractères",
+    "taglineTooLong": "La présentation ne doit pas dépasser 100 caractères",
+    "renameFailed": "Échec de l’enregistrement. Réessayez.",
+    "planetName": "Nom de la planète",
+    "planetTagline": "Présentation de la planète",
+    "renamePlanet": "Renommer la planète",
+    "taglinePlaceholder": "Ajouter une présentation…",
+    "online": "En ligne",
+    "going": "Inscrit",
+    "eventOpen": "Inscriptions ouvertes",
+    "eventDetails": "Voir les détails et s’inscrire",
+    "eventDetailsSoon": "Détails à venir",
+    "roles": {
+      "explorer": "Explorateur",
+      "resonator": "Résonateur"
+    },
+    "radar": {
+      "introvert": "Introversion",
+      "empathy": "Empathie",
+      "curious": "Curiosité",
+      "emotional": "Émotions",
+      "openminded": "Ouverture d’esprit",
+      "adventurous": "Aventure"
+    },
+    "eventCategories": {
+      "MEETUP": "Rencontre",
+      "ONLINE": "En ligne",
+      "WORKSHOP": "Atelier",
+      "STARGAZING": "Observation des étoiles",
+      "DISCUSSION": "Discussion",
+      "OTHER": "Autre"
+    }
   },
   "planetPage": {
     "culturalCoordinates": "Coordonnées culturelles",
@@ -413,7 +451,55 @@
     "fileSizeError": "La taille maximale est de 5 Mo",
     "uploadFailed": "Échec du téléversement",
     "missingTextureUrl": "Le serveur n'a pas renvoyé d'URL de texture",
-    "uploadServerError": "Échec du téléversement. Vérifiez que le serveur de l'application fonctionne."
+    "uploadServerError": "Échec du téléversement. Vérifiez que le serveur de l'application fonctionne.",
+    "swatches": {
+      "Nebula": {
+        "name": "Nébuleuse",
+        "tone": "Violet profond"
+      },
+      "Lumen": {
+        "name": "Lueur",
+        "tone": "Lavande douce"
+      },
+      "Orbit": {
+        "name": "Orbite",
+        "tone": "Bleu clair"
+      },
+      "Aurora": {
+        "name": "Aurore",
+        "tone": "Cyan électrique"
+      },
+      "Verdant": {
+        "name": "Verdure",
+        "tone": "Vert vif"
+      },
+      "Solar": {
+        "name": "Soleil",
+        "tone": "Or chaud"
+      },
+      "Ember": {
+        "name": "Braise",
+        "tone": "Orange vif"
+      },
+      "Pulse": {
+        "name": "Pulsation",
+        "tone": "Rouge signal"
+      },
+      "Bloom": {
+        "name": "Floraison",
+        "tone": "Lueur rose"
+      },
+      "Mist": {
+        "name": "Brume",
+        "tone": "Lueur pâle"
+      },
+      "Custom": {
+        "name": "Personnalisé",
+        "tone": "Couleur enregistrée"
+      }
+    },
+    "uploadSignIn": "Connectez-vous pour importer une texture",
+    "uploadLocked": "Les textures personnalisées ne sont pas encore débloquées"
   },
   "messagesPage": {
     "eyebrow": "Signaux",
@@ -560,7 +646,16 @@
     "firstJoinHintTitle": "Vous êtes dans cette galaxie",
     "firstJoinHintBody": "Vous pouvez maintenant publier, répondre et voir tout ce que cette galaxie partage.",
     "firstDmHintTitle": "Votre premier faisceau est envoyé",
-    "firstDmHintBody": "Les réponses arrivent ici. Consultez Messages à tout moment pour continuer la conversation."
+    "firstDmHintBody": "Les réponses arrivent ici. Consultez Messages à tout moment pour continuer la conversation.",
+    "levelNames": {
+      "1": "Roche à la dérive",
+      "2": "Jeune planète",
+      "3": "Étoile en orbite",
+      "4": "Champ gravitationnel",
+      "5": "Singularité"
+    },
+    "saving": "Enregistrement…",
+    "planetTexturesBy": "Textures planétaires par"
   },
   "communities": {
     "eyebrow": "Communautés",
@@ -1071,7 +1166,9 @@
     "unread": "Non lu",
     "deleteNotification": "Supprimer la notification",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "previousMatches": "Affinités précédentes",
+    "nextMatches": "Affinités suivantes"
   },
   "planetActions": {
     "planetDepth": "Profondeur de la planète",

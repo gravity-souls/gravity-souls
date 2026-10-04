@@ -293,7 +293,45 @@
     "xpToNext": "{xp} XP to next level",
     "coreThemes": "Core Themes",
     "moodDrift": "Mood Drift",
-    "customizeYourPlanet": "Customize your planet"
+    "customizeYourPlanet": "Customize your planet",
+    "resonantMatches": "Resonant Matches",
+    "matchCount": "{count} matches total",
+    "compatible": "Compatible",
+    "communityCount": "{count} communities",
+    "resonanceBalance": "Resonance balance",
+    "emptyName": "Planet name cannot be empty",
+    "nameTooLong": "Name must be 60 characters or fewer",
+    "taglineTooLong": "Tagline must be 100 characters or fewer",
+    "renameFailed": "Could not save. Try again.",
+    "planetName": "Planet name",
+    "planetTagline": "Planet tagline",
+    "renamePlanet": "Rename planet",
+    "taglinePlaceholder": "Add a tagline…",
+    "online": "Online",
+    "going": "Going",
+    "eventOpen": "Open",
+    "eventDetails": "View details & RSVP",
+    "eventDetailsSoon": "Details coming soon",
+    "roles": {
+      "explorer": "Explorer",
+      "resonator": "Resonator"
+    },
+    "radar": {
+      "introvert": "Introvert",
+      "empathy": "Empathy",
+      "curious": "Curious",
+      "emotional": "Emotional",
+      "openminded": "Open-minded",
+      "adventurous": "Adventurous"
+    },
+    "eventCategories": {
+      "MEETUP": "Meetup",
+      "ONLINE": "Online",
+      "WORKSHOP": "Workshop",
+      "STARGAZING": "Stargazing",
+      "DISCUSSION": "Discussion",
+      "OTHER": "Other"
+    }
   },
   "planetPage": {
     "culturalCoordinates": "Cultural coordinates",
@@ -413,7 +451,55 @@
     "fileSizeError": "Max file size is 5MB",
     "uploadFailed": "Upload failed",
     "missingTextureUrl": "The server did not return a texture URL",
-    "uploadServerError": "Upload failed. Check that the app server is running."
+    "uploadServerError": "Upload failed. Check that the app server is running.",
+    "swatches": {
+      "Nebula": {
+        "name": "Nebula",
+        "tone": "Deep violet"
+      },
+      "Lumen": {
+        "name": "Lumen",
+        "tone": "Soft lavender"
+      },
+      "Orbit": {
+        "name": "Orbit",
+        "tone": "Clear blue"
+      },
+      "Aurora": {
+        "name": "Aurora",
+        "tone": "Electric cyan"
+      },
+      "Verdant": {
+        "name": "Verdant",
+        "tone": "Living green"
+      },
+      "Solar": {
+        "name": "Solar",
+        "tone": "Warm gold"
+      },
+      "Ember": {
+        "name": "Ember",
+        "tone": "Bright orange"
+      },
+      "Pulse": {
+        "name": "Pulse",
+        "tone": "Signal red"
+      },
+      "Bloom": {
+        "name": "Bloom",
+        "tone": "Rose light"
+      },
+      "Mist": {
+        "name": "Mist",
+        "tone": "Pale glow"
+      },
+      "Custom": {
+        "name": "Custom",
+        "tone": "Saved color"
+      }
+    },
+    "uploadSignIn": "Sign in before uploading a custom texture",
+    "uploadLocked": "Custom textures are locked for this planet"
   },
   "messagesPage": {
     "eyebrow": "Signals",
@@ -560,7 +646,16 @@
     "firstJoinHintTitle": "You're in this galaxy",
     "firstJoinHintBody": "You can now post, reply, and see everything this galaxy shares.",
     "firstDmHintTitle": "Your first beam is sent",
-    "firstDmHintBody": "Replies land right here. Check Messages any time to keep the conversation going."
+    "firstDmHintBody": "Replies land right here. Check Messages any time to keep the conversation going.",
+    "levelNames": {
+      "1": "Drifting Rock",
+      "2": "Young Planet",
+      "3": "Orbiting Star",
+      "4": "Gravity Field",
+      "5": "Singularity"
+    },
+    "saving": "Saving…",
+    "planetTexturesBy": "Planet textures by"
   },
   "communities": {
     "eyebrow": "Communities",
@@ -1071,7 +1166,9 @@
     "unread": "Unread",
     "deleteNotification": "Delete notification",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "previousMatches": "Previous matches",
+    "nextMatches": "Next matches"
   },
   "planetActions": {
     "planetDepth": "Planet depth",

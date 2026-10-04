@@ -20,7 +20,7 @@ const COVER_IMAGES: Record<string, string> = {
 }
 
 interface Props {
-  galaxies: GalaxyPreview[]
+  galaxies: (GalaxyPreview & { joined?: boolean })[]
   className?: string
 }
 
@@ -29,8 +29,13 @@ interface Props {
  * Each card has a real cover image with dark overlay, text overlay, and join button.
  */
 export default function RecommendedCommunities({ galaxies, className = '' }: Props) {
+  const t = useTranslations('myPlanet')
+  const tGalaxy = useTranslations('galaxies')
+  const tGalaxyPage = useTranslations('galaxyPage')
   const tHome = useTranslations('home')
   const router = useRouter()
+  const [joiningId, setJoiningId] = useState<string | null>(null)
+  const [joinError, setJoinError] = useState<string | null>(null)
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
 
 
@@ -46,15 +51,16 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
             className="text-[10px] px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ghost)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {galaxies.length} communities
+            {t('communityCount', { count: galaxies.length })}
           </span>
         </div>
 
       </div>
 
+      {joinError && <p role="alert" className="mb-3 text-sm text-red-300">{joinError}</p>}
       <HorizontalCarousel label={tHome('recommendedCommunities')}>
         {galaxies.map((g) => {
-          const joined = joinedIds.has(g.id)
+          const joined = g.joined || joinedIds.has(g.id)
           const coverUrl = COVER_IMAGES[g.slug]
 
           return (
@@ -129,14 +135,25 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
               {/* Bottom bar */}
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {g.memberCount >= 1000 ? `${(g.memberCount / 1000).toFixed(1)}K` : g.memberCount} members
+                  {tGalaxy('members', { count: g.memberCount })}
                 </span>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation()
-                    setJoinedIds((prev) => { const next = new Set(prev); next.add(g.id); return next })
+                    if (joiningId) return
+                    setJoiningId(g.id)
+                    setJoinError(null)
+                    try {
+                      const response = await fetch('/api/communities/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ communityId: g.id }) })
+                      if (!response.ok) throw new Error('Join failed')
+                      setJoinedIds((prev) => new Set(prev).add(g.id))
+                    } catch {
+                      setJoinError(tGalaxyPage('joinFailed'))
+                    } finally {
+                      setJoiningId(null)
+                    }
                   }}
-                  disabled={joined}
+                  disabled={joined || joiningId !== null}
                   className="text-[10px] font-semibold px-4 py-1.5 rounded-lg transition-all duration-200"
                   style={{
                     background: joined
@@ -148,7 +165,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
                     boxShadow: joined ? 'none' : '0 0 8px rgba(124,58,237,0.15)',
                   }}
                 >
-                  {joined ? 'Joined' : 'Join'}
+                  {tGalaxy(joined ? 'joined' : 'join')}
                 </button>
               </div>
             </div>

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
@@ -37,7 +38,7 @@ import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
-import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
+import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
 import type { StreamPost } from '@/types/stream'
 
@@ -114,19 +115,10 @@ function planetConfigFromSource(source: unknown, planet: PlanetProfile): PlanetC
   }
 }
 
-const CATEGORY_LABELS: Record<EventCategory, string> = {
-  MEETUP: 'Meetup',
-  ONLINE: 'Online',
-  WORKSHOP: 'Workshop',
-  STARGAZING: 'Stargazing',
-  DISCUSSION: 'Discussion',
-  OTHER: 'Other',
-}
-
 interface CommunityRaw {
   id: string; slug: string; name: string; symbol: string
   tagline: string | null; keywords: string[]; mood: string
-  accentColor: string; maturity: string; memberCount: number
+  accentColor: string; maturity: string; memberCount: number; joined?: boolean
 }
 
 function fallbackResonanceScore(id: string): number {
@@ -134,7 +126,7 @@ function fallbackResonanceScore(id: string): number {
   return 40 + (seed % 51)
 }
 
-function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string): ActivityEvent {
+function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string, locale: string, t: ReturnType<typeof useTranslations>): ActivityEvent {
   const date = new Date(event.date)
 
   return {
@@ -142,9 +134,9 @@ function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string): Act
     title: event.title,
     subtitle: event.galaxy?.name ?? event.description,
     date: event.date,
-    time: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(date),
-    location: event.location ?? (event.onlineUrl ? 'Online' : undefined),
-    tags: [CATEGORY_LABELS[event.category], event.userHasRSVPed ? 'Going' : 'Open'],
+    time: new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(date),
+    location: event.location ?? (event.onlineUrl ? t('online') : undefined),
+    tags: [t(`eventCategories.${event.category}`), t(event.userHasRSVPed ? 'going' : 'eventOpen')],
     imageUrl: event.coverImage ?? undefined,
     accentColor: event.galaxy?.accentColor ?? fallbackAccent,
   }
@@ -155,10 +147,11 @@ function toActivityEvent(event: GalaxyEventSummary, fallbackAccent: string): Act
 export default function MyPlanetPage() {
   const tHome = useTranslations('home')
   const tMyPlanet = useTranslations('myPlanet')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const tNav = useTranslations('nav')
   const tStream = useTranslations('stream')
   const tSettings = useTranslations('planetSettings')
-  const tCommon = useTranslations('common')
   const tCreation = useTranslations('creationSteps')
   const [planet, setPlanet]       = useState<PlanetProfile | null>(null)
   const [storedUser, setStoredUser] = useState<{ planetConfig: PlanetConfig; userLevel: number } | null>(null)
@@ -167,7 +160,7 @@ export default function MyPlanetPage() {
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
-  const [communities, setCommunities] = useState<GalaxyPreview[]>([])
+  const [communities, setCommunities] = useState<(GalaxyPreview & { joined?: boolean })[]>([])
   const [createPostOpen, setCreatePostOpen] = useState(false)
   const [selectedPost, setSelectedPost] = useState<StreamPost | null>(null)
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
@@ -299,29 +292,10 @@ export default function MyPlanetPage() {
           // Fetch real planets for resonance map
           (async () => {
             try {
-              const planetsRes = await fetch('/api/planets')
+              const planetsRes = await fetch('/api/planets', { cache: 'no-store' })
               if (planetsRes.ok) {
                 const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
-                const allPlanets = planetRows.map((data: Record<string, unknown>) => {
-                  const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
-                  return {
-                    id: data.id as string,
-                    name: (data.name as string) || 'Unknown',
-                    avatarSymbol: (data.avatarSymbol as string) || '?',
-                    tagline: (data.tagline as string) ?? undefined,
-                    role: 'resonator' as const,
-                    mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
-                    style: (data.style as PlanetProfile['style']) ?? 'minimal',
-                    lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-                    coreThemes: (data.coreThemes as string[]) ?? [],
-                    contentFragments: (data.contentFragments as string[]) ?? [],
-                    visual,
-                    cognitiveAxes: { abstract: (data.abstractAxis as number) ?? 50, introspective: (data.introspectiveAxis as number) ?? 50 },
-                    emotionalBars: [],
-                    createdAt: (data.createdAt as string) ?? new Date().toISOString(),
-                    userId: (data.userId as string) ?? '',
-                  } as PlanetProfile
-                })
+                const allPlanets = planetRows.map(planetProfileFromApi)
                 setOtherPlanets(allPlanets)
               }
             } catch {
@@ -334,7 +308,7 @@ export default function MyPlanetPage() {
               const commRes = await fetch('/api/communities')
               if (commRes.ok) {
                 const commData = (await commRes.json()) as CommunityRaw[]
-                setCommunities(commData.slice(0, 3).map((c) => ({
+                setCommunities(commData.map((c) => ({
                   id: c.id,
                   slug: c.slug,
                   name: c.name,
@@ -343,6 +317,7 @@ export default function MyPlanetPage() {
                   keywords: c.keywords,
                   mood: c.mood as GalaxyPreview['mood'],
                   memberCount: c.memberCount,
+                  joined: c.joined,
                   maturity: c.maturity as GalaxyPreview['maturity'],
                   accentColor: c.accentColor,
                 })))
@@ -513,12 +488,12 @@ export default function MyPlanetPage() {
 
   // Resonance radar dimensions
   const radarDimensions = [
-    { label: 'Introvert', value: planet.cognitiveAxes.introspective },
-    { label: 'Empathy', value: planet.emotionalBars.find((b) => b.label === 'Warmth')?.value ?? 55 },
-    { label: 'Curious', value: planet.cognitiveAxes.abstract },
-    { label: 'Emotional', value: planet.emotionalBars.find((b) => b.label === 'Depth')?.value ?? 60 },
-    { label: 'Open-minded', value: planet.emotionalBars.find((b) => b.label === 'Resonance')?.value ?? 65 },
-    { label: 'Adventurous', value: Math.min(100, 100 - planet.cognitiveAxes.introspective + 15) },
+    { label: tMyPlanet('radar.introvert'), value: planet.cognitiveAxes.introspective },
+    { label: tMyPlanet('radar.empathy'), value: planet.emotionalBars.find((b) => b.label === 'Warmth')?.value ?? 55 },
+    { label: tMyPlanet('radar.curious'), value: planet.cognitiveAxes.abstract },
+    { label: tMyPlanet('radar.emotional'), value: planet.emotionalBars.find((b) => b.label === 'Depth')?.value ?? 60 },
+    { label: tMyPlanet('radar.openminded'), value: planet.emotionalBars.find((b) => b.label === 'Resonance')?.value ?? 65 },
+    { label: tMyPlanet('radar.adventurous'), value: Math.min(100, 100 - planet.cognitiveAxes.introspective + 15) },
   ]
   const balance = Math.round(radarDimensions.reduce((sum, d) => sum + d.value, 0) / radarDimensions.length)
 
@@ -541,15 +516,15 @@ export default function MyPlanetPage() {
     const trimmedTagline = taglineInput.trim()
 
     if (!trimmedName) {
-      setRenameError('Planet name cannot be empty')
+      setRenameError(tMyPlanet('emptyName'))
       return
     }
     if (trimmedName.length > 60) {
-      setRenameError('Name must be 60 characters or fewer')
+      setRenameError(tMyPlanet('nameTooLong'))
       return
     }
     if (trimmedTagline.length > 100) {
-      setRenameError('Tagline must be 100 characters or fewer')
+      setRenameError(tMyPlanet('taglineTooLong'))
       return
     }
 
@@ -567,10 +542,10 @@ export default function MyPlanetPage() {
         setTaglineInput(trimmedTagline)
         setRenaming(false)
       } else {
-        setRenameError("Couldn't save. Try again.")
+        setRenameError(tMyPlanet('renameFailed'))
       }
     } catch {
-      setRenameError("Couldn't save. Try again.")
+      setRenameError(tMyPlanet('renameFailed'))
     } finally {
       setRenameSaving(false)
     }
@@ -644,7 +619,7 @@ export default function MyPlanetPage() {
                     disabled={renameSaving}
                     maxLength={70}
                     autoFocus
-                    aria-label="Planet name"
+                    aria-label={tMyPlanet('planetName')}
                     className="w-full bg-transparent text-2xl font-bold focus:outline-none"
                     style={{
                       color: 'var(--foreground)',
@@ -659,8 +634,8 @@ export default function MyPlanetPage() {
                     onChange={e => setTaglineInput(e.target.value)}
                     disabled={renameSaving}
                     maxLength={110}
-                    placeholder="Add a tagline…"
-                    aria-label="Planet tagline"
+                    placeholder={tMyPlanet('taglinePlaceholder')}
+                    aria-label={tMyPlanet('planetTagline')}
                     className="w-full bg-transparent text-sm italic focus:outline-none"
                     style={{
                       color: 'var(--ink)',
@@ -686,7 +661,7 @@ export default function MyPlanetPage() {
                         cursor: renameSaving ? 'default' : 'pointer',
                       }}
                     >
-                      {renameSaving ? 'Saving…' : 'Save'}
+                      {renameSaving ? tCommon('saving') : tCommon('save')}
                     </button>
                     <button
                       type="button"
@@ -701,7 +676,7 @@ export default function MyPlanetPage() {
                         cursor: renameSaving ? 'default' : 'pointer',
                       }}
                     >
-                      Cancel
+                      {tCommon('cancel')}
                     </button>
                   </div>
                 </div>
@@ -723,7 +698,7 @@ export default function MyPlanetPage() {
                     <button
                       type="button"
                       onClick={handleRenameEnter}
-                      aria-label="Rename planet"
+                      aria-label={tMyPlanet('renamePlanet')}
                       style={{
                         padding: '10px',
                         margin: '-10px -10px -10px 0',
@@ -1000,7 +975,7 @@ export default function MyPlanetPage() {
             {upcomingEvents.length > 0 ? (
               <div className="grid gap-3 px-4 pb-4 pt-3">
                 {upcomingEvents.map((event) => (
-                  <UpcomingActivityCard key={event.id} event={toActivityEvent(event, visual.coreColor)} compact onOpen={() => openUpcomingEvent(event)} />
+                  <UpcomingActivityCard key={event.id} event={toActivityEvent(event, visual.coreColor, locale, tMyPlanet)} compact onOpen={() => openUpcomingEvent(event)} />
                 ))}
               </div>
             ) : (
@@ -1047,7 +1022,7 @@ export default function MyPlanetPage() {
             BOTTOM IDENTITY BAR
             ================================================================ */}
         <div
-          className="mt-6 flex items-center gap-4 px-5 py-3.5 rounded-2xl"
+          className="mt-6 flex flex-wrap items-center gap-4 px-5 py-3.5 rounded-2xl"
           style={{
             background: 'rgba(255,255,255,0.02)',
             border: '1px solid rgba(255,255,255,0.06)',
@@ -1065,15 +1040,15 @@ export default function MyPlanetPage() {
               {planet.name}
             </span>
             <span className="text-[10px] capitalize" style={{ color: 'var(--ghost)' }}>
-              {planet.role}
+              {tMyPlanet(`roles.${planet.role}`)}
             </span>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
             <GlowButton href="/stream" variant="secondary" className="py-2 px-4 text-xs">
-              Explore the stream
+              {tCommon('exploreStream')}
             </GlowButton>
             <GlowButton href="/resonance" variant="ghost" className="py-2 px-4 text-xs">
-              Open resonance
+              {tHome('openResonance')}
             </GlowButton>
           </div>
         </div>
