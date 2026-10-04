@@ -84,6 +84,7 @@ test('conversation acknowledges only received message IDs, then updates on focus
   )
   await page.goto('/messages/conversation-fixture')
   await expect(page.getByText('Received 0', { exact: true })).toBeVisible()
+  await expect(page.getByText('Your first beam is sent', { exact: true })).toHaveCount(0)
   await expect.poll(() => acknowledgements.length).toBeGreaterThan(0)
   expect(acknowledgements[0]).toEqual(['received-0'])
   arrivals = 2

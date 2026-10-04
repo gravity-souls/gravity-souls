@@ -98,7 +98,7 @@ export default function EventsTab({
       setError(t.has(key) ? t(key) : t('failed'))
     }
   }
-  function attendance(id: string, state: AttendanceState) {
+  async function attendance(id: string, state: AttendanceState) {
     setEvents((rows) => rows.map((e) => (e.id === id ? { ...e, ...state } : e)))
     setSelected((e) =>
       e?.id === id
@@ -112,6 +112,13 @@ export default function EventsTab({
           }
         : e,
     )
+    try {
+      const data = await galaxyRequest<{ event: GalaxyEventDetail }>(`/api/galaxies/${galaxyId}/events/${id}`)
+      setSelected(previous => previous?.id === id && previous.rsvpCount === state.rsvpCount && previous.userHasRSVPed === state.userHasRSVPed ? data.event : previous)
+    } catch (err) {
+      const key = err instanceof Error ? err.message : 'failed'
+      setError(t.has(key) ? t(key) : t('failed'))
+    }
   }
   function changed() {
     setSelected(null)
