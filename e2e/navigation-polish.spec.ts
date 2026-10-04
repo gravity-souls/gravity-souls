@@ -26,7 +26,7 @@ test('home orbit summary stays below the universe and community controls actuall
 test('messages appear in desktop navigation, the avatar menu, and My Planet', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/my-planet')
-  await expect(page.locator('header').getByRole('link', { name: 'Messages', exact: true })).toBeVisible()
+  await expect(page.locator('header a[href="/messages"]').first()).toBeHidden()
   await expect(page.locator('aside').getByRole('link', { name: /Messages/ })).toBeVisible()
   await page.getByRole('button', { name: 'Open user menu' }).click()
   await expect(page.locator('header').getByRole('link', { name: 'Messages', exact: true }).last()).toBeVisible()
@@ -34,4 +34,6 @@ test('messages appear in desktop navigation, the avatar menu, and My Planet', as
   await expect(inbox.getByRole('heading', { name: 'Messages' })).toBeVisible()
   await inbox.getByRole('link', { name: /View all/ }).click()
   await expect(page).toHaveURL(/\/messages$/)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('header a[href="/messages"]').first()).toBeVisible()
 })

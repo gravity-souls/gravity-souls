@@ -21,7 +21,8 @@ test('community carousel exposes accessible desktop controls and a keyboard-focu
   assert.match(html, /aria-label="nextCommunities"/)
   assert.match(html, /role="region" aria-label="Communities" tabindex="0"/)
   assert.ok(html.includes('overflow-x-auto'))
-  assert.ok(html.includes('scrollbar-width:thin'))
+  assert.ok(html.includes('scrollbar-width:none'))
+  assert.ok(html.includes('[&amp;::-webkit-scrollbar]:hidden'))
   assert.ok(html.includes('Community A'))
 })
 
