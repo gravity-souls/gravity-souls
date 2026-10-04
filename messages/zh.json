@@ -149,6 +149,9 @@
     "loadingCommunity": "正在加载社区…",
     "loadingDiscussions": "正在加载讨论…",
     "noDiscussions": "暂无讨论。",
+    "loadingPosts": "正在加载社区动态…",
+    "loadingReplies": "正在加载回复…",
+    "noPosts": "暂无动态。加入星系，发出第一条信号。",
     "retryLoad": "重试",
     "publicPostNotice": "任何人都可以阅读这些动态，包括未注册的访客。"
   },

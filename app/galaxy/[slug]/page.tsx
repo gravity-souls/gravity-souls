@@ -1076,11 +1076,11 @@ export default function GalaxyPage({ params }: Props) {
                       <div role="alert"><p>{postsError}</p><button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button></div>
                     ) : communityLoading || postsLoading ? (
                       <p className="text-sm py-4" style={{ color: 'var(--ghost)' }}>
-                        Loading community posts...
+                        {t('loadingPosts')}
                       </p>
                     ) : communityPosts.length === 0 ? (
                       <p className="text-sm py-4" style={{ color: 'var(--ghost)' }}>
-                        No posts yet. Join and start the first signal.
+                        {t('noPosts')}
                       </p>
                     ) : (
                       communityPosts.map((post) => {
@@ -1149,7 +1149,7 @@ export default function GalaxyPage({ params }: Props) {
                               <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                                 {loadingReplies && (
                                   <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                                    Loading replies...
+                                    {t('loadingReplies')}
                                   </p>
                                 )}
 
@@ -1302,7 +1302,7 @@ export default function GalaxyPage({ params }: Props) {
                     {[
                       { label: t('members'), value: galaxy.memberCount.toLocaleString() },
                       { label: t('atmosphere'), value: galaxyMoodLabel(tGalaxies, galaxy.mood) },
-                      { label: t('status'), value: galaxy.maturity },
+                      { label: t('status'), value: tw.has(`maturity.${galaxy.maturity}`) ? tw(`maturity.${galaxy.maturity}`) : galaxy.maturity },
                       { label: t('keywords'), value: galaxy.keywords.length.toString() },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between">
