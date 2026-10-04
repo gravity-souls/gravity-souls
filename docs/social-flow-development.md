@@ -56,13 +56,45 @@ invitation and accept/reject flow would require an explicit product/model decisi
 not silently invented here. Existing independent routes for discovery, orbit and follows
 still need desktop/mobile end-to-end acceptance.
 
+### Next priority: star-map planet actions (recorded 2026-10-04)
+
+Scheduled before Post→Community/Event associations. This is planned work, not an
+implementation or deployed acceptance claim.
+
+1. Unify actions across star-map detail handoff, planet detail, discovery/resonance
+   previews and saved cards. Fix the detail link `/saved?add=...`: the saved page
+   currently does not consume `add`, so navigation alone does not persist a save.
+   Prefer a shared save/remove action with explicit success, failure and retry states.
+2. Give My Planet clear entry points to private saved orbit and relationships, reusing
+   `/saved` and `/relationships`. Distinguish saved, following, followers and mutual
+   follows; preserve five mobile bottom tabs and avoid duplicate destination pages.
+3. Complete follow/unfollow failure handling, persistence and cross-entry refresh.
+   Follow creates one recipient-localized notice; saving remains private and sends no
+   notice. An unsuccessful removal must retain the prior state.
+4. Explain current beam behavior at every entry: opening a conversation is not sending
+   a message; a new conversation requires mutual follows. Guide non-mutual users to
+   follow/relationship status, then support composer→send→recipient notice→read→reply.
+   Existing threads remain usable after unfollow unless blocked or otherwise unavailable.
+5. Decide separately whether beam becomes an invitation with send/receive/accept/reject
+   states. This mechanism is not implemented or authorized by recording the plan;
+   define permissions, rate limits, notifications and schema before developing it.
+6. Reflect saved/following/mutual/chat status in permitted planet previews and lists,
+   and restore selection/filter/view on return to the map. Never infer real social edges
+   from decorative clusters or recommendation scores; avoid rings and conspicuous
+   border lines. Exact map presentation remains a design decision.
+7. Verify two accounts on desktop/mobile in en/zh/fr: save→refresh→orbit→remove;
+   follow→notice→follow-back→chat→send→read→reply; failed writes, duplicate clicks,
+   own planets, unauthenticated access, private/blocked/deleted/inactive targets,
+   membership/visibility changes, custom avatars and return-state synchronization.
+   Record server tests and real browser acceptance separately.
+
 ### Stage 4: current delivery
 
 Steps 1–2 are implemented in `activity-interest-review.md`: canonical `/activities`, private
 interest saves independent of attendance, lifecycle retention and personal history. The
 user reports the previous unified resonance release deployed; this does not establish
-browser acceptance for the new activity slice. Next is optional Post association, then
-related detail cards and deployed multi-account acceptance.
+browser acceptance for the new activity slice. Before optional Post association, complete the Stage 2 action-chain follow-up below.
+Then implement related detail cards and deployed multi-account acceptance.
 
 ### Stage 4: implementation sequence
 
