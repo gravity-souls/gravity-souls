@@ -154,7 +154,7 @@ export default function Topbar() {
           <Link
             href="/messages"
             aria-label={tA11y('messages')}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/4 text-white/72 transition hover:bg-white/8 hover:text-white"
           >
             <MessageCircle className="h-4.5 w-4.5" />
           </Link>
@@ -182,6 +182,10 @@ export default function Topbar() {
                   >
                     <UserCircle className="h-4 w-4" />
                     {tNav('myPlanet')}
+                  </Link>
+                  <Link href="/messages" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm text-white/76 no-underline transition hover:bg-white/6 hover:text-white">
+                    <MessageCircle className="h-4 w-4" />
+                    {tNav('messages')}
                   </Link>
                   <Link
                     href="/settings/planet"

@@ -15,6 +15,7 @@ import GalaxyCard from '@/components/galaxy/GalaxyCard'
 import PostCard from '@/components/stream/PostCard'
 import PostDetail from '@/components/stream/PostDetail'
 import UniverseSearch from '@/components/universe/UniverseSearch'
+import HorizontalCarousel from '@/components/ui/HorizontalCarousel'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
@@ -394,7 +395,8 @@ export default function HomeDashboard() {
               )}
             </div>
 
-            <div className="relative min-h-140 lg:min-h-170" aria-label={tHome('universeFieldLabel')}>
+            <div className="min-w-0">
+            <div data-testid="universe-field" className="relative min-h-140 lg:min-h-170" aria-label={tHome('universeFieldLabel')}>
               <div
                 className="absolute inset-0"
                 style={{
@@ -477,11 +479,12 @@ export default function HomeDashboard() {
                 ))
               )}
 
+            </div>
               {featuredPlanet && (
                 <button
                   type="button"
                   onClick={() => setSelectedPlanet(featuredPlanet)}
-                  className="absolute left-1/2 bottom-4 -translate-x-1/2 rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-all duration-200"
+                  data-testid="closest-orbit" className="mt-6 w-full rounded-2xl px-4 py-3 flex items-center gap-3 text-left transition-all duration-200"
                   style={{ background: 'rgba(3,3,15,0.70)', backdropFilter: 'blur(18px)', border: '1px solid var(--border-mid)', cursor: 'pointer' }}
                 >
                   <span className="text-data-label shrink-0">{tHome('closestOrbit')}</span>
@@ -531,11 +534,7 @@ export default function HomeDashboard() {
               </Link>
             </div>
 
-            {/* Horizontal scrollable strip */}
-            <div
-              className="flex gap-4 overflow-x-auto pb-4"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-            >
+            <HorizontalCarousel label={tHome('recommendedCommunities')}>
               {galaxies.map((g) => (
                 <GalaxyCard
                   key={g.id}
@@ -563,7 +562,7 @@ export default function HomeDashboard() {
                 <span style={{ color: 'var(--star)', fontSize: '1.5rem' }}>◈</span>
                 <span className="text-xs" style={{ color: 'var(--ghost)' }}>{tHome('allGalaxies')}</span>
               </Link>
-            </div>
+            </HorizontalCarousel>
           </div>
         </section>
 

@@ -1,6 +1,8 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
+import HorizontalCarousel from '@/components/ui/HorizontalCarousel'
+import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import type { GalaxyPreview } from '@/types/galaxy'
@@ -27,14 +29,10 @@ interface Props {
  * Each card has a real cover image with dark overlay, text overlay, and join button.
  */
 export default function RecommendedCommunities({ galaxies, className = '' }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const tHome = useTranslations('home')
   const router = useRouter()
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
 
-  function scroll(dir: -1 | 1) {
-    if (!scrollRef.current) return
-    scrollRef.current.scrollBy({ left: dir * 320, behavior: 'smooth' })
-  }
 
   return (
     <div className={className}>
@@ -42,7 +40,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--foreground)' }}>
-            Recommended Communities
+            {tHome('recommendedCommunities')}
           </h3>
           <span
             className="text-[10px] px-2 py-0.5 rounded-full"
@@ -51,30 +49,10 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
             {galaxies.length} communities
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => scroll(-1)}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-xs"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ink)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => scroll(1)}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-xs"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ink)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            ›
-          </button>
-        </div>
+
       </div>
 
-      {/* Cards */}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-2"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
+      <HorizontalCarousel label={tHome('recommendedCommunities')}>
         {galaxies.map((g) => {
           const joined = joinedIds.has(g.id)
           const coverUrl = COVER_IMAGES[g.slug]
@@ -176,7 +154,7 @@ export default function RecommendedCommunities({ galaxies, className = '' }: Pro
             </div>
           )
         })}
-      </div>
+      </HorizontalCarousel>
     </div>
   )
 }

@@ -19,6 +19,7 @@ import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
 import EventDetail from '@/components/events/EventDetail'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
+import InboxPreview from '@/components/messages/InboxPreview'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import CreatePostModal from '@/components/stream/CreatePostModal'
 import PostDetail from '@/components/stream/PostDetail'
@@ -943,6 +944,8 @@ export default function MyPlanetPage() {
             />
           </div>
         )}
+
+        <InboxPreview />
 
         {/* ================================================================
             THREE-COLUMN DASHBOARD ROW

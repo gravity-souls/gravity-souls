@@ -4,6 +4,7 @@
     "description": "Gravity-Souls connects you with those who share your inner pull. Discover resonance, compatibility, and genuine connection through the power of authentic expression."
   },
   "nav": {
+    "messages": "Messages",
     "home": "Home",
     "stream": "Stream",
     "resonance": "Resonance",
@@ -1052,6 +1053,8 @@
     "chipThinking": "Thinking"
   },
   "a11y": {
+    "previousCommunities": "Previous communities",
+    "nextCommunities": "Next communities",
     "backToMessages": "Back to messages",
     "sendSignal": "Send signal",
     "close": "Close",

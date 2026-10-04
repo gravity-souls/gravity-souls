@@ -14,6 +14,7 @@ import {
   Globe2,
   Home,
   Lock,
+  MessageCircle,
   Orbit,
   Settings,
   Waves,
@@ -47,7 +48,7 @@ interface MeResponse {
 
 interface NavItem {
   href: string
-  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'settings'
+  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'messages' | 'settings'
   Icon: LucideIcon
   badge?: boolean
   // Requires an account — see proxy.ts's matcher, the actual source of truth
@@ -290,6 +291,8 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               <SubLink href="/my-planet/report" label={tNav('matchReport')} active={isRouteActive(pathname, '/my-planet/report')} Icon={CircleDot} />
             </SubMenu>
           </div>
+
+          <NavLink item={{ href: '/messages', labelKey: 'messages', Icon: MessageCircle, gated: true }} level={currentUserLevel} label={tNav('messages')} active={isRouteActive(pathname, '/messages')} collapsed={collapsed} showLock={!isAuthenticated} lockLabel={lockLabel} />
 
           <SectionLabel collapsed={collapsed}>{tNav('account')}</SectionLabel>
           <div className="space-y-1">
