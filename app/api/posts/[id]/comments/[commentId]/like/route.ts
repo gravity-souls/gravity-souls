@@ -1,3 +1,5 @@
+import { isBlocked } from '@/lib/visibility'
+import { postReadDenial } from '@/lib/post-context'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { jsonError } from '@/lib/stream-posts'
@@ -14,10 +16,13 @@ export async function POST(
   }
 
   const { id, commentId } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
   const userId = session.user.id
-  const comment = await prisma.postComment.findUnique({ where: { id: commentId }, select: { id: true, postId: true } })
+  const comment = await prisma.postComment.findUnique({ where: { id: commentId }, select: { id: true, postId: true, authorId: true } })
   if (!comment || comment.postId !== id) return jsonError('Comment not found', 404)
 
+  if (await isBlocked(userId, comment.authorId)) return jsonError('Comment not found', 404)
   const existing = await prisma.postCommentLike.findUnique({ where: { commentId_userId: { commentId, userId } } })
 
   const [, updatedComment] = existing

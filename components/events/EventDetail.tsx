@@ -1,5 +1,6 @@
 'use client'
 
+import RelatedSignals from '@/components/stream/RelatedSignals'
 import { useState } from 'react'
 import { CalendarDays, Check, MapPin, Monitor, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -162,6 +163,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
           )}
         </div>
 
+        <RelatedSignals key={event.id} galaxyId={event.galaxyId} eventId={event.id} />
         {event.rejectionReason && <p className="mt-4 text-sm text-red-200">{event.rejectionReason}</p>}
         {event.canManage && <EventManagement key={event.id} event={event} onChanged={() => { onUpdated?.(); onClose() }} />}
         {isAdmin && event.status === 'PENDING' && (

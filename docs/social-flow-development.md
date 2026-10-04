@@ -11,7 +11,7 @@ Updated: 2026-10-04 (Europe/Paris). Canonical backlog:
 | 1 | Conversations, notifications and unread synchronization | Implemented in this change | Real Prisma/PostgreSQL fixture workflow checks; browser/multi-account checks pending |
 | 2 | Discovery → planet → message/beam, orbit save, follow | Contact, follow and save server boundaries improved; current beam meaning clarified | Route lifecycle exercised; discovery UI/real multi-account/device acceptance pending |
 | 3 | Star-map exploration and return navigation | First real-data version merged in MR #23 | Browser gestures, visual clarity and physical iPhone performance pending |
-| 4 | Activity entry, interested collection and feed associations | Entry and private interests implemented; feed associations next | 65 database/locale tests; migration deployment and browser/multi-account acceptance pending |
+| 4 | Activity entry, interested collection and feed associations | Entry, private interests and optional Post associations implemented | 74 database/locale tests; context migration and browser/multi-account acceptance pending |
 
 ### Stage 1: concrete behavior
 
@@ -96,8 +96,9 @@ social relationship graphics on the map remain proposals.
 Steps 1–2 are implemented in `activity-interest-review.md`: canonical `/activities`, private
 interest saves independent of attendance, lifecycle retention and personal history. The
 user reports the previous unified resonance release deployed; this does not establish
-browser acceptance for the new activity slice. Before optional Post association, complete the Stage 2 action-chain follow-up below.
-Then implement related detail cards and deployed multi-account acceptance.
+browser acceptance for the new activity slice. The user reports MR #28 deployed. Optional Post associations, contextual cards and separate
+related-signal sections are now implemented; see `post-context-review.md`. This report does
+not establish deployed multi-account acceptance for either slice.
 
 ### Stage 4: implementation sequence
 

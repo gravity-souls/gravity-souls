@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import PostContextCard from '@/components/stream/PostContextCard'
 import { Heart } from 'lucide-react'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
@@ -29,7 +30,7 @@ export default function PostCard({ post, compact = false, onOpen }: PostCardProp
       tabIndex={0}
       onClick={() => onOpen?.(post)}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onOpen?.(post)
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) onOpen?.(post)
       }}
       className="group mb-3 inline-block w-full cursor-pointer overflow-hidden rounded-2xl transition-all duration-200 hover:scale-[1.02]"
       style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${accent}22`, boxShadow: '0 10px 34px rgba(0,0,0,0.28)' }}
@@ -60,9 +61,10 @@ export default function PostCard({ post, compact = false, onOpen }: PostCardProp
         )}
       </div>
 
+      <PostContextCard post={post} />
       <div className="flex items-center justify-between gap-3 p-3">
         <div className="flex min-w-0 items-center gap-2">
-          <PlanetAvatar planetConfig={post.author.planetConfig} size={28} glowColor={accent} />
+          <PlanetAvatar planetConfig={post.author.planetConfig ?? undefined} size={28} glowColor={accent} />
           <span className="min-w-0">
             <span className="block truncate text-xs font-medium" style={{ color: 'var(--ink)' }}>{post.author.name}</span>
             <span className="block truncate text-[10px] leading-tight" style={{ color: 'var(--ghost)' }}>{safeLevel} {LEVEL_NAMES[safeLevel]}</span>

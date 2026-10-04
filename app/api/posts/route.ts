@@ -1,6 +1,13 @@
-import { type Prisma } from '@prisma/client'
+import { PostCategory, type Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { grantXP } from '@/lib/grantXP'
+import { z } from 'zod'
+import { safeApiError } from '@/lib/api-input'
+import { bindPostContext, visiblePostWhere, serializeContextPost, POST_CONTEXT_INCLUDE } from '@/lib/post-context'
+import { reward } from '@/lib/galaxy-workflow'
+import { NotificationTemplates } from '@/lib/createNotification'
+import { resolveLocale } from '@/lib/i18n-locales'
+import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
+import { checkRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/rate-limit'
 import { requireUser } from '@/lib/session'
 import {
   MAX_POST_CONTENT_LENGTH,
@@ -9,7 +16,6 @@ import {
   jsonError,
   normalizeTags,
   parsePostCategory,
-  serializePost,
   uploadStreamMedia,
 } from '@/lib/stream-posts'
 
@@ -32,6 +38,7 @@ const AUTHOR_SELECT = {
 } as const
 
 export async function GET(request: Request) {
+  try {
   const session = await getOptionalSession()
   const userId = session?.user.id ?? null
   const url = new URL(request.url)
@@ -42,7 +49,11 @@ export async function GET(request: Request) {
   const cursor = url.searchParams.get('cursor')
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit') ?? POST_PAGE_SIZE) || POST_PAGE_SIZE))
 
-  const where: Prisma.PostWhereInput = {}
+  const parsed = z.object({ category: z.string().max(20).optional(), tag: z.string().max(32).optional(), search: z.string().max(80).optional(), authorId: z.string().max(100).optional(), cursor: z.string().max(100).optional(), limit: z.coerce.number().int().min(1).max(50).optional(), galaxyId: z.string().min(1).max(100).optional(), eventId: z.string().min(1).max(100).optional() }).strict().safeParse(Object.fromEntries(url.searchParams))
+  if (!parsed.success) return Response.json({ error: 'invalidQuery' }, { status: 400 })
+  const where: Prisma.PostWhereInput = { AND: [await visiblePostWhere(userId)] }
+  if (parsed.data.galaxyId) where.galaxyId = parsed.data.galaxyId
+  if (parsed.data.eventId) where.eventId = parsed.data.eventId
   if (category && category !== 'ALL') where.category = parsePostCategory(category)
   if (tag) where.tags = { has: tag }
   if (authorId) where.authorId = authorId
@@ -54,12 +65,14 @@ export async function GET(request: Request) {
     ]
   }
 
+  if (cursor && !await prisma.post.findFirst({ where: { AND: [where, { id: cursor }] }, select: { id: true } })) return Response.json({ error: 'invalidCursor' }, { status: 400 })
   const posts = await prisma.post.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     include: {
+      ...POST_CONTEXT_INCLUDE,
       author: { select: AUTHOR_SELECT },
       likes: userId ? { where: { userId }, select: { userId: true } } : { take: 0, select: { userId: true } },
     },
@@ -68,12 +81,14 @@ export async function GET(request: Request) {
   const nextPost = posts.length > limit ? posts.pop() : null
 
   return Response.json({
-    posts: posts.map((post) => serializePost(post, userId)),
-    nextCursor: nextPost?.id ?? null,
-  })
+    posts: await Promise.all(posts.map((post) => serializeContextPost(post, userId))),
+    nextCursor: nextPost ? posts.at(-1)?.id ?? null : null,
+  }, { headers: { 'Cache-Control': 'private, no-store' } })
+  } catch (error) { return safeApiError(error) }
 }
 
 export async function POST(request: Request) {
+  try {
   let session
   try {
     session = await requireUser()
@@ -88,8 +103,20 @@ export async function POST(request: Request) {
     return jsonError('Post request could not be read', 400)
   }
 
+  const allowed = new Set(['content', 'category', 'tags', 'media', 'galaxyId', 'eventId'])
+  if ([...formData.keys()].some(key => !allowed.has(key))) return jsonError('invalidFields', 400)
+  const contextInput = z.object({ galaxyId: z.string().min(1).max(100).nullable(), eventId: z.string().min(1).max(100).nullable() }).safeParse({ galaxyId: formData.get('galaxyId') || null, eventId: formData.get('eventId') || null })
+  if (!contextInput.success) return jsonError('invalidFields', 400)
+  const rate = RATE_LIMITS.POST_CREATE
+  if (!await checkRateLimit(rateLimitKey('POST_CREATE', session.user.id), rate.limit, rate.windowMs)) return jsonError('rateLimited', 429)
+  await prisma.$transaction(tx => bindPostContext(tx, session.user, contextInput.data))
+
   const content = String(formData.get('content') ?? '').trim()
-  const category = parsePostCategory(formData.get('category'))
+  const categoryInput = z.enum(PostCategory).safeParse(formData.get('category') ?? 'GENERAL')
+  if (!categoryInput.success) return jsonError('invalidFields', 400)
+  const category = categoryInput.data
+  const rawTags = formData.get('tags')
+  if (rawTags !== null && (typeof rawTags !== 'string' || rawTags.length > 2000)) return jsonError('invalidFields', 400)
   const tags = normalizeTags(formData.get('tags'), content)
   const files = formData.getAll('media').filter((item): item is File => item instanceof File && item.size > 0)
 
@@ -111,8 +138,11 @@ export async function POST(request: Request) {
     return jsonError('Media upload failed', 500)
   }
 
-  const post = await prisma.post.create({
+  const post = await prisma.$transaction(async tx => {
+  const context = await bindPostContext(tx, session.user, contextInput.data)
+  const created = await tx.post.create({
     data: {
+      ...context,
       authorId: session.user.id,
       content,
       mediaUrls,
@@ -121,12 +151,19 @@ export async function POST(request: Request) {
       category,
     },
     include: {
+      ...POST_CONTEXT_INCLUDE,
       author: { select: AUTHOR_SELECT },
       likes: { where: { userId: session.user.id }, select: { userId: true } },
     },
   })
 
-  await grantXP(session.user.id, 'POST_CREATED')
+  const beforeReward = await tx.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { userLevel: true, language: true } })
+  await reward(tx, session.user.id, 'POST_CREATED')
+  const afterReward = await tx.user.findUniqueOrThrow({ where: { id: session.user.id }, select: { userLevel: true } })
+  if (afterReward.userLevel > beforeReward.userLevel) await tx.notification.create({ data: { userId: session.user.id, ...await NotificationTemplates.levelUp(afterReward.userLevel, LEVEL_NAMES[clampLevel(afterReward.userLevel)], resolveLocale(beforeReward.language)) } })
+  return created
+  })
 
-  return Response.json({ post: serializePost(post, session.user.id) }, { status: 201 })
+  return Response.json({ post: await serializeContextPost(post, session.user.id) }, { status: 201 })
+  } catch (error) { return safeApiError(error) }
 }

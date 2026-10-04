@@ -296,3 +296,23 @@ test('planet action transport announces only successful writes and exposes retry
     ])
   } finally { globalThis.window = previousWindow; globalThis.fetch = previousFetch }
 })
+
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`post context picker and lifecycle cards translate in ${locale}`, () => {
+    const messages = require(`../messages/${locale}.json`).postContext
+    const Picker = require('../components/stream/PostContextPicker.tsx').default
+    const Card = require('../components/stream/PostContextCard.tsx').default
+    const escaped = value => value.replaceAll('&', '&amp;')
+    const picker = render(locale, React.createElement(Picker, { value: { galaxyId: 'g', eventId: null }, onChange: () => {} }))
+    assert.ok(picker.includes(escaped(messages.memberAudience)))
+    assert.ok(picker.includes(escaped(messages.clear)))
+    assert.ok(picker.includes('fieldset'))
+    const post = { contextRestricted: true, context: { galaxy: { id: 'g', name: 'Galaxy', slug: 'galaxy', href: '/galaxy/galaxy' }, event: { id: 'e', title: 'Activity', date: '2030-01-01T12:00:00Z', status: 'CANCELLED', href: '/galaxy/galaxy?event=e#events' } } }
+    const card = render(locale, React.createElement(Card, { post }))
+    assert.ok(card.includes(escaped(messages.cancelled)))
+    assert.ok(card.includes('href="/galaxy/galaxy?event=e#events"'))
+    const unavailable = render(locale, React.createElement(Card, { post: { contextRestricted: true, context: null } }))
+    assert.ok(unavailable.includes(escaped(messages.unavailable)))
+    assert.ok(!unavailable.includes('href='))
+  })
+}

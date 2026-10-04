@@ -1,3 +1,4 @@
+import { postReadDenial } from '@/lib/post-context'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { jsonError } from '@/lib/stream-posts'
@@ -14,6 +15,8 @@ export async function POST(
   }
 
   const { id } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
   const userId = session.user.id
   const post = await prisma.post.findUnique({ where: { id }, select: { id: true } })
   if (!post) return jsonError('Post not found', 404)
@@ -45,6 +48,8 @@ export async function DELETE(
   }
 
   const { id } = await params
+  const denied = await postReadDenial(id, session.user.id)
+  if (denied) return denied
   const userId = session.user.id
   const deleted = await prisma.postLike.deleteMany({ where: { postId: id, userId } })
   const post = deleted.count > 0

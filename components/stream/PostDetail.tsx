@@ -2,7 +2,10 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import PostContextCard from '@/components/stream/PostContextCard'
+import PostEditor from '@/components/stream/PostEditor'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Heart, LoaderCircle, Reply, Share2, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -29,6 +32,9 @@ function countCommentTree(comments: StreamComment[] = []) {
 
 export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated }: PostDetailProps) {
   const t = useTranslations('stream')
+  const router = useRouter()
+  const tc = useTranslations('postContext')
+  const [readError, setReadError] = useState(false), [unavailable, setUnavailable] = useState(false), [revision, setRevision] = useState(0)
   const tCommon = useTranslations('common')
   const [detail, setDetail] = useState<StreamPost | null>(post)
   const [commentText, setCommentText] = useState('')
@@ -42,19 +48,20 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
   useEffect(() => {
     if (!open || !post) return
-    setDetail(post)
-    fetch(`/api/posts/${post.id}`)
-      .then((res) => res.ok ? res.json() : { post })
-      .then((data: { post?: StreamPost }) => {
-        setDetail(data.post ?? post)
-        const comments = data.post?.comments ?? []
-        setCommentCursor(comments.length === 20 ? comments[comments.length - 1]?.id ?? null : null)
-      })
-    setReplyTarget(null)
-      setExpandedReplyThreads({})
-  }, [open, post])
+    let cancelled = false
+    Promise.resolve().then(() => { if (!cancelled) { setDetail(post); setUnavailable(false); setReplyTarget(null); setExpandedReplyThreads({}) } })
+    fetch(`/api/posts/${post.id}`, { cache: 'no-store' }).then(async response => {
+      if ([401, 403, 404].includes(response.status)) { if (!cancelled) { setDetail(null); setUnavailable(true) }; return }
+      if (!response.ok) throw new Error('failed')
+      const data = await response.json()
+      if (!cancelled) { setDetail(data.post); setReadError(false); const comments = data.post?.comments ?? []; setCommentCursor(comments.length === 20 ? comments.at(-1)?.id ?? null : null) }
+    }).catch(() => { if (!cancelled) setReadError(true) })
+    return () => { cancelled = true }
+  }, [open, post, revision])
 
-  if (!open || !detail) return null
+  if (!open) return null
+  if (unavailable) return <div role="dialog" aria-modal="true" className="fixed inset-0 z-80 grid place-items-center bg-black/80 p-6"><div className="rounded-xl bg-[#11152a] p-6 text-white/70"><p>{tc('unavailable')}</p><button type="button" onClick={onClose} className="mt-3 underline">{tc('close')}</button></div></div>
+  if (!detail) return null
 
   const ownPost = currentUserId === detail.authorId
   const accent = detail.author.tintColor || '#a78bfa'
@@ -72,7 +79,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   async function toggleLike() {
     if (!detail) return
     if (!currentUserId) {
-      window.location.href = `/sign-in?next=/stream/${detail.id}`
+      router.push(`/sign-in?next=/stream/${detail.id}`)
       return
     }
     const previous = detail
@@ -141,7 +148,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   async function toggleCommentLike(comment: StreamComment) {
     if (!detail) return
     if (!currentUserId) {
-      window.location.href = `/sign-in?next=/stream/${detail.id}`
+      router.push(`/sign-in?next=/stream/${detail.id}`)
       return
     }
 
@@ -178,7 +185,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   function renderCommentAvatar(comment: StreamComment, size: number) {
     const avatar = (
       <div className="relative grid shrink-0 place-items-center overflow-hidden rounded-full" style={{ width: size, height: size }}>
-        <PlanetGlobe planetConfig={comment.author.planetConfig} size={size} framing="avatar" />
+        {comment.author.planetConfig ? <PlanetGlobe planetConfig={comment.author.planetConfig} size={size} framing="avatar" /> : <span aria-hidden="true">✦</span>}
       </div>
     )
 
@@ -244,7 +251,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
     if (!detail) return
     const url = `${window.location.origin}/stream/${detail.id}`
     try {
-      if (navigator.share) await navigator.share({ title: 'Gravity Souls signal', text: detail.content.slice(0, 120), url })
+      if (navigator.share) await navigator.share({ title: 'Gravity Souls signal', text: detail.contextRestricted ? tc('memberAudience') : detail.content.slice(0, 120), url })
       else await navigator.clipboard.writeText(url)
       setShared(true)
       setTimeout(() => setShared(false), 1400)
@@ -282,7 +289,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
         <div className="flex min-h-0 flex-col p-5">
           <div className="flex items-center gap-3">
             <div className="relative -ml-2 grid h-18 w-18 place-items-center overflow-hidden">
-              <PlanetGlobe planetConfig={detail.author.planetConfig} size={72} framing="avatar" />
+              {detail.author.planetConfig ? <PlanetGlobe planetConfig={detail.author.planetConfig} size={72} framing="avatar" /> : <span aria-hidden="true">✦</span>}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{detail.author.name}</p>
@@ -291,6 +298,9 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
             {detail.author.planetId && <Link href={`/planet/${detail.author.planetId}`} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>{t('viewPlanet')}</Link>}
           </div>
 
+          {readError && <p role="alert" className="text-xs text-red-300">{tc('failed')} <button type="button" onClick={() => setRevision(v => v + 1)}>{tc('retry')}</button></p>}
+          <PostContextCard post={detail} />
+          {ownPost && <PostEditor key={detail.updatedAt} post={detail} onUpdated={updated => { const merged = { ...updated, comments: detail.comments }; setDetail(merged); onPostUpdated?.(merged) }} />}
           <p className="mt-5 whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink)' }}>{detail.content}</p>
           {detail.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{detail.tags.map((tag) => <button key={tag} type="button" onClick={() => onTagClick?.(tag)} className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `${accent}14`, border: `1px solid ${accent}28`, color: accent }}>#{tag}</button>)}</div>}
 

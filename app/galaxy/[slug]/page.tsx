@@ -1,5 +1,6 @@
 'use client'
 
+import RelatedSignals from '@/components/stream/RelatedSignals'
 import { useState, useEffect, use } from 'react'
 import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -906,6 +907,7 @@ export default function GalaxyPage({ params }: Props) {
                 </section>
 
                 {/* Events */}
+                {communityJoined && <RelatedSignals galaxyId={community.id} />}
                 <section id="events" className="scroll-mt-24">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-data-label">{t('events')}</p>

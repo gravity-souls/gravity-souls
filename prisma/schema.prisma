@@ -298,6 +298,7 @@ model Community {
   posts       CommunityPost[]
   discussions CommunityDiscussion[]
   events      Event[]
+  linkedPosts Post[]
 
   @@map("community")
 }
@@ -372,6 +373,7 @@ model Event {
   proposer     user          @relation("ProposedEvents", fields: [proposerId], references: [id], onDelete: Cascade)
   rsvps        EventRSVP[]
   interests    EventInterest[]
+  linkedPosts  Post[]
 
   @@index([galaxyId, status, date])
   @@index([proposerId, createdAt])
@@ -413,6 +415,9 @@ enum EventCategory {
 model Post {
   id           String       @id @default(cuid())
   authorId     String
+  galaxyId     String?
+  eventId      String?
+  contextRestricted Boolean @default(false)
   content      String
   mediaUrls    String[]     @default([])
   mediaTypes   String[]     @default([])
@@ -424,12 +429,16 @@ model Post {
   updatedAt    DateTime     @updatedAt
 
   author       user         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  galaxy       Community? @relation(fields: [galaxyId], references: [id], onDelete: SetNull)
+  event        Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   likes        PostLike[]
   comments     PostComment[]
 
   @@index([category, createdAt])
   @@index([authorId, createdAt])
   @@index([createdAt])
+  @@index([galaxyId, createdAt])
+  @@index([eventId, createdAt])
   @@map("post")
 }
 

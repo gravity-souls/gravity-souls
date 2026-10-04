@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import PostContextPicker from '@/components/stream/PostContextPicker'
 import { useMemo, useRef, useState } from 'react'
 import { ImagePlus, LoaderCircle, Plus, Trash2, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -21,7 +22,8 @@ function extractTags(content: string) {
 }
 
 export default function CreatePostModal({ open, onClose, onCreated }: CreatePostModalProps) {
-  const t = useTranslations('stream')
+  const t = useTranslations('stream'), tc = useTranslations('postContext')
+  const [context, setContext] = useState<{ galaxyId: string | null; eventId: string | null }>({ galaxyId: null, eventId: null })
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [content, setContent] = useState('')
   const [category, setCategory] = useState<StreamPostCategory>('GENERAL')
@@ -70,16 +72,19 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
     formData.append('content', content.trim())
     formData.append('category', category)
     formData.append('tags', tags.join(','))
+    if (context.galaxyId) formData.append('galaxyId', context.galaxyId)
+    if (context.eventId) formData.append('eventId', context.eventId)
     files.forEach((file) => formData.append('media', file))
 
     try {
       setProgress(72)
       const res = await fetch('/api/posts', { method: 'POST', body: formData })
       const data = await res.json() as { post?: StreamPost; error?: string }
-      if (!res.ok || !data.post) throw new Error(data.error ?? t('sendError'))
+      if (!res.ok || !data.post) throw new Error(['contextUnavailable','contextMismatch','notFound'].includes(data.error ?? '') ? tc('unavailable') : t('sendError'))
       setProgress(100)
       onCreated(data.post)
       setToast(t('signalSent'))
+      setContext({ galaxyId: null, eventId: null })
       setContent('')
       setManualTags([])
       setManualTag('')
@@ -150,6 +155,8 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
           ))}
         </div>
 
+        <PostContextPicker value={context} onChange={setContext} />
+        {context.galaxyId && files.length > 0 && <p className="text-xs text-white/50">{tc('mediaVisibility')}</p>}
         <div className="mt-4 flex gap-2">
           <input value={manualTag} onChange={(event) => setManualTag(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addManualTag() } }} placeholder={t('addTagPlaceholder')} className="min-w-0 flex-1 rounded-xl px-3 py-2 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
           <button type="button" onClick={addManualTag} className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: 'rgba(167,139,250,0.14)', border: '1px solid rgba(167,139,250,0.24)', color: 'var(--star)' }} aria-label={t('addTag')}>

@@ -29,6 +29,7 @@ export async function checkRateLimit(key: string, limit: number, windowMs: numbe
 }
 
 export const RATE_LIMITS = {
+  POST_CREATE: { limit: 30, windowMs: 60 * 60_000 },
   EVENT_INTEREST: { limit: 60, windowMs: 60_000 },
   CONVERSATION_START: { limit: 20, windowMs: 60 * 60_000 },
   MESSAGE_SEND: { limit: 60, windowMs: 60 * 60_000 },

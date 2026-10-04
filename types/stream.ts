@@ -9,7 +9,7 @@ export interface StreamAuthor {
   name: string
   planetId: string | null
   planetTexture: string | null
-  planetConfig: PlanetConfig
+  planetConfig: PlanetConfig | null
   tintColor: string
   userLevel: number
 }
@@ -41,4 +41,7 @@ export interface StreamPost {
   author: StreamAuthor
   userHasLiked: boolean
   comments?: StreamComment[]
+  contextRestricted?: boolean
+  editableContext?: { galaxyId: string | null; eventId: string | null }
+  context?: { galaxy: { id: string; name: string; slug: string; href: string }; event: { id: string; title: string; date: string; status: string; href: string } | null } | null
 }
