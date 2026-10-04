@@ -1670,6 +1670,16 @@
     "tag4": "Idées"
   },
   "starMap": {
+    "relationshipStatus": "Votre relation avec cette planète",
+    "savedStatus": "Dans votre orbite",
+    "followingStatus": "Abonnement",
+    "mutualStatus": "Abonnements réciproques",
+    "followsYouStatus": "Vous suit",
+    "conversationStatus": "Conversation existante",
+    "privateRelationships": "Ces indications de relation ne sont visibles que par vous.",
+    "continueChat": "Continuer la conversation",
+    "returnMap": "← Revenir à la carte stellaire",
+    "returnHomeMap": "← Revenir à la carte de l’accueil",
     "title": "Carte stellaire",
     "subtitle": "Explorez les planètes et galaxies réelles, une constellation à la fois.",
     "modes": "Modes de la carte",

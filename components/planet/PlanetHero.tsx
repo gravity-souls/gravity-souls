@@ -12,6 +12,7 @@ import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
+import type { ExplorationOrigin } from '@/lib/exploration-return'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
@@ -48,10 +49,10 @@ function ExplorerActions() {
   )
 }
 
-function ResonatorActions({ planet }: { planet: PlanetProfile }) {
+function ResonatorActions({ planet, origin }: { planet: PlanetProfile; origin?: ExplorationOrigin | null }) {
   return (
     <div className="flex flex-wrap items-start gap-3">
-      <BeamButton hasFollowControl key={planet.id} userId={planet.userId} planetId={planet.id} />
+      <BeamButton hasFollowControl key={planet.id} userId={planet.userId} planetId={planet.id} origin={origin} />
       <SavePlanetButton key={planet.id} planetId={planet.id} />
       {planet.userId && <SafetyMenu key={planet.userId} targetUserId={planet.userId} />}
     </div>
@@ -109,9 +110,10 @@ interface Props {
   planet: PlanetProfile
   /** Viewer perspective  -  determines which actions render */
   viewerRole: 'self' | 'explorer' | 'resonator'
+  origin?: ExplorationOrigin | null
 }
 
-export default function PlanetHero({ planet, viewerRole }: Props) {
+export default function PlanetHero({ planet, viewerRole, origin }: Props) {
   const t = useTranslations('planetPage')
   const tCreation = useTranslations('creationSteps')
   const { visual } = planet
@@ -277,7 +279,7 @@ export default function PlanetHero({ planet, viewerRole }: Props) {
           {/* Action row */}
           <div className="flex justify-center md:justify-start">
             {viewerRole === 'self'      && <SelfActions />}
-            {viewerRole === 'resonator' && <ResonatorActions planet={planet} />}
+            {viewerRole === 'resonator' && <ResonatorActions planet={planet} origin={origin} />}
             {viewerRole === 'explorer'  && <ExplorerActions />}
           </div>
 

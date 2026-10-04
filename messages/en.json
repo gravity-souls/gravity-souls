@@ -1670,6 +1670,16 @@
     "tag4": "Ideas"
   },
   "starMap": {
+    "relationshipStatus": "Your relationship with this planet",
+    "savedStatus": "In your orbit",
+    "followingStatus": "Following",
+    "mutualStatus": "Mutual follows",
+    "followsYouStatus": "Follows you",
+    "conversationStatus": "Existing chat",
+    "privateRelationships": "These relationship markers are visible only to you.",
+    "continueChat": "Continue chat",
+    "returnMap": "← Return to star map",
+    "returnHomeMap": "← Return to home star map",
     "title": "Star map",
     "subtitle": "Explore real planets and galaxies, one constellation at a time.",
     "modes": "Map modes",

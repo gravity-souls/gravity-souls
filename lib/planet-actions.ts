@@ -1,7 +1,7 @@
 'use client'
 
 export const PLANET_ACTION_CHANGED = 'planet-action:changed'
-export type PlanetActionChange = { kind: 'saved'; planetId: string; saved: boolean } | { kind: 'follow'; userId: string; following: boolean }
+export type PlanetActionChange = { kind: 'saved'; planetId: string; saved: boolean } | { kind: 'follow'; userId: string; following: boolean } | { kind: 'conversation'; userId: string; conversationId: string }
 export function announcePlanetAction(detail: PlanetActionChange) {
   window.dispatchEvent(new CustomEvent(PLANET_ACTION_CHANGED, { detail }))
 }
