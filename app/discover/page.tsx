@@ -33,7 +33,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     visual: (data.visual as PlanetProfile['visual']) ?? {
       coreColor: '#a78bfa',
       accentColor: '#c4b5fd',
-      ringStyle: 'single' as const,
+      ringStyle: 'none' as const,
       surfaceStyle: 'smooth' as const,
       satelliteCount: 1,
       size: 'lg' as const,

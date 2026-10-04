@@ -8,7 +8,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import SafetyMenu from '@/components/social/SafetyMenu'
 import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
-import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
@@ -110,8 +110,8 @@ function planetConfigFromPlanet(planet: PlanetProfile): PlanetConfig {
     tintColor: planet.visual.coreColor,
     atmosphereColor: planet.visual.accentColor,
     atmosphereDensity: 0.12,
-    hasRing: resolvePlanetHasRing(),
-    ringColor: planet.visual.accentColor,
+    hasRing: false,
+    ringColor: '',
     rotationSpeed: 0.018,
     cloudOpacity: 0,
   }

@@ -1,4 +1,4 @@
-import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceStyle } from '@/types/planet'
+import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, SurfaceStyle } from '@/types/planet'
 import type { PlanetDraft } from '@/types/creation'
 import { CLIMATE_OPTIONS } from '@/types/creation'
 import { getTextureFile } from '@/lib/planet-textures'
@@ -21,15 +21,6 @@ const CLIMATE_TO_STYLE: Record<string, PlanetStyle> = {
   electric:      'fluid',
   turbulent:     'fractured',
   expansive:     'fluid',
-}
-
-const CLIMATE_TO_RING: Record<string, RingStyle> = {
-  calm:          'single',
-  melancholic:   'broken',
-  introspective: 'double',
-  electric:      'double',
-  turbulent:     'broken',
-  expansive:     'single',
 }
 
 const CLIMATE_TO_SURFACE: Record<string, SurfaceStyle> = {
@@ -176,7 +167,7 @@ export function buildPlanetFromDraft(draft: PlanetDraft, userId: string): Planet
       coreColor,
       accentColor,
       textureFile,
-      ringStyle:      CLIMATE_TO_RING[climateKey]    as RingStyle    ?? 'single',
+      ringStyle:      'none',
       surfaceStyle:   CLIMATE_TO_SURFACE[climateKey] as SurfaceStyle ?? 'smooth',
       satelliteCount: satellites,
       size:           'lg',

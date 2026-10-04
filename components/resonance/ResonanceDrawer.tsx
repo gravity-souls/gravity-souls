@@ -22,13 +22,13 @@ const REL_KEY: Record<string, string> = {
 
 // --- Score ring ---------------------------------------------------------------
 
-function ScoreRing({ score, color }: { score: number; color: string }) {
+export function ScoreRing({ score, color }: { score: number; color: string }) {
   const r   = 28
   const circ = 2 * Math.PI * r
   const fill = (score / 100) * circ
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 72, height: 72 }}>
+    <div data-testid="resonance-score" className="relative flex shrink-0 items-center justify-center" style={{ width: 72, height: 72 }}>
       <svg width={72} height={72} style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}>
         <circle cx={36} cy={36} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
         <circle
@@ -102,7 +102,7 @@ export default function ResonanceDrawer({ match, onClose, planetById }: Props) {
         className="fixed z-50 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out"
         style={{
           // Desktop: right panel
-          top: 0, right: 0, bottom: 0, width: 400,
+          top: 'var(--nav-h, 56px)', right: 0, bottom: 0, width: 'min(400px, 100vw)',
           background: 'linear-gradient(180deg, rgba(14,10,44,0.98) 0%, rgba(6,4,24,0.98) 100%)',
           borderLeft: `1px solid ${color}20`,
           boxShadow: `-24px 0 80px rgba(0,0,0,0.6), inset 1px 0 0 ${color}10`,
@@ -170,7 +170,7 @@ function DrawerContent({
         {/* Planet identity */}
         <div className="flex items-center gap-4">
           <PlanetAvatar planetConfig={planet.planetConfig} size={56} glowColor={planet.visual.coreColor} />
-          <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex flex-1 flex-col gap-1 min-w-0">
             <h2 className="text-lg font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
               {planet.name}
             </h2>

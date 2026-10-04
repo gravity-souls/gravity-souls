@@ -29,7 +29,7 @@ import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereSty
 import Step4CulturalPaths from '@/components/creation/steps/Step4CulturalPaths'
 import Step5RelationalGravity from '@/components/creation/steps/Step5RelationalGravity'
 import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder'
-import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getResonanceMatches } from '@/lib/match'
 import { themeLabel, moodLabel, lifestyleLabel, commStyleLabel } from '@/lib/planet-labels'
 import type { PlanetDraft } from '@/types/creation'
@@ -55,7 +55,7 @@ const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { s
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
   accentColor: '#c4b5fd',
-  ringStyle: 'single',
+  ringStyle: 'none',
   surfaceStyle: 'smooth',
   satelliteCount: 1,
   size: 'lg',
@@ -89,10 +89,6 @@ function stringValue(value: unknown, fallback: string) {
   return typeof value === 'string' && value.length > 0 ? value : fallback
 }
 
-function booleanValue(value: unknown, fallback: boolean) {
-  return typeof value === 'boolean' ? value : fallback
-}
-
 function numberValue(value: unknown, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
@@ -109,8 +105,8 @@ function planetConfigFromSource(source: unknown, planet: PlanetProfile): PlanetC
     tintColor: stringValue(config.tintColor ?? config.planetTint, planet.visual.coreColor),
     atmosphereColor: stringValue(config.atmosphereColor ?? config.planetAtmoColor, planet.visual.accentColor),
     atmosphereDensity: numberValue(config.atmosphereDensity ?? config.planetAtmoDensity, 0.12),
-    hasRing: booleanValue(config.hasRing ?? config.planetHasRing, resolvePlanetHasRing()),
-    ringColor: stringValue(config.ringColor ?? config.planetRingColor, planet.visual.accentColor),
+    hasRing: false,
+    ringColor: '',
     rotationSpeed: numberValue(config.rotationSpeed ?? config.planetRotationSpeed, 0.018),
     cloudOpacity: numberValue(config.cloudOpacity ?? config.planetCloudOpacity, 0),
     customTextureUrl: optionalStringValue(config.customTextureUrl ?? config.planetCustomTexture),

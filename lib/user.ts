@@ -1,5 +1,5 @@
 import type { Universe, EmotionTone, ExpressionStyle } from '@/types/universe'
-import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, RingStyle, SurfaceStyle } from '@/types/planet'
+import type { PlanetProfile, Mood, PlanetStyle, Lifestyle, SurfaceStyle } from '@/types/planet'
 
 // --- Storage keys -------------------------------------------------------------
 
@@ -143,15 +143,6 @@ const MOOD_TO_LIFESTYLE: Record<string, Lifestyle> = {
   expansive:     'nomadic',
 }
 
-const MOOD_TO_RING: Record<string, RingStyle> = {
-  calm:          'single',
-  introspective: 'double',
-  melancholic:   'broken',
-  turbulent:     'broken',
-  electric:      'double',
-  expansive:     'single',
-}
-
 const MOOD_TO_SURFACE: Record<string, SurfaceStyle> = {
   calm:          'smooth',
   introspective: 'nebulous',
@@ -218,7 +209,7 @@ export function buildPlanetFromInput(
     visual: {
       coreColor:      MOOD_CORE_COLOR[moodKey] ?? '#a78bfa',
       accentColor:    MOOD_ACCENT_COLOR[moodKey] ?? '#6366f1',
-      ringStyle:      MOOD_TO_RING[moodKey] as RingStyle ?? 'single',
+      ringStyle:      'none',
       surfaceStyle:   MOOD_TO_SURFACE[moodKey] as SurfaceStyle ?? 'smooth',
       satelliteCount: Math.min(4, themes.length),
       size:           'lg',

@@ -252,19 +252,17 @@ interface Props {
  * Renders:
  *  - Outer nebula atmosphere (driven by communicationStyle)
  *  - Orbit trace rings (driven by explorationTraces)
- *  - Ring system (driven by ringStyle)
  *  - Planet orb with biome bands (driven by coreThemes) + surface texture
  *  - Satellite system
  *  - Avatar symbol at centre
  */
 export default function PlanetScene({ planet, size = 300, className = '', style }: Props) {
   const { visual, communicationStyle, explorationTraces, coreThemes, avatarSymbol } = planet
-  const { coreColor, accentColor, ringStyle, surfaceStyle, satelliteCount } = visual
+  const { coreColor, accentColor, surfaceStyle, satelliteCount } = visual
 
   // Canvas needs room for: satellites + orbit traces + atmosphere halos
   const canvasSize = size + 200
 
-  const ringCount = ringStyle === 'double' ? 2 : ringStyle === 'none' ? 0 : 1
 
   return (
     <div
@@ -280,62 +278,6 @@ export default function PlanetScene({ planet, size = 300, className = '', style 
       {explorationTraces && explorationTraces.length > 0 && (
         <OrbitTraces traces={explorationTraces} size={size} />
       )}
-
-      {/* -- Rings (behind planet) ------------------------------------------- */}
-      {Array.from({ length: ringCount }).map((_, i) => {
-        const gap = 14 + i * 18
-        const w = size + gap * 2
-        const h = size * 0.26 + i * 8
-        if (ringStyle === 'broken') {
-          const rx = w / 2
-          const ry = h / 2
-          return (
-            <svg
-              key={i}
-              className="absolute pointer-events-none"
-              width={w} height={h}
-              viewBox={`0 0 ${w} ${h}`}
-              style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-            >
-              <defs>
-                <filter id={`rg-${i}`}>
-                  <feGaussianBlur stdDeviation="2" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
-              <ellipse cx={w/2} cy={h/2} rx={rx-2} ry={ry-1}
-                fill="none" stroke={coreColor} strokeWidth="1.4" strokeOpacity="0.5"
-                strokeDasharray={`${Math.PI*rx*0.6} ${Math.PI*rx*1.4}`}
-                filter={`url(#rg-${i})`} />
-              <ellipse cx={w/2} cy={h/2} rx={rx-2} ry={ry-1}
-                fill="none" stroke={coreColor} strokeWidth="1.4" strokeOpacity="0.25"
-                strokeDasharray={`${Math.PI*rx*0.32} ${Math.PI*rx*1.68}`}
-                strokeDashoffset={Math.PI*rx*0.7}
-                filter={`url(#rg-${i})`} />
-            </svg>
-          )
-        }
-        return (
-          <svg
-            key={i}
-            className="absolute pointer-events-none"
-            width={w} height={h}
-            viewBox={`0 0 ${w} ${h}`}
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-          >
-            <defs>
-              <filter id={`rg-${i}`}>
-                <feGaussianBlur stdDeviation="2" result="blur" />
-                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-            </defs>
-            <ellipse cx={w/2} cy={h/2} rx={w/2-2} ry={h/2-1}
-              fill="none" stroke={coreColor} strokeWidth="1.8"
-              strokeOpacity={i === 0 ? 0.55 : 0.28}
-              filter={`url(#rg-${i})`} />
-          </svg>
-        )
-      })}
 
       {/* -- Planet orb ------------------------------------------------------ */}
       <div

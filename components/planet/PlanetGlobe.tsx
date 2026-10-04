@@ -3,7 +3,7 @@
 import { Component, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
-import { BackSide, DoubleSide, type Mesh } from 'three'
+import { BackSide, type Mesh } from 'three'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
 import { useNarrowViewportPreference, useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
@@ -175,31 +175,6 @@ function CloudLayer({ planetConfig }: { planetConfig: PlanetConfig }) {
   )
 }
 
-function PlanetRing({ planetConfig }: { planetConfig: PlanetConfig }) {
-  const ringRef = useRef<Mesh>(null)
-
-  useFrame(() => {
-    if (ringRef.current) ringRef.current.rotation.z += 0.004
-  })
-
-  return (
-    <mesh ref={ringRef} rotation={[Math.PI / 2.35, 0, 0]}>
-      <ringGeometry args={[1.58, 1.68, 128]} />
-      <meshPhongMaterial
-        color={planetConfig.ringColor || planetConfig.tintColor}
-        emissive={planetConfig.ringColor || planetConfig.tintColor}
-        emissiveIntensity={0.26}
-        specular="#ffffff"
-        shininess={80}
-        transparent
-        opacity={0.82}
-        side={DoubleSide}
-        depthWrite={false}
-      />
-    </mesh>
-  )
-}
-
 function PlanetScene({
   planetConfig,
   sceneScale,
@@ -222,7 +197,6 @@ function PlanetScene({
       <directionalLight position={[-3, -1, -2]} intensity={0.3} color="#8844ff" />
       <group scale={sceneScale}>
         <AtmosphereGlow planetConfig={planetConfig} />
-        {planetConfig.hasRing && <PlanetRing planetConfig={planetConfig} />}
         <PlanetSphere planetConfig={planetConfig} />
         <CloudLayer planetConfig={planetConfig} />
       </group>

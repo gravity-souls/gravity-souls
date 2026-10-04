@@ -26,7 +26,7 @@ import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/plane
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
   accentColor: '#c4b5fd',
-  ringStyle: 'single',
+  ringStyle: 'none',
   surfaceStyle: 'smooth',
   satelliteCount: 1,
   size: 'lg',

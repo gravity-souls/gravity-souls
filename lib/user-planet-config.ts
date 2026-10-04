@@ -1,10 +1,10 @@
-import { resolvePlanetHasRing, resolvePlanetTexture } from '@/lib/planet-textures'
+import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 export const DEFAULT_PLANET_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
   accentColor: '#c4b5fd',
-  ringStyle: 'single',
+  ringStyle: 'none',
   surfaceStyle: 'smooth',
   satelliteCount: 1,
   size: 'lg',
@@ -43,7 +43,7 @@ export interface PlanetVisualSource {
 
 export function normalizePlanetVisual(value: unknown): PlanetProfile['visual'] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return DEFAULT_PLANET_VISUAL
-  return { ...DEFAULT_PLANET_VISUAL, ...(value as Partial<PlanetProfile['visual']>) }
+  return { ...DEFAULT_PLANET_VISUAL, ...(value as Partial<PlanetProfile['visual']>), ringStyle: 'none' }
 }
 
 export function planetConfigFromUser(source: UserPlanetConfigSource | null | undefined): PlanetConfig | null {
@@ -54,8 +54,8 @@ export function planetConfigFromUser(source: UserPlanetConfigSource | null | und
     tintColor: source.planetTint ?? '#7c4dbf',
     atmosphereColor: source.planetAtmoColor ?? '#b39ddb',
     atmosphereDensity: source.planetAtmoDensity ?? 0.12,
-    hasRing: source.planetHasRing ?? false,
-    ringColor: source.planetRingColor ?? '#9b7de0',
+    hasRing: false,
+    ringColor: '',
     rotationSpeed: source.planetRotationSpeed ?? 0.018,
     cloudOpacity: source.planetCloudOpacity ?? 0,
     customTextureUrl: source.planetCustomTexture ?? undefined,
@@ -75,8 +75,8 @@ export function planetConfigFromVisual(planet: PlanetVisualSource): PlanetConfig
     tintColor: visual.coreColor,
     atmosphereColor: visual.accentColor,
     atmosphereDensity: 0.12,
-    hasRing: resolvePlanetHasRing(),
-    ringColor: visual.accentColor,
+    hasRing: false,
+    ringColor: '',
     rotationSpeed: 0.018,
     cloudOpacity: 0,
     customTextureUrl: undefined,
