@@ -72,6 +72,7 @@ export default function GalaxiesPage() {
 function GalaxiesInner() {
   const tw = useTranslations('galaxyWorkflow')
   const tNav = useTranslations('nav')
+  const tMap = useTranslations('starMap')
   const tHome = useTranslations('home')
   const tGalaxies = useTranslations('galaxies')
   const tCommon = useTranslations('common')
@@ -126,6 +127,7 @@ function GalaxiesInner() {
       <div className="px-6 pt-8 pb-20 max-w-6xl mx-auto">
 
         {/* Header */}
+        <div className="mb-5"><Link href="/star-map?mode=galaxies" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link></div>
         <SectionHeader
           eyebrow={tHome('recommendedCommunities')}
           level={1}

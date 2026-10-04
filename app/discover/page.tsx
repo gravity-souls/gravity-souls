@@ -128,6 +128,7 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
 export default function DiscoverPage() {
   const router = useRouter()
   const t = useTranslations('discover')
+  const tMap = useTranslations('starMap')
   const tAuth = useTranslations('auth')
   const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
@@ -205,6 +206,7 @@ export default function DiscoverPage() {
           <h1 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
             {t('title')}
           </h1>
+          <Link href="/star-map?mode=discover" className="inline-flex rounded-lg border border-violet-400/30 px-4 py-2 text-sm text-violet-200">{tMap('openMap')}</Link>
           <p className="text-sm max-w-lg leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
             {t('subtitle')}
           </p>

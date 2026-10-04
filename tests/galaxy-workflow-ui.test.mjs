@@ -12,6 +12,7 @@ const Form = require('../components/galaxy/GalaxyForm.tsx').default
 const Composer = require('../components/galaxy/DiscussionComposer.tsx').default
 const RSVP = require('../components/events/RSVPButton.tsx').default
 const EventCard = require('../components/events/EventCard.tsx').default
+const StarMap = require('../components/star-map/StarMap.tsx').default
 const event = {
   id: 'evt',
   galaxyId: 'g',
@@ -103,3 +104,20 @@ test('all workflow and notification keys exist in three languages', () => {
         assert.ok(m.notifications[key + suffix])
   }
 })
+
+for (const locale of ['en', 'zh', 'fr']) {
+  test(`production star map explains real data and gestures in ${locale} without playback controls`, () => {
+    const messages = require(`../messages/${locale}.json`).starMap
+    assert.deepEqual(Object.keys(messages).sort(),Object.keys(require('../messages/en.json').starMap).sort())
+    for (const mode of ['discover','galaxies','resonance']) {
+      const html = render(locale,React.createElement(StarMap,{mode}))
+      assert.ok(html.includes(messages['meaning_'+mode]))
+      assert.ok(html.includes(messages.gestures))
+      assert.ok(html.includes(messages.decoration.replaceAll('&','&amp;')))
+      assert.ok(!html.includes('starMap.'))
+      assert.ok(!html.includes('Reset view'))
+      assert.ok(!html.includes('Zoom in'))
+      assert.ok(!html.includes('Pause'))
+    }
+  })
+}

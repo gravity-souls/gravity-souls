@@ -24,6 +24,7 @@ export const config = {
     '/resonance',
     '/my-planet/:path*',
     '/discover',
+    '/star-map',
     '/stream',
     '/settings/:path*',
     '/relationships',

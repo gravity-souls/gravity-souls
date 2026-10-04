@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Orbit,
   Settings,
+  Sparkles,
   Waves,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -48,7 +49,7 @@ interface MeResponse {
 
 interface NavItem {
   href: string
-  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'messages' | 'settings'
+  labelKey: 'home' | 'stream' | 'resonance' | 'galaxies' | 'myPlanet' | 'messages' | 'settings' | 'starMap'
   Icon: LucideIcon
   badge?: boolean
   // Requires an account — see proxy.ts's matcher, the actual source of truth
@@ -60,6 +61,7 @@ const MAIN_ITEMS: NavItem[] = [
   { href: '/', labelKey: 'home', Icon: Home },
   { href: '/stream', labelKey: 'stream', Icon: Waves, gated: true },
   { href: '/resonance', labelKey: 'resonance', Icon: CircleDot, gated: true },
+  { href: '/star-map', labelKey: 'starMap', Icon: Sparkles, gated: true },
 ]
 
 const GALAXIES_ITEM: NavItem = { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 }

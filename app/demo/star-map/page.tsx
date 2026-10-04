@@ -1,5 +1,3 @@
-import StarMapPreview from './StarMapPreview'
+import { redirect } from 'next/navigation'
 
-export default function StarMapDemoPage() {
-  return <StarMapPreview />
-}
+export default function StarMapDemoPage() { redirect('/star-map') }
