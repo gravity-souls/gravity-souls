@@ -1,5 +1,6 @@
 "use client";
 
+import { stopPushBeforeSignOut } from '@/lib/push-client'
 import { clearBrowserChatDrafts } from '@/lib/chat-drafts'
 import { useState } from "react";
 import { useTranslations } from "next-intl";
@@ -14,6 +15,7 @@ export function SignOutButton() {
     setLoading(true);
 
     try {
+      await stopPushBeforeSignOut()
       await authClient.signOut();
       clearBrowserChatDrafts();
       window.location.href = "/sign-in";

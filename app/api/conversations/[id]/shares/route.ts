@@ -1,3 +1,4 @@
+import { queueMessagePush, schedulePushDelivery } from '@/lib/push-notifications'
 import { hydrateMessageState, validateReplyTo } from '@/lib/chat-interactions'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
@@ -41,10 +42,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       await tx.conversationThread.update({ where: { id }, data: { lastMessageAt: message.createdAt } })
       const notice = await NotificationTemplates.newMessage(sender.name, `/messages/${id}`, resolveLocale(recipient.language))
       await tx.notification.create({ data: { userId: recipient.id, ...notice } })
+      await queueMessagePush(tx, message.id, recipient.id)
       return { message, created: true, first: await tx.directMessage.count({ where: { conversationId: id } }) === 1 }
     })
+    if (result.created) schedulePushDelivery()
     if (result.first) { try { await grantXP(user.id, 'RESONANCE_SENT') } catch { console.error('Could not grant share message XP') } }
     const [message] = await hydrateMessageState([result.message], user)
     return Response.json(message, { status: result.created ? 201 : 200, headers: invitationHeaders })
   } catch (error) { return safeApiError(error) }
 }
+
+export const maxDuration = 60

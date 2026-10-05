@@ -2052,5 +2052,25 @@
     "useOther": "Utiliser le brouillon de l’autre onglet",
     "keepMine": "Garder ce brouillon",
     "discard": "Effacer le brouillon"
+  },
+  "pushSettings": {
+    "title": "Notifications système",
+    "description": "Recevez les nouveaux messages privés dans ce navigateur. L’activation demande votre autorisation. La déconnexion les désactive ici.",
+    "iphone": "Sur iPhone, ajoutez Gravity Souls à l’écran d’accueil et ouvrez l’app depuis celui-ci avant d’activer les notifications.",
+    "loading": "Vérification des notifications…",
+    "unsupported": "Les notifications push ne sont pas prises en charge ici. Les notifications internes restent disponibles.",
+    "unconfigured": "Les notifications système ne sont pas encore configurées. Les notifications internes restent disponibles.",
+    "enabled": "Activées dans ce navigateur",
+    "disabled": "Désactivées dans ce navigateur",
+    "preview": "Contenu sur l’écran verrouillé",
+    "generic": "Notification générique uniquement",
+    "sender": "Afficher le nom de l’expéditeur, jamais le texte du message",
+    "enable": "Activer les notifications",
+    "disable": "Désactiver les notifications",
+    "working": "Mise à jour…",
+    "failed": "Impossible de modifier les notifications. Réessayez.",
+    "denied": "Les notifications sont bloquées. Autorisez-les dans les réglages du navigateur ou de l’appareil, puis réessayez.",
+    "bound": "Ce navigateur a un abonnement pour un autre compte. Désactivez-le ici, puis réactivez-le.",
+    "deviceLimit": "La limite de 5 navigateurs abonnés est atteinte. Désactivez les notifications sur l’un d’eux."
   }
 }
