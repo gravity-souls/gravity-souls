@@ -13,6 +13,7 @@ export const MOBILE_EXPLORE_LINKS = [
   { href: '/galaxies', key: 'galaxies' },
   { href: '/activities', key: 'events' },
   { href: '/relationships', key: 'relationships' },
+  { href: '/star-map?mode=personal', key: 'personalStarMap' },
   { href: '/saved', key: 'savedOrbit' },
   { href: '/search', key: 'search' },
   { href: '/my-planet/customize', key: 'customizePlanet' },

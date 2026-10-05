@@ -7,6 +7,6 @@ export default function ExplorationReturnLink({ origin }: { origin: ExplorationO
   const t = useTranslations('starMap')
   if (!origin) return null
   return <Link href={explorationReturnHref(origin)} className="inline-block px-4 py-2 text-xs text-violet-200">
-    {t(origin === 'home-star-map' ? 'returnHomeMap' : 'returnMap')}
+    {t(origin === 'home-star-map' ? 'returnHomeMap' : origin.startsWith('personal-star-map-') ? 'returnPersonalMap' : 'returnMap')}
   </Link>
 }

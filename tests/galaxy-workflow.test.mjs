@@ -1345,6 +1345,111 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       assert.equal((await state()).saved, false)
       await db.user.deleteMany({ where: { id: { in: [viewer, target, other] } } })
     })
+    await t.test('personal map collections, permissions and lifecycle on real SQL', async (t) => {
+      const viewer = 'personal-viewer', outsider = 'personal-outsider'
+      const ids = [viewer, outsider, 'personal-saved', 'personal-followed', 'personal-both', 'personal-incoming', 'personal-chat', 'personal-private']
+      for (const id of ids) await db.user.create({ data: { id, name: id, email: `${id}@example.test` } })
+      const planets = new Map()
+      for (const id of ids) planets.set(id, await db.planet.create({ data: { userId: id, name: `Personal fixture ${id}`, mood: id === 'personal-followed' ? 'cold' : 'calm' } }))
+      const map = (collection = 'all', extra = '') => starMap.GET(new Request(`https://example.test/api?mode=personal&collection=${collection}&search=Personal%20fixture${extra}`))
+      const data = async (...args) => (await (await map(...args)).json())
+      const names = async (...args) => (await data(...args)).nodes.map(n => n.userId).sort()
+      as(viewer)
+      for (const id of ['personal-saved', 'personal-both', 'personal-private']) await saved.POST(request({ planetId: planets.get(id).id }))
+      for (const id of ['personal-followed', 'personal-both']) await follows.POST(request({ userId: id }))
+      await db.follow.createMany({ data: [
+        { followerId: 'personal-both', followingId: viewer },
+        { followerId: 'personal-incoming', followingId: viewer },
+      ] })
+      await db.conversationThread.create({ data: { userAId: viewer, userBId: 'personal-chat' } })
+      try {
+        await t.test('collections deduplicate saves and outgoing follows, excluding own, incoming-only and chat-only', async () => {
+          assert.deepEqual(await names(), ['personal-both', 'personal-followed', 'personal-private', 'personal-saved'])
+          assert.deepEqual(await names('saved'), ['personal-both', 'personal-private', 'personal-saved'])
+          assert.deepEqual(await names('following'), ['personal-both', 'personal-followed'])
+          assert.deepEqual(await names('mutual'), ['personal-both'])
+          const response = await map()
+          assert.equal(response.headers.get('cache-control'), 'private, no-store')
+          const result = await response.json()
+          assert.equal(result.scope, 'personal')
+          assert.equal(result.total, result.nodes.length)
+          assert.equal(result.groups.reduce((sum,g) => sum + g.count,0), result.total)
+          assert.equal((await data('all', '&group=cold')).nodes[0].userId, 'personal-followed')
+        })
+        await t.test('owner isolation and strict query authentication', async () => {
+          as(outsider)
+          assert.equal((await data()).total, 0)
+          as(null)
+          assert.equal((await map()).status, 401)
+          as(viewer)
+          assert.equal((await map('unknown')).status, 400)
+          assert.equal((await starMap.GET(new Request('https://example.test/api?mode=discover&collection=saved'))).status,400)
+          assert.equal((await starMap.GET(new Request('https://example.test/api?mode=personal&userId=personal-outsider'))).status,400)
+        })
+        await t.test('PRIVATE follows match profile visibility; saves alone do not grant access', async () => {
+          await db.profile.create({ data: { userId: 'personal-private', visibility: 'PRIVATE' } })
+          assert.ok(!(await names()).includes('personal-private'))
+          await db.follow.create({ data: { followerId: 'personal-private', followingId: viewer } })
+          assert.ok((await names()).includes('personal-private'))
+          const discovery = await (await starMap.GET(new Request('https://example.test/api?mode=discover&search=Personal%20fixture'))).json()
+          assert.ok(!discovery.nodes.some(n => n.userId === 'personal-private'))
+          await db.follow.deleteMany({ where: { followerId: 'personal-private', followingId: viewer } })
+          assert.ok(!(await names()).includes('personal-private'))
+          assert.equal(await db.savedPlanet.count({ where: { userId: viewer, planetId: planets.get('personal-private').id } }), 1)
+          await db.profile.delete({ where: { userId: 'personal-private' } })
+        })
+        await t.test('both-direction blocks hide nodes, counts, avatars and relationship metadata', async () => {
+          for (const [blockerId, blockedId] of [[viewer,'personal-both'],['personal-both',viewer]]) {
+            const block = await db.block.create({ data: { blockerId, blockedId } })
+            const result = await data()
+            assert.equal(result.total,3)
+            assert.ok(!JSON.stringify(result).includes('personal-both'))
+            await db.block.delete({ where: { id: block.id } })
+          }
+        })
+        await t.test('inactive and deleted targets disappear; fresh custom avatars resolve', async () => {
+          const target = planets.get('personal-both')
+          await db.planet.update({ where: { id: target.id }, data: { active: false } })
+          assert.ok(!(await names()).includes('personal-both'))
+          await db.planet.update({ where: { id: target.id }, data: { active: true } })
+          await db.user.update({ where: { id: 'personal-both' }, data: { deletedAt: new Date() } })
+          assert.ok(!(await names()).includes('personal-both'))
+          await db.user.update({ where: { id: 'personal-both' }, data: { deletedAt: null, planetCustomTexture: 'https://example.test/personal-new.png' } })
+          assert.equal((await data()).nodes.find(n => n.userId === 'personal-both').planetConfig.customTextureUrl, 'https://example.test/personal-new.png')
+          await db.user.update({ where: { id: viewer }, data: { deletedAt: new Date() } })
+          assert.equal((await map()).status,401)
+          await db.user.update({ where: { id: viewer }, data: { deletedAt: null } })
+        })
+        await t.test('real save/follow removals update membership independently without new notices', async () => {
+          const notices = await db.notification.count()
+          await removeSaved.DELETE(request(), { params: Promise.resolve({ planetId: planets.get('personal-both').id }) })
+          assert.ok((await names()).includes('personal-both'))
+          assert.ok(!(await names('saved')).includes('personal-both'))
+          await followStatus.DELETE(request(), { params: Promise.resolve({ userId: 'personal-both' }) })
+          assert.ok(!(await names()).includes('personal-both'))
+          assert.equal(await db.notification.count(), notices)
+          assert.equal(await db.directMessage.count({ where: { conversation: { OR: [{ userAId: viewer }, { userBId: viewer }] } } }), 0)
+        })
+        await t.test('large collections use bounded stable pages without missing or duplicate nodes', async () => {
+          const moreIds = Array.from({length:40}, (_,i) => `personal-page-${String(i).padStart(2,'0')}`)
+          for (const id of moreIds) {
+            await db.user.create({ data: { id, name: id, email: `${id}@example.test` } })
+            const p = await db.planet.create({ data: { userId:id, name:`Personal fixture ${id}` } })
+            await db.savedPlanet.create({ data: { userId:viewer, planetId:p.id } })
+          }
+          try {
+            const first = await data('saved'), second = await data('saved', `&cursor=${first.nextCursor}`)
+            assert.equal(first.nodes.length,36)
+            assert.ok(second.nodes.length > 0 && second.nodes.length <= 36)
+            assert.equal(second.nextCursor,null)
+            const all = [...first.nodes,...second.nodes].map(n => n.id)
+            assert.equal(all.length,first.total)
+            assert.equal(new Set(all).size,first.total)
+            assert.equal((await data('saved','&search=zzzz-not-found')).total,0)
+          } finally { await db.user.deleteMany({ where: { id: { in: moreIds } } }) }
+        })
+      } finally { await db.user.deleteMany({ where: { id: { in: ids } } }); as('owner') }
+    })
     await t.test(
       'star map bounded pages have no missing or duplicate planet nodes',
       async () => {

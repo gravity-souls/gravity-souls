@@ -467,3 +467,17 @@
   -webkit-line-clamp: unset;
   overflow: visible;
 }
+
+/* Personal list view reuses the authoritative map batch and selection. */
+.listView .explorer { grid-template-columns: minmax(0, 1fr); }
+.map.listView .sidebar, .map.listView .sidebar[data-open='true'] {
+  display: flex;
+  position: static;
+  width: auto;
+  min-height: 440px;
+  max-height: min(75vh, 800px);
+  box-shadow: none;
+}
+.map.listView .sidebarToggle { display: none; }
+.listView .sidebar .nodeList { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.listStatus { color: #9eacc1; font-size: 13px; padding-bottom: 12px; }

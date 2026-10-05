@@ -31,7 +31,8 @@
     "savedOrbit": "保存的轨道",
     "search": "搜索",
     "allSections": "全部板块",
-    "relationships": "关注与粉丝"
+    "relationships": "关注与粉丝",
+    "personalStarMap": "我的星图"
   },
   "topbar": {
     "searchPlaceholder": "搜索星球、星系、活动...",
@@ -1770,7 +1771,21 @@
     "viewMode": "展示方式",
     "mapView": "星图视图",
     "resonancePurpose": "这里按最强共鸣原因对当前加载的星球分组。独立共鸣页提供最多五个推荐及详细评分；候选批次不同，推荐可能不同。",
-    "openRecommendations": "查看共鸣推荐"
+    "openRecommendations": "查看共鸣推荐",
+    "mode_personal": "我的星图",
+    "personalSubtitle": "由你保存到轨道或关注的星球组成的私人星图。也可以前往全域探索，发现更多星球。",
+    "personalFilters": "我的星图集合",
+    "collection_all": "我的全部",
+    "collection_saved": "已存轨道",
+    "collection_following": "我关注的",
+    "collection_mutual": "互相关注",
+    "meaning_personal": "保存到轨道或主动关注会加入个人星图。气候星团用于浏览，连线只作探索引导。",
+    "personalScope": "仅展示你当前有权限查看的私人集合；同时保存和关注的星球只出现一次，允许查看的私密星球可能不在全域发现中。",
+    "personalEmpty": "此集合暂无可见星球。探索时保存到轨道或关注，就能加入我的星图。",
+    "exploreGlobal": "前往全域探索",
+    "firstBatch": "返回首批",
+    "personalTotal": "此集合中有 {count} 个星球",
+    "returnPersonalMap": "← 返回我的星图"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",

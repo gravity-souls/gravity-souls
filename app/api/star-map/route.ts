@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
-import { discoveryPlanetWhere } from '@/lib/visibility'
+import { discoveryPlanetWhere, personalMapPlanetWhere } from '@/lib/visibility'
 import { safeApiError } from '@/lib/api-input'
 import {
   USER_PLANET_CONFIG_SELECT,
@@ -12,7 +12,8 @@ import type { StarMapData } from '@/types/star-map'
 
 const querySchema = z
   .object({
-    mode: z.enum(['discover', 'galaxies']).default('discover'),
+    mode: z.enum(['discover', 'galaxies', 'personal']).default('discover'),
+    collection: z.enum(['all', 'saved', 'following', 'mutual']).optional(),
     group: z
       .enum(['calm', 'melancholic', 'intense', 'cold', 'mixed', 'other'])
       .optional(),
@@ -30,7 +31,11 @@ export async function GET(request: Request) {
     )
     if (!parsed.success)
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
-    const { mode, group, cursor, search } = parsed.data
+    const { mode, group, cursor, search, collection } = parsed.data
+    if (collection && mode !== 'personal')
+      return Response.json({ error: 'invalidQuery' }, { status: 400 })
+    const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
+    if (!viewer || viewer.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     if (mode === 'galaxies') {
       const where = search
         ? {
@@ -84,7 +89,9 @@ export async function GET(request: Request) {
         headers: { 'Cache-Control': 'private, no-store' },
       })
     }
-    const base = await discoveryPlanetWhere(user.id)
+    const base = mode === 'personal'
+      ? await personalMapPlanetWhere(user.id, collection ?? 'all')
+      : await discoveryPlanetWhere(user.id)
     if (search) base.name = { contains: search, mode: 'insensitive' }
     const where = {
       ...base,
@@ -176,7 +183,7 @@ export async function GET(request: Request) {
         nodes,
         total,
         nextCursor: more ? rows.at(-1)!.id : null,
-        scope: 'allVisible',
+        scope: mode === 'personal' ? 'personal' : 'allVisible',
       } satisfies StarMapData,
       { headers: { 'Cache-Control': 'private, no-store' } },
     )

@@ -76,6 +76,7 @@ const MOBILE_TABS: NavItem[] = [
 ]
 
 interface Props {
+  personalMapActive?: boolean
   collapsed: boolean
   onToggle: () => void
 }
@@ -159,7 +160,7 @@ function SubLink({ href, label, active, Icon }: { href: string; label: string; a
   )
 }
 
-export default function SideNav({ collapsed, onToggle }: Props) {
+export default function SideNav({ collapsed, onToggle, personalMapActive = false }: Props) {
   const pathname = usePathname()
   const tNav = useTranslations('nav')
   const tA11y = useTranslations('a11y')
@@ -175,7 +176,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
   const galaxiesActive = isRouteActive(pathname, '/galaxies')
   const myPlanetActive = isRouteActive(pathname, '/my-planet')
-  const mySpaceActive = myPlanetActive || pathname === '/saved' || pathname === '/relationships'
+  const mySpaceActive = personalMapActive || myPlanetActive || pathname === '/saved' || pathname === '/relationships'
   const showMyPlanetSubItems = !collapsed && mySpaceActive
 
   useEffect(() => {
@@ -230,7 +231,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
                 key={item.href}
                 item={item}
                 label={tNav(item.labelKey)}
-                active={isRouteActive(pathname, item.href)}
+                active={isRouteActive(pathname, item.href) && !(personalMapActive && item.href === '/star-map')}
                 collapsed={collapsed}
                 level={currentUserLevel}
                 showLock={!!item.gated && !isAuthenticated}
@@ -253,6 +254,7 @@ export default function SideNav({ collapsed, onToggle }: Props) {
               lockLabel={lockLabel}
             />
             <SubMenu open={showMyPlanetSubItems}>
+              <SubLink href="/star-map?mode=personal" label={tNav('personalStarMap')} active={personalMapActive} Icon={Sparkles} />
               <SubLink href="/saved" label={tNav('savedOrbit')} active={isRouteActive(pathname, '/saved')} Icon={Orbit} />
               <SubLink href="/relationships" label={tNav('relationships')} active={isRouteActive(pathname, '/relationships')} Icon={Globe2} />
               <SubLink href="/my-planet/customize" label={tNav('customizePlanet')} active={isRouteActive(pathname, '/my-planet/customize')} Icon={Orbit} />

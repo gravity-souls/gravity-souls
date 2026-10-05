@@ -157,3 +157,17 @@ behavior remain separate acceptance tasks. Browser engines are absent and their 
 download failed; included browser specifications are not claimed as executed.
 
 Validation: 24 baseline tests and 53 tests reported by the database/locale suite passed; TypeScript and production webpack build passed. ESLint: zero errors, 18 existing warnings. Browser specifications were added but not executed.
+
+## Current slice — personal star map (2026-10-05)
+
+Per the user's instruction, further chat development follows storage configuration.
+MR38 is merged. This slice implements an owner-only personal view inside `/star-map`,
+using existing saves and outgoing follows rather than introducing another interest table.
+See `personal-star-map-review.md` for collection rules, permissions and acceptance limits.
+
+The previous proposed queue above is historical: relationship markers and invitations
+are already implemented (MR33/MR34). The next non-chat work is to recheck activity discovery,
+interest → membership approval → attendance approval → cancellation/history and organizer
+management, then permission-aware return paths between dynamic posts, galaxies and events.
+Personal galaxy/event overlays and temporary activity clusters follow separately; they must
+use genuine memberships/interests and current visibility, never decorative edges as proof.

@@ -31,7 +31,8 @@
     "savedOrbit": "Saved orbit",
     "search": "Search",
     "allSections": "All sections",
-    "relationships": "Follows and followers"
+    "relationships": "Follows and followers",
+    "personalStarMap": "My star map"
   },
   "topbar": {
     "searchPlaceholder": "Search planets, galaxies, events...",
@@ -1770,7 +1771,21 @@
     "viewMode": "View format",
     "mapView": "Star map",
     "resonancePurpose": "Map exploration groups the loaded planets by their strongest resonance reason. Open Resonance for up to five recommendations and detailed scores.",
-    "openRecommendations": "Open resonance recommendations"
+    "openRecommendations": "Open resonance recommendations",
+    "mode_personal": "My star map",
+    "personalSubtitle": "A private map of planets you saved to your orbit or follow. Browse the wider sky to find more.",
+    "personalFilters": "My map collections",
+    "collection_all": "All in my map",
+    "collection_saved": "Saved orbit",
+    "collection_following": "Following",
+    "collection_mutual": "Mutual follows",
+    "meaning_personal": "Your saves and outgoing follows determine this map. Climate clusters help you browse; lines are exploration guides.",
+    "personalScope": "Only your current permitted collection is shown. Saved and followed planets overlap once; privately connected planets may be absent from global discovery.",
+    "personalEmpty": "No visible planets in this collection. Save a planet to your orbit or follow someone while exploring.",
+    "exploreGlobal": "Explore the wider sky",
+    "firstBatch": "Back to first batch",
+    "personalTotal": "{count} planets in your collection",
+    "returnPersonalMap": "← Return to my star map"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",
