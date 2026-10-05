@@ -506,3 +506,9 @@
 .selfMissing a { display: inline-block; color: #c4b5fd; padding: 8px 0; }
 .centeredStage .fallback { top: auto; bottom: 24px; height: auto; padding: 0 16px; pointer-events: none; }
 .centeredStage .fallback a, .centeredStage .fallback button { pointer-events: auto; }
+.relationLegend { margin: 0 0 14px; padding: 12px 14px; border: 1px solid #ffffff14; border-radius: 12px; background: #0a0e1699; font-size: 11px; color: #bec8d6; }
+.relationLegend strong { display: block; margin-bottom: 8px; font-weight: 500; }
+.relationLegend p { margin: 8px 0 0; color: #94a3b8; line-height: 1.6; }
+.relationItems { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.relationItem { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; line-height: 1.5; }
+.relationItem svg { flex: 0 0 38px; }

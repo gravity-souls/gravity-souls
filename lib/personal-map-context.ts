@@ -22,12 +22,12 @@ export async function personalMapContext(userId: string, { layer, search, group,
     const where: Prisma.CommunityWhereInput = { AND: [base, ...(group ? [filters[group]] : [])] }
     if (cursor && !await prisma.community.findFirst({ where: { AND: [where, { id: cursor }] }, select: { id: true } })) throw Response.json({ error: 'invalidCursor' }, { status: 400 })
     const [rows, counts] = await Promise.all([
-      prisma.community.findMany({ where, orderBy: { id: 'asc' }, take: LIMIT + 1, ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), select: { id: true, name: true, slug: true, tagline: true, creatorId: true, _count: { select: { memberships: { where: { user: { deletedAt: null } } } } } } }),
+      prisma.community.findMany({ where, orderBy: { id: 'asc' }, take: LIMIT + 1, ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}), select: { id: true, name: true, slug: true, tagline: true, creatorId: true, memberships: { where: { userId }, select: { id: true } }, _count: { select: { memberships: { where: { user: { deletedAt: null } } } } } } }),
       Promise.all(Object.entries(filters).map(async ([id, filter]) => ({ id, color: COLORS[id], count: await prisma.community.count({ where: { AND: [base, filter] } }) }))),
     ])
     const more = rows.length > LIMIT
     if (more) rows.pop()
-    return { groups: counts, nodes: rows.map(row => ({ id: row.id, kind: 'galaxy', groupId: row.creatorId === userId ? 'owned' : 'joined', name: row.name, tagline: row.tagline, memberCount: row._count.memberships, href: `/galaxy/${encodeURIComponent(row.slug)}` })), total: counts.reduce((sum, g) => sum + g.count, 0), nextCursor: more ? rows.at(-1)!.id : null, scope: 'personal' }
+    return { groups: counts, nodes: rows.map(row => ({ id: row.id, kind: 'galaxy', galaxyRelationship: { created: row.creatorId === userId, joined: row.memberships.length > 0 }, groupId: row.creatorId === userId ? 'owned' : 'joined', name: row.name, tagline: row.tagline, memberCount: row._count.memberships, href: `/galaxy/${encodeURIComponent(row.slug)}` })), total: counts.reduce((sum, g) => sum + g.count, 0), nextCursor: more ? rows.at(-1)!.id : null, scope: 'personal' }
   }
   const now = new Date()
   const base: Prisma.EventWhereInput = { AND: [
