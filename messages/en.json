@@ -1893,5 +1893,26 @@
     "open": "Open shared content",
     "backChat": "Back to chat",
     "messagePreview": "Shared a card"
+  },
+  "chatImages": {
+    "choose": "Add photo",
+    "preview": "Selected photo preview",
+    "privateHint": "Only conversation participants can view sent photos. JPEG, PNG or WebP, up to 3 MB.",
+    "remove": "Remove",
+    "sending": "Uploading and sending…",
+    "send": "Send photo",
+    "retry": "Retry",
+    "invalidImage": "Choose a valid, still JPEG, PNG or WebP image (up to 16 megapixels).",
+    "tooLarge": "This photo is too large. Choose an image under 3 MB.",
+    "storageUnavailable": "Photo storage is not configured yet. Please try later.",
+    "uploadBusy": "This upload is still processing. Please retry shortly.",
+    "uploadExpired": "This upload expired. Retry to upload the selected photo again.",
+    "rateLimited": "Too many uploads or messages. Please try later.",
+    "sendFailed": "Delivery could not be confirmed. Your photo is kept for retry.",
+    "unavailable": "Photo unavailable",
+    "loading": "Loading photo…",
+    "open": "View larger photo",
+    "photo": "Photo",
+    "close": "Close"
   }
 }

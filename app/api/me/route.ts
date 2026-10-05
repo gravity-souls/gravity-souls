@@ -105,6 +105,7 @@ export async function DELETE(request: Request) {
   try {
     await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR NO KEY UPDATE`
+      await tx.chatImage.updateMany({ where: { ownerId: userId, message: null }, data: { deleteRequested: true } });
       const owned = await tx.community.findMany({ where: { creatorId: userId }, orderBy: { id: 'asc' } })
       for (const galaxy of owned) {
         await tx.$queryRaw`SELECT id FROM community WHERE id = ${galaxy.id} FOR UPDATE`

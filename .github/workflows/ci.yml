@@ -37,6 +37,8 @@ jobs:
       - run: npm run typecheck
       - run: npx prisma validate
       - run: npm test
+      - run: npm run test:chat
+      - run: npm run test:chat-images
       - run: npm run test:galaxy
 
   database-suite:
