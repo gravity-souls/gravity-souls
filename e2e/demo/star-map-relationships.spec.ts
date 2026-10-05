@@ -32,6 +32,7 @@ test('map actions preserve selection, failures retain state, and chat returns to
     starts++; conversationId = 'map-thread'
     return route.fulfill({ json: { conversationId } })
   })
+  await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: null, status: null, conversationId, incomingPending: false } }))
   await page.route('**/api/conversations/map-thread', route => {
     if (route.request().method() === 'POST') sent++
     return route.fulfill({ json: { conversation: { id: 'map-thread' }, viewerId: 'viewer', otherUser: { id: 'map-target', name: planet.name }, otherPlanet: null, messages: [], olderCursor: null, canSend: true } })
@@ -51,10 +52,12 @@ test('map actions preserve selection, failures retain state, and chat returns to
   await expect(card.getByRole('group')).toContainText('In your orbit')
   await expect(page.getByRole('button', { name: /^Browser relationship planet/ })).toContainText('In your orbit')
   await card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
-  await expect(card.getByRole('alert')).toContainText('previous state has been kept')
+  await expect(card.getByRole('alert')).toContainText('latest state could not be confirmed')
   await expect(card.getByRole('group')).toContainText('In your orbit')
   failRemoval = false
   await card.getByRole('button', { name: 'Retry', exact: true }).click()
+  await expect(card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true })).toBeVisible()
+  await card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
   await expect(card.getByRole('group')).not.toContainText('In your orbit')
   await card.getByRole('button', { name: 'Follow back', exact: true }).click()
   await expect(card.getByRole('group')).toContainText('Mutual follows')

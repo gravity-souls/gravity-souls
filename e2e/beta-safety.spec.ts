@@ -44,7 +44,7 @@ test.describe('authenticated API protections', () => {
     expect(await prisma.communityMembership.count({ where: { communityId } })).toBe(1)
     expect(await prisma.xPEvent.count({ where: { userId: E2E.withPlanet.userId, type: 'GALAXY_JOINED' } })).toBe(before + 1)
     const status = await request.patch(`/api/galaxies/${communityId}/events/nonexistent/status`, { data: { status: 'APPROVED' } })
-    expect(status.status()).toBe(403)
+    expect(status.status()).toBe(404)
   })
 
   test('invalid planet, calibration and message inputs do not mutate data', async ({ request }) => {
@@ -75,7 +75,7 @@ test.describe('authenticated API protections', () => {
       data: { planetTexture: 'mars.jpg', planetTint: '#ec4899', planetHasRing: true, planetCustomTexture: customTextureUrl },
     })
     const viewer = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
-    const guest = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL })
+    const guest = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: { cookies: [], origins: [] } })
     const context = await browser.newContext({ storageState: AUTH_NP })
     try {
       expect((await guest.get('/api/universe')).status()).toBe(401)
@@ -114,8 +114,8 @@ test.describe('authenticated API protections', () => {
   test('conversation participants remain enforced and a valid message persists', async ({ request, playwright }) => {
     const thread = await prisma.conversationThread.create({ data: { userAId: E2E.noPlanet.userId, userBId: E2E.handoff.userId } })
     try {
-      expect((await request.get(`/api/conversations/${thread.id}`)).status()).toBe(403)
-      expect((await request.post(`/api/conversations/${thread.id}`, { data: { content: 'intruder' } })).status()).toBe(403)
+      expect((await request.get(`/api/conversations/${thread.id}`)).status()).toBe(404)
+      expect((await request.post(`/api/conversations/${thread.id}`, { data: { content: 'intruder' } })).status()).toBe(404)
       const participant = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
       try {
         expect((await participant.post(`/api/conversations/${thread.id}`, { data: { content: '  Hello  ' } })).status()).toBe(201)
@@ -130,7 +130,7 @@ test.describe('authenticated API protections', () => {
       await page.setViewportSize({ width: 390, height: 844 })
       await page.goto(`/messages/${thread.id}`)
       const composer = page.locator('textarea')
-      await expect(composer).toHaveAttribute('maxlength', '2000')
+      await expect(composer).toHaveAttribute('maxlength', '4000')
       await composer.fill('你好，世界')
       let posts = 0
       await page.route(`**/api/conversations/${thread.id}`, async (route) => {

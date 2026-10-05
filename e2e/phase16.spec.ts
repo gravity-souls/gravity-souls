@@ -21,6 +21,7 @@ test.describe('planet detail — real DB planet via resonance drawer', () => {
   test.use({ storageState: AUTH_WP })
 
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/resonance', { waitUntil: 'domcontentloaded' })
     await page.evaluate((key) => localStorage.setItem(key, '1'), P14_KEY)
   })
@@ -29,7 +30,7 @@ test.describe('planet detail — real DB planet via resonance drawer', () => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
 
     // Open the resonance drawer on the first orbit node
-    const node = page.getByRole('button', { name: /resonance score/i }).first()
+    const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
     await node.click()
 

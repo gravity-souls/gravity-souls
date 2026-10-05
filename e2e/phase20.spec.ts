@@ -62,7 +62,7 @@ test('a slug with no matching Community shows the real not-found state, not a bl
   // Rendered by app/not-found.tsx via notFound() — confirms the gate is now
   // driven by the same live API the rest of the page already used, not a
   // static mock list that could disagree with it.
-  await expect(page.getByText("This planet doesn't exist")).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'This orbit is empty', exact: true })).toBeVisible()
 })
 
 test('/galaxies directory shows real communities with real, derived member counts', async ({ page }) => {
