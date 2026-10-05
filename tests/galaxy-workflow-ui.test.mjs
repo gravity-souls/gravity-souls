@@ -475,7 +475,7 @@ test('personal context return restores layers and views while preserving activit
 for (const locale of ['en','fr','zh']) test(`personal context layers localize explanation, units and return links in ${locale}`,()=>{
   const m=require(`../messages/${locale}.json`).starMap
   const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
-  for (const layer of ['galaxies','activities']) {
+  for (const layer of ['galaxies','activities','constellations']) {
     const html=render(locale,React.createElement(StarMap,{mode:'personal',layer,listOnly:true}))
     assert.ok(html.includes(escape(m[`meaning_personal_${layer}`])))
     assert.ok(html.includes(escape(m[`scope_${layer}`])))

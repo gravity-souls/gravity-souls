@@ -1,8 +1,8 @@
 import type { PersonalMapCollection, PersonalMapLayer } from '@/types/star-map'
 
-type PersonalMapOrigin = `personal-star-map-${PersonalMapCollection | 'galaxies' | 'activities'}${'' | '-list'}`
+type PersonalMapOrigin = `personal-star-map-${PersonalMapCollection | 'galaxies' | 'activities' | 'constellations'}${'' | '-list'}`
 export type ExplorationOrigin = 'star-map' | 'home-star-map' | PersonalMapOrigin
-const personalOrigins = new Set<string>(['all', 'saved', 'following', 'mutual', 'galaxies', 'activities'].flatMap(collection => [
+const personalOrigins = new Set<string>(['all', 'saved', 'following', 'mutual', 'galaxies', 'activities', 'constellations'].flatMap(collection => [
   `personal-star-map-${collection}`, `personal-star-map-${collection}-list`,
 ]))
 export function personalMapOrigin(collection: PersonalMapCollection, listOnly: boolean, layer: PersonalMapLayer = 'planets'): PersonalMapOrigin {
@@ -16,7 +16,7 @@ export function explorationReturnHref(origin: ExplorationOrigin): string {
   if (origin.startsWith('personal-star-map-')) {
     const list = origin.endsWith('-list')
     const collection = origin.slice('personal-star-map-'.length).replace(/-list$/, '')
-    return `/star-map?mode=personal&${collection === 'galaxies' || collection === 'activities' ? `layer=${collection}` : `collection=${collection}`}${list ? '&view=list' : ''}`
+    return `/star-map?mode=personal&${collection === 'galaxies' || collection === 'activities' || collection === 'constellations' ? `layer=${collection}` : `collection=${collection}`}${list ? '&view=list' : ''}`
   }
   return '/star-map?mode=discover'
 }

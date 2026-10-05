@@ -1844,7 +1844,17 @@
     "relation_going": "Participation approuvée · trait plein",
     "relation_past": "Historique / retrait · points espacés",
     "relationScope": "Les lignes relient votre centre aux objets réels de la couche et du lot chargés. Un objet peut avoir plusieurs liens. Ouvrez un groupe ou la liste pour lire tous les libellés.",
-    "personalDecoration": "Les particules et groupes sont décoratifs. Dans la vue d’ensemble, les liens décrivent vos relations privées actuelles, sans représenter des faisceaux envoyés. Aucun lien n’est tracé sans planète centrale."
+    "personalDecoration": "Les particules et groupes sont décoratifs. Dans la vue d’ensemble, les liens décrivent vos relations privées actuelles, sans représenter des faisceaux envoyés. Aucun lien n’est tracé sans planète centrale.",
+    "layer_constellations": "Amas d’activités",
+    "meaning_personal_constellations": "Vos activités liées forment des amas temporaires par galaxie réelle. Les activités à venir et l’historique restent séparés.",
+    "empty_constellations": "Aucun amas d’activités accessible. Marquez votre intérêt ou demandez à participer à une activité de galaxie.",
+    "scope_constellations": "Chaque amas regroupe vos activités liées et accessibles d’une galaxie dans le lot chargé. Les nombres comptent les activités, pas les personnes. Le regroupement ne crée ni adhésion ni inscription.",
+    "constellationName": "{name} · {phase}",
+    "constellation_active": "À venir",
+    "constellation_past": "Historique",
+    "constellationBatchCount": "{count} activités dans ce lot",
+    "constellationLifecycle": "Ouvrez une activité pour marquer votre intérêt, demander à participer ou vous retirer. Chaque activité est examinée séparément. Les activités terminées, annulées ou quittées passent à l’historique ; quitter la galaxie masque ses amas. Sans inscription, retirer l’intérêt retire aussi l’activité.",
+    "constellationRequests": "Voir mes inscriptions en attente →"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { personalMapSelf } from '@/lib/personal-map-self'
 import { personalMapContext } from '@/lib/personal-map-context'
+import { parseConstellationGroup } from '@/lib/activity-constellations'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { discoveryPlanetWhere, personalMapPlanetWhere } from '@/lib/visibility'
@@ -15,11 +16,9 @@ import type { StarMapData } from '@/types/star-map'
 const querySchema = z
   .object({
     mode: z.enum(['discover', 'galaxies', 'personal']).default('discover'),
-    layer: z.enum(['planets', 'galaxies', 'activities']).optional(),
+    layer: z.enum(['planets', 'galaxies', 'activities', 'constellations']).optional(),
     collection: z.enum(['all', 'saved', 'following', 'mutual']).optional(),
-    group: z
-      .enum(['calm', 'melancholic', 'intense', 'cold', 'mixed', 'other', 'owned', 'joined', 'interested', 'going', 'requested', 'past'])
-      .optional(),
+    group: z.string().min(1).max(100).optional(),
     cursor: z.string().min(1).max(100).optional(),
     search: z.string().trim().max(80).default(''),
   })
@@ -37,7 +36,8 @@ export async function GET(request: Request) {
     const { mode, group, cursor, search, collection, layer } = parsed.data
     const contextLayer = mode === 'personal' && layer && layer !== 'planets' ? layer : null
     const allowedGroups = contextLayer === 'galaxies' ? ['owned', 'joined'] : contextLayer === 'activities' ? ['interested', 'going', 'requested', 'past'] : [...MOODS, 'other']
-    if ((layer && mode !== 'personal') || (contextLayer && collection) || (group && !allowedGroups.includes(group)) || (collection && mode !== 'personal'))
+    const validGroup = !group || (contextLayer === 'constellations' ? !!parseConstellationGroup(group) : allowedGroups.includes(group))
+    if ((layer && mode !== 'personal') || (contextLayer && collection) || !validGroup || (collection && mode !== 'personal'))
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
     const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
     if (!viewer || viewer.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
