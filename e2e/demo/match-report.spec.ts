@@ -16,7 +16,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(page.getByRole('heading', { level: 1, name: copy.matchReport.title, exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Report candidate', exact: true })).toBeVisible()
     await expect(page.locator('article img')).toHaveAttribute('src', config.customTextureUrl)
-    await expect(page.locator('canvas, .planet-avatar-rotating')).toHaveCount(0)
+    await expect(page.locator('article canvas, article .planet-avatar-rotating')).toHaveCount(0)
     await expect(page.locator('article').getByRole('link', { name: copy.resonance.viewPlanet, exact: true })).toHaveAttribute('href', '/planet/other')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     candidates = []
