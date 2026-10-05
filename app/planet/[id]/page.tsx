@@ -176,6 +176,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
 
   const profile: PlanetProfile = {
     publicTags: data.publicTags as PlanetProfile['publicTags'],
+    preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     id: data.id as string,
     name: (data.name as string) || 'Unknown',
     avatarSymbol: (data.avatarSymbol as string) || '?',

@@ -111,6 +111,7 @@ test('private basics registration and edit lifecycle on real migrations and rout
       for (const text of ['Hidden city', 'nonbinary', 'adultConfirmedAt', 'registrationBasics']) assert.ok(!JSON.stringify(result).includes(text), text)
       const detail = await (await planetDetail.GET(new Request('https://test.invalid'), { params: Promise.resolve({ id: peer.id }) })).json()
       assert.deepEqual(detail.publicTags, candidate.publicTags)
+      assert.deepEqual(detail.preferenceFit, candidate.preferenceFit)
       actor = 'other'; await registration.PUT(request({ ...values, publicTags: [] }))
       actor = 'new'; candidate = (await read()).planets.find(p => p.id === peer.id)
       assert.deepEqual(candidate.publicTags, [])
