@@ -36,8 +36,8 @@ export default function OriginalMessageDialog({ id, conversationId, origin, view
     window.addEventListener('focus',sync);document.addEventListener('visibilitychange',sync)
     return()=>{controller.abort();clearInterval(interval);window.removeEventListener('focus',sync);document.removeEventListener('visibilitychange',sync)}
   },[id,conversationId,viewerId])
-  return <dialog ref={dialog} onClose={onClose} aria-label={t('original')} className="max-h-[85dvh] w-[min(90vw,32rem)] rounded-2xl border border-white/15 bg-slate-950 p-4 text-white backdrop:bg-black/80">
-    <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-sm">{t('original')}</h2><button autoFocus onClick={()=>dialog.current?.close()} className="min-h-11 px-3 text-sm">{t('close')}</button></div>
+  return <dialog ref={dialog} onClose={onClose} aria-label={t('original')} className="m-auto overflow-y-auto max-h-[85dvh] w-[min(90vw,32rem)] rounded-2xl border border-white/15 bg-slate-950 p-4 text-white backdrop:bg-black/80">
+    <div className="sticky top-0 z-10 mb-3 flex items-center justify-between gap-3 bg-slate-950"><h2 className="text-sm">{t('original')}</h2><button autoFocus onClick={()=>dialog.current?.close()} className="min-h-11 px-3 text-sm">{t('close')}</button></div>
     {readError&&<p role="status" className="mb-2 text-xs text-amber-200">{tw('readError')}</p>}
     {failed?<p role="status">{t('quoteUnavailable')}</p>:!message?<p role="status">{t('loadingOriginal')}</p>:message.type==='image'?<ImageMessage image={message.image}/>:message.type==='share'?<SharedMessageCard card={message.share??{available:false}} conversationId={conversationId} origin={origin}/>:<MessageContent content={message.content}/>}
   </dialog>
