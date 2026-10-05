@@ -213,7 +213,8 @@ for (const locale of ['en', 'zh', 'fr']) {
       assert.ok(html.includes('aria-controls="star-map-sidebar"'))
       assert.ok(html.includes('id="star-map-sidebar"'))
       assert.ok(html.includes((mode === 'galaxies' ? messages.browseGalaxies : messages.browseObjects).replaceAll('&', '&amp;')))
-      assert.ok(html.includes((mode === 'galaxies' ? messages.galaxyDecoration : messages.decoration).replaceAll('&', '&amp;')))
+      if (mode === 'galaxies') assert.ok(html.includes(messages.galaxyDecoration.replaceAll('&', '&amp;')))
+      else assert.ok(!html.includes(messages.decoration.replaceAll('&', '&amp;')))
       assert.ok(!html.includes('starMap.'))
       assert.ok(!html.includes('Reset view'))
       assert.ok(!html.includes('Zoom in'))
@@ -231,7 +232,6 @@ for (const locale of ['en', 'zh', 'fr']) {
     )
     for (const href of [
       '/star-map',
-      '/star-map?mode=personal',
       '/discover',
       '/resonance',
       '/activities',
@@ -522,17 +522,17 @@ test('personal overview reserves its origin while global layout retains its exis
     assert.deepEqual(center,mapCenter(index,count,true))
   }
 })
-for (const locale of ['en','fr','zh']) test(`personal center is translated, preserves portraits and has a safe return link in ${locale}`,()=>{
+for (const locale of ['en','fr','zh']) test(`personal origin uses only name/avatar and a safe return link in ${locale}`,()=>{
   const Anchor=require('../components/star-map/PersonalMapAnchor.tsx').default
   const m=require(`../messages/${locale}.json`).starMap
   const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
-  const planet={id:'own',name:'My own planet',href:'/planet/own',level:2,planetConfig:{baseTexture:'mars.jpg',customTextureUrl:'https://example.test/center-portrait.png',tintColor:'#a78bfa'}}
+  const planet={id:'own',name:'My own planet',href:'/planet/own',level:2,avatarUrl:'https://example.test/center-portrait.png',displayName:'Actual person',planetConfig:{baseTexture:'mars.jpg',customTextureUrl:'https://example.test/center-portrait.png',tintColor:'#a78bfa'}}
   const html=render(locale,React.createElement(Anchor,{planet,origin:'personal-star-map-activities-list',summary:true}))
-  assert.ok(html.includes(escape(m.selfCenter)));assert.ok(html.includes(escape(m.selfExcluded)))
+  assert.ok(html.includes('Actual person'));assert.ok(!html.includes(escape(m.selfCenter)));assert.ok(!html.includes(escape(m.selfExcluded)))
   assert.ok(html.includes('src="https://example.test/center-portrait.png"'))
   assert.ok(html.includes('href="/planet/own?from=personal-star-map-activities-list"'))
   assert.ok(!html.includes('planet-surface-drift'));assert.ok(!html.includes('<canvas'))
   const missing=render(locale,React.createElement(Anchor,{planet:null,origin:'personal-star-map-saved'}))
-  assert.ok(missing.includes(escape(m.selfMissing)));assert.ok(missing.includes(escape(m.createSelf)))
+  assert.ok(missing.includes(escape(m.createSelf)))
   assert.ok(missing.includes('href="/onboarding"'));assert.ok(!missing.includes('<img'))
 })

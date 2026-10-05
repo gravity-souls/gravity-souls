@@ -1,3 +1,4 @@
+import { publicPlanetTags } from '@/lib/public-planet-tags'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { planetCreateSchema, planetUpdateSchema } from '@/lib/input-schemas'
 import { NextResponse } from "next/server";
@@ -17,7 +18,7 @@ export async function GET() {
 
     const planet = await prisma.planet.findFirst({
       where: { userId: session.user.id, active: true },
-      include: { user: { select: USER_PLANET_CONFIG_SELECT } },
+      include: { user: { select: { ...USER_PLANET_CONFIG_SELECT, registrationBasics: true } } },
     });
 
     if (!planet) {
@@ -25,7 +26,7 @@ export async function GET() {
     }
 
     const { user, ...planetData } = planet;
-    return NextResponse.json({ ...planetData, planetConfig: resolveUserPlanetConfig(user, planet) });
+    return NextResponse.json({ ...planetData, publicTags: publicPlanetTags(user.registrationBasics), planetConfig: resolveUserPlanetConfig(user, planet) });
 
   } catch (error) {
     return safeApiError(error)
@@ -52,6 +53,11 @@ export async function POST(request: Request) {
     }
 
     const userId = session.user.id;
+
+    const registrationUser = await prisma.user.findUnique({ where: { id: userId }, select: { registrationRequired: true, registrationBasics: { select: { userId: true } } } });
+    if (registrationUser?.registrationRequired && !registrationUser.registrationBasics) {
+      return NextResponse.json({ error: "REGISTRATION_REQUIRED" }, { status: 403 });
+    }
 
     // Deactivate any existing active planets
     await prisma.planet.updateMany({

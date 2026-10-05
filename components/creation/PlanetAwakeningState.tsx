@@ -4,7 +4,6 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import type { PlanetProfile } from '@/types/planet'
 import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
-import UniverseGlimpse from '@/components/creation/UniverseGlimpse'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
@@ -70,7 +69,6 @@ function NovaBurst({ coreColor }: { coreColor: string }) {
 
 export default function PlanetAwakeningState({ planet }: Props) {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0)
-  const [hasOtherPlanets, setHasOtherPlanets] = useState(false)
   const [globeStatus, setGlobeStatus] = useState<GlobeStatus>('loading')
   const reducedMotion = useReducedMotionPreference()
   const { data: session } = authClient.useSession()
@@ -121,9 +119,6 @@ export default function PlanetAwakeningState({ planet }: Props) {
           opacity: phase >= 1 ? 1 : 0,
         }}
       />
-
-      {/* Universe glimpse  -  real other planets, faded in last */}
-      <UniverseGlimpse visible={phase >= 4} onHasPlanets={setHasOtherPlanets} />
 
       {/* Planet  -  scales in. The cosmic globe, orbit rings, and nova burst
           are nested here (not page-level) so they center on this wrapper's
@@ -243,18 +238,6 @@ export default function PlanetAwakeningState({ planet }: Props) {
             You are now a Resonator  -  the deeper layers are open
           </span>
         </div>
-
-        {/* Universe glimpse caption  -  fades in with the glimpse itself.
-            Only shown once real other planets are confirmed to exist —
-            never a claim about a universe that might still be empty. */}
-        {hasOtherPlanets && (
-          <p
-            className="text-xs italic transition-opacity duration-[1500ms]"
-            style={{ color: 'var(--ghost)', opacity: phase >= 4 ? 0.75 : 0 }}
-          >
-            Your planet now shines among the others already alight in this universe
-          </p>
-        )}
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">

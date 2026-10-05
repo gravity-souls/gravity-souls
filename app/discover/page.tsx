@@ -21,6 +21,8 @@ import { themeLabel } from '@/lib/planet-labels'
 function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
   return {
     id: data.id as string,
+    preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
+    publicTags: data.publicTags as PlanetProfile['publicTags'],
     name: (data.name as string) || 'Unknown',
     avatarSymbol: (data.avatarSymbol as string) || '?',
     tagline: (data.tagline as string) ?? undefined,

@@ -1,4 +1,6 @@
 'use client'
+import DiscoveryFilters from '@/components/discovery/DiscoveryFilters'
+import type { DiscoveryFilters as FilterValues } from '@/lib/discovery-filters'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -25,6 +27,7 @@ function EventsTabContent({
   const t = useTranslations('galaxyWorkflow'),
     te = useTranslations('eventForms'),
     old = useTranslations('galaxies')
+  const [filters, setFilters] = useState<FilterValues>({})
   const [tab, setTab] = useState('upcoming'),
     [category, setCategory] = useState('ALL'),
     [search, setSearch] = useState(''),
@@ -72,6 +75,7 @@ function EventsTabContent({
     const query = new URLSearchParams({ status: tab, page: String(page) })
     if (category !== 'ALL') query.set('category', category)
     if (search.trim()) query.set('search', search.trim())
+    for (const [key, value] of Object.entries(filters)) if (value && key !== 'sort') query.set(key, value)
     galaxyRequest<{
       events: GalaxyEventSummary[]
       total: number
@@ -94,7 +98,7 @@ function EventsTabContent({
     return () => {
       alive = false
     }
-  }, [galaxyId, canPropose, tab, page, category, search, revision, t])
+  }, [galaxyId, canPropose, tab, page, category, search, revision, t, filters])
   useEffect(() => {
     const foreground = () => { if (document.visibilityState !== 'hidden') setRevision(v => v + 1) }
     window.addEventListener('focus', foreground)
@@ -270,6 +274,7 @@ function EventsTabContent({
               </button>
             ))}
           </div>
+          <DiscoveryFilters value={filters} onChange={value => { setFilters(value); setPage(1) }} recommended={false} />
           <input
             className="rounded-xl border border-white/15 bg-white/5 p-3 text-sm"
             aria-label={te('searchPlaceholder')}

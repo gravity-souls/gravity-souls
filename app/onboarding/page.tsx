@@ -16,6 +16,7 @@ import Step3AtmosphereStyle from '@/components/creation/steps/Step3AtmosphereSty
 import GlowButton from '@/components/ui/GlowButton'
 import PlanetAwakeningState from '@/components/creation/PlanetAwakeningState'
 import type { PlanetProfile, Lifestyle, CommunicationStyle } from '@/types/planet'
+import RegistrationGate from '@/components/registration/RegistrationGate'
 import type { ResonanceAnswers } from '@/types/creation'
 
 // Step indices: 0 = intro, 1–3 = creation steps, 4 = resonance questions, 5 = reveal
@@ -33,7 +34,7 @@ const RESONANCE_QUESTIONS: Array<{
   { key: 'lifeChapter',         required: false, options: ['building', 'exploring', 'healing', 'waiting'] },
 ]
 
-export default function OnboardingPage() {
+function CalibrationPage() {
   const router = useRouter()
   const t = useTranslations('createPlanet')
   const { draft, setDraft, step, setStep, markReady, clear } = useOnboardingState()
@@ -367,4 +368,10 @@ export default function OnboardingPage() {
       </div>
     </OnboardingShell>
   )
+}
+
+export default function OnboardingPage() {
+  // The wizard saves private preferences separately. It does not silently make
+  // the user's region or language public through Profile.
+  return <RegistrationGate><CalibrationPage /></RegistrationGate>
 }

@@ -1,3 +1,4 @@
+import { BASIC_OPTIONS } from '@/lib/registration-basics'
 import { z } from 'zod'
 import { MAX_MESSAGE_LENGTH } from './message-limits'
 
@@ -84,7 +85,14 @@ const optionalUrl = z.union([z.literal(''), z.url().max(2048).refine((value) => 
   const url = new URL(value)
   return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password
 })]).nullable().optional()
+const audienceFields = {
+  languages: z.array(z.enum(BASIC_OPTIONS.languages)).max(9).optional(),
+  interestTags: z.array(z.enum(BASIC_OPTIONS.interests)).max(12).optional(),
+  connectionGoals: z.array(z.enum(BASIC_OPTIONS.connectionGoals)).max(8).optional(),
+  gatheringPreferences: z.array(z.enum(BASIC_OPTIONS.gatheringPreferences)).max(6).optional(),
+}
 export const eventSchema = z.object({
+  ...audienceFields,
   title: text(80).min(1), description: text(500).min(1), date: text(100).min(1),
   requiresApproval: z.boolean().optional(),
   category: z.enum(['MEETUP', 'ONLINE', 'WORKSHOP', 'STARGAZING', 'DISCUSSION', 'OTHER']),
@@ -114,6 +122,8 @@ export const passwordResetRequestSchema = z.object({
 
 
 export const galaxySchema = z.object({
+  ...audienceFields,
+  region: text(120).optional(),
   name: text(80).min(2), symbol: text(12).min(1), tagline: text(160),
   description: text(2000), keywords: z.array(text(50).min(1)).max(12),
   mood: z.enum(['contemplative', 'creative', 'intimate', 'technical', 'vibrant']),

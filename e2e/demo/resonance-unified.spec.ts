@@ -68,7 +68,7 @@ test('canonical recommendation identity and score survive map/list switches', as
   await expect(
     page.getByTestId('resonance-score').filter({ visible: true }),
   ).toContainText(score)
-  await page.getByRole('button', { name: 'Star map', exact: true }).click()
+  await page.getByRole('button', { name: 'Match orbits', exact: true }).click()
   await expect(planet).toHaveAttribute('aria-pressed', 'true')
   expect(forbidden).toEqual([])
 })
@@ -78,7 +78,7 @@ test('legacy resonance map link opens the canonical resonance page', async ({
   await page.goto('/star-map?mode=resonance')
   await expect(page).toHaveURL(/\/resonance$/)
   await expect(
-    page.getByRole('button', { name: 'Star map', exact: true }),
+    page.getByRole('button', { name: 'Match orbits', exact: true }),
   ).toBeVisible()
   await page.goto('/star-map')
   await expect(

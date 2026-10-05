@@ -118,6 +118,7 @@ function PrivacySection() {
 
 function AccountDataSection() {
   const t = useTranslations('accountSettings')
+  const basics = useTranslations('registrationBasics')
 
   return (
     <SectionCard title={t('title')} description={t('subtitle')} color="#f87171">
@@ -128,6 +129,7 @@ function AccountDataSection() {
       >
         {t('linkFromPlanetSettings')} →
       </Link>
+      <Link href="/settings/basics" className="mt-4 block text-sm underline">{basics('editTitle')} →</Link>
     </SectionCard>
   )
 }

@@ -1802,7 +1802,8 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
           as(viewer)
           for (const mode of ['discover','galaxies']) {
             const global=await starMap.GET(new Request(`https://example.test/api?mode=${mode}`)).then(r=>r.json())
-            assert.ok(!('selfPlanet' in global))
+            if (mode === 'discover') assert.equal(global.selfPlanet.id,own.id)
+            else assert.equal(global.selfPlanet,undefined)
           }
         })
         await t.test('fresh avatar and name changes replace the center without writes or notifications',async()=>{

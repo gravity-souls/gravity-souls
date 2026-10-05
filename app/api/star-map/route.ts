@@ -1,3 +1,7 @@
+import { preferenceFit } from '@/lib/preference-matching'
+import { buildOrbitMatches } from '@/lib/match'
+import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
+import { publicPlanetTags } from '@/lib/public-planet-tags'
 import { z } from 'zod'
 import { personalMapSelf } from '@/lib/personal-map-self'
 import { personalMapContext } from '@/lib/personal-map-context'
@@ -41,7 +45,7 @@ export async function GET(request: Request) {
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
     const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
     if (!viewer || viewer.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    const selfPlanet = mode === 'personal' ? await personalMapSelf(user.id) : undefined
+    const selfPlanet = mode !== 'galaxies' ? await personalMapSelf(user.id) : undefined
     if (contextLayer) return Response.json({ ...await personalMapContext(user.id, { layer: contextLayer, group, cursor, search }), selfPlanet }, { headers: { 'Cache-Control': 'private, no-store' } })
     if (mode === 'galaxies') {
       const where = search
@@ -122,7 +126,7 @@ export async function GET(request: Request) {
           abstractAxis: true,
           introspectiveAxis: true,
           visual: true,
-          user: { select: { userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
+          user: { select: { name: true, image: true, registrationBasics: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } },
         },
       }),
       prisma.planet.count({ where: base }),
@@ -161,7 +165,18 @@ export async function GET(request: Request) {
     const followingIds = new Set(follows.filter((row) => row.followerId === user.id).map((row) => row.followingId))
     const followerIds = new Set(follows.filter((row) => row.followingId === user.id).map((row) => row.followerId))
     const threadIds = new Map(conversations.map((row) => [row.userAId === user.id ? row.userBId : row.userAId, row.id]))
+    const [sourcePlanet, preferences] = mode === 'discover' ? await Promise.all([
+      prisma.planet.findFirst({ where: { userId: user.id, active: true } }),
+      prisma.registrationBasics.findUnique({ where: { userId: user.id } }),
+    ]) : [null, null]
+    const candidates = rows.map(p => planetProfileFromApi({ ...p, preferenceFit: preferenceFit(preferences, p.user.registrationBasics,
+      sourcePlanet ? sourcePlanet.lifestyle !== p.lifestyle || Math.abs(sourcePlanet.abstractAxis-p.abstractAxis) >= 20 : undefined) }))
+    const scores = sourcePlanet ? new Map(buildOrbitMatches(planetProfileFromApi(sourcePlanet), candidates, candidates.length).map(match => [match.planetId, match.score])) : new Map<string,number>()
     const nodes = rows.map((p) => ({
+      ...(scores.has(p.id) ? { score: scores.get(p.id) } : {}),
+      avatarUrl: p.user.image || p.user.planetCustomTexture,
+      displayName: p.user.name,
+      publicTags: publicPlanetTags(p.user.registrationBasics),
       id: p.id,
       userId: p.userId,
       relationship: {
@@ -191,7 +206,7 @@ export async function GET(request: Request) {
         total,
         nextCursor: more ? rows.at(-1)!.id : null,
         scope: mode === 'personal' ? 'personal' : 'allVisible',
-        ...(mode === 'personal' ? { selfPlanet } : {}),
+        selfPlanet,
       } satisfies StarMapData,
       { headers: { 'Cache-Control': 'private, no-store' } },
     )

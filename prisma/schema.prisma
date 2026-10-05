@@ -38,6 +38,8 @@ model user {
 
   sessions Session[]
   accounts Account[]
+  registrationRequired Boolean @default(true)
+  registrationBasics RegistrationBasics?
   profile  Profile?
   questionnaires QuestionnaireResult[]
   planets  Planet[]
@@ -283,6 +285,12 @@ model Match {
 }
 
 model Community {
+  region String @default("")
+  languages String[] @default([])
+  interestTags String[] @default([])
+  connectionGoals String[] @default([])
+  gatheringPreferences String[] @default([])
+
   id          String   @id @default(cuid())
   slug        String   @unique
   name        String
@@ -358,6 +366,11 @@ model CommunityMembership {
 }
 
 model Event {
+  languages String[] @default([])
+  interestTags String[] @default([])
+  connectionGoals String[] @default([])
+  gatheringPreferences String[] @default([])
+
   id           String        @id @default(cuid())
   galaxyId     String
   proposerId   String
@@ -888,4 +901,21 @@ model PushDelivery {
   @@index([status, nextAttemptAt])
   @@index([expiresAt])
   @@map("push_delivery")
+}
+
+// Private registration data; never included in public profile DTOs.
+model RegistrationBasics {
+  publicTags String[] @default([])
+  userId String @id
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender String @default("undisclosed")
+  languages String[] @default([])
+  region String @default("")
+  interests String[] @default([])
+  connectionGoals String[] @default([])
+  peoplePreferences String[] @default([])
+  gatheringPreferences String[] @default([])
+  adultConfirmedAt DateTime
+  ageMethod String
+  updatedAt DateTime @updatedAt
 }

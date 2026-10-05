@@ -22,7 +22,6 @@ import GalaxyMemberships from '@/components/planet/GalaxyMemberships'
 import ExplorationTracePanel from '@/components/planet/ExplorationTracePanel'
 import ProfileLayerSection from '@/components/planet/ProfileLayerSection'
 import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeCloud } from '@/components/planet/PlanetModules'
-import ResonanceMap from '@/components/planet/ResonanceMap'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
@@ -176,6 +175,8 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
   const planetConfig = isPlanetConfig(data.planetConfig) ? data.planetConfig : undefined
 
   const profile: PlanetProfile = {
+    publicTags: data.publicTags as PlanetProfile['publicTags'],
+    preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     id: data.id as string,
     name: (data.name as string) || 'Unknown',
     avatarSymbol: (data.avatarSymbol as string) || '?',
@@ -235,7 +236,6 @@ function PlanetPageInner() {
   const [viewerRole, setViewerRole]     = useState<'self' | 'explorer' | 'resonator'>('explorer')
   const [myMatch, setMyMatch]           = useState<ResonancePlanet | null>(null)
   const [viewerPlanet, setViewerPlanet] = useState<PlanetProfile | null>(null)
-  const [resonances, setResonances]     = useState<ResonancePlanet[]>([])
 
   useEffect(() => {
     async function load() {
@@ -279,16 +279,7 @@ function PlanetPageInner() {
         setViewerRole('explorer')
       }
 
-      // Fetch other planets for resonance map
-      try {
-        const planetsRes = await fetch('/api/planets')
-        if (planetsRes.ok) {
-          const { planets: planetRows } = await planetsRes.json() as { planets: Record<string, unknown>[] }
-          const allPlanets = planetRows.map(dbPlanetToProfile)
-          const reso = getResonanceMatches(p, allPlanets, 4)
-          setResonances(reso)
-        }
-      } catch { /* ignore */ }
+
     }
 
     load()
@@ -497,23 +488,8 @@ function PlanetPageInner() {
               </OrbitCard>
             )}
 
-            {/* Resonance field (Resonator / self only) */}
-            {(isResonator || isSelf) && resonances.length > 0 ? (
-              <OrbitCard glowColor={visual.coreColor} className="p-5">
-                <ResonanceMap
-                  planets={resonances}
-                  hubColor={visual.coreColor}
-                  title={t('resonancesOf', { name: planet.name })}
-                />
-              </OrbitCard>
-            ) : (!isResonator && !isSelf) && (
-              <OrbitCard glowColor={visual.coreColor} className="p-5">
-                <FogVeil
-                  title={t('resonanceHidden')}
-                  message={t('resonanceHiddenMessage')}
-                />
-              </OrbitCard>
-            )}
+            {isSelf && <Link href="/resonance" className="inline-flex min-h-11 items-center text-sm underline">{tNav('resonance')}</Link>}
+
 
           </div>
         </div>

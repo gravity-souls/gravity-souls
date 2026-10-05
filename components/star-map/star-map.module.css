@@ -512,3 +512,8 @@
 .relationItems { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .relationItem { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; line-height: 1.5; }
 .relationItem svg { flex: 0 0 38px; }
+
+/* One small person node at the relationship origin, without a planet card. */
+.selfCenter { width: 100px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+.selfLink { gap: 5px; }
+.selfName { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }

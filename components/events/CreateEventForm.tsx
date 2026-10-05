@@ -1,5 +1,6 @@
 'use client'
 
+import AudienceFields, { type AudienceValues } from '@/components/discovery/AudienceFields'
 import { useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -92,6 +93,7 @@ export default function CreateEventForm({ galaxyId, onCreated, initialEvent }: C
   const t = useTranslations('eventForms')
   const tCommon = useTranslations('common')
   const locale = useLocale()
+  const [audience, setAudience] = useState<AudienceValues>({ languages: initialEvent?.languages ?? [], interests: initialEvent?.interestTags ?? [], connectionGoals: initialEvent?.connectionGoals ?? [], gatheringPreferences: initialEvent?.gatheringPreferences ?? [] })
   const [step, setStep] = useState(1)
   const [title, setTitle] = useState(initialEvent?.title ?? '')
   const [description, setDescription] = useState(initialEvent?.description ?? '')
@@ -162,6 +164,7 @@ export default function CreateEventForm({ galaxyId, onCreated, initialEvent }: C
         method: initialEvent ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          languages: audience.languages, interestTags: audience.interests, connectionGoals: audience.connectionGoals, gatheringPreferences: audience.gatheringPreferences,
           title: title.trim(),
           description: description.trim(),
           category,
@@ -311,6 +314,7 @@ export default function CreateEventForm({ galaxyId, onCreated, initialEvent }: C
         </div>
       )}
 
+      <AudienceFields value={audience} onChange={setAudience} />
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={requiresApproval} onChange={e => setRequiresApproval(e.target.checked)} /><span>{tw('requireAttendanceApproval')}<span className="mt-1 block text-xs text-white/50">{tw('attendanceApprovalHint')}</span></span></label>
       {initialEvent && <p className="text-xs text-amber-200">{tw('editResubmits')}</p>}
       {error && <p className="text-xs" style={{ color: '#fca5a5' }}>{error}</p>}

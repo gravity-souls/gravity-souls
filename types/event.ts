@@ -21,6 +21,11 @@ export interface EventAttendee {
 }
 
 export interface GalaxyEventSummary {
+  languages?: string[]
+  interestTags?: string[]
+  connectionGoals?: string[]
+  gatheringPreferences?: string[]
+  recommendation?: { score?: number; exploration?: boolean } | null
   id: string
   galaxyId: string
   title: string

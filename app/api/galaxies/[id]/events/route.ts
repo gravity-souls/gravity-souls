@@ -1,3 +1,5 @@
+import { eventDiscoveryWhere, discoveryQueryFields } from '@/lib/discovery-filters'
+import { z } from 'zod'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { eventSchema } from '@/lib/input-schemas'
 import { prisma } from '@/lib/prisma'
@@ -59,6 +61,10 @@ export async function GET(
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ]
+    const filters = z.object(discoveryQueryFields).safeParse(Object.fromEntries(url.searchParams))
+    if (!filters.success) return Response.json({ error: 'invalidQuery' }, { status: 400 })
+    const extraFilters = eventDiscoveryWhere(filters.data)
+    if (extraFilters.length) where.AND = [...(Array.isArray(where.AND) ? where.AND : []), ...extraFilters]
     const [events, total] = await Promise.all([
       prisma.event.findMany({
         where,

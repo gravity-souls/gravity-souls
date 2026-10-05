@@ -1,9 +1,15 @@
 'use client'
+import AudienceFields, { type AudienceValues } from '@/components/discovery/AudienceFields'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { galaxyRequest } from '@/lib/galaxy-client'
 export interface GalaxySettings {
+  region?: string
+  languages?: string[]
+  interestTags?: string[]
+  connectionGoals?: string[]
+  gatheringPreferences?: string[]
   id?: string
   slug?: string
   name: string
@@ -24,6 +30,9 @@ export default function GalaxyForm({
   galaxy?: GalaxySettings
   onSaved?: () => void
 }) {
+  const td = useTranslations('discoveryPreferences')
+  const [region, setRegion] = useState(galaxy?.region ?? '')
+  const [audience, setAudience] = useState<AudienceValues>({ languages: galaxy?.languages ?? [], interests: galaxy?.interestTags ?? [], connectionGoals: galaxy?.connectionGoals ?? [], gatheringPreferences: galaxy?.gatheringPreferences ?? [] })
   const t = useTranslations('galaxyWorkflow'),
     router = useRouter()
   const [draft, setDraft] = useState(
@@ -80,6 +89,7 @@ export default function GalaxyForm({
         setSaved(false)
         try {
           const data = {
+            region, languages: audience.languages, interestTags: audience.interests, connectionGoals: audience.connectionGoals, gatheringPreferences: audience.gatheringPreferences,
             name: draft.name,
             symbol: draft.symbol,
             tagline: draft.tagline ?? '',
@@ -117,6 +127,8 @@ export default function GalaxyForm({
       {field('symbol', 12)}
       {field('tagline', 160)}
       {field('description', 2000, true)}
+      <label className="grid gap-2">{td('region')}<input value={region} maxLength={120} onChange={e => setRegion(e.target.value)} className={inputClass} /></label>
+      <AudienceFields value={audience} onChange={setAudience} />
       <label className="grid gap-2">
         {t('keywords')}
         <input

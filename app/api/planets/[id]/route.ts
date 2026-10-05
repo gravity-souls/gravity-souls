@@ -1,3 +1,5 @@
+import { preferenceFit } from '@/lib/preference-matching'
+import { publicPlanetTags } from '@/lib/public-planet-tags'
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { safeApiError } from "@/lib/api-input";
@@ -24,6 +26,7 @@ const PLANET_SELECT = {
   updatedAt: true,
   user: {
     select: {
+      registrationBasics: true,
       id: true,
       name: true,
       userLevel: true,
@@ -75,9 +78,17 @@ export async function GET(
       return Response.json({ error: "Planet not found" }, { status: 404 });
     }
 
+    const [preferences, sourcePlanet] = await Promise.all([
+      prisma.registrationBasics.findUnique({ where: { userId: session.user.id } }),
+      prisma.planet.findFirst({ where: { userId: session.user.id, active: true }, select: { id: true, lifestyle: true, abstractAxis: true } }),
+    ]);
+    const fit = preferenceFit(preferences, planet.user.registrationBasics,
+      sourcePlanet ? sourcePlanet.lifestyle !== planet.lifestyle || Math.abs(sourcePlanet.abstractAxis-planet.abstractAxis) >= 20 : undefined);
     const profile = planet.user.profile;
 
     const result = {
+      preferenceFit: fit && sourcePlanet ? { ...fit, sourcePlanetId: sourcePlanet.id } : null,
+      publicTags: publicPlanetTags(planet.user.registrationBasics),
       id: planet.id,
       userId: planet.userId,
       name: planet.name,

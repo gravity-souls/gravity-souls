@@ -158,6 +158,7 @@ export async function DELETE(request: Request) {
       await Promise.all([
         tx.session.deleteMany({ where: { userId } }),
         tx.account.deleteMany({ where: { userId } }),
+        tx.registrationBasics.deleteMany({ where: { userId } }),
         tx.profile.deleteMany({ where: { userId } }),
         tx.questionnaireResult.deleteMany({ where: { userId } }),
         tx.savedPlanet.deleteMany({ where: { userId } }),

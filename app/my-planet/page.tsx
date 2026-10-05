@@ -1,5 +1,6 @@
 'use client'
 
+import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -200,6 +201,7 @@ export default function MyPlanetPage() {
           const visual = { ...DEFAULT_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
 
           p = {
+            publicTags: data.publicTags,
             id: data.id,
             name: data.name,
             avatarSymbol: data.avatarSymbol,
@@ -704,6 +706,8 @@ export default function MyPlanetPage() {
                     </button>
                   </div>
 
+                  <PublicPlanetTags tags={planet.publicTags} />
+                  <Link href="/settings/basics" className="text-xs underline">{tNav('settings')}</Link>
                   {planet.tagline && (
                     <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
                       {planet.tagline}
@@ -908,7 +912,6 @@ export default function MyPlanetPage() {
 
         <div className="mb-4 flex flex-wrap gap-3">
           <Link href="/star-map?mode=personal" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('personalStarMap')}</Link>
-          <Link href="/saved" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('savedOrbit')}</Link>
           <Link href="/relationships" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('relationships')}</Link>
         </div>
         <InboxPreview />

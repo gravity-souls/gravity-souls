@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
+import PreferenceMatchNote from '@/components/discovery/PreferenceMatchNote'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
@@ -250,6 +252,7 @@ export function ResonanceDetails({
             <ScoreRing score={match.score} color={color} />
           </div>
 
+          <PublicPlanetTags tags={planet.publicTags} /><PreferenceMatchNote match={match} />
           {/* Resonance note */}
           <div
             className="px-4 py-3 rounded-xl"

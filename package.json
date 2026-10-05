@@ -27,7 +27,8 @@
     "build:deploy": "prisma migrate deploy && npm run build",
     "test:chat-images": "node --import ./tests/register.mjs --test tests/chat-images.test.mjs",
     "test:chat-interactions": "node --import ./tests/register.mjs --test tests/chat-interactions.test.mjs",
-    "test:push": "node --import ./tests/register.mjs --test tests/push.test.mjs tests/push-worker.test.mjs"
+    "test:push": "node --import ./tests/register.mjs --test tests/push.test.mjs tests/push-worker.test.mjs",
+    "test:registration": "node --import ./tests/register.mjs --test tests/registration-basics.test.mjs tests/discovery-preferences.test.mjs"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

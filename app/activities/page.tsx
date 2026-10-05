@@ -1,5 +1,7 @@
 'use client'
 
+import DiscoveryFilters from '@/components/discovery/DiscoveryFilters'
+import type { DiscoveryFilters as FilterValues } from '@/lib/discovery-filters'
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -30,6 +32,7 @@ export default function GalaxyEventsPage() {
   const tAuth = useTranslations('auth')
   const [events, setEvents] = useState<GalaxyEventSummary[]>([])
   const [tab, setTab] = useState<EventListTab>('upcoming')
+  const [filters, setFilters] = useState<FilterValues>({ sort: 'date' })
   const [category, setCategory] = useState<'ALL' | EventCategory>('ALL')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -41,8 +44,9 @@ export default function GalaxyEventsPage() {
     const params = new URLSearchParams({ status: tab, page: String(page) })
     if (category !== 'ALL') params.set('category', category)
     if (search.trim()) params.set('search', search.trim())
+    for (const [key, value] of Object.entries(filters)) if (value && (key !== 'sort' || tab === 'upcoming')) params.set(key, value)
     return params.toString()
-  }, [category, search, tab, page])
+  }, [category, search, tab, page, filters])
 
   const currentTab = TABS.find((item) => item.value === tab) ?? TABS[0]
 
@@ -178,6 +182,7 @@ export default function GalaxyEventsPage() {
               </button>
             ))}
           </div>
+          <DiscoveryFilters value={filters} onChange={value => { setFilters(value); setPage(1) }} recommended={tab === 'upcoming'} />
           <input aria-label={t('searchPlaceholder')} maxLength={80} value={search} onChange={(event) => {setSearch(event.target.value);setPage(1)}} placeholder={t('searchPlaceholder')} className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
         </div>
 

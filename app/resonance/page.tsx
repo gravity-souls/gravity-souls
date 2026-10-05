@@ -10,6 +10,7 @@ import ResonanceDrawer from '@/components/resonance/ResonanceDrawer'
 import ResonanceEmptyState from '@/components/resonance/ResonanceEmptyState'
 import FirstSessionHint from '@/components/resonance/FirstSessionHint'
 import FirstMatchCTA from '@/components/resonance/FirstMatchCTA'
+import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { dismissHint } from '@/lib/hints-preferences'
 import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 import { localizeResonanceMatch } from '@/lib/resonance-presentation'
@@ -98,6 +99,7 @@ function SessionStats({ session }: { session: ResonanceSession }) {
 // --- Page ---------------------------------------------------------------------
 
 export default function ResonancePage() {
+  const td = useTranslations('discoveryPreferences')
   const tNav = useTranslations('nav')
   const t = useTranslations('resonance')
   const tCommon = useTranslations('common')
@@ -122,8 +124,13 @@ export default function ResonancePage() {
 
   useEffect(() => {
     let cancelled = false
+    let generation = 0
 
     async function load() {
+      const current = ++generation
+      setSession(null)
+      setPlanetById({})
+      setActiveId(null)
       setMounted(true)
 
       let res: Response
@@ -133,7 +140,7 @@ export default function ResonancePage() {
         return
       }
 
-      if (cancelled) return
+      if (cancelled || current !== generation) return
 
       // A single 401 right after landing here can be WebKit's cookie jar not
       // having committed the session yet rather than a real unauthenticated
@@ -144,7 +151,7 @@ export default function ResonancePage() {
         } catch {
           return
         }
-        if (cancelled) return
+        if (cancelled || current !== generation) return
       }
 
       if (res.status === 401) {
@@ -196,11 +203,13 @@ export default function ResonancePage() {
         .then((r) => (r.ok ? r.json() : { planets: [] }))
         .then(
           ({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
-            if (cancelled) return
+            if (cancelled || current !== generation) return
             const planets = planetData.map(
               (d) =>
                 ({
                   id: d.id as string,
+                  publicTags: d.publicTags as PlanetProfile['publicTags'],
+                  preferenceFit: d.preferenceFit as PlanetProfile['preferenceFit'],
                   name: (d.name as string) || 'Unknown',
                   avatarSymbol: (d.avatarSymbol as string) || '?',
                   tagline: (d.tagline as string) ?? undefined,
@@ -245,8 +254,10 @@ export default function ResonancePage() {
         })
     }
 
-    load()
+    void load()
+    const unsubscribe = subscribeSocialRefresh(() => { void load() })
     return () => {
+      unsubscribe()
       cancelled = true
     }
   }, [])
@@ -348,6 +359,7 @@ export default function ResonancePage() {
           />
         )}
 
+        <p className="mb-4 text-xs text-slate-400">{td('scoringHint')}</p>
         <ResonanceExperience
           source={myPlanet}
           session={displaySession!}

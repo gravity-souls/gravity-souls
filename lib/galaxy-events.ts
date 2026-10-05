@@ -80,6 +80,10 @@ export function parseEventCategory(value: unknown): EventCategory | null {
 }
 
 type EventSummaryInput = {
+  languages?: string[]
+  interestTags?: string[]
+  connectionGoals?: string[]
+  gatheringPreferences?: string[]
   id: string
   galaxyId: string
   title: string
@@ -110,6 +114,10 @@ type EventDetailInput = Omit<EventSummaryInput, 'rsvps'> & {
 
 export function serializeEventSummary(event: EventSummaryInput) {
   return {
+    languages: event.languages ?? [],
+    interestTags: event.interestTags ?? [],
+    connectionGoals: event.connectionGoals ?? [],
+    gatheringPreferences: event.gatheringPreferences ?? [],
     id: event.id,
     galaxyId: event.galaxyId,
     title: event.title,

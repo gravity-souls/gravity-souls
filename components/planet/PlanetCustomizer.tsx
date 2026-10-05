@@ -5,6 +5,7 @@
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Check, Lock, RotateCcw, Save, Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetGlobe from '@/components/planet/PlanetGlobe'
 import XPProgressBar from '@/components/planet/XPProgressBar'
@@ -169,6 +170,7 @@ function ControlSection({
 
   return (
     <section className="rounded-lg border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{title}</h3>
         {locked && (
@@ -188,6 +190,7 @@ interface XPSummary {
 }
 
 export default function PlanetCustomizer({ initialConfig, planetName, userLevel, onSaved, onClose }: Props) {
+  const td = useTranslations('discoveryPreferences')
   const t = useTranslations('planetCustomizer')
   const [savedConfig, setSavedConfig] = useState(() => normalizeConfig(initialConfig))
   const [localConfig, setLocalConfig] = useState(() => normalizeConfig(initialConfig))
@@ -316,7 +319,10 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
 
   return (
     <div className="grid min-h-full gap-5 md:grid-cols-[280px_minmax(0,1fr)]">
+
       <aside className="rounded-lg border border-white/10 p-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <Link href="/settings/basics" className="mb-4 inline-flex min-h-11 items-center text-sm underline">{td('publicTags')}</Link>
+
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--ghost)' }}>{t('livePreview')}</p>

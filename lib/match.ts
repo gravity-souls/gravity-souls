@@ -1,3 +1,4 @@
+import { adjustedPreferenceScore, selectWithExploration } from '@/lib/preference-matching'
 import type { PlanetProfile, ResonancePlanet, ResonanceType, BeamColor } from '@/types/planet'
 import type {
   OrbitMatch, OrbitReasonKey, OrbitColor, MatchDimensions,
@@ -71,7 +72,7 @@ function scorePair(source: PlanetProfile, candidate: PlanetProfile): ScoredPlane
     Math.max(0, 10 - introDiff / 10) // 0–10 (introspection proximity)
 
   const resType = dominantResonanceType(themeOverlap, moodDist, lifestyleComp, cogDiff)
-  return { planet: candidate, score: Math.min(100, Math.round(score)), resType }
+  return { planet: candidate, score: adjustedPreferenceScore(score, candidate.preferenceFit?.sourcePlanetId && candidate.preferenceFit.sourcePlanetId !== source.id ? null : candidate.preferenceFit), resType }
 }
 
 // --- Public API ---------------------------------------------------------------
@@ -271,7 +272,8 @@ export function buildOrbitMatches(
         (lifestyleComp  ? 8  : 0) +
         Math.max(0, 20 - cogDiff / 5) +
         Math.max(0, 10 - introDiff / 10)
-      const score = Math.min(100, Math.round(rawScore))
+      const fit = target.preferenceFit?.sourcePlanetId && target.preferenceFit.sourcePlanetId !== source.id ? null : target.preferenceFit
+      const score = adjustedPreferenceScore(rawScore, fit)
 
       const { primaryReason, orbitColor } = deriveOrbitReason(source, target, themeOverlap, moodDist, lifestyleComp)
       const dimensions = deriveDimensions(source, target, themeOverlap, moodDist)
@@ -279,6 +281,7 @@ export function buildOrbitMatches(
       return {
         planetId:      target.id,
         score,
+        ...(fit ? { preferenceFit: fit } : {}),
         orbitColor,
         primaryReason,
         dimensions,
@@ -301,7 +304,7 @@ export function buildResonanceSession(
 ): ResonanceSession {
   return {
     sourcePlanetId: source.id,
-    matches:        buildOrbitMatches(source, candidates, 5),
+    matches:        selectWithExploration(buildOrbitMatches(source, candidates, candidates.length), m => m.planetId, `${source.id}:${new Date().toISOString().slice(0, 10)}`),
     date:           new Date().toISOString().slice(0, 10),
   }
 }

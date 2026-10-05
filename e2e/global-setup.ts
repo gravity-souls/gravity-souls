@@ -238,6 +238,15 @@ export default async function globalSetup() {
       },
     })
 
+    // These fixtures represent adults who have already completed registration.
+    for (const userId of [E2E.withPlanet.userId, E2E.noPlanet.userId, E2E.signOut.userId, E2E.handoff.userId]) {
+      await prisma.registrationBasics.upsert({
+        where: { userId },
+        create: { userId, adultConfirmedAt: new Date(), ageMethod: 'adult-self-declaration' },
+        update: {},
+      })
+    }
+
     // ── Journey 1 clean-up: delete any leftover sign-up user from prior runs ──
     await prisma.user.deleteMany({ where: { email: JOURNEY.signUp.email } })
 
