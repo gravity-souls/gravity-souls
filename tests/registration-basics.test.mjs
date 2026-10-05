@@ -19,6 +19,11 @@ Module._load = function(id, parent, main) {
 const registration = require('../app/api/registration/route.ts')
 const complete = require('../app/api/onboarding/complete/route.ts')
 const exportData = require('../app/api/me/export/route.ts')
+const planetList = require('../app/api/planets/route.ts')
+const planetDetail = require('../app/api/planets/[id]/route.ts')
+const starMap = require('../app/api/star-map/route.ts')
+const events = require('../app/api/galaxies/events/route.ts')
+const myPlanet = require('../app/api/my-planet/route.ts')
 const account = require('../app/api/me/route.ts')
 const { isAdultBirthDate, BASIC_OPTIONS } = require('../lib/registration-basics.ts')
 const request = (data, origin = 'https://test.invalid') => new Request('https://test.invalid/api/registration', { method: 'PUT', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(data) })
@@ -47,6 +52,7 @@ test('private basics registration and edit lifecycle on real migrations and rout
       actor = 'new'; assert.equal((await (await registration.GET()).json()).required, true)
       const response = await savePlanet(); assert.equal(response.status, 403); assert.equal((await response.json()).error, 'REGISTRATION_REQUIRED')
       assert.equal(await db.planet.count({ where: { userId: 'new' } }), 0)
+      assert.equal((await myPlanet.POST(request({ name: 'Bypass attempt' }))).status, 403)
     })
     await t.test('requires authentication, rejects cross-origin and forged owner fields', async () => {
       actor = null; assert.equal((await registration.GET()).status, 401); assert.equal((await registration.PUT(request({ adultConfirmed: true }))).status, 401)
@@ -87,6 +93,46 @@ test('private basics registration and edit lifecycle on real migrations and rout
       assert.equal(result.basics.ageMethod, 'birth-date-declaration'); assert.ok(!JSON.stringify(result).includes('1996-01-01')); assert.equal(result.basics.birthDate, undefined)
       const exported = await (await exportData.GET()).json()
       assert.equal(exported.registrationBasics.ageMethod, 'birth-date-declaration'); assert.ok(!JSON.stringify(exported).includes('1996-01-01'))
+    })
+    await t.test('public tags require individual consent, private fields stay server-side, revocation is immediate', async () => {
+      actor = 'other'
+      const values = { adultConfirmed: true, gender: 'nonbinary', region: 'Hidden city', languages: ['fr'], interests: ['art'], connectionGoals: ['friendship'], publicTags: ['interests:art', 'birthDate', 'gender:male', 'region:forged'] }
+      assert.equal((await registration.PUT(request(values))).status, 200)
+      assert.equal((await savePlanet()).status, 200)
+      const peer = await db.planet.findFirstOrThrow({ where: { userId: actor, active: true } })
+      actor = 'new'
+      await registration.PUT(request({ region: 'Paris', languages: ['fr'], interests: ['art'] }))
+      const read = async () => (await planetList.GET(new Request('https://test.invalid/api/planets'))).json()
+      let result = await read(), candidate = result.planets.find(p => p.id === peer.id)
+      assert.deepEqual(candidate.publicTags, [{ key: 'interests', value: 'art' }])
+      assert.ok(candidate.preferenceFit.coverage > 0)
+      const own = await db.planet.findFirstOrThrow({ where: { userId: 'new', active: true } })
+      assert.equal(candidate.preferenceFit.sourcePlanetId, own.id)
+      for (const text of ['Hidden city', 'nonbinary', 'adultConfirmedAt', 'registrationBasics']) assert.ok(!JSON.stringify(result).includes(text), text)
+      const detail = await (await planetDetail.GET(new Request('https://test.invalid'), { params: Promise.resolve({ id: peer.id }) })).json()
+      assert.deepEqual(detail.publicTags, candidate.publicTags)
+      actor = 'other'; await registration.PUT(request({ ...values, publicTags: [] }))
+      actor = 'new'; candidate = (await read()).planets.find(p => p.id === peer.id)
+      assert.deepEqual(candidate.publicTags, [])
+      const map = await (await starMap.GET(new Request('https://test.invalid/api/star-map?mode=discover'))).json()
+      assert.deepEqual(map.nodes.find(p => p.id === peer.id).publicTags, [])
+      await db.profile.update({ where: { userId: 'other' }, data: { visibility: 'PRIVATE' } })
+      assert.ok(!(await read()).planets.some(p => p.id === peer.id))
+      assert.equal((await planetDetail.GET(new Request('https://test.invalid'), { params: Promise.resolve({ id: peer.id }) })).status, 404)
+      await db.profile.update({ where: { userId: 'other' }, data: { visibility: 'MEMBERS' } })
+    })
+    await t.test('activity preference filters and recommendation preserve membership and proposer privacy', async () => {
+      const galaxy = await db.community.create({ data: { name: 'Preferences', slug: 'preferences', creatorId: 'new' } })
+      await db.communityMembership.create({ data: { userId: 'new', communityId: galaxy.id } })
+      const base = { galaxyId: galaxy.id, proposerId: 'new', description: 'Public event description', date: new Date('2050-01-01'), category: 'MEETUP', status: 'APPROVED' }
+      const local = await db.event.create({ data: { ...base, title: 'Local art', location: 'Paris', languages: ['fr'], interestTags: ['art'] } })
+      await db.event.create({ data: { ...base, title: 'Remote music', location: 'Berlin', languages: ['en'], interestTags: ['music'] } })
+      actor = 'new'
+      const url = 'https://test.invalid/api/galaxies/events?status=upcoming&sort=recommended&region=Paris&language=fr&interest=art'
+      const response = await events.GET(new Request(url)); assert.equal(response.status, 200)
+      const result = await response.json(); assert.deepEqual(result.events.map(e => e.id), [local.id]); assert.ok(result.events[0].recommendation.score > 0)
+      actor = 'other'; const outsider = await (await events.GET(new Request(url))).json(); assert.deepEqual(outsider.events, [])
+      actor = 'new'; assert.equal((await events.GET(new Request(url + '&language=invalid'))).status, 400)
     })
     await t.test('deleted owner cannot recreate private preferences and physical deletion cascades', async () => {
       actor = 'date'; await db.user.update({ where: { id: actor }, data: { deletedAt: new Date() } })

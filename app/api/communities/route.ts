@@ -1,3 +1,4 @@
+import { preferenceFit } from '@/lib/preference-matching'
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ export async function GET() {
 
   const userId = session?.user?.id;
 
-  const [communities, memberships, requests] = await Promise.all([
+  const [communities, memberships, requests, preferences] = await Promise.all([
     prisma.community.findMany({
       orderBy: { name: "asc" },
       include: { _count: { select: { memberships: true } } },
@@ -27,6 +28,7 @@ export async function GET() {
         })
       : Promise.resolve([]),
     userId ? prisma.communityJoinRequest.findMany({ where: { userId }, select: { communityId: true, status: true } }) : Promise.resolve([]),
+    userId ? prisma.registrationBasics.findUnique({ where: { userId } }) : Promise.resolve(null),
   ]);
 
   const membershipsByCommunityId = new Map(memberships.map((m: { communityId: string; role?: string }) => [m.communityId, m]));
@@ -36,6 +38,7 @@ export async function GET() {
     const membership = membershipsByCommunityId.get(c.id);
     return {
       ...rest,
+      recommendation: preferenceFit(preferences, c),
       memberCount: _count.memberships,
       joined: !!membership,
       requestStatus: requests.find(r => r.communityId === c.id)?.status ?? null,
@@ -44,7 +47,7 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(request: Request) {

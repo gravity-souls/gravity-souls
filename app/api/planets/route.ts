@@ -1,3 +1,5 @@
+import { publicPlanetTags } from '@/lib/public-planet-tags'
+import { preferenceFit } from '@/lib/preference-matching'
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { safeApiError } from "@/lib/api-input";
@@ -17,6 +19,10 @@ export async function GET(request: Request) {
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? PAGE_SIZE) || PAGE_SIZE));
 
+    const [preferences, sourcePlanet] = await Promise.all([
+      prisma.registrationBasics.findUnique({ where: { userId } }),
+      prisma.planet.findFirst({ where: { userId, active: true }, select: { id: true, lifestyle: true, abstractAxis: true } }),
+    ]);
     const excludedUserIds = await blockedUserIds(userId);
     excludedUserIds.add(userId);
 
@@ -30,7 +36,7 @@ export async function GET(request: Request) {
         // alone would silently exclude every user with no Profile row, since
         // `is` requires the relation to exist; only an explicit PRIVATE
         // profile should be excluded here.
-        user: { OR: [{ profile: null }, { profile: { is: { visibility: { not: "PRIVATE" } } } }] },
+        user: { deletedAt: null, OR: [{ profile: null }, { profile: { is: { visibility: { not: "PRIVATE" } } } }] },
       },
       orderBy: { createdAt: "desc" },
       take: limit + 1,
@@ -53,6 +59,7 @@ export async function GET(request: Request) {
         createdAt: true,
         user: {
           select: {
+            registrationBasics: true,
             userLevel: true,
             ...USER_PLANET_CONFIG_SELECT,
             profile: {
@@ -77,6 +84,12 @@ export async function GET(request: Request) {
 
     const result = planets.map((p) => ({
       id: p.id,
+      publicTags: publicPlanetTags(p.user.registrationBasics),
+      preferenceFit: (() => {
+        const fit = preferenceFit(preferences, p.user.registrationBasics,
+          sourcePlanet ? sourcePlanet.lifestyle !== p.lifestyle || Math.abs(sourcePlanet.abstractAxis - p.abstractAxis) >= 20 : undefined);
+        return fit && sourcePlanet ? { ...fit, sourcePlanetId: sourcePlanet.id } : null;
+      })(),
       userId: p.userId,
       name: p.name,
       avatarSymbol: p.avatarSymbol,
@@ -104,7 +117,7 @@ export async function GET(request: Request) {
       planetConfig: resolveUserPlanetConfig(p.user, p),
     }));
 
-    return Response.json({ planets: result, nextCursor: nextPlanet?.id ?? null });
+    return Response.json({ planets: result, nextCursor: nextPlanet?.id ?? null }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return safeApiError(error);
   }

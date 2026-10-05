@@ -7,8 +7,8 @@ export async function personalMapSelf(userId: string): Promise<StarMapSelfPlanet
   const planet = await prisma.planet.findFirst({
     where: { userId, active: true, user: { deletedAt: null } },
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    select: { id: true, name: true, mood: true, lifestyle: true, coreThemes: true, visual: true, user: { select: { userLevel: true, ...USER_PLANET_CONFIG_SELECT } } },
+    select: { id: true, name: true, mood: true, lifestyle: true, coreThemes: true, visual: true, user: { select: { name: true, image: true, userLevel: true, ...USER_PLANET_CONFIG_SELECT } } },
   })
   if (!planet) return null
-  return { id: planet.id, name: planet.name, href: `/planet/${encodeURIComponent(planet.id)}`, level: planet.user.userLevel, planetConfig: resolveUserPlanetConfig(planet.user, planet) ?? undefined }
+  return { avatarUrl: planet.user.image || planet.user.planetCustomTexture, displayName: planet.user.name, id: planet.id, name: planet.name, href: `/planet/${encodeURIComponent(planet.id)}`, level: planet.user.userLevel, planetConfig: resolveUserPlanetConfig(planet.user, planet) ?? undefined }
 }

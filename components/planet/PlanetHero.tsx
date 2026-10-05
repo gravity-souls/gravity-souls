@@ -1,5 +1,6 @@
 'use client'
 
+import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -192,6 +193,7 @@ export default function PlanetHero({ planet, viewerRole, origin }: Props) {
             {planet.name}
           </h1>
 
+          <PublicPlanetTags tags={planet.publicTags} />
           {/* Tagline */}
           {planet.tagline && (
             <p

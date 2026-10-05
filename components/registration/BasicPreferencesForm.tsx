@@ -1,5 +1,7 @@
 'use client'
 
+import { requestSocialRefresh } from '@/lib/social-refresh'
+import PublicTagPicker from '@/components/registration/PublicTagPicker'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASIC_OPTIONS, EMPTY_BASICS, isAdultBirthDate, type BasicPreferences } from '@/lib/registration-basics'
@@ -37,6 +39,7 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
         return
       }
       setBirthDate('')
+      requestSocialRefresh()
       onSaved(final)
     } catch { setError(t('saveError')) } finally { setSaving(false) }
   }
@@ -69,6 +72,7 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
         })
       }} className={`min-h-12 rounded-2xl border px-5 py-3 text-left ${selected ? 'border-violet-300 bg-violet-400/20' : 'border-white/15 bg-white/5'}`}>{t(`options.${option}`)}</button>
     })}</div>
+    {step === 7 && <PublicTagPicker value={values} onChange={tokens => setValues(v => ({ ...v, publicTags: tokens }))} />}
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     <button type="button" disabled={saving || (field === 'adult' && !birthDate && !adultConfirmed)} onClick={() => step === 7 ? void save() : advance()} className="mt-4 min-h-12 rounded-2xl bg-violet-400 px-6 py-4 font-semibold text-slate-950 disabled:opacity-40">{saving ? t('saving') : step === 7 ? t(editing ? 'save' : 'startCalibration') : t('continue')}</button>
     <p className="text-xs opacity-50">{t('editHint')}</p>

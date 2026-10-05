@@ -17,11 +17,12 @@ export const registrationSchema = z.object({
   connectionGoals: choices(BASIC_OPTIONS.connectionGoals).default([]),
   peoplePreferences: choices(BASIC_OPTIONS.peoplePreferences).default([]),
   gatheringPreferences: choices(BASIC_OPTIONS.gatheringPreferences).default([]),
+  publicTags: z.array(z.string().max(80)).max(12).default([]),
   birthDate: z.string().max(10).optional(),
   adultConfirmed: z.boolean().optional(),
 }).strict()
 export type BasicPreferences = Omit<z.infer<typeof registrationSchema>, 'birthDate' | 'adultConfirmed'>
-export const EMPTY_BASICS: BasicPreferences = { gender: 'undisclosed', languages: [], region: '', interests: [], connectionGoals: [], peoplePreferences: [], gatheringPreferences: [] }
+export const EMPTY_BASICS: BasicPreferences = { publicTags: [], gender: 'undisclosed', languages: [], region: '', interests: [], connectionGoals: [], peoplePreferences: [], gatheringPreferences: [] }
 
 // Calendar arithmetic avoids timezone shifts and rejects normalized invalid dates.
 export function isAdultBirthDate(value: string, now = new Date()): boolean {

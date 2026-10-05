@@ -72,6 +72,8 @@ export interface OrbitMatch {
 
   /** Overall resonance score 0–100 */
   score:          number
+  preferenceFit?: { score: number; coverage: number; sourcePlanetId?: string } | null
+  exploration?: boolean
 
   /** Dominant orbit colour (driven by the strongest dimension) */
   orbitColor:     OrbitColor

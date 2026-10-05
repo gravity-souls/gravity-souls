@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import DiscoveryScore from '@/components/discovery/DiscoveryScore'
 import { CalendarDays, MapPin, Monitor, Users } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import RSVPButton from '@/components/events/RSVPButton'
@@ -85,6 +86,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
             <h3 className="text-sm font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
               {event.title}
             </h3>
+            <DiscoveryScore recommendation={event.recommendation} />
             {event.galaxy && (
               <p className="mt-1 text-[11px]" style={{ color: event.galaxy.accentColor }}>
                 {event.galaxy.name}

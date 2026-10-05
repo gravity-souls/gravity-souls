@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
+import DiscoveryScore from '@/components/discovery/DiscoveryScore'
+import DiscoveryFilters from '@/components/discovery/DiscoveryFilters'
+import type { DiscoveryFilters as FilterValues } from '@/lib/discovery-filters'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -14,6 +17,12 @@ import type { GalaxyPreview } from '@/types/galaxy'
 // Shape returned by GET /api/communities — the galaxy directory resolves
 // real Community rows (see docs/adr/0001-galaxy-content-model.md).
 interface CommunityRow {
+  region?: string
+  languages?: string[]
+  interestTags?: string[]
+  connectionGoals?: string[]
+  gatheringPreferences?: string[]
+  recommendation?: { score: number } | null
   id: string
   slug: string
   name: string
@@ -30,6 +39,7 @@ interface CommunityRow {
 
 function toGalaxyPreview(row: CommunityRow): GalaxyPreview & { joined?: boolean; isAdmin?: boolean } {
   return {
+    region: row.region, languages: row.languages, interestTags: row.interestTags, connectionGoals: row.connectionGoals, gatheringPreferences: row.gatheringPreferences, recommendation: row.recommendation ?? undefined,
     id: row.id,
     slug: row.slug,
     name: row.name,
@@ -79,6 +89,7 @@ function GalaxiesInner() {
   const searchParams = useSearchParams()
   const initialQ = searchParams.get('q') ?? ''
 
+  const [filters, setFilters] = useState<FilterValues>({ sort: 'date' })
   const [scope, setScope] = useState<'all' | 'joined' | 'managed'>('all')
   const [query, setQuery] = useState(initialQ)
   const [moodFilter, setMoodFilter] = useState<MoodFilter>('all')
@@ -116,9 +127,12 @@ function GalaxiesInner() {
         g.tagline?.toLowerCase().includes(q)
       const matchesMood = moodFilter === 'all' || g.mood === moodFilter
       const matchesScope = scope === 'all' || (scope === 'joined' ? g.joined : g.isAdmin)
-      return matchesQuery && matchesMood && matchesScope
-    })
-  }, [galaxies, query, moodFilter, scope])
+      const metadataMatch = (!filters.region || g.region?.toLowerCase().includes(filters.region.toLowerCase())) &&
+        (!filters.language || g.languages?.includes(filters.language)) && (!filters.interest || g.interestTags?.includes(filters.interest)) &&
+        (!filters.goal || g.connectionGoals?.includes(filters.goal)) && (!filters.gathering || g.gatheringPreferences?.includes(filters.gathering))
+      return matchesQuery && matchesMood && matchesScope && metadataMatch
+    }).sort((a,b) => filters.sort === 'recommended' ? (b.recommendation?.score ?? 50)-(a.recommendation?.score ?? 50) || a.name.localeCompare(b.name) : a.name.localeCompare(b.name))
+  }, [galaxies, query, moodFilter, scope, filters])
 
   if (loading) return <GalaxiesLoading />
 
@@ -137,6 +151,7 @@ function GalaxiesInner() {
 
         <div className="mt-5 flex flex-wrap gap-3"><Link href="/galaxies/create" className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium">{tw('createGalaxy')}</Link>{(['all','joined','managed'] as const).map(value=><button key={value} type="button" onClick={()=>setScope(value)} className={`rounded-xl border border-white/15 px-4 py-2 text-sm ${scope===value?'bg-white/10':''}`}>{tw(`${value}Galaxies`)}</button>)}</div>
 
+        <DiscoveryFilters value={filters} onChange={setFilters} />
         {/* -- Search + filters -------------------------------------------- */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
 

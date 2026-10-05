@@ -1,0 +1,47 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const { preferenceFit, adjustedPreferenceScore, selectWithExploration, sameRegion } = require('../lib/preference-matching.ts')
+const { atlasPosition, planetGravity, galaxyMagnitude } = require('../lib/atlas-layout.ts')
+const { publicPlanetTags } = require('../lib/public-planet-tags.ts')
+const { planetProfileFromApi } = require('../lib/planet-profile-from-api.ts')
+const { buildOrbitMatches } = require('../lib/match.ts')
+const source = { region: 'Paris, FR', languages: ['fr'], interests: ['art'], connectionGoals: ['friendship'], peoplePreferences: ['localPeople'], gatheringPreferences: ['smallGroups'] }
+test('preferences are a bounded soft signal with neutral missing answers and no gender or age scoring', () => {
+  assert.equal(preferenceFit(source, {}), null)
+  assert.equal(adjustedPreferenceScore(72, null), 72)
+  const fit = preferenceFit(source, source)
+  assert.deepEqual(fit, { score: 100, coverage: 1 })
+  assert.equal(adjustedPreferenceScore(0, fit), 15)
+  assert.equal(adjustedPreferenceScore(100, { score: 0, coverage: 1 }), 85)
+  assert.deepEqual(preferenceFit({ ...source, gender: 'male', birthDate: '1990-01-01' }, source), fit)
+  assert.equal(sameRegion('Paris, FR', 'Paris'), true)
+  assert.equal(sameRegion('Paris', 'Parish'), false)
+  const a = planetProfileFromApi({ id: 'a' }), b = planetProfileFromApi({ id: 'b', preferenceFit: { score: 0, coverage: 1, sourcePlanetId: 'someone-else' } })
+  assert.equal(buildOrbitMatches(a, [b])[0].score, buildOrbitMatches(a, [{ ...b, preferenceFit: null }])[0].score)
+})
+test('exploration stays reproducible inside an eligible batch without inventing scores or duplicates', () => {
+  const ranked = Array.from({ length: 12 }, (_, i) => ({ id: String(i), score: 95-i*4 }))
+  ranked.push({ id: 'irrelevant', score: 2 })
+  const result = selectWithExploration(ranked, p => p.id, 'viewer:2026-10-05')
+  assert.deepEqual(result, selectWithExploration(ranked, p => p.id, 'viewer:2026-10-05'))
+  assert.equal(result.length, 5); assert.equal(new Set(result.map(p => p.id)).size, 5)
+  for (const p of result) assert.equal(p.score, ranked.find(r => r.id === p.id).score)
+  assert.ok(!result.some(p => p.id === 'irrelevant')); assert.equal(result.filter(p => p.exploration).length, 1)
+  assert.deepEqual(selectWithExploration(ranked.slice(0, 3), p => p.id, 'a'), ranked.slice(0, 3))
+})
+test('atlas distance tracks match strength, level is bounded, galaxy magnitude tracks actual membership', () => {
+  const near = atlasPosition('fixed', 95, 1), far = atlasPosition('fixed', 20, 1)
+  assert.ok(Math.hypot(near.x, near.y) < Math.hypot(far.x, far.y))
+  assert.deepEqual(atlasPosition('fixed', 95, 1), near)
+  assert.ok(planetGravity(100).radius > planetGravity(1).radius)
+  assert.deepEqual(planetGravity(Infinity), planetGravity(1))
+  assert.ok(galaxyMagnitude(100).radius > galaxyMagnitude(4).radius)
+  assert.ok(galaxyMagnitude(100).particles > galaxyMagnitude(4).particles)
+  assert.ok(galaxyMagnitude(1e9).radius <= 110); assert.ok(galaxyMagnitude(1e9).particles <= 240)
+})
+test('tag consent cannot publish birthday, age, missing answers or forged values', () => {
+  assert.deepEqual(publicPlanetTags({ ...source, gender: 'undisclosed', publicTags: ['birthDate', 'ageMethod', 'gender:undisclosed', 'interests:music'] }), [])
+  assert.deepEqual(publicPlanetTags({ ...source, publicTags: ['interests:art', 'languages:fr'] }), [{ key: 'languages', value: 'fr' }, { key: 'interests', value: 'art' }])
+})

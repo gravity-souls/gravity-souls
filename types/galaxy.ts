@@ -24,6 +24,12 @@ export type GalaxyMaturity =
 // --- Galaxy preview (used in cards, lists) ---------------------------------
 
 export interface GalaxyPreview {
+  region?: string
+  languages?: string[]
+  interestTags?: string[]
+  connectionGoals?: string[]
+  gatheringPreferences?: string[]
+  recommendation?: { score: number; exploration?: boolean }
   id:          string
   slug:        string
   name:        string

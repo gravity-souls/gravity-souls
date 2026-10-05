@@ -1,3 +1,4 @@
+import { availablePublicTags } from '@/lib/public-planet-tags'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { readJson, safeApiError } from '@/lib/api-input'
@@ -25,6 +26,8 @@ export async function PUT(request: Request) {
     const { birthDate, adultConfirmed, ...preferences } = input.data
     // A supplied underage/invalid date cannot be overridden by a checkbox.
     if (birthDate && !isAdultBirthDate(birthDate)) return Response.json({ error: 'ADULT_REQUIRED' }, { status: 400 })
+    const allowedTags = new Set(availablePublicTags(preferences).map(item => item.token))
+    preferences.publicTags = [...new Set(preferences.publicTags)].filter(token => allowedTags.has(token))
     const basics = await prisma.$transaction(async tx => {
       // Coordinate with account deletion: private data must not be recreated
       // after its owner has been scrubbed.

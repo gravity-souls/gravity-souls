@@ -10,6 +10,9 @@ export interface StarMapGroup {
   phase?: 'active' | 'past'
 }
 export interface StarMapNode {
+  avatarUrl?: string | null
+  displayName?: string
+  publicTags?: { key: string; value: string }[]
   id: string
   kind?: 'planet' | 'galaxy' | 'activity'
   date?: string
@@ -36,6 +39,8 @@ export interface StarMapRelationship {
   conversationId: string | null
 }
 export interface StarMapSelfPlanet {
+  avatarUrl?: string | null
+  displayName?: string
   id: string
   name: string
   href: string

@@ -47,7 +47,7 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/star-map')
   await expect(
-    page.getByRole('heading', { name: 'Star map', exact: true }),
+    page.getByRole('heading', { name: 'Global star map', exact: true }),
   ).toBeVisible()
   await expect(
     page.getByRole('button', { name: /Pause|Play|Reset|Zoom in|Zoom out/ }),
@@ -82,7 +82,7 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
   expect(errors).toEqual([])
 })
 
-test('wheel zoom enters a real cluster, and reduced motion has no playback controls', async ({
+test('global wheel zoom keeps the full field, and reduced motion has no playback controls', async ({
   page,
 }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -115,15 +115,15 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
   }
   await expect(
     page.getByRole('button', { name: /Back to overview/ }),
-  ).toBeVisible()
+  ).toHaveCount(0)
   await expect(
     page.getByRole('button', { name: /Pause|Play|Reset/ }),
   ).toHaveCount(0)
 })
 
 for (const [locale, title] of [
-  ['zh', '星图'],
-  ['fr', 'Carte stellaire'],
+  ['zh', '全域星图'],
+  ['fr', 'Carte stellaire globale'],
 ]) {
   test(`production star map renders ${locale}`, async ({
     page,
@@ -237,4 +237,25 @@ test('phone exposes language and complete navigation from the account menu', asy
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true)
+})
+
+
+test('global map appends visible batches and clears them after revoked access', async ({ page }) => {
+  let denied = false
+  await page.route('**/api/star-map?**', route => {
+    if (denied) return route.fulfill({ status: 401, json: {} })
+    const next = new URL(route.request().url()).searchParams.get('cursor')
+    return route.fulfill({ json: { ...fixture, total: 2, scope: 'batch', nextCursor: next ? null : 'next', nodes: [{ ...fixture.nodes[0], id: next ? 'second' : 'first', name: next ? 'Second visible planet' : 'First visible planet' }] } })
+  })
+  await page.goto('/star-map')
+  const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
+  if (await toggle.isVisible()) await toggle.click()
+  await expect(page.getByText('First visible planet', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Load more planets', exact: true }).click()
+  await expect(page.getByText('Second visible planet', { exact: true })).toBeVisible()
+  await expect(page.getByText('First visible planet', { exact: true })).toBeVisible()
+  denied = true
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByText('First visible planet', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Second visible planet', { exact: true })).toHaveCount(0)
 })

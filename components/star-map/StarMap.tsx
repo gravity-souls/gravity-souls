@@ -6,7 +6,10 @@ import { useLocale, useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PersonalMapAnchor from '@/components/star-map/PersonalMapAnchor'
 import { PersonalRelationLegend, PersonalNodeRelations } from '@/components/star-map/PersonalMapRelations'
+import { atlasPosition, galaxyMagnitude, planetGravity } from '@/lib/atlas-layout'
 import { personalNodeOffset, personalNodeRelations, RELATION_STYLES } from '@/lib/personal-map-relations'
+import PersonAvatar from '@/components/planet/PersonAvatar'
+import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetRelationshipStatus from '@/components/social/PlanetRelationshipStatus'
 import SavePlanetButton from '@/components/social/SavePlanetButton'
@@ -15,7 +18,7 @@ import BeamButton from '@/components/social/BeamButton'
 import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { withExplorationOrigin, personalMapOrigin } from '@/lib/exploration-return'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
-import { mapCenter, stableUnit } from '@/lib/star-map'
+import { MAP_COLORS, mapCenter, stableUnit } from '@/lib/star-map'
 import type { StarMapData, StarMapMode, StarMapNode, PersonalMapCollection, PersonalMapLayer } from '@/types/star-map'
 import styles from './star-map.module.css'
 
@@ -83,7 +86,7 @@ export default function StarMap({
           setQuery(saved.query)
           setSearch(saved.query)
           if (typeof saved.cursor === 'string' && saved.cursor.length <= 100)
-            setCursor(saved.cursor)
+            if (mode !== 'discover') setCursor(saved.cursor)
           if (typeof saved.focus === 'string' && saved.focus.length <= 100)
             setFocus(saved.focus)
           if (typeof saved.selected === 'string' && saved.selected.length <= 100)
@@ -106,7 +109,7 @@ export default function StarMap({
       }
       setRestored(true)
     })
-  }, [storageKey])
+  }, [storageKey, mode])
 
   useEffect(() => {
     if (!restored) return
@@ -136,9 +139,9 @@ export default function StarMap({
   }, [storageKey, query, cursor, focus, selectedId, sidebarOpen, restored])
 
   useEffect(() => {
-    const refresh = () => setRevision(value => value + 1)
+    const refresh = () => { if (mode === 'discover') setCursor(null); setRevision(value => value + 1) }
     return subscribeSocialRefresh(refresh)
-  }, [])
+  }, [mode])
 
   const queryGroup = mode !== 'galaxies' ? focus : null
 
@@ -164,7 +167,7 @@ export default function StarMap({
           throw new Error(response.status === 401 ? 'signIn' : 'loadError')
         const result = (await response.json()) as StarMapData
         if (!abort.signal.aborted) {
-          setData(result)
+          setData(previous => mode === 'discover' && cursor ? { ...result, nodes: [...new Map([...previous.nodes, ...result.nodes].map(node => [node.id,node])).values()] } : result)
           setSelectedId(current => result.nodes.some(node => node.id === current) ? current : null)
           setFocus(current => result.groups.some(group => group.id === current && (group.count > 0 || mode === 'galaxies')) ? current : null)
         }
@@ -202,9 +205,9 @@ export default function StarMap({
       Math.floor(2000 / Math.max(1, clusters.length)),
     )
     clusters.forEach((group) => {
-      for (let i = 0; i < perCluster; i++) {
+      for (let i = 0; i < (mode === 'galaxies' ? Math.min(perCluster,galaxyMagnitude(group.count).particles) : perCluster); i++) {
         const a = stableUnit(`${group.id}:${i}:a`) * Math.PI * 2
-        const r = Math.sqrt(stableUnit(`${group.id}:${i}:r`)) * 58
+        const r = Math.sqrt(stableUnit(`${group.id}:${i}:r`)) * (mode === 'galaxies' ? galaxyMagnitude(group.count).radius : 58)
         result.push({
           x: group.center[0] + Math.cos(a + r * 0.025) * r,
           y: group.center[1] + Math.sin(a + r * 0.025) * r * 0.7,
@@ -215,7 +218,7 @@ export default function StarMap({
       }
     })
     return result
-  }, [clusters])
+  }, [clusters, mode])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -225,6 +228,12 @@ export default function StarMap({
       queueMicrotask(() => setCanvasAvailable(false))
       return
     }
+    const portraits = new Map<string, HTMLImageElement>()
+    if (mode !== 'galaxies') for (const node of data.nodes) if (node.avatarUrl || node.planetConfig) {
+      const image = new Image(); portraits.set(node.id, image)
+      image.onload = () => { if (!disposed) redraw() }
+      image.src = mode === 'personal' ? node.avatarUrl || '' : node.planetConfig?.customTextureUrl || (node.planetConfig?.baseTexture ? `/textures/${node.planetConfig.baseTexture}` : node.avatarUrl || '')
+    }
     let width = 0
     let height = 0
     let frame = 0
@@ -232,7 +241,7 @@ export default function StarMap({
     let visible = true
     let last = 0
     // Personal filters keep the owner and actual relationship edges visible.
-    const focused = mode === 'personal' ? undefined : clusters.find((group) => group.id === focus)
+    const focused = mode !== 'galaxies' ? undefined : clusters.find((group) => group.id === focus)
     const centers = new Map(clusters.map((group) => [group.id, group.center]))
     const project = (x: number, y: number, z: number) => {
       if (focused) {
@@ -265,7 +274,7 @@ export default function StarMap({
       const hub = project(0, 0, 0)
       const cos = Math.cos(spin.current)
       const sin = Math.sin(spin.current)
-      for (let i = 0; i < dots.length; i++) {
+      for (let i = 0; mode !== 'discover' && i < dots.length; i++) {
         const dot = dots[i]
         if (focused && dot.groupId !== focus) continue
         const center = centers.get(dot.groupId)!
@@ -291,7 +300,22 @@ export default function StarMap({
         }
       }
       hits.current = []
-      if (!focused && mode === 'personal') {
+      if (mode === 'discover') {
+        ctx.globalCompositeOperation = 'source-over'
+        for (const node of data.nodes) {
+          const point = atlasPosition(node.id,node.score,node.level)
+          const p = project(point.x,point.y,point.z), radius = planetGravity(node.level).radius * Math.min(1.25,p.p)
+          const color = MAP_COLORS[node.groupId] || '#b89afa'
+          const glow = ctx.createRadialGradient(p.x,p.y,radius,p.x,p.y,radius*2.8)
+          glow.addColorStop(0,color+'55'); glow.addColorStop(1,color+'00'); ctx.fillStyle=glow; ctx.fillRect(p.x-radius*3,p.y-radius*3,radius*6,radius*6)
+          const portrait=portraits.get(node.id)
+          ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=color+'88'; ctx.fill()
+          if (portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
+          ctx.restore(); ctx.font='11px system-ui'; ctx.fillStyle='#d6deed'; ctx.textAlign='center'
+          if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText(node.name.slice(0,12),p.x,p.y+radius+13)
+          ctx.textAlign='start'; hits.current.push({...p,groupId:node.groupId,node})
+        }
+      } else if (!focused && mode === 'personal') {
         // Render actual bounded-batch objects in overview. Decorative particles
         // and climate/status group centers have no relationship edges.
         clusters.forEach(group => {
@@ -316,8 +340,8 @@ export default function StarMap({
                 const style = RELATION_STYLES[relation]
                 const shift = (relationIndex - (relations.length - 1) / 2) * 5
                 const nx = -dy / length * shift, ny = dx / length * shift
-                const start = { x: hub.x + dx / length * 85 + nx, y: hub.y + dy / length * 85 + ny }
-                const end = { x: p.x - dx / length * 9 + nx, y: p.y - dy / length * 9 + ny }
+                const start = { x: hub.x + dx / length * 24 + nx, y: hub.y + dy / length * 24 + ny }
+                const end = { x: p.x - dx / length * 18 + nx, y: p.y - dy / length * 18 + ny }
                 ctx.strokeStyle = style.color + (node.id === selected?.id ? 'e0' : 'b0')
                 ctx.lineWidth = node.id === selected?.id ? 2.2 : 1.4
                 ctx.setLineDash([...style.dash])
@@ -332,28 +356,40 @@ export default function StarMap({
                 if (style.arrow === 'both') arrow(start.x, start.y, angle + Math.PI)
               })
             }
+            ctx.globalCompositeOperation = 'source-over'
             ctx.fillStyle = group.color
             ctx.beginPath()
-            const size = node.id === selected?.id ? 10 : 7
-            if (node.kind === 'galaxy') ctx.rect(p.x - size, p.y - size, size * 2, size * 2)
-            else if (node.kind === 'activity') { ctx.moveTo(p.x, p.y - size - 1); ctx.lineTo(p.x + size + 1, p.y); ctx.lineTo(p.x, p.y + size + 1); ctx.lineTo(p.x - size - 1, p.y); ctx.closePath() }
-            else ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
+            const person = !node.kind || node.kind === 'planet'
+            const size = person ? 16 : node.id === selected?.id ? 10 : 7
+            if (node.kind === 'galaxy') ctx.rect(p.x-size,p.y-size,size*2,size*2)
+            else if (node.kind === 'activity') { ctx.moveTo(p.x,p.y-size-1); ctx.lineTo(p.x+size+1,p.y); ctx.lineTo(p.x,p.y+size+1); ctx.lineTo(p.x-size-1,p.y); ctx.closePath() }
+            else ctx.arc(p.x,p.y,size,0,Math.PI*2)
             ctx.fill()
-            ctx.globalCompositeOperation = 'source-over'
-            ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'
-            if (node.id === selected?.id || data.nodes.length <= 6) ctx.fillText(node.name.slice(0, 18), p.x + 10, p.y + 3)
-            ctx.globalCompositeOperation = 'lighter'
+            if (person) {
+              const portrait = portraits.get(node.id)
+              if (portrait?.complete && portrait.naturalWidth) {
+                ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,size,0,Math.PI*2); ctx.clip()
+                const crop = Math.min(portrait.naturalWidth,portrait.naturalHeight)
+                ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-size,p.y-size,size*2,size*2); ctx.restore()
+              } else {
+                ctx.font = '13px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.fillText((node.displayName || node.name).slice(0,1),p.x,p.y+4); ctx.textAlign = 'start'
+              }
+            }
+            ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'; ctx.textAlign = 'center'
+            ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+size+14)
+            ctx.textAlign = 'start'; ctx.globalCompositeOperation = 'lighter'
             hits.current.push({ ...p, groupId: group.id, node })
           })
         })
       } else if (!focused) {
         clusters.forEach((group) => {
           const p = project(...group.center)
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 22)
+          const magnitude = galaxyMagnitude(group.count)
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, magnitude.radius)
           gradient.addColorStop(0, group.color + 'a0')
           gradient.addColorStop(1, group.color + '00')
           ctx.fillStyle = gradient
-          ctx.fillRect(p.x - 22, p.y - 22, 44, 44)
+          ctx.fillRect(p.x-magnitude.radius,p.y-magnitude.radius,magnitude.radius*2,magnitude.radius*2)
           hits.current.push({ ...p, groupId: group.id })
         })
       } else {
@@ -415,7 +451,7 @@ export default function StarMap({
         0.65,
         Math.min(4, view.current.zoom * Math.exp(-event.deltaY * 0.0015)),
       )
-      if (!focus && view.current.zoom >= 1.8) {
+      if (mode !== 'discover' && !focus && view.current.zoom >= 1.8) {
         const rect = canvas.getBoundingClientRect()
         const x = event.clientX - rect.left
         const y = event.clientY - rect.top
@@ -426,7 +462,7 @@ export default function StarMap({
           setFocus(nearest.groupId)
           setSelectedId(null)
           setCursor(null)
-          view.current.zoom = mode === 'personal' ? 1 : 2.4
+          view.current.zoom = mode !== 'galaxies' ? 1 : 2.4
         }
       } else if (focus && view.current.zoom <= 1.2) {
         setFocus(null)
@@ -455,6 +491,7 @@ export default function StarMap({
     resize()
     return () => {
       disposed = true
+      portraits.forEach(image => { image.onload = null })
       cancelAnimationFrame(frame)
       observer.disconnect()
       intersection.disconnect()
@@ -468,7 +505,7 @@ export default function StarMap({
     setFocus(id)
     setSelectedId(mode === 'galaxies' ? id : null)
     setCursor(null)
-    view.current.zoom = mode === 'personal' ? 1 : 2.4
+    view.current.zoom = mode !== 'galaxies' ? 1 : 2.4
   }
   const groupLabel = (id: string, name?: string) => {
     const group = data.groups.find(item => item.id === id)
@@ -480,7 +517,6 @@ export default function StarMap({
     : []
   return (
     <div className={`${styles.map} ${compact ? styles.compact : ''} ${listOnly ? styles.listView : ''}`}>
-      {mode === 'personal' && listOnly && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} summary />}
       <div className={styles.mapToolbar}>
         <form
           onSubmit={(event) => {
@@ -611,7 +647,7 @@ export default function StarMap({
               }
               pointers.current.set(event.pointerId, next)
               if (pointers.current.size === 2) {
-                if (!focus && view.current.zoom >= 1.8) {
+                if (mode !== 'discover' && !focus && view.current.zoom >= 1.8) {
                   const rect = event.currentTarget.getBoundingClientRect()
                   const pair = [...pointers.current.values()]
                   const x = (pair[0].x + pair[1].x) / 2 - rect.left
@@ -652,7 +688,7 @@ export default function StarMap({
               pointers.current.delete(event.pointerId)
             }
           />
-          {mode === 'personal' && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
+          {mode !== 'galaxies' && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
           {!canvasAvailable && (
             <p className={styles.fallback}>{t('fallback')}</p>
           )}
@@ -736,14 +772,14 @@ export default function StarMap({
                           aria-pressed={selected?.id === node.id}
                           onClick={() => setSelectedId(node.id)}
                         >
-                          {node.planetConfig && (
+                          {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} name={node.displayName || node.name} size={28} /> : node.planetConfig && (
                             <PlanetAvatar
                               planetConfig={node.planetConfig}
                               size={28}
                             />
                           )}
                           <span className={styles.nodeIdentity}>
-                            <span>{node.name}</span>
+                            <span>{mode === 'personal' ? node.displayName || node.name : node.name}</span>
                             <PlanetRelationshipStatus relationship={node.relationship} />
                             {mode === 'personal' && <PersonalNodeRelations node={node} />}
                             {node.kind && node.kind !== 'planet' && <span>{t(`kind_${node.kind}`)}</span>}
@@ -772,7 +808,7 @@ export default function StarMap({
                   }
                 }}
               >
-                {t('nextBatch')}
+                {t(mode === 'discover' ? 'loadMore' : 'nextBatch')}
               </button>
             )}
           </ScrollRegion>
@@ -782,7 +818,7 @@ export default function StarMap({
               aria-live="polite"
             >
               <div className={styles.nodeHeading}>
-                {selected.planetConfig && (
+                {mode === 'personal' && (!selected.kind || selected.kind === 'planet') ? <PersonAvatar key={selected.avatarUrl} src={selected.avatarUrl} name={selected.displayName || selected.name} size={36} /> : selected.planetConfig && (
                   <PlanetAvatar
                     planetConfig={selected.planetConfig}
                     size={48}
@@ -793,9 +829,10 @@ export default function StarMap({
                     level={selected.level}
                   />
                 )}
-                <h2>{selected.name}</h2>
+                <h2>{mode === 'personal' ? selected.displayName || selected.name : selected.name}</h2>
               </div>
               <p>{selected.tagline}</p>
+              <PublicPlanetTags tags={selected.publicTags} />
               <PlanetRelationshipStatus relationship={selected.relationship} />
               {mode === 'personal' && <PersonalNodeRelations node={selected} />}
               {selected.score !== undefined && (

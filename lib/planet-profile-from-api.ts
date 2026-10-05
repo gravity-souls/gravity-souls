@@ -5,6 +5,8 @@ export function planetProfileFromApi(data: Record<string, unknown>): PlanetProfi
   const visual = { ...DEFAULT_PLANET_VISUAL, ...((data.visual as Partial<PlanetProfile['visual']>) ?? {}) }
   return {
     id: data.id as string,
+    publicTags: data.publicTags as PlanetProfile['publicTags'],
+    preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     name: (data.name as string) || '',
     avatarSymbol: (data.avatarSymbol as string) || '?',
     tagline: (data.tagline as string) ?? undefined,

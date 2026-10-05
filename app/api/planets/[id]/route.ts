@@ -1,3 +1,4 @@
+import { publicPlanetTags } from '@/lib/public-planet-tags'
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { safeApiError } from "@/lib/api-input";
@@ -24,6 +25,7 @@ const PLANET_SELECT = {
   updatedAt: true,
   user: {
     select: {
+      registrationBasics: true,
       id: true,
       name: true,
       userLevel: true,
@@ -78,6 +80,7 @@ export async function GET(
     const profile = planet.user.profile;
 
     const result = {
+      publicTags: publicPlanetTags(planet.user.registrationBasics),
       id: planet.id,
       userId: planet.userId,
       name: planet.name,
