@@ -1,5 +1,6 @@
 "use client";
 
+import { clearBrowserChatDrafts } from '@/lib/chat-drafts'
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
@@ -14,6 +15,7 @@ export function SignOutButton() {
 
     try {
       await authClient.signOut();
+      clearBrowserChatDrafts();
       window.location.href = "/sign-in";
     } finally {
       setLoading(false);

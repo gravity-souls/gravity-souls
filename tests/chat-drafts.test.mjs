@@ -1,0 +1,127 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const { ChatDraftStore, chatDraftKey, parseChatDraft, CHAT_DRAFT_TTL, clearChatDrafts } = require('../lib/chat-drafts.ts')
+function memory() {
+  const data = new Map()
+  return { get length() { return data.size }, key: i => [...data.keys()][i] ?? null, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) }
+}
+let serial = 0
+const uuid = () => `00000000-0000-4000-8000-${String(++serial).padStart(12, '0')}`
+const now = 2000000000000
+function create(storage, viewer = 'alice', thread = 'one') {
+  const store = new ChatDraftStore(chatDraftKey(viewer, thread), () => now, uuid)
+  store.hydrate(storage)
+  return store
+}
+test('draft restores Unicode text and reply ID without sending, and is isolated by account and conversation', () => {
+  const storage = memory(), a = create(storage)
+  a.change('你好 🪐\nBonjour', 'original')
+  const b = create(storage)
+  assert.equal(b.getSnapshot().draft.text, '你好 🪐\nBonjour')
+  assert.equal(b.getSnapshot().draft.replyToId, 'original')
+  assert.equal(b.getSnapshot().restored, true)
+  assert.equal(create(storage, 'bob').getSnapshot().draft, null)
+  assert.equal(create(storage, 'alice', 'two').getSnapshot().draft, null)
+  assert.notEqual(chatDraftKey('a:b', 'c'), chatDraftKey('a', 'b:c'))
+})
+test('a dropped response and reload keep the same idempotency key; editing text or reply creates a new key', () => {
+  const storage = memory(), a = create(storage)
+  a.change(' retry ', null)
+  const sent = a.prepareSend('retry')
+  const b = create(storage)
+  assert.equal(b.prepareSend('retry').clientMessageId, sent.clientMessageId)
+  b.change('retry', 'original')
+  assert.notEqual(b.prepareSend('retry').clientMessageId, sent.clientMessageId)
+  assert.equal(b.prepareSend('wrong text'), null)
+})
+test('only a successful acknowledgement clears a draft and leaves a fenced empty version', () => {
+  const storage = memory(), a = create(storage)
+  a.change('hello', null)
+  const sent = a.prepareSend('hello')
+  assert.equal(create(storage).getSnapshot().draft.text, 'hello')
+  a.acknowledge(sent)
+  assert.equal(create(storage).getSnapshot().draft.text, '')
+  assert.equal(create(storage).getSnapshot().draft.replyToId, null)
+  assert.notEqual(create(storage).getSnapshot().draft.revision, sent.revision)
+})
+test('active editors retain their own text on remote changes, including changes detected before the event arrives', () => {
+  const storage = memory(), a = create(storage), b = create(storage)
+  a.change('first', null)
+  b.change('second', null)
+  assert.equal(b.getSnapshot().conflict, true)
+  assert.equal(b.getSnapshot().draft.text, 'second')
+  assert.equal(parseChatDraft(storage.getItem(a.key), now).text, 'first')
+  b.change('second edited', null)
+  assert.equal(parseChatDraft(storage.getItem(a.key), now).text, 'first')
+  assert.equal(b.prepareSend('second edited'), null)
+  b.keepMine()
+  assert.equal(parseChatDraft(storage.getItem(a.key), now).text, 'second edited')
+  a.refresh()
+  assert.equal(a.getSnapshot().draft.text, 'first')
+  assert.equal(a.getSnapshot().conflict, true)
+  a.useOther()
+  assert.equal(a.getSnapshot().draft.text, 'second edited')
+  assert.equal(a.getSnapshot().conflict, false)
+})
+test('restored but unedited tabs follow remote drafts and cannot send a stale value before the storage event', () => {
+  const storage = memory(), a = create(storage)
+  a.change('initial', null)
+  const b = create(storage)
+  a.change('new draft', null)
+  assert.equal(b.prepareSend('initial'), null)
+  assert.equal(b.getSnapshot().draft.text, 'new draft')
+  assert.equal(b.getSnapshot().conflict, false)
+})
+test('a late send result preserves a newer remote draft and never deletes it', () => {
+  const storage = memory(), a = create(storage)
+  a.change('sent text', null)
+  const sent = a.prepareSend('sent text'), b = create(storage)
+  b.change('new unsent text', null)
+  a.acknowledge(sent)
+  assert.equal(create(storage).getSnapshot().draft.text, 'new unsent text')
+  assert.equal(a.getSnapshot().draft.text, 'new unsent text')
+})
+test('a late result cannot clear a newer local edit, including a changed quote', () => {
+  const a = create(memory())
+  a.change('sent', null)
+  const sent = a.prepareSend('sent')
+  a.change('next', 'different-original')
+  a.acknowledge(sent)
+  assert.equal(a.getSnapshot().draft.text, 'next')
+  assert.equal(a.getSnapshot().draft.replyToId, 'different-original')
+})
+test('storage denial and quota failures leave usable in-memory drafts and explicit unavailable status', () => {
+  const denied = { getItem() { throw Error('denied') }, setItem() { throw Error('quota') }, removeItem() {} }
+  const a = create(denied)
+  a.change('keep me', null)
+  assert.equal(a.getSnapshot().ready, true)
+  assert.equal(a.getSnapshot().unavailable, true)
+  assert.equal(a.prepareSend('keep me').text, 'keep me')
+  const sent = a.prepareSend('keep me')
+  a.acknowledge(sent)
+  assert.equal(a.getSnapshot().draft.text, '')
+})
+test('expiry, corrupt JSON, invalid IDs, oversized Unicode and unexpected fields never restore unsafe payloads', () => {
+  const storage = memory(), a = create(storage)
+  a.change('valid', null)
+  const good = a.getSnapshot().draft
+  for (const value of [null, {}, { ...good, version: 2 }, { ...good, text: '🪐'.repeat(2001) }, { ...good, clientMessageId: 'bad' }, { ...good, replyToId: '../secret' }, { ...good, updatedAt: now - CHAT_DRAFT_TTL }, { ...good, updatedAt: now + 60001 }]) assert.equal(parseChatDraft(JSON.stringify(value), now), null)
+  assert.equal(parseChatDraft('{invalid', now), null)
+  assert.deepEqual(parseChatDraft(JSON.stringify({ ...good, privateUrl: 'secret', quote: { content: 'secret' } }), now), good)
+  storage.setItem(a.key, JSON.stringify({ ...good, updatedAt: now - CHAT_DRAFT_TTL }))
+  assert.equal(create(storage).getSnapshot().draft, null)
+  assert.equal(storage.getItem(a.key), null)
+})
+test('sign-out cleanup removes all draft accounts while preserving unrelated settings, and reset fences old writers', () => {
+  const storage = memory(), a = create(storage), b = create(storage, 'bob')
+  a.change('a', null); b.change('b', null)
+  storage.setItem('locale', 'fr')
+  clearChatDrafts(storage)
+  a.reset(); a.change('late input', null)
+  assert.equal(a.getSnapshot().draft, null)
+  assert.equal(a.prepareSend('late input'), null)
+  assert.equal(storage.length, 1)
+  assert.equal(storage.getItem('locale'), 'fr')
+})

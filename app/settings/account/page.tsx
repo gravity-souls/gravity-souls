@@ -1,5 +1,6 @@
 'use client'
 
+import { clearBrowserChatDrafts } from '@/lib/chat-drafts'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -90,6 +91,7 @@ function DeleteSection() {
       // the account's Session/Account rows are already gone server-side;
       // this clears the client-side cookie and lands on a signed-out state.
       await authClient.signOut()
+      clearBrowserChatDrafts()
       window.location.href = '/sign-in'
     } catch {
       setError(t('deleteFailed'))

@@ -2043,5 +2043,14 @@
     "cancelled": "Activité annulée. Supprimez la copie du calendrier et son rappel.",
     "past": "L’heure de début est passée. Cette activité figure dans votre historique.",
     "withdrawn": "Vous vous êtes désisté. Supprimez la copie du calendrier si vous l’avez ajoutée."
+  },
+  "chatDrafts": {
+    "localOnly": "Les brouillons texte sont récupérables dans ce navigateur pendant 7 jours. La déconnexion les efface. Les photos ne sont pas sauvegardées en brouillon.",
+    "unavailable": "Le stockage du navigateur est indisponible. Gardez cette page ouverte pour conserver votre brouillon.",
+    "restored": "Votre brouillon a été restauré. Aucun message n’a été envoyé.",
+    "conflict": "Un autre onglet a modifié le brouillon de cette conversation. Choisissez la version à utiliser avant l’envoi.",
+    "useOther": "Utiliser le brouillon de l’autre onglet",
+    "keepMine": "Garder ce brouillon",
+    "discard": "Effacer le brouillon"
   }
 }
