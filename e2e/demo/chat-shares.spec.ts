@@ -48,7 +48,7 @@ test('previously loaded share cards are revalidated and become unavailable when 
   let revoked = false, refreshes = 0
   const old = { id: 'old-share', fromId: 'other', content: '', type: 'share', share: { available: true, kind: 'event', id: 'event', title: 'Old private activity', href: '/galaxy/fixture?event=event#events' }, sentAt: '2026-10-05T10:00:00Z' }
   await page.route('**/api/conversations/share-fixture?before=**', route => route.fulfill({ json: { messages: [old], olderCursor: null } }))
-  await page.route('**/api/conversations/share-fixture/shared-cards', route => {
+  await page.route('**/api/conversations/share-fixture/message-state', route => {
     refreshes++
     return route.fulfill({ json: { messages: [{ ...old, share: revoked ? { available: false } : old.share }] } })
   })

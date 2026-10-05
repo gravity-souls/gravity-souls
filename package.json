@@ -25,7 +25,8 @@
     "test:chat": "node --import ./tests/register.mjs --test tests/chat-content.test.mjs",
     "test:galaxy": "node --import ./tests/register.mjs --test tests/galaxy-workflow.test.mjs tests/galaxy-workflow-ui.test.mjs",
     "build:deploy": "prisma migrate deploy && npm run build",
-    "test:chat-images": "node --import ./tests/register.mjs --test tests/chat-images.test.mjs"
+    "test:chat-images": "node --import ./tests/register.mjs --test tests/chat-images.test.mjs",
+    "test:chat-interactions": "node --import ./tests/register.mjs --test tests/chat-interactions.test.mjs"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

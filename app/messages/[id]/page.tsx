@@ -7,29 +7,22 @@ import { useLocale, useTranslations } from 'next-intl'
 import { notifyInboxChanged } from '@/lib/inbox-client'
 import ImageComposer from '@/components/messages/ImageComposer'
 import ImageMessage from '@/components/messages/ImageMessage'
-import type { ChatImageCard } from '@/lib/chat-image-types'
+import MessageQuote from '@/components/messages/MessageQuote'
+import MessageActions from '@/components/messages/MessageActions'
+import OriginalMessageDialog from '@/components/messages/OriginalMessageDialog'
+import { quotePreview, preserveReactionState, type ReactionEmoji } from '@/lib/chat-interaction-types'
+import type { ChatMessage as MsgData } from '@/lib/chat-message-types'
 import SignalComposer from '@/components/social/SignalComposer'
 import MessageContent from '@/components/messages/MessageContent'
 import SharedMessageCard from '@/components/messages/SharedMessageCard'
 import ShareComposer from '@/components/messages/ShareComposer'
-import type { SharedCard, ShareSelection } from '@/lib/chat-share-types'
+import type { ShareSelection } from '@/lib/chat-share-types'
 import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
 import { explorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types ---
-
-interface MsgData {
-  id: string
-  fromId: string
-  content: string
-  type: string
-  sentAt: string
-  readAt?: string
-  image?: ChatImageCard | null
-  share?: SharedCard
-}
 
 interface PlanetData {
   id: string
@@ -40,11 +33,9 @@ interface PlanetData {
 }
 
 function mergeMessages(previous: MsgData[], incoming: MsgData[]) {
-  return [
-    ...new Map(
-      [...previous, ...incoming].map((message) => [message.id, message]),
-    ).values(),
-  ].sort((a, b) => a.sentAt.localeCompare(b.sentAt) || a.id.localeCompare(b.id))
+  const map = new Map(previous.map(message=>[message.id,message]))
+  for (const message of incoming) map.set(message.id,preserveReactionState(map.get(message.id),message))
+  return [...map.values()].sort((a,b)=>a.sentAt.localeCompare(b.sentAt)||a.id.localeCompare(b.id))
 }
 
 // --- Message bubble ----------------------------------------------------------
@@ -54,18 +45,26 @@ function MessageBubble({
   isOwn,
   color,
   conversationId,
-  origin,
+  origin, viewerId, partnerName, disabled, highlighted, onReply, onReact, onOpenQuote,
 }: {
   msg: MsgData
   isOwn: boolean
   color: string
   conversationId: string
   origin?: ExplorationOrigin | null
+  viewerId: string
+  partnerName: string
+  disabled: boolean
+  highlighted: boolean
+  onReply: () => void
+  onReact: (emoji:ReactionEmoji|null) => Promise<boolean>
+  onOpenQuote: (id:string) => void
 }) {
   const t = useTranslations('inboxWorkflow')
+  const ti = useTranslations('chatInteractions')
   const locale = useLocale()
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+    <div id={`message-${msg.id}`} tabIndex={-1} className={`flex rounded-2xl outline-none ${isOwn ? 'justify-end' : 'justify-start'} ${highlighted ? 'ring-2 ring-violet-300/50' : ''}`}>
       <div
         className="min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 sm:max-w-[75%]"
         style={{
@@ -73,7 +72,9 @@ function MessageBubble({
           border: `1px solid ${isOwn ? `${color}33` : 'rgba(255,255,255,0.06)'}`,
         }}
       >
-        {msg.type === 'image' ? <ImageMessage image={msg.image} /> : msg.type === 'share' ? <SharedMessageCard card={msg.share ?? { available: false }} conversationId={conversationId} origin={origin} /> : <MessageContent content={msg.content} />}
+        {msg.quote && <MessageQuote quote={msg.quote} viewerId={viewerId} partnerName={partnerName} onOpen={onOpenQuote} />}
+        {msg.type === 'unavailable' ? <p className="text-xs text-slate-400">{ti('messageUnavailable')}</p> : msg.type === 'image' ? <ImageMessage image={msg.image} /> : msg.type === 'share' ? <SharedMessageCard card={msg.share ?? { available: false }} conversationId={conversationId} origin={origin} /> : <MessageContent content={msg.content} />}
+        {msg.type !== 'unavailable' && <MessageActions reactions={msg.reactions} disabled={disabled} replyDisabled={!quotePreview(msg).available} onReply={onReply} onReact={onReact} />}
         <span
           className="block text-[10px] mt-1 text-right"
           style={{ color: 'var(--ghost)', opacity: 0.5 }}
@@ -166,7 +167,14 @@ function ConversationPageInner({ params }: Props) {
   const tCommon = useTranslations('common')
   const tw = useTranslations('inboxWorkflow')
   const ts = useTranslations('chatShares')
-  const pendingImageRef = useRef<{ id: string; key: string } | null>(null)
+  const ti = useTranslations('chatInteractions')
+  const [replyToId,setReplyToId] = useState<string|null>(null)
+  const [originalId,setOriginalId] = useState<string|null>(null)
+  const [highlighted,setHighlighted] = useState<string|null>(null)
+  const [attachmentBusy,setAttachmentBusy] = useState(false)
+  const highlightTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
+  useEffect(()=>()=>{if(highlightTimer.current)clearTimeout(highlightTimer.current)},[])
+  const pendingImageRef = useRef<{ id: string; key: string; replyToId:string|null } | null>(null)
   const { id } = use(params)
   const router = useRouter()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -177,11 +185,12 @@ function ConversationPageInner({ params }: Props) {
   const pendingSendRef = useRef<{
     content: string
     clientMessageId: string
+    replyToId: string|null
   } | null>(null)
 
   const [messages, setMessages] = useState<MsgData[]>([])
   const messagesRef = useRef<MsgData[]>([])
-  const pendingShareRef = useRef<{ selection: ShareSelection; clientMessageId: string } | null>(null)
+  const pendingShareRef = useRef<{ selection: ShareSelection; clientMessageId: string; replyToId: string|null } | null>(null)
   const sendLock = useRef(false)
   useEffect(() => { messagesRef.current = messages }, [messages])
   const [otherPlanet, setOtherPlanet] = useState<PlanetData | null>(null)
@@ -228,20 +237,20 @@ function ConversationPageInner({ params }: Props) {
           historyLoaded.current ? previous : result.olderCursor,
         )
         setLoadError('')
-        // The latest page does not include previously loaded history; refresh its cards too.
+        // The latest page does not include previously loaded history; refresh its quotes, cards and reactions too.
         const incoming = new Set(result.messages.map((message: MsgData) => message.id))
-        const olderIds = messagesRef.current.filter(message => message.type === 'share' && !incoming.has(message.id)).map(message => message.id)
+        const olderIds = messagesRef.current.filter(message => !incoming.has(message.id)).map(message => message.id)
         for (let start = 0; start < olderIds.length; start += 100) {
           const ids = olderIds.slice(start, start + 100)
           try {
-            const refreshed = await fetch(`/api/conversations/${id}/shared-cards`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }), signal: controller.signal })
+            const refreshed = await fetch(`/api/conversations/${id}/message-state`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }), signal: controller.signal })
             if (!refreshed.ok) throw new Error('failed')
             const cards = await refreshed.json()
             if (controller.signal.aborted) return
             const returned = new Set(cards.messages.map((message: MsgData) => message.id))
-            setMessages(previous => mergeMessages(previous.map(message => ids.includes(message.id) && !returned.has(message.id) ? { ...message, share: { available: false } } : message), cards.messages))
+            setMessages(previous => mergeMessages(previous.map(message => ids.includes(message.id) && !returned.has(message.id) ? { ...message, type:'unavailable', content:'', image:null, share:{available:false}, quote:null, reactions:[] } : message), cards.messages))
           } catch {
-            if (!controller.signal.aborted) setMessages(previous => previous.map(message => ids.includes(message.id) ? { ...message, share: { available: false } } : message))
+            if (!controller.signal.aborted) setMessages(previous => previous.map(message => ids.includes(message.id) ? { ...message, share: { available: false }, quote:message.quote?{available:false}:null, reactions:[], image:null } : message))
           }
         }
         const unread = result.messages
@@ -265,7 +274,8 @@ function ConversationPageInner({ params }: Props) {
       } catch {
         if (!controller.signal.aborted) {
           setLoadError(tw('conversationUnavailable'))
-          setMessages(previous => previous.map(message => message.type === 'share' ? { ...message, share: { available: false } } : message))
+          setOriginalId(null)
+          setMessages(previous => previous.map(message => message.type === 'share' ? { ...message, share: { available: false }, quote:message.quote?{available:false}:null, reactions:[], image:null } : message))
         }
       } finally {
         inFlight = false
@@ -346,8 +356,8 @@ function ConversationPageInner({ params }: Props) {
     // Reuse the same clientMessageId across retries of the same draft (the
     // composer only clears its text on success), so a resend after a
     // dropped response can't create a duplicate message server-side.
-    if (pendingSendRef.current?.content !== content) {
-      pendingSendRef.current = { content, clientMessageId: crypto.randomUUID() }
+    if (pendingSendRef.current?.content !== content || pendingSendRef.current.replyToId !== replyToId) {
+      pendingSendRef.current = { content, clientMessageId: crypto.randomUUID(), replyToId }
     }
     const clientMessageId = pendingSendRef.current.clientMessageId
 
@@ -355,17 +365,18 @@ function ConversationPageInner({ params }: Props) {
       const res = await fetch(`/api/conversations/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, clientMessageId }),
+        body: JSON.stringify({ content, clientMessageId, replyToId }),
       })
-      if (!res.ok) throw new Error('delivery-unconfirmed')
+      if (!res.ok) { const result=await res.json(); throw new Error(result.error==='replyUnavailable'?'replyUnavailable':'delivery-unconfirmed') }
       const real = (await res.json()) as MsgData
       followingLatest.current = true
       setMessages((prev) => mergeMessages(prev, [real]))
       notifyInboxChanged()
       pendingSendRef.current = null
+      setReplyToId(null)
       return true
-    } catch {
-      setSendError(t('deliveryUnconfirmed'))
+    } catch (error) {
+      setSendError(error instanceof Error && error.message==='replyUnavailable' ? ti('replyUnavailable') : t('deliveryUnconfirmed'))
       return false
     } finally {
       sendLock.current = false
@@ -377,32 +388,53 @@ function ConversationPageInner({ params }: Props) {
     if (sendLock.current) return false
     sendLock.current = true
     setSending(true); setSendError('')
-    if (pendingShareRef.current?.selection.kind !== selection.kind || pendingShareRef.current.selection.targetId !== selection.targetId) pendingShareRef.current = { selection, clientMessageId: crypto.randomUUID() }
+    if (pendingShareRef.current?.selection.kind !== selection.kind || pendingShareRef.current.selection.targetId !== selection.targetId || pendingShareRef.current.replyToId !== replyToId) pendingShareRef.current = { selection, clientMessageId: crypto.randomUUID(), replyToId }
     try {
-      const response = await fetch(`/api/conversations/${id}/shares`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...selection, clientMessageId: pendingShareRef.current.clientMessageId }) })
-      if (!response.ok) throw new Error('failed')
+      const response = await fetch(`/api/conversations/${id}/shares`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...selection, clientMessageId: pendingShareRef.current.clientMessageId, replyToId }) })
+      if (!response.ok) { const result=await response.json(); throw new Error(result.error==='replyUnavailable'?'replyUnavailable':'failed') }
       const message = await response.json() as MsgData
       followingLatest.current = true
       setMessages(previous => mergeMessages(previous, [message]))
       pendingShareRef.current = null
+      setReplyToId(null)
       notifyInboxChanged()
       return true
-    } catch { setSendError(ts('sendFailed')); return false }
+    } catch (error) { setSendError(error instanceof Error && error.message==='replyUnavailable' ? ti('replyUnavailable') : ts('sendFailed')); return false }
     finally { sendLock.current = false; setSending(false) }
   }
 
   async function handleImage(imageId: string): Promise<boolean | string> {
     if (sendLock.current) return false
     sendLock.current = true; setSending(true); setSendError('')
-    if (pendingImageRef.current?.id !== imageId) pendingImageRef.current = { id: imageId, key: crypto.randomUUID() }
+    if (pendingImageRef.current?.id !== imageId || pendingImageRef.current.replyToId !== replyToId) pendingImageRef.current = { id: imageId, key: crypto.randomUUID(), replyToId }
     try {
-      const response = await fetch(`/api/conversations/${id}/images`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId, clientMessageId: pendingImageRef.current.key }) })
+      const response = await fetch(`/api/conversations/${id}/images`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId, clientMessageId: pendingImageRef.current.key, replyToId }) })
       const result = await response.json()
-      if (!response.ok) return result.error ?? 'sendFailed'
-      followingLatest.current = true; setMessages(previous => mergeMessages(previous, [result])); notifyInboxChanged(); pendingImageRef.current = null
+      if (!response.ok) { if(result.error==='replyUnavailable')setSendError(ti('replyUnavailable')); return result.error ?? 'sendFailed' }
+      followingLatest.current = true; setMessages(previous => mergeMessages(previous, [result])); notifyInboxChanged(); pendingImageRef.current = null; setReplyToId(null)
       return true
     } catch { return false }
     finally { sendLock.current = false; setSending(false) }
+  }
+
+  function selectReply(message:MsgData) {
+    if(sending||attachmentBusy||!canSend||loadError)return
+    setReplyToId(message.id)
+    document.getElementById(`composer-${id}`)?.querySelector('textarea')?.focus()
+  }
+  function openOriginal(messageId:string) {
+    const element=document.getElementById(`message-${messageId}`)
+    if(element){ followingLatest.current=false; element.scrollIntoView({behavior:'smooth',block:'center'});element.focus({preventScroll:true});setHighlighted(messageId);if(highlightTimer.current)clearTimeout(highlightTimer.current);highlightTimer.current=setTimeout(()=>setHighlighted(null),3000) }
+    else setOriginalId(messageId)
+  }
+  async function react(messageId:string,emoji:ReactionEmoji|null) {
+    try {
+      const response=await fetch(`/api/conversations/${id}/messages/${encodeURIComponent(messageId)}/reaction`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({emoji})})
+      if(!response.ok)return false
+      const result=await response.json()
+      setMessages(previous=>previous.map(message=>message.id===messageId?preserveReactionState(message,{...message,...result}):message))
+      return true
+    } catch {return false}
   }
 
   if (loading) {
@@ -419,6 +451,8 @@ function ConversationPageInner({ params }: Props) {
     )
   }
 
+  const selectedReply = replyToId ? (loadError ? { available:false as const } : quotePreview(messages.find(message=>message.id===replyToId))) : null
+  const composerDisabled = sending || attachmentBusy || !canSend || !!loadError
   const accentColor =
     otherPlanet?.planetConfig?.tintColor ??
     otherPlanet?.visual?.coreColor ??
@@ -434,8 +468,8 @@ function ConversationPageInner({ params }: Props) {
       }}
     >
       <ConvHeader
-        planet={otherPlanet}
-        fallbackName={otherUserName}
+        planet={loadError ? null : otherPlanet}
+        fallbackName={loadError ? tw('conversationUnavailable') : otherUserName}
         onBack={() => router.push('/messages')}
       />
       <ExplorationReturnLink origin={origin} />
@@ -472,7 +506,7 @@ function ConversationPageInner({ params }: Props) {
             {tw('olderMessages')}
           </button>
         )}
-        {messages.map((msg) => (
+        {!loadError && messages.map((msg) => (
           <MessageBubble
             key={msg.id}
             msg={msg}
@@ -480,6 +514,13 @@ function ConversationPageInner({ params }: Props) {
             color={accentColor}
             conversationId={id}
             origin={origin}
+            viewerId={myUserId}
+            partnerName={otherUserName}
+            disabled={composerDisabled}
+            highlighted={highlighted===msg.id}
+            onReply={()=>selectReply(msg)}
+            onReact={emoji=>react(msg.id,emoji)}
+            onOpenQuote={openOriginal}
           />
         ))}
 
@@ -519,16 +560,18 @@ function ConversationPageInner({ params }: Props) {
       {!canSend && (
         <p className="px-4 py-3 text-xs text-slate-400">{tw('archived')}</p>
       )}
-      <ImageComposer conversationId={id} disabled={sending || !canSend || !!loadError} onSend={handleImage} />
-      <ShareComposer conversationId={id} disabled={sending || !canSend || !!loadError} onSend={handleShare} />
-      <SignalComposer
+      {selectedReply && <div className="shrink-0 px-4 pt-2"><div className="flex items-center justify-between gap-2 text-xs text-violet-200"><span>{ti('replying')}</span><button disabled={sending||attachmentBusy} onClick={()=>setReplyToId(null)} className="min-h-9 px-2">{ti('cancelReply')}</button></div><MessageQuote quote={selectedReply} viewerId={myUserId} partnerName={otherUserName}/></div>}
+      <ImageComposer conversationId={id} disabled={composerDisabled} onBusyChange={setAttachmentBusy} onSend={handleImage} />
+      <ShareComposer conversationId={id} disabled={composerDisabled} onSend={handleShare} />
+      <div id={`composer-${id}`} className="shrink-0"><SignalComposer
         onSend={handleSend}
-        disabled={sending || !canSend || !!loadError}
+        disabled={composerDisabled}
         accentColor={accentColor}
         placeholder={t('transmitTo', {
           name: otherPlanet?.name ?? otherUserName ?? t('unknown'),
         })}
-      />
+      /></div>
+      {originalId && !loadError && <OriginalMessageDialog key={originalId} id={originalId} conversationId={id} origin={origin} viewerId={myUserId} onClose={()=>setOriginalId(null)}/>}
     </div>
   )
 }

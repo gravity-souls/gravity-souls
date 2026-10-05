@@ -39,6 +39,7 @@ jobs:
       - run: npm test
       - run: npm run test:chat
       - run: npm run test:chat-images
+      - run: npm run test:chat-interactions
       - run: npm run test:galaxy
 
   database-suite:

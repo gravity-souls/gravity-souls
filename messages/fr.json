@@ -1914,5 +1914,27 @@
     "open": "Agrandir la photo",
     "photo": "Photo",
     "close": "Fermer"
+  },
+  "chatInteractions": {
+    "reply": "Répondre",
+    "react": "Réagir",
+    "chooseReaction": "Choisir une réaction",
+    "removeReaction": "Retirer votre réaction {emoji}, {count} réactions",
+    "setReaction": "Réagir avec {emoji}, {count} réactions",
+    "updating": "Mise à jour de la réaction…",
+    "reactionFailed": "Votre réaction n’a pas pu être confirmée. Réessayez le même choix.",
+    "retry": "Réessayer",
+    "you": "Vous",
+    "viewOriginal": "Voir le message original",
+    "original": "Message original",
+    "close": "Fermer",
+    "loadingOriginal": "Chargement du message original…",
+    "quotedImage": "Photo",
+    "quotedShare": "Carte partagée",
+    "quoteUnavailable": "Message original indisponible",
+    "messageUnavailable": "Message indisponible",
+    "replying": "Réponse à un message",
+    "cancelReply": "Annuler la réponse",
+    "replyUnavailable": "Le message original n’est plus disponible. Annulez cette réponse pour envoyer un nouveau message."
   }
 }

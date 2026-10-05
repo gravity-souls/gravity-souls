@@ -1,14 +1,15 @@
 import { z } from 'zod'
-import { hydrateSharedMessages } from '@/lib/chat-shares'
+import { hydrateMessageState, validateReplyTo } from '@/lib/chat-interactions'
+import { lockContactPair } from '@/lib/beam-invitations'
+import { canContact } from '@/lib/visibility'
+import { resolveLocale } from '@/lib/i18n-locales'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { messageSchema } from '@/lib/input-schemas'
 import { NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { NotificationTemplates } from '@/lib/createNotification'
 import { grantXP } from '@/lib/grantXP'
-import { getUserLocale } from '@/lib/notification-i18n'
 import { isBlocked, canViewProfile } from '@/lib/visibility'
 import { checkRateLimit, rateLimitKey, RATE_LIMITS } from '@/lib/rate-limit'
 import { resolveUserPlanetConfig } from '@/lib/user-planet-config'
@@ -54,6 +55,7 @@ export async function GET(
     const canSeePlanet = await canViewProfile(user.id, other.id)
     const mine =
       conversation.userAId === user.id ? conversation.userA : conversation.userB
+    if (mine.deletedAt) return NextResponse.json({ error: 'unavailable' }, { status: 404 })
     const before = query.data.before
     if (
       before &&
@@ -91,7 +93,7 @@ export async function GET(
               }
             : null,
         otherUser: { id: other.id, name: other.name },
-        messages: await hydrateSharedMessages(rows.reverse(), user),
+        messages: await hydrateMessageState(rows.reverse(), user),
         olderCursor,
       },
       { headers: { 'Cache-Control': 'private, no-store' } },
@@ -130,7 +132,9 @@ export async function PATCH(
     const input = await readJson(request, readSchema)
     if (!input.ok) return input.response
     const result = await prisma.$transaction(async (tx) => {
+      await lockContactPair(tx,user.id,otherId)
       await tx.$queryRaw`SELECT "id" FROM "conversation_thread" WHERE "id" = ${id} FOR UPDATE`
+      if (!await tx.user.findFirst({where:{id:user.id,deletedAt:null}}) || !await canContact(user.id,otherId,tx) || !await tx.conversationThread.findUnique({where:{id}})) throw NextResponse.json({error:'unavailable'},{status:404})
       const updated = await tx.directMessage.updateMany({
         where: {
           conversationId: id,
@@ -161,207 +165,40 @@ export async function PATCH(
   }
 }
 
-// POST /api/conversations/[id] - send a message in a conversation
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+// Sending/retrying always validates current contact under the participant/thread locks.
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    let session
-    try {
-      session = await requireUser()
-    } catch (res) {
-      return res as Response
-    }
-
-    const { id } = await params
-    const userId = session.user.id
-
-    const conversation = await prisma.conversationThread.findUnique({
-      where: { id },
-    })
-
-    if (!conversation) {
-      return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404 },
-      )
-    }
-
-    if (conversation.userAId !== userId && conversation.userBId !== userId) {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
-    }
-
-    const recipientId =
-      conversation.userAId === userId
-        ? conversation.userBId
-        : conversation.userAId
-
-    if (await isBlocked(userId, recipientId)) {
-      return NextResponse.json(
-        { error: 'This conversation is no longer available' },
-        { status: 403 },
-      )
-    }
-
-    if (
-      !(await prisma.user.findFirst({
-        where: { id: recipientId, deletedAt: null },
-        select: { id: true },
-      }))
-    )
-      return NextResponse.json(
-        { error: 'Recipient not found' },
-        { status: 404 },
-      )
-
-    const input = await readJson(request, messageSchema)
-    if (!input.ok) return input.response
-    const body = input.data
-    const { content, clientMessageId } = body
-    const trimmedContent = content.trim()
-
-    if (
-      !content ||
-      typeof content !== 'string' ||
-      content.trim().length === 0
-    ) {
-      return NextResponse.json(
-        { error: 'Message content is required' },
-        { status: 400 },
-      )
-    }
-
-    // A retried send (client never saw the first response) reuses the same
-    // clientMessageId, so return the message already created instead of a duplicate.
-    if (clientMessageId) {
-      const existing = await prisma.directMessage.findFirst({
-        where: { conversationId: id, clientMessageId },
-      })
+    const { user } = await requireUser(), { id } = await params
+    const conversation = await prisma.conversationThread.findUnique({ where: { id } })
+    if (!conversation) return NextResponse.json({ error: 'unavailable' }, { status: 404 })
+    if (conversation.userAId !== user.id && conversation.userBId !== user.id) return NextResponse.json({ error: 'unavailable' }, { status: 403 })
+    const recipientId = conversation.userAId === user.id ? conversation.userBId : conversation.userAId
+    if (!await canContact(user.id, recipientId)) return NextResponse.json({ error: 'unavailable' }, { status: 403 })
+    const input = await readJson(request, messageSchema); if (!input.ok) return input.response
+    const { content, clientMessageId, replyToId } = input.data
+    const result = await prisma.$transaction(async tx => {
+      await lockContactPair(tx,user.id,recipientId)
+      await tx.$queryRaw`SELECT "id" FROM "conversation_thread" WHERE "id" = ${id} FOR UPDATE`
+      const people = await tx.user.findMany({ where: { id: { in: [user.id,recipientId] }, deletedAt: null }, select: { id: true, name: true, language: true } })
+      const sender = people.find(person=>person.id===user.id), recipient = people.find(person=>person.id===recipientId)
+      if (!sender || !recipient || !await tx.conversationThread.findUnique({where:{id}})) throw NextResponse.json({error:'unavailable'},{status:404})
+      if (!await canContact(user.id,recipientId,tx)) throw NextResponse.json({error:'unavailable'},{status:403})
+      const existing = clientMessageId ? await tx.directMessage.findUnique({ where: { conversationId_clientMessageId: { conversationId: id, clientMessageId } } }) : null
       if (existing) {
-        if (
-          existing.senderId !== userId ||
-          existing.content !== trimmedContent
-        ) {
-          return NextResponse.json(
-            { error: 'Message key already used' },
-            { status: 409 },
-          )
-        }
-        return NextResponse.json(
-          {
-            id: existing.id,
-            fromId: existing.senderId,
-            content: existing.content,
-            type: existing.type,
-            sentAt: existing.createdAt.toISOString(),
-          },
-          { status: 200 },
-        )
+        if (existing.senderId!==user.id || existing.type!=='text' || existing.content!==content || existing.replyToId!==(replyToId ?? null)) throw NextResponse.json({error:'keyConflict'},{status:409})
+        return { message: existing, created: false, first: false }
       }
-    }
-
-    const messageAllowed = await checkRateLimit(
-      rateLimitKey('MESSAGE_SEND', userId),
-      RATE_LIMITS.MESSAGE_SEND.limit,
-      RATE_LIMITS.MESSAGE_SEND.windowMs,
-    )
-    if (!messageAllowed)
-      return NextResponse.json(
-        { error: 'Too many messages. Try again later.' },
-        { status: 429 },
-      )
-
-    const recipientLocale = await getUserLocale(recipientId)
-    const notification = await NotificationTemplates.newMessage(
-      session.user.name ?? 'A planet',
-      `/messages/${id}`,
-      recipientLocale,
-    )
-
-    let sent
-    try {
-      sent = await prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT "id" FROM "conversation_thread" WHERE "id" = ${id} FOR UPDATE`
-        const created = await tx.directMessage.create({
-          data: {
-            conversationId: id,
-            senderId: userId,
-            content: trimmedContent,
-            type: 'text',
-            clientMessageId: clientMessageId ?? undefined,
-          },
-        })
-        await tx.conversationThread.update({
-          where: { id },
-          data: { lastMessageAt: created.createdAt },
-        })
-        const messageCount = await tx.directMessage.count({
-          where: { conversationId: id },
-        })
-        await tx.notification.create({
-          data: { userId: recipientId, ...notification },
-        })
-        return { msg: created, isFirstMessage: messageCount === 1 }
-      })
-    } catch (error) {
-      // Two concurrent retries with the same clientMessageId can both pass the
-      // findFirst check above; the unique constraint then rejects the loser,
-      // which just means the winner's row is the canonical one to return.
-      if (
-        clientMessageId &&
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const existing = await prisma.directMessage.findFirst({
-          where: { conversationId: id, clientMessageId },
-        })
-        if (existing) {
-          if (
-            existing.senderId !== userId ||
-            existing.content !== trimmedContent
-          ) {
-            return NextResponse.json(
-              { error: 'Message key already used' },
-              { status: 409 },
-            )
-          }
-          return NextResponse.json(
-            {
-              id: existing.id,
-              fromId: existing.senderId,
-              content: existing.content,
-              type: existing.type,
-              sentAt: existing.createdAt.toISOString(),
-            },
-            { status: 200 },
-          )
-        }
-      }
-      throw error
-    }
-
-    // XP is a separate reward; its failure must not turn a delivered message
-    // into an apparent failed send and trigger a duplicate retry.
-    if (sent.isFirstMessage) {
-      try {
-        await grantXP(userId, 'RESONANCE_SENT')
-      } catch (error) {
-        console.error('Could not grant message XP', error)
-      }
-    }
-
-    return NextResponse.json(
-      {
-        id: sent.msg.id,
-        fromId: sent.msg.senderId,
-        content: sent.msg.content,
-        type: sent.msg.type,
-        sentAt: sent.msg.createdAt.toISOString(),
-      },
-      { status: 201 },
-    )
-  } catch (error) {
-    return safeApiError(error)
-  }
+      await validateReplyTo(tx,id,replyToId,user)
+      const limit = RATE_LIMITS.MESSAGE_SEND
+      if (!await checkRateLimit(rateLimitKey('MESSAGE_SEND',user.id),limit.limit,limit.windowMs,tx)) throw NextResponse.json({error:'rateLimited'},{status:429})
+      const message = await tx.directMessage.create({ data: { conversationId: id, senderId: user.id, content, type:'text', clientMessageId, replyToId } })
+      await tx.conversationThread.update({ where: { id }, data: { lastMessageAt: message.createdAt } })
+      const notice = await NotificationTemplates.newMessage(sender.name,`/messages/${id}`,resolveLocale(recipient.language))
+      await tx.notification.create({ data: { userId: recipientId, ...notice } })
+      return { message, created: true, first: await tx.directMessage.count({where:{conversationId:id}})===1 }
+    })
+    if (result.first) { try { await grantXP(user.id,'RESONANCE_SENT') } catch { console.error('Could not grant message XP') } }
+    const [message] = await hydrateMessageState([result.message],user)
+    return NextResponse.json(message,{ status: result.created ? 201 : 200, headers: { 'Cache-Control':'private, no-store' } })
+  } catch (error) { return safeApiError(error) }
 }

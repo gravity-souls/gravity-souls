@@ -14,7 +14,7 @@ const color = z.string().regex(/^#[0-9a-f]{6}$/i)
 export const resourceId = text(128).min(1)
 export const joinSchema = z.object({ communityId: resourceId }).strict()
 export const conversationSchema = z.object({ recipientId: resourceId }).strict()
-export const messageSchema = z.object({ content: text(MAX_MESSAGE_LENGTH).min(1), clientMessageId: resourceId.optional() }).strict()
+export const messageSchema = z.object({ content: text(MAX_MESSAGE_LENGTH).min(1), clientMessageId: resourceId.optional(), replyToId: resourceId.nullable().optional() }).strict()
 // Mirrors lib/stream-posts.ts's MAX_COMMENT_LENGTH (500), used by PATCH
 // /api/posts/[id]/comments/[commentId] — edits are capped the same as creation.
 export const postCommentEditSchema = z.object({ content: text(500).min(1) }).strict()

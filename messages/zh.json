@@ -1914,5 +1914,27 @@
     "open": "查看大图",
     "photo": "图片",
     "close": "关闭"
+  },
+  "chatInteractions": {
+    "reply": "回复",
+    "react": "回应",
+    "chooseReaction": "选择回应表情",
+    "removeReaction": "取消你的{emoji}回应，共 {count} 个回应",
+    "setReaction": "用{emoji}回应，共 {count} 个回应",
+    "updating": "正在更新回应…",
+    "reactionFailed": "尚未确认回应成功，请重试同一个选择。",
+    "retry": "重试",
+    "you": "你",
+    "viewOriginal": "查看原消息",
+    "original": "原消息",
+    "close": "关闭",
+    "loadingOriginal": "正在加载原消息…",
+    "quotedImage": "图片",
+    "quotedShare": "分享卡片",
+    "quoteUnavailable": "原消息不可用",
+    "messageUnavailable": "消息不可用",
+    "replying": "正在回复消息",
+    "cancelReply": "取消引用",
+    "replyUnavailable": "原消息已不可用，取消引用后可发送新消息。"
   }
 }

@@ -101,7 +101,7 @@ export async function GET() {
       prisma.conversationThread.findMany({
         where: { OR: [{ userAId: userId }, { userBId: userId }] },
         orderBy: { createdAt: "asc" },
-        include: { messages: { orderBy: { createdAt: "asc" }, include: { image: { select: { id: true, width: true, height: true, bytes: true } } } } },
+        include: { messages: { orderBy: { createdAt: "asc" }, include: { reactions: { where: { userId }, select: { emoji: true, createdAt: true, updatedAt: true } }, image: { select: { id: true, width: true, height: true, bytes: true } } } } },
       }),
       prisma.beamInvitation.findMany({ where: { OR: [{ senderId: userId }, { recipientId: userId }] }, orderBy: { createdAt: 'asc' } }),
     ]);
@@ -132,7 +132,7 @@ export async function GET() {
       lastMessageAt: c.lastMessageAt,
       messages: c.messages.map((m) => ({
         id: m.id, senderId: m.senderId, content: m.content, type: m.type,
-        image: m.image, readAt: m.readAt, createdAt: m.createdAt, shareKind: m.shareKind, shareTargetId: m.shareTargetId,
+        replyToId: m.replyToId, reactions: m.reactions, image: m.image, readAt: m.readAt, createdAt: m.createdAt, shareKind: m.shareKind, shareTargetId: m.shareTargetId,
       })),
     }));
 
