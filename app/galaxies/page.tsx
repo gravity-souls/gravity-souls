@@ -151,7 +151,7 @@ function GalaxiesInner() {
 
         <div className="mt-5 flex flex-wrap gap-3"><Link href="/galaxies/create" className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium">{tw('createGalaxy')}</Link>{(['all','joined','managed'] as const).map(value=><button key={value} type="button" onClick={()=>setScope(value)} className={`rounded-xl border border-white/15 px-4 py-2 text-sm ${scope===value?'bg-white/10':''}`}>{tw(`${value}Galaxies`)}</button>)}</div>
 
-        <DiscoveryFilters value={filters} onChange={setFilters} />
+        <DiscoveryFilters value={filters} onChange={setFilters} activityPool={false} />
         {/* -- Search + filters -------------------------------------------- */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
 
@@ -237,7 +237,7 @@ function GalaxiesInner() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {filtered.map((galaxy) => (
-                <GalaxyCard key={galaxy.id} galaxy={galaxy} variant="full" />
+                <div key={galaxy.id}><GalaxyCard galaxy={galaxy} variant="full" /><DiscoveryScore recommendation={galaxy.recommendation} /></div>
               ))}
             </div>
           )}

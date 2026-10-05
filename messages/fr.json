@@ -2211,6 +2211,7 @@
     "publicTagsHint": "Choisissez les informations individuelles à afficher sur votre planète, dans les résonances et les cartes. Tout est privé par défaut. La naissance et la déclaration de majorité ne sont jamais des étiquettes publiques.",
     "hideAll": "Masquer toutes les étiquettes",
     "scoringHint": "La calibration reste le signal principal. Les préférences renseignées contribuent au maximum à 15% ; les réponses absentes ne pénalisent pas. Un choix d’exploration peut compléter un ensemble suffisant.",
+    "galaxyHint": "L’ordre personnalisé utilise les informations disponibles des galaxies. Les champs sans réponse ne sont pas évalués ; vos filtres restent actifs.",
     "discoveryScore": "Affinité des préférences {score}/100"
   }
 }

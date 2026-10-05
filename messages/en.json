@@ -2211,6 +2211,7 @@
     "publicTagsHint": "Select only the individual details you want people to see on your planet, in resonance and star maps. Everything starts private. Birthday and adult declaration are never public tags.",
     "hideAll": "Hide all tags",
     "scoringHint": "Planet calibration remains the main signal. Available basic preferences contribute at most 15%; unanswered fields carry no penalty. When the batch is large enough, up to one result is an exploration pick.",
+    "galaxyHint": "Preference order uses available community tags. Missing tags are unscored; your filters still apply.",
     "discoveryScore": "Preference fit {score}/100"
   }
 }

@@ -19,7 +19,7 @@ export async function GET() {
   const [communities, memberships, requests, preferences] = await Promise.all([
     prisma.community.findMany({
       orderBy: { name: "asc" },
-      include: { _count: { select: { memberships: true } } },
+      include: { _count: { select: { memberships: { where: { user: { deletedAt: null } } } } } },
     }),
     userId
       ? prisma.communityMembership.findMany({
