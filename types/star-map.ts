@@ -17,6 +17,7 @@ export interface StarMapNode {
   userInterested?: boolean
   userId?: string
   relationship?: StarMapRelationship
+  galaxyRelationship?: { created: boolean; joined: boolean }
   groupId: string
   name: string
   tagline?: string | null

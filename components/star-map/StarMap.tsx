@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PersonalMapAnchor from '@/components/star-map/PersonalMapAnchor'
+import { PersonalRelationLegend, PersonalNodeRelations } from '@/components/star-map/PersonalMapRelations'
+import { personalNodeOffset, personalNodeRelations, RELATION_STYLES } from '@/lib/personal-map-relations'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetRelationshipStatus from '@/components/social/PlanetRelationshipStatus'
 import SavePlanetButton from '@/components/social/SavePlanetButton'
@@ -283,7 +285,7 @@ export default function StarMap({
         )
         ctx.fillStyle = dot.color + 'a0'
         ctx.fillRect(p.x, p.y, Math.max(0.6, p.p), Math.max(0.6, p.p))
-        if (!focused && i % 40 === 0) {
+        if (mode !== 'personal' && !focused && i % 40 === 0) {
           const gradient = ctx.createLinearGradient(hub.x, hub.y, p.x, p.y)
           gradient.addColorStop(0, '#ffffff30')
           gradient.addColorStop(1, dot.color + '08')
@@ -296,7 +298,62 @@ export default function StarMap({
         }
       }
       hits.current = []
-      if (!focused) {
+      if (!focused && mode === 'personal') {
+        // Render actual bounded-batch objects in overview. Decorative particles
+        // and climate/status group centers have no relationship edges.
+        clusters.forEach(group => {
+          const nodes = data.nodes.filter(node => node.groupId === group.id)
+          nodes.forEach((node, index) => {
+            const offset = personalNodeOffset(index, nodes.length)
+            const p = project(group.center[0] + offset.x, group.center[1] + offset.y, group.center[2])
+            // The HTML owner anchor stays at the screen origin even when the
+            // camera rotates. Keep real targets clear of its label/hit area.
+            let dx = p.x - hub.x, dy = p.y - hub.y
+            const distance = Math.hypot(dx, dy)
+            if (distance < 120) {
+              const angle = distance < 1 ? index * 2.3999632297 : Math.atan2(dy, dx)
+              p.x = hub.x + Math.cos(angle) * 120
+              p.y = hub.y + Math.sin(angle) * 120
+            }
+            dx = p.x - hub.x; dy = p.y - hub.y
+            const length = Math.hypot(dx, dy)
+            if (data.selfPlanet && !loading && !error) {
+              const relations = personalNodeRelations(node)
+              relations.forEach((relation, relationIndex) => {
+                const style = RELATION_STYLES[relation]
+                const shift = (relationIndex - (relations.length - 1) / 2) * 5
+                const nx = -dy / length * shift, ny = dx / length * shift
+                const start = { x: hub.x + dx / length * 85 + nx, y: hub.y + dy / length * 85 + ny }
+                const end = { x: p.x - dx / length * 9 + nx, y: p.y - dy / length * 9 + ny }
+                ctx.strokeStyle = style.color + (node.id === selected?.id ? 'e0' : '80')
+                ctx.lineWidth = node.id === selected?.id ? 1.8 : 1
+                ctx.setLineDash([...style.dash])
+                ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke()
+                ctx.setLineDash([])
+                const arrow = (x: number, y: number, angle: number) => {
+                  ctx.beginPath(); ctx.moveTo(x - Math.cos(angle - 0.55) * 7, y - Math.sin(angle - 0.55) * 7)
+                  ctx.lineTo(x, y); ctx.lineTo(x - Math.cos(angle + 0.55) * 7, y - Math.sin(angle + 0.55) * 7); ctx.stroke()
+                }
+                const angle = Math.atan2(dy, dx)
+                if (style.arrow !== 'none') arrow(end.x, end.y, angle)
+                if (style.arrow === 'both') arrow(start.x, start.y, angle + Math.PI)
+              })
+            }
+            ctx.fillStyle = group.color
+            ctx.beginPath()
+            const size = node.id === selected?.id ? 7 : 5
+            if (node.kind === 'galaxy') ctx.rect(p.x - size, p.y - size, size * 2, size * 2)
+            else if (node.kind === 'activity') { ctx.moveTo(p.x, p.y - size - 1); ctx.lineTo(p.x + size + 1, p.y); ctx.lineTo(p.x, p.y + size + 1); ctx.lineTo(p.x - size - 1, p.y); ctx.closePath() }
+            else ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.globalCompositeOperation = 'source-over'
+            ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'
+            if (node.id === selected?.id || data.nodes.length <= 6) ctx.fillText(node.name.slice(0, 18), p.x + 10, p.y + 3)
+            ctx.globalCompositeOperation = 'lighter'
+            hits.current.push({ ...p, groupId: group.id, node })
+          })
+        })
+      } else if (!focused) {
         clusters.forEach((group) => {
           const p = project(...group.center)
           const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 22)
@@ -319,12 +376,14 @@ export default function StarMap({
             focused.center[1] + Math.sin(angle) * radius * 0.7,
             focused.center[2],
           )
-          ctx.strokeStyle = focused.color + '40'
-          ctx.lineWidth = 0.65
-          ctx.beginPath()
-          ctx.moveTo(width / 2, height * 0.44)
-          ctx.lineTo(p.x, p.y)
-          ctx.stroke()
+          if (mode !== 'personal') {
+            ctx.strokeStyle = focused.color + '40'
+            ctx.lineWidth = 0.65
+            ctx.beginPath()
+            ctx.moveTo(width / 2, height * 0.44)
+            ctx.lineTo(p.x, p.y)
+            ctx.stroke()
+          }
           ctx.fillStyle = focused.color
           ctx.beginPath()
           const size = node.id === selected?.id ? 5 : 3
@@ -410,7 +469,7 @@ export default function StarMap({
       canvas.removeEventListener('pointermove', redraw)
       document.removeEventListener('visibilitychange', visibility)
     }
-  }, [clusters, dots, data.nodes, focus, reduced, selected, zoomTick, listOnly])
+  }, [clusters, dots, data.nodes, data.selfPlanet, focus, reduced, selected, zoomTick, listOnly, mode, loading, error])
 
   function enter(id: string) {
     setFocus(id)
@@ -457,6 +516,7 @@ export default function StarMap({
           {t(browseLabel)}
         </button>}
       </div>
+      {mode === 'personal' && <PersonalRelationLegend layer={layer} />}
       {focus && (
         <button
           className={styles.back}
@@ -685,6 +745,7 @@ export default function StarMap({
                           <span className={styles.nodeIdentity}>
                             <span>{node.name}</span>
                             <PlanetRelationshipStatus relationship={node.relationship} />
+                            {mode === 'personal' && <PersonalNodeRelations node={node} />}
                             {node.kind && node.kind !== 'planet' && <span>{t(`kind_${node.kind}`)}</span>}
                           </span>
                           {node.score !== undefined && (
@@ -736,6 +797,7 @@ export default function StarMap({
               </div>
               <p>{selected.tagline}</p>
               <PlanetRelationshipStatus relationship={selected.relationship} />
+              {mode === 'personal' && <PersonalNodeRelations node={selected} />}
               {selected.score !== undefined && (
                 <p>{t('score', { score: selected.score })}</p>
               )}
@@ -766,7 +828,7 @@ export default function StarMap({
         </aside>
       </div>
       <p className={styles.mapNote}>
-        {t(contextLayer ? 'contextDecoration' : mode === 'galaxies' ? 'galaxyDecoration' : 'decoration')}{' '}
+        {t(mode === 'personal' ? 'personalDecoration' : mode === 'galaxies' ? 'galaxyDecoration' : 'decoration')}{' '}
         {t(contextLayer ? `scope_${layer}` : mode === 'galaxies' ? 'galaxyScope' : data.scope === 'personal' ? 'personalScope' : data.scope === 'batch' ? 'batchScope' : 'allScope')}
       </p>
     </div>
