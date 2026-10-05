@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { MAX_CHAT_IMAGE_BYTES, CHAT_IMAGE_MIMES } from '@/lib/chat-image-types'
-export default function ImageComposer({ conversationId, disabled, onSend }: { conversationId: string; disabled?: boolean; onSend: (imageId: string) => Promise<boolean | string> }) {
+export default function ImageComposer({ conversationId, disabled, onSend, onBusyChange }: { conversationId: string; disabled?: boolean; onBusyChange?: (busy:boolean)=>void; onSend: (imageId: string) => Promise<boolean | string> }) {
   const t = useTranslations('chatImages')
   const [file, setFile] = useState<File | null>(null), [preview, setPreview] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('')
   const input = useRef<HTMLInputElement>(null), upload = useRef<{ attempt: string; imageId?: string } | null>(null), lock = useRef(false)
@@ -20,7 +20,7 @@ export default function ImageComposer({ conversationId, disabled, onSend }: { co
   }
   async function send() {
     if (!file || disabled || lock.current) return
-    lock.current = true; setBusy(true); setError('')
+    lock.current = true; setBusy(true); onBusyChange?.(true); setError('')
     try {
       if (!upload.current) upload.current = { attempt: crypto.randomUUID() }
       if (!upload.current.imageId) {
@@ -41,7 +41,7 @@ export default function ImageComposer({ conversationId, disabled, onSend }: { co
     } catch (error) {
       const code = error instanceof Error ? error.message : ''
       setError(['invalidImage', 'tooLarge', 'storageUnavailable', 'uploadBusy', 'uploadExpired', 'rateLimited'].includes(code) ? code : 'sendFailed')
-    } finally { lock.current = false; setBusy(false) }
+    } finally { lock.current = false; setBusy(false); onBusyChange?.(false) }
   }
   return <div className="px-4 pt-2 text-sm">
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label={t('choose')} disabled={disabled || busy} onChange={event => {

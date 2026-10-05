@@ -121,3 +121,35 @@ for (const locale of ['en', 'fr', 'zh']) test(`private image controls and unavai
   assert.ok(unavailable.includes(escaped(messages.unavailable))); assert.ok(!unavailable.includes('<img'))
   assert.deepEqual(Object.keys(messages).sort(),Object.keys(require('../messages/en.json').chatImages).sort())
 })
+
+const MessageQuote = require('../components/messages/MessageQuote.tsx').default
+const MessageActions = require('../components/messages/MessageActions.tsx').default
+const { preserveReactionState, quotePreview } = require('../lib/chat-interaction-types.ts')
+for (const locale of ['en','fr','zh']) test(`quotations and reaction controls are localized, plain-text and accessible in ${locale}`,()=>{
+  const translations=require(`../messages/${locale}.json`).chatInteractions
+  const escaped=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  const hidden=render(locale,React.createElement(MessageQuote,{quote:{available:false},viewerId:'viewer',partnerName:'Other',onOpen:()=>{}}))
+  assert.ok(hidden.includes(escaped(translations.quoteUnavailable)));assert.ok(!hidden.includes('<button'));assert.ok(!hidden.includes('href='))
+  const text=render(locale,React.createElement(MessageQuote,{quote:{available:true,id:'source',fromId:'viewer',type:'text',excerpt:'<img src=x onerror=alert(1)>\n🪐 https://example.test'},viewerId:'viewer',partnerName:'Other',onOpen:()=>{}}))
+  assert.ok(!text.includes('<img'));assert.ok(!text.includes('href='));assert.ok(text.includes('&lt;img'));assert.ok(text.includes(escaped(translations.you)));assert.ok(text.includes(escaped(translations.viewOriginal)))
+  for(const [type,key] of [['image','quotedImage'],['share','quotedShare']]) {
+    const html=render(locale,React.createElement(MessageQuote,{quote:{available:true,id:'source',fromId:'other',type},viewerId:'viewer',partnerName:'Other'}))
+    assert.ok(html.includes(escaped(translations[key])));assert.ok(!html.includes('<img'));assert.ok(!html.includes('href='))
+  }
+  const controls=render(locale,React.createElement(MessageActions,{reactions:[{emoji:'👍',count:2,mine:true}],disabled:true,onReply:()=>{},onReact:async()=>true}))
+  assert.ok(controls.includes(escaped(translations.reply)));assert.ok(controls.includes(escaped(translations.react)));assert.ok(controls.includes('aria-pressed="true"'));assert.equal((controls.match(/disabled=""/g)??[]).length,3)
+  assert.deepEqual(Object.keys(translations).sort(),Object.keys(require('../messages/en.json').chatInteractions).sort())
+})
+test('stale polling cannot undo confirmed reactions while current quote revocation still takes effect',()=>{
+  const previous={id:'message',reactionVersion:4,reactions:[{emoji:'👍',count:1,mine:true}],quote:{available:true,id:'old'}}
+  const incoming={id:'message',reactionVersion:3,reactions:[],quote:{available:false}}
+  assert.deepEqual(preserveReactionState(previous,incoming),{...incoming,reactionVersion:4,reactions:previous.reactions})
+  assert.deepEqual(preserveReactionState(previous,{...incoming,reactionVersion:4}),{...incoming,reactionVersion:4})
+  assert.deepEqual(preserveReactionState(previous,{...incoming,reactionVersion:5}),{...incoming,reactionVersion:5})
+})
+test('quote preview bounds Unicode and omits private media/share presentation',()=>{
+  const text=quotePreview({id:'source',fromId:'author',type:'text',content:'🪐'.repeat(200)})
+  assert.equal([...text.excerpt].length,160);assert.ok(!/[\uD800-\uDBFF]$/.test(text.excerpt))
+  assert.deepEqual(quotePreview({id:'source',fromId:'author',type:'share',content:'',share:{available:false,title:'SECRET'}}),{available:false})
+  assert.deepEqual(quotePreview({id:'source',fromId:'author',type:'image',content:'',image:{url:'PRIVATE_URL'}}),{available:true,id:'source',fromId:'author',type:'image'})
+})

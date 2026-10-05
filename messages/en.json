@@ -1914,5 +1914,27 @@
     "open": "View larger photo",
     "photo": "Photo",
     "close": "Close"
+  },
+  "chatInteractions": {
+    "reply": "Reply",
+    "react": "React",
+    "chooseReaction": "Choose a reaction",
+    "removeReaction": "Remove your {emoji} reaction, {count} reactions",
+    "setReaction": "React with {emoji}, {count} reactions",
+    "updating": "Updating reaction…",
+    "reactionFailed": "Your reaction could not be confirmed. Retry the same choice.",
+    "retry": "Retry",
+    "you": "You",
+    "viewOriginal": "View original message",
+    "original": "Original message",
+    "close": "Close",
+    "loadingOriginal": "Loading original message…",
+    "quotedImage": "Photo",
+    "quotedShare": "Shared card",
+    "quoteUnavailable": "Original message unavailable",
+    "messageUnavailable": "Message unavailable",
+    "replying": "Replying to a message",
+    "cancelReply": "Cancel reply",
+    "replyUnavailable": "The original message is no longer available. Cancel this reply to send a new message."
   }
 }

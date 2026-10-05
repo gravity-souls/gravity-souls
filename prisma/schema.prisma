@@ -49,6 +49,7 @@ model user {
   beamInvitationsSent BeamInvitation[] @relation("BeamInvitationSender")
   beamInvitationsReceived BeamInvitation[] @relation("BeamInvitationRecipient")
   sentMessages   DirectMessage[]
+  messageReactions DirectMessageReaction[]
   communityPosts CommunityPost[]
   communityPostReplies CommunityPostReply[]
   communityPostLikes CommunityPostLike[]
@@ -648,6 +649,9 @@ model DirectMessage {
   type             String   @default("text")
   readAt           DateTime?
   // Stable references only; current presentation is permission-checked on reads.
+  replyToId        String?
+  reactionVersion  Int @default(0)
+  reactions        DirectMessageReaction[]
   imageId          String? @unique
   image            ChatImage? @relation(fields: [imageId], references: [id], onDelete: Restrict)
   shareKind        String?
@@ -828,4 +832,18 @@ model ChatImage {
   @@index([expiresAt])
   @@index([ownerId, conversationId])
   @@map("chat_image")
+}
+
+model DirectMessageReaction {
+  id String @id @default(cuid())
+  messageId String
+  userId String
+  emoji String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  message DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("direct_message_reaction")
 }

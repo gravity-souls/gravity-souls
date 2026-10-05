@@ -34,8 +34,8 @@ function LoadedImage({ image }: { image?: ChatImageCard | null }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={url} alt={t('photo')} width={image.width} height={image.height} className="max-h-72 max-w-full rounded-xl object-contain" />
     </button>
-    <dialog ref={dialog} aria-label={t('photo')} className="max-h-[90dvh] max-w-[95vw] rounded-xl bg-slate-950 p-3 text-white backdrop:bg-black/80">
-      <button autoFocus onClick={() => dialog.current?.close()} className="mb-2 px-3 py-2">{t('close')}</button>
+    <dialog ref={dialog} aria-label={t('photo')} className="m-auto overflow-y-auto max-h-[90dvh] max-w-[95vw] rounded-xl bg-slate-950 p-3 text-white backdrop:bg-black/80">
+      <button autoFocus onClick={() => dialog.current?.close()} className="sticky top-0 z-10 mb-2 bg-slate-950 px-3 py-2">{t('close')}</button>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={url} alt={t('photo')} className="max-h-[75dvh] max-w-full object-contain" />
     </dialog>

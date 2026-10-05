@@ -105,6 +105,8 @@ export async function DELETE(request: Request) {
   try {
     await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR NO KEY UPDATE`
+      await tx.directMessage.updateMany({ where: { reactions: { some: { userId } } }, data: { reactionVersion: { increment: 1 } } });
+      await tx.directMessageReaction.deleteMany({ where: { userId } });
       await tx.chatImage.updateMany({ where: { ownerId: userId, message: null }, data: { deleteRequested: true } });
       const owned = await tx.community.findMany({ where: { creatorId: userId }, orderBy: { id: 'asc' } })
       for (const galaxy of owned) {

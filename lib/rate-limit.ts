@@ -30,6 +30,7 @@ export async function checkRateLimit(key: string, limit: number, windowMs: numbe
 }
 
 export const RATE_LIMITS = {
+  MESSAGE_REACTION: { limit: 120, windowMs: 60 * 60_000 },
   IMAGE_UPLOAD_VALIDATE: { limit: 60, windowMs: 60 * 60_000 },
   IMAGE_UPLOAD: { limit: 20, windowMs: 60 * 60_000 },
   BEAM_INVITATION: { limit: 5, windowMs: 24 * 60 * 60_000 },
