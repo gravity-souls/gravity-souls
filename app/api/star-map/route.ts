@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { personalMapContext } from '@/lib/personal-map-context'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { discoveryPlanetWhere, personalMapPlanetWhere } from '@/lib/visibility'
@@ -13,9 +14,10 @@ import type { StarMapData } from '@/types/star-map'
 const querySchema = z
   .object({
     mode: z.enum(['discover', 'galaxies', 'personal']).default('discover'),
+    layer: z.enum(['planets', 'galaxies', 'activities']).optional(),
     collection: z.enum(['all', 'saved', 'following', 'mutual']).optional(),
     group: z
-      .enum(['calm', 'melancholic', 'intense', 'cold', 'mixed', 'other'])
+      .enum(['calm', 'melancholic', 'intense', 'cold', 'mixed', 'other', 'owned', 'joined', 'interested', 'going', 'requested', 'past'])
       .optional(),
     cursor: z.string().min(1).max(100).optional(),
     search: z.string().trim().max(80).default(''),
@@ -31,11 +33,14 @@ export async function GET(request: Request) {
     )
     if (!parsed.success)
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
-    const { mode, group, cursor, search, collection } = parsed.data
-    if (collection && mode !== 'personal')
+    const { mode, group, cursor, search, collection, layer } = parsed.data
+    const contextLayer = mode === 'personal' && layer && layer !== 'planets' ? layer : null
+    const allowedGroups = contextLayer === 'galaxies' ? ['owned', 'joined'] : contextLayer === 'activities' ? ['interested', 'going', 'requested', 'past'] : [...MOODS, 'other']
+    if ((layer && mode !== 'personal') || (contextLayer && collection) || (group && !allowedGroups.includes(group)) || (collection && mode !== 'personal'))
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
     const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
     if (!viewer || viewer.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    if (contextLayer) return Response.json(await personalMapContext(user.id, { layer: contextLayer, group, cursor, search }), { headers: { 'Cache-Control': 'private, no-store' } })
     if (mode === 'galaxies') {
       const where = search
         ? {

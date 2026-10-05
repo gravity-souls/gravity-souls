@@ -1,5 +1,6 @@
 import type { PlanetConfig } from './planet'
 export type StarMapMode = 'discover' | 'galaxies' | 'personal'
+export type PersonalMapLayer = 'planets' | 'galaxies' | 'activities'
 export type PersonalMapCollection = 'all' | 'saved' | 'following' | 'mutual'
 export interface StarMapGroup {
   id: string
@@ -9,6 +10,11 @@ export interface StarMapGroup {
 }
 export interface StarMapNode {
   id: string
+  kind?: 'planet' | 'galaxy' | 'activity'
+  date?: string
+  eventStatus?: 'APPROVED' | 'PASSED' | 'CANCELLED'
+  userAttendance?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | null
+  userInterested?: boolean
   userId?: string
   relationship?: StarMapRelationship
   groupId: string

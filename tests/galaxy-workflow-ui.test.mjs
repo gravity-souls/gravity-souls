@@ -459,3 +459,28 @@ for (const locale of ['en', 'fr', 'zh']) test(`post return and read failures hav
   const m = require(`../messages/${locale}.json`).postContext
   for (const key of ['backPost', 'backGalaxy', 'backEvent', 'readFailed']) assert.ok(m[key] && !m[key].includes('postContext.'))
 })
+
+
+test('personal context return restores layers and views while preserving activity fragments',()=>{
+  const {personalMapOrigin}=require('../lib/exploration-return.ts')
+  for (const layer of ['galaxies','activities']) for (const list of [false,true]) {
+    const origin=personalMapOrigin('all',list,layer)
+    assert.equal(explorationOrigin(origin),origin)
+    assert.equal(explorationReturnHref(origin),`/star-map?mode=personal&layer=${layer}${list?'&view=list':''}`)
+    const url=new URL(withExplorationOrigin('/galaxy/sky?event=e#events',origin),'https://example.test')
+    assert.equal(url.searchParams.get('from'),origin);assert.equal(url.searchParams.get('event'),'e');assert.equal(url.hash,'#events')
+  }
+  assert.equal(explorationOrigin('personal-star-map-other-layer'),null)
+})
+for (const locale of ['en','fr','zh']) test(`personal context layers localize explanation, units and return links in ${locale}`,()=>{
+  const m=require(`../messages/${locale}.json`).starMap
+  const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  for (const layer of ['galaxies','activities']) {
+    const html=render(locale,React.createElement(StarMap,{mode:'personal',layer,listOnly:true}))
+    assert.ok(html.includes(escape(m[`meaning_personal_${layer}`])))
+    assert.ok(html.includes(escape(m[`scope_${layer}`])))
+    assert.ok(!html.includes('<canvas'));assert.ok(!html.includes('starMap.'))
+    const back=render(locale,React.createElement(ReturnLink,{origin:`personal-star-map-${layer}-list`}))
+    assert.ok(back.includes(`href="/star-map?mode=personal&amp;layer=${layer}&amp;view=list"`))
+  }
+})
