@@ -108,7 +108,11 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
     // Playwright cannot drive a mouse wheel in mobile WebKit. Exercise the
     // browser wheel listener directly; physical pinch remains a device check.
     await page.locator('canvas[aria-label]').dispatchEvent('wheel', {deltaY:-550,clientX:box!.x + box!.width / 2,clientY:box!.y + box!.height * 0.44})
-  } else await page.mouse.wheel(0, -550)
+  } else {
+    // Device emulation changes wheel step size. Use a short continuous scroll
+    // and verify the actual cluster transition instead of assuming one delta.
+    for (let step = 0; step < 3; step++) await page.mouse.wheel(0, -550)
+  }
   await expect(
     page.getByRole('button', { name: /Back to overview/ }),
   ).toBeVisible()
