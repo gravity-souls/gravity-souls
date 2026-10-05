@@ -87,7 +87,7 @@ export default function StreamPage() {
           />
         </main>
 
-        <button type="button" onClick={openCreate} className="fixed bottom-6 right-5 z-40 grid h-14 w-14 place-items-center rounded-full sm:hidden" style={{ color: '#fff', background: 'linear-gradient(135deg, rgba(124,58,237,0.96), rgba(99,102,241,0.92))', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 18px 42px rgba(99,102,241,0.32)' }} aria-label={t('createPost')}>
+        <button type="button" onClick={openCreate} className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-5 z-40 grid h-14 w-14 place-items-center rounded-full sm:hidden" style={{ color: '#fff', background: 'linear-gradient(135deg, rgba(124,58,237,0.96), rgba(99,102,241,0.92))', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 18px 42px rgba(99,102,241,0.32)' }} aria-label={t('createPost')}>
           <Plus size={22} />
         </button>
       </div>

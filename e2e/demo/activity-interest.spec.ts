@@ -29,7 +29,7 @@ test('interest remains independent of RSVP and failed removal preserves the save
     return route.fulfill({ status: 500, json: {} })
   })
   await page.goto('/activities')
-  await page.getByRole('button', { name: '感兴趣', exact: true }).last().click()
+  await page.locator('article').filter({has:page.getByRole('heading',{name:'测试活动',exact:true})}).getByRole('button', { name: '感兴趣', exact: true }).click()
   await expect(page.getByRole('button', { name: '已收藏 · 感兴趣', exact: true })).toHaveAttribute('aria-pressed', 'true')
   expect(attendanceWrites).toBe(0)
   await page.getByRole('button', { name: '感兴趣', exact: true }).first().click()

@@ -42,6 +42,7 @@ test('map actions preserve selection, failures retain state, and chat returns to
 
   await page.goto('/star-map?mode=discover')
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('textbox', { name: 'Search names' }).fill('Browser')
   await page.getByRole('button', { name: 'Search', exact: true }).click()
@@ -90,6 +91,7 @@ test('returning to a map removes a now unavailable selection and its relationshi
   await page.route('**/api/star-map?**', route => route.fulfill({ json: { groups: [{ id: 'calm', count: visible ? 1 : 0, color: '#b89afa' }], nodes: visible ? [node] : [], total: visible ? 1 : 0, nextCursor: null, scope: 'allVisible' } }))
   await page.goto('/star-map')
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('button', { name: 'Calm 1 planets' }).click()
   await page.getByRole('button', { name: /^Permission fixture/ }).click()

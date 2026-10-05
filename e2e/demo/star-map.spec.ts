@@ -56,6 +56,7 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
     name: 'Constellations & planets',
     exact: true,
   })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await panelToggle.isVisible()) await panelToggle.click()
   await page.getByRole('button', { name: 'Calm 1 planets' }).click()
   await page.getByRole('button', { name: 'Browser fixture planet' }).click()
@@ -90,6 +91,7 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
     name: 'Constellations & planets',
     exact: true,
   })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await panelToggle.isVisible()) await panelToggle.click()
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
@@ -136,6 +138,7 @@ test('map data failure clears stale objects and explains failure', async ({
     name: 'Constellations & planets',
     exact: true,
   })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await panelToggle.isVisible()) await panelToggle.click()
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
@@ -167,6 +170,7 @@ test('view switch stays above the map and objects occupy a side panel', async ({
     name: 'Constellations & planets',
     exact: true,
   })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await toggle.isVisible()) {
     await expect(page.locator('#star-map-sidebar')).toBeHidden()
     await toggle.click()

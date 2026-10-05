@@ -56,7 +56,8 @@ for (const [locale, messages] of Object.entries({ en, fr, zh })) {
     saved = true; permitted = true
     await page.getByRole('navigation',{name:messages.starMap.personalFilters}).getByRole('link',{name:messages.starMap.collection_saved,exact:true}).click()
     const toggle = page.getByRole('button',{name:messages.starMap.browseObjects,exact:true})
-    if (await toggle.isVisible()) await toggle.click()
+    await expect(page.locator('canvas[aria-label]')).toBeVisible()
+  if (await toggle.isVisible()) await toggle.click()
     await page.getByRole('button',{name:new RegExp(messages.starMap.group_calm)}).click()
     await page.getByRole('button',{name:/^Personal browser fixture/}).click()
     permitted = false

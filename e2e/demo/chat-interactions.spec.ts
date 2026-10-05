@@ -33,7 +33,7 @@ for(const locale of ['en','zh','fr'] as const)test(`quoted reply retry and expli
  await expect(page.locator('#message-source')).toHaveClass(/ring-2/)
  await page.locator('#message-source').getByRole('button',{name:t.chatInteractions.react,exact:true}).click()
  await page.locator('#message-source').getByRole('button',{name:t.chatContent.emoji.thumbsUp,exact:true}).click()
- await expect(page.getByText(t.chatInteractions.reactionFailed,{exact:true})).toBeVisible()
+ await expect(page.locator('#message-source [role="alert"]')).toBeVisible()
  await page.locator('#message-source').getByRole('button',{name:t.chatInteractions.retry,exact:true}).click()
  await expect(page.locator('#message-source').getByRole('button',{pressed:true})).toBeVisible();expect(reactions).toEqual([{emoji:'👍'},{emoji:'👍'}]);expect(sends).toHaveLength(2)
 })
