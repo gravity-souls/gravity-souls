@@ -229,7 +229,8 @@
     "note_expression-style": "Vos façons de vous exprimer se répondent.",
     "note_culture-travel": "Vos intérêts culturels et vos voyages se rejoignent.",
     "note_art-books-music": "L’art, les livres ou la musique vous rapprochent.",
-    "note_worldview-complement": "Vos visions du monde offrent des perspectives complémentaires."
+    "note_worldview-complement": "Vos visions du monde offrent des perspectives complémentaires.",
+    "fullReport": "Ouvrir le rapport complet"
   },
   "stream": {
     "searchPlaceholder": "Rechercher des signaux...",
@@ -465,10 +466,10 @@
     "earlyAccess": "✦ Accès anticipé - toutes les personnalisations sont déverrouillées",
     "base": "Base",
     "color": "Couleur",
-    "planetTint": "Teinte de planète",
+    "planetTint": "Couleur du halo",
     "atmosphere": "Atmosphère",
-    "atmosphereDensity": "Densité d'atmosphère",
-    "motionSurface": "Mouvement et surface",
+    "atmosphereDensity": "Intensité du halo",
+    "motionSurface": "Surface",
     "rotationSpeed": "Vitesse de rotation",
     "slow": "Lent",
     "medium": "Moyen",
@@ -477,15 +478,15 @@
     "none": "Aucune",
     "light": "Légère",
     "dense": "Dense",
-    "customTexture": "Texture personnalisée",
+    "customTexture": "Photo personnalisée",
     "uploading": "Téléversement",
-    "uploadTexture": "Téléverser une texture",
-    "removeTexture": "Retirer la texture personnalisée",
+    "uploadTexture": "Choisir une photo",
+    "removeTexture": "Retirer la photo",
     "savePlanet": "Enregistrer la planète",
     "unsavedChanges": "Modifications non enregistrées",
     "resetPreset": "Réinitialiser au préréglage",
     "saved": "Enregistré",
-    "textureUploaded": "Texture téléversée",
+    "textureUploaded": "Photo importée",
     "saveError": "Impossible d'enregistrer la planète",
     "fileTypeError": "Utilisez JPG, PNG ou WEBP",
     "fileSizeError": "La taille maximale est de 5 Mo",
@@ -539,7 +540,8 @@
       }
     },
     "uploadSignIn": "Connectez-vous pour importer une texture",
-    "uploadLocked": "Les textures personnalisées ne sont pas encore débloquées"
+    "uploadLocked": "Les textures personnalisées ne sont pas encore débloquées",
+    "flatPhotoHint": "Votre image apparaît comme une photo circulaire fixe, comme dans la résonance, sans sphère en rotation."
   },
   "messagesPage": {
     "eyebrow": "Signaux",
@@ -1335,7 +1337,8 @@
     "removeSaveDone": "Planète retirée de votre orbite.",
     "followDone": "Vous suivez maintenant cette planète.",
     "unfollowDone": "Vous ne suivez plus cette planète.",
-    "stateFailed": "Impossible de confirmer l’état actuel. Réessayez pour le relire."
+    "stateFailed": "Impossible de confirmer l’état actuel. Réessayez pour le relire.",
+    "viewSavedList": "Voir la liste enregistrée"
   },
   "sbti": {
     "protocol": "Protocole Soul Scan",
@@ -2072,5 +2075,34 @@
     "denied": "Les notifications sont bloquées. Autorisez-les dans les réglages du navigateur ou de l’appareil, puis réessayez.",
     "bound": "Ce navigateur a un abonnement pour un autre compte. Désactivez-le ici, puis réactivez-le.",
     "deviceLimit": "La limite de 5 navigateurs abonnés est atteinte. Désactivez les notifications sur l’un d’eux."
+  },
+  "matchReport": {
+    "title": "Rapport de correspondance",
+    "eyebrow": "Comprendre votre résonance",
+    "subtitle": "Une page dédiée à vos correspondances actuelles, aux points communs et aux différences.",
+    "navigation": "Navigation du rapport",
+    "back": "Retour à ma planète",
+    "resonance": "Ouvrir la carte de résonance",
+    "refresh": "Actualiser le rapport",
+    "loading": "Préparation de votre rapport…",
+    "auth": "Connectez-vous pour consulter votre rapport personnel.",
+    "missing": "Créez une planète pour voir vos correspondances.",
+    "failed": "Impossible de charger le rapport. Réessayez.",
+    "signIn": "Se connecter",
+    "create": "Créer ma planète",
+    "overview": "Aperçu du rapport",
+    "updated": "Mis à jour le {date}",
+    "matches": "Correspondances du rapport",
+    "average": "Résonance moyenne",
+    "strongest": "Résonance la plus forte",
+    "scope": "Ce rapport utilise le lot actuel de {count} planètes visibles et les mêmes règles que la résonance. Les scores décrivent des ressemblances entre profils, sans garantir une compatibilité ou une relation existante.",
+    "empty": "Aucune correspondance pour le moment",
+    "emptyHint": "Ce lot ne contient aucun candidat visible. Explorez puis revenez plus tard.",
+    "explore": "Explorer les planètes",
+    "entry": "Correspondance avec {name}",
+    "rank": "Correspondance {rank}",
+    "dimensions": "Dimensions de résonance",
+    "noShared": "Aucun point commun précis identifié dans les informations disponibles.",
+    "noContrast": "Aucune différence notable identifiée dans les informations disponibles."
   }
 }

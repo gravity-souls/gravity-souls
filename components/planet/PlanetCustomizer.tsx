@@ -393,20 +393,17 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
           </div>
         </ControlSection>
 
-        <ControlSection title={t('motionSurface')} level={4} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
+        {!localConfig.customTextureUrl && <ControlSection title={t('motionSurface')} level={4} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm" style={{ color: 'var(--ink)' }}>
-              <span className="mb-2 flex justify-between"><span>{t('rotationSpeed')}</span><span>{localConfig.rotationSpeed.toFixed(3)}</span></span>
-              <input type="range" min={0.005} max={0.03} step={0.001} value={localConfig.rotationSpeed} onChange={(event) => updateConfig({ rotationSpeed: readNumber(event.target.value, 0.005, 0.03) })} className="w-full accent-violet-400" />
-              <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>{t('slow')}</span><span>{t('medium')}</span><span>{t('fast')}</span></span>
-            </label>
             <label className="text-sm" style={{ color: 'var(--ink)' }}>
               <span className="mb-2 flex justify-between"><span>{t('cloudOpacity')}</span><span>{localConfig.cloudOpacity.toFixed(2)}</span></span>
               <input type="range" min={0} max={0.5} step={0.05} value={localConfig.cloudOpacity} onChange={(event) => updateConfig({ cloudOpacity: readNumber(event.target.value, 0, 0.5) })} className="w-full accent-violet-400" />
               <span className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--ghost)' }}><span>{t('none')}</span><span>{t('light')}</span><span>{t('dense')}</span></span>
             </label>
           </div>
-        </ControlSection>
+        </ControlSection>}
+
+        <p className="text-sm text-slate-400">{t('flatPhotoHint')}</p>
 
         <ControlSection title={t('customTexture')} level={5} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

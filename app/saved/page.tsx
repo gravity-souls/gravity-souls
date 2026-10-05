@@ -129,6 +129,8 @@ export default function SavedPage() {
           subtitle={t('subtitle')}
         />
 
+        <Link href="/star-map?mode=personal&collection=saved" className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-violet-300/20 px-4 text-sm text-violet-200">{ta('viewOrbit')}</Link>
+
         {/* 401 — session expired */}
         {loadError === 'unauthorized' && !items && (
           <div className="mt-16 flex flex-col items-center gap-5 text-center max-w-sm mx-auto">

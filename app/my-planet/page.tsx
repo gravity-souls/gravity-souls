@@ -348,10 +348,7 @@ export default function MyPlanetPage() {
     return () => cancelAnimationFrame(frame)
   }, [loading])
 
-  // /my-planet/report redirects here with #match-report. The browser's native
-  // scroll-to-hash fires on initial load, before this page (gated on `loading`)
-  // has rendered the #match-report element — so it never actually scrolls.
-  // Same fix as #customize above: retry once this content exists.
+  // Keep old bookmarked dashboard hashes usable alongside the standalone report.
   useEffect(() => {
     if (loading || window.location.hash !== '#match-report') return
     const frame = requestAnimationFrame(() => {
@@ -944,8 +941,8 @@ export default function MyPlanetPage() {
                     {tMyPlanet('signalScore')}: {matchReportSummary.signalScore} · {tMyPlanet('planetsInConstellation', { count: matchReportSummary.linkedPlanets })}
                   </p>
                 </div>
-                <Link href="/resonance" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
-                  {tNav('resonance')}
+                <Link href="/my-planet/report" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--star)', border: '1px solid rgba(167,139,250,0.2)', background: 'rgba(167,139,250,0.08)', textDecoration: 'none' }}>
+                  {tMyPlanet('matchReport')}
                 </Link>
               </div>
             </OrbitCard>
