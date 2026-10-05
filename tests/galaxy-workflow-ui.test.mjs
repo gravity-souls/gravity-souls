@@ -376,10 +376,10 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(picker.includes(escaped(messages.memberAudience)))
     assert.ok(picker.includes(escaped(messages.clear)))
     assert.ok(picker.includes('fieldset'))
-    const post = { contextRestricted: true, context: { galaxy: { id: 'g', name: 'Galaxy', slug: 'galaxy', href: '/galaxy/galaxy' }, event: { id: 'e', title: 'Activity', date: '2030-01-01T12:00:00Z', status: 'CANCELLED', href: '/galaxy/galaxy?event=e#events' } } }
+    const post = { id: 'original-post', contextRestricted: true, context: { galaxy: { id: 'g', name: 'Galaxy', slug: 'galaxy', href: '/galaxy/galaxy' }, event: { id: 'e', title: 'Activity', date: '2030-01-01T12:00:00Z', status: 'CANCELLED', href: '/galaxy/galaxy?event=e#events' } } }
     const card = render(locale, React.createElement(Card, { post }))
     assert.ok(card.includes(escaped(messages.cancelled)))
-    assert.ok(card.includes('href="/galaxy/galaxy?event=e#events"'))
+    assert.ok(card.includes('href="/galaxy/galaxy?event=e&amp;returnPost=original-post#events"'))
     const unavailable = render(locale, React.createElement(Card, { post: { contextRestricted: true, context: null } }))
     assert.ok(unavailable.includes(escaped(messages.unavailable)))
     assert.ok(!unavailable.includes('href='))
@@ -437,3 +437,25 @@ for (const locale of ['en','fr','zh']) {
     assert.ok(!map.includes(escaped(m.starMap.decoration)))
   })
 }
+
+
+test('post return navigation bounds IDs and retains only internal galaxy/activity origins', () => {
+  const { postReturnHref, postContextReturnHref, withPostOrigin, withPostReturn } = require('../lib/post-return.ts')
+  assert.equal(postReturnHref('post-123'), '/stream/post-123')
+  for (const invalid of [null, '', '../private', 'x?event=secret', 'x'.repeat(129), 'https://example.test']) assert.equal(postReturnHref(invalid), null)
+  const event = '/galaxy/night-sky?event=evt_123#events'
+  assert.equal(withPostReturn(event, 'post-123'), '/galaxy/night-sky?event=evt_123&returnPost=post-123#events')
+  const postLink = new URL(withPostOrigin('post-123', event), 'https://local.invalid')
+  assert.equal(postLink.pathname, '/stream/post-123')
+  assert.equal(postContextReturnHref(postLink.searchParams.get('fromContext')), event)
+  assert.equal(postContextReturnHref('/galaxy/%E6%98%9F%E7%A9%BA'), '/galaxy/%E6%98%9F%E7%A9%BA')
+  for (const invalid of ['https://evil.test/galaxy/g', '//evil.test/galaxy/g', '/galaxy/g/../../messages/p', '/galaxy/%2e%2e', '/galaxy/g\\evil', '/galaxy/g%2Fprivate', '/galaxy/%ZZ', '/galaxy/g?event=../../secret', '/galaxy/g?event=e&event=f', '/galaxy/g?chat=secret', '/galaxy/g#other', '/messages/p', '/galaxy/' + 'x'.repeat(129)]) {
+    assert.equal(postContextReturnHref(invalid), null, invalid)
+    assert.equal(withPostOrigin('post-123', invalid), '/stream/post-123')
+    assert.equal(withPostReturn(invalid, 'post-123'), '/stream')
+  }
+})
+for (const locale of ['en', 'fr', 'zh']) test(`post return and read failures have real localized copy in ${locale}`, () => {
+  const m = require(`../messages/${locale}.json`).postContext
+  for (const key of ['backPost', 'backGalaxy', 'backEvent', 'readFailed']) assert.ok(m[key] && !m[key].includes('postContext.'))
+})

@@ -438,6 +438,8 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       const commentId = (await commentResponse.json()).comment.id
       const commentCtx = { params: Promise.resolve({ id: post.id, commentId }) }
       as('context-outsider')
+      // A bookmarked/forged navigation hint never grants access to the destination.
+      assert.equal((await streamPost.GET(get(`fromContext=%2Fgalaxy%2F${g.slug}%3Fevent%3D${e.id}&returnPost=${post.id}`), ctx(post.id))).status, 404)
       assert.equal((await streamPost.GET(get(''), ctx(post.id))).status, 404)
       assert.equal((await streamLike.POST(request(), ctx(post.id))).status, 404)
       assert.equal((await streamComments.GET(get(''), ctx(post.id))).status, 404)

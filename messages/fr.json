@@ -1857,7 +1857,11 @@
     "related": "Signaux associés du flux global",
     "empty": "Aucun signal associé pour le moment.",
     "more": "Afficher plus",
-    "mediaVisibility": "Les liens des fichiers médias peuvent être partagés. Ne téléversez pas de fichiers confidentiels."
+    "mediaVisibility": "Les liens des fichiers médias peuvent être partagés. Ne téléversez pas de fichiers confidentiels.",
+    "backPost": "Revenir au signal d’origine",
+    "backGalaxy": "Revenir à la galaxie",
+    "backEvent": "Revenir à l’activité",
+    "readFailed": "Impossible de charger ce contenu. Réessayez."
   },
   "chatContent": {
     "placeholder": "Écrire un message…",

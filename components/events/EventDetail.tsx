@@ -1,6 +1,7 @@
 'use client'
 
 import RelatedSignals from '@/components/stream/RelatedSignals'
+import PostReturnLink from '@/components/stream/PostReturnLink'
 import { useState } from 'react'
 import { CalendarDays, Check, MapPin, Monitor, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -87,6 +88,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
           <X size={16} />
         </button>
 
+        <PostReturnLink eventId={event.id} />
         <div className="pr-10">
           <p className="text-eyebrow mb-2">{tEvents(`categories.${event.category.toLowerCase()}`)}</p>
           <h2 className="text-xl font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>

@@ -1857,7 +1857,11 @@
     "related": "关联的全局动态",
     "empty": "暂无关联动态。",
     "more": "查看更多",
-    "mediaVisibility": "媒体文件链接可以被转发，请勿上传私密文件。"
+    "mediaVisibility": "媒体文件链接可以被转发，请勿上传私密文件。",
+    "backPost": "返回原动态",
+    "backGalaxy": "返回星系",
+    "backEvent": "返回活动",
+    "readFailed": "暂时无法加载内容，请重试。"
   },
   "chatContent": {
     "placeholder": "输入消息…",
