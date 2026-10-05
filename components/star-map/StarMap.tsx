@@ -10,10 +10,10 @@ import SavePlanetButton from '@/components/social/SavePlanetButton'
 import FollowButton from '@/components/social/FollowButton'
 import BeamButton from '@/components/social/BeamButton'
 import { PLANET_ACTION_CHANGED } from '@/lib/planet-actions'
-import { withExplorationOrigin } from '@/lib/exploration-return'
+import { withExplorationOrigin, personalMapOrigin } from '@/lib/exploration-return'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { mapCenter, stableUnit } from '@/lib/star-map'
-import type { StarMapData, StarMapMode, StarMapNode } from '@/types/star-map'
+import type { StarMapData, StarMapMode, StarMapNode, PersonalMapCollection } from '@/types/star-map'
 import styles from './star-map.module.css'
 
 type Dot = { x: number; y: number; z: number; color: string; groupId: string }
@@ -29,13 +29,18 @@ const EMPTY: StarMapData = {
 export default function StarMap({
   mode = 'discover',
   compact = false,
+  collection = 'all',
+  listOnly = false,
 }: {
   mode?: StarMapMode
   compact?: boolean
+  collection?: PersonalMapCollection
+  listOnly?: boolean
 }) {
   const t = useTranslations('starMap')
   const ta = useTranslations('planetActions')
-  const storageKey = compact ? `star-map:home:${mode}` : `star-map:${mode}`
+  const storageKey = compact ? `star-map:home:${mode}` : `star-map:${mode}${mode === 'personal' ? `:${collection}` : ''}`
+  const origin = mode === 'personal' ? personalMapOrigin(collection, listOnly) : compact ? 'home-star-map' : 'star-map'
   const [data, setData] = useState(EMPTY)
   const [focus, setFocus] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -135,12 +140,13 @@ export default function StarMap({
     }
   }, [])
 
-  const queryGroup = mode === 'discover' ? focus : null
+  const queryGroup = mode !== 'galaxies' ? focus : null
 
   useEffect(() => {
     if (!restored) return
     const abort = new AbortController()
     const params = new URLSearchParams({ mode, search: query })
+    if (mode === 'personal') params.set('collection', collection)
     if (cursor) params.set('cursor', cursor)
     if (queryGroup) params.set('group', queryGroup)
     async function load() {
@@ -159,6 +165,7 @@ export default function StarMap({
         if (!abort.signal.aborted) {
           setData(result)
           setSelectedId(current => result.nodes.some(node => node.id === current) ? current : null)
+          setFocus(current => result.groups.some(group => group.id === current && (group.count > 0 || mode === 'galaxies')) ? current : null)
         }
       } catch (cause) {
         if (!abort.signal.aborted) {
@@ -175,7 +182,7 @@ export default function StarMap({
     }
     void load()
     return () => abort.abort()
-  }, [mode, query, cursor, queryGroup, restored, revision])
+  }, [mode, query, cursor, queryGroup, restored, revision, collection])
 
   const clusters = useMemo(
     () =>
@@ -393,7 +400,7 @@ export default function StarMap({
       canvas.removeEventListener('pointermove', redraw)
       document.removeEventListener('visibilitychange', visibility)
     }
-  }, [clusters, dots, data.nodes, focus, reduced, selected, zoomTick])
+  }, [clusters, dots, data.nodes, focus, reduced, selected, zoomTick, listOnly])
 
   function enter(id: string) {
     setFocus(id)
@@ -407,7 +414,7 @@ export default function StarMap({
     ? data.nodes.filter((node) => node.groupId === focus)
     : []
   return (
-    <div className={`${styles.map} ${compact ? styles.compact : ''}`}>
+    <div className={`${styles.map} ${compact ? styles.compact : ''} ${listOnly ? styles.listView : ''}`}>
       <div className={styles.mapToolbar}>
         <form
           onSubmit={(event) => {
@@ -429,7 +436,7 @@ export default function StarMap({
           <button type="submit">{t('searchAction')}</button>
         </form>
         <p>{t(`meaning_${mode}`)}</p>
-        <button
+        {!listOnly && <button
           type="button"
           className={styles.sidebarToggle}
           aria-expanded={sidebarOpen}
@@ -437,7 +444,7 @@ export default function StarMap({
           onClick={() => setSidebarOpen((open) => !open)}
         >
           {t('browseObjects')}
-        </button>
+        </button>}
       </div>
       {focus && (
         <button
@@ -454,7 +461,7 @@ export default function StarMap({
         </button>
       )}
       <div className={styles.explorer}>
-        <section
+        {!listOnly && <section
           className={styles.stage}
           aria-label={t('title')}
           aria-busy={loading}
@@ -463,7 +470,7 @@ export default function StarMap({
             <span>
               {loading
                 ? t('loading')
-                : t('visibleTotal', { count: data.total })}
+                : t(mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
             </span>
             <span>{t('gestures')}</span>
           </div>
@@ -593,9 +600,9 @@ export default function StarMap({
             </div>
           )}
           {!loading && !error && !data.requiresPlanet && !clusters.length && (
-            <p className={styles.fallback}>{t('empty')}</p>
+            <p className={styles.fallback}>{t(mode === 'personal' ? 'personalEmpty' : 'empty')}</p>
           )}
-        </section>
+        </section>}
         <aside
           id="star-map-sidebar"
           className={styles.sidebar}
@@ -612,6 +619,10 @@ export default function StarMap({
               {t('closeSidebar')}
             </button>
           </div>
+          {listOnly && <div role={error ? 'alert' : 'status'} className={styles.listStatus}>
+            {loading ? t('loading') : error ? t(error) : data.total === 0 ? t('personalEmpty') : t(mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
+            {!loading && error && <button type="button" className={styles.next} onClick={() => setRevision(value => value + 1)}>{ta('retry')}</button>}
+          </div>}
           <ScrollRegion label={t('browseObjects')}>
             <nav className={styles.clusters} aria-label={t('chooseGroup')}>
               {clusters.map((group) => (
@@ -642,12 +653,12 @@ export default function StarMap({
                       })}
                     </span>
                   </button>
-                  {focus === group.id && (
+                  {(focus === group.id || (listOnly && !focus)) && (
                     <div
                       className={styles.nodeList}
                       aria-label={t('choosePlanet')}
                     >
-                      {visibleNodes.map((node) => (
+                      {(listOnly && !focus ? data.nodes.filter(node => node.groupId === group.id) : visibleNodes).map((node) => (
                         <button
                           key={node.id}
                           aria-pressed={selected?.id === node.id}
@@ -673,6 +684,7 @@ export default function StarMap({
                 </div>
               ))}
             </nav>
+            {cursor && <button className={styles.next} disabled={loading} onClick={() => { setCursor(null); setSelectedId(null) }}>{t('firstBatch')}</button>}
             {data.nextCursor && (
               <button
                 className={styles.next}
@@ -717,10 +729,10 @@ export default function StarMap({
               {selected.memberCount !== undefined && (
                 <p>{t('members', { count: selected.memberCount })}</p>
               )}
-              <Link href={mode === 'discover' ? withExplorationOrigin(selected.href, compact ? 'home-star-map' : 'star-map') : selected.href}>
+              <Link href={mode !== 'galaxies' ? withExplorationOrigin(selected.href, origin) : selected.href}>
                 {t(mode === 'galaxies' ? 'openGalaxy' : 'openPlanet')}
               </Link>
-              {mode === 'discover' && selected.userId && (
+              {mode !== 'galaxies' && selected.userId && (
                 <div className={styles.planetActions} key={selected.id}>
                   <p>{t('privateRelationships')}</p>
                   <div className={styles.actionPair}>
@@ -729,7 +741,7 @@ export default function StarMap({
                   </div>
                   <BeamButton userId={selected.userId} planetId={selected.id} hasFollowControl
                     conversationId={selected.relationship?.conversationId ?? undefined}
-                    origin={compact ? 'home-star-map' : 'star-map'} />
+                    origin={origin} />
                 </div>
               )}
             </div>
@@ -738,7 +750,7 @@ export default function StarMap({
       </div>
       <p className={styles.mapNote}>
         {t('decoration')}{' '}
-        {t(data.scope === 'batch' ? 'batchScope' : 'allScope')}
+        {t(data.scope === 'personal' ? 'personalScope' : data.scope === 'batch' ? 'batchScope' : 'allScope')}
       </p>
     </div>
   )

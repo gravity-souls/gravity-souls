@@ -1,5 +1,6 @@
 import type { PlanetConfig } from './planet'
-export type StarMapMode = 'discover' | 'galaxies'
+export type StarMapMode = 'discover' | 'galaxies' | 'personal'
+export type PersonalMapCollection = 'all' | 'saved' | 'following' | 'mutual'
 export interface StarMapGroup {
   id: string
   name?: string
@@ -30,6 +31,6 @@ export interface StarMapData {
   nodes: StarMapNode[]
   total: number
   nextCursor: string | null
-  scope: 'allVisible' | 'batch'
+  scope: 'allVisible' | 'batch' | 'personal'
   requiresPlanet?: boolean
 }

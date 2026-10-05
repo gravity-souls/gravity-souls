@@ -27,6 +27,7 @@ interface Props {
   defaultExpanded?: boolean
   /** Disable the sidebar entirely for focused pages */
   noSideNav?: boolean
+  personalMapActive?: boolean
 }
 
 /**
@@ -50,7 +51,7 @@ interface Props {
  *     )
  *   }
  */
-export default function AppShell({ children, defaultExpanded = true, noSideNav = false }: Props) {
+export default function AppShell({ children, defaultExpanded = true, noSideNav = false, personalMapActive = false }: Props) {
   const [collapsed, setCollapsed] = useState(!defaultExpanded)
 
   const toggleSideNav = () => setCollapsed((c) => !c)
@@ -65,7 +66,7 @@ export default function AppShell({ children, defaultExpanded = true, noSideNav =
     <AppShellContext.Provider value={{ sideNavCollapsed: collapsed, toggleSideNav }}>
       {/* Sidebar */}
       {!noSideNav && (
-        <SideNav collapsed={collapsed} onToggle={toggleSideNav} />
+        <SideNav personalMapActive={personalMapActive} collapsed={collapsed} onToggle={toggleSideNav} />
       )}
 
       {/* Main content  -  offset by sidebar width */}

@@ -205,6 +205,7 @@ for (const locale of ['en', 'zh', 'fr']) {
     )
     for (const href of [
       '/star-map',
+      '/star-map?mode=personal',
       '/discover',
       '/resonance',
       '/activities',
@@ -384,3 +385,29 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(!unavailable.includes('href='))
   })
 }
+
+for (const locale of ['en','fr','zh']) {
+  test(`personal star map list and meaning are localized in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`).starMap
+    const html = render(locale, React.createElement(StarMap, { mode:'personal', collection:'saved', listOnly:true }))
+    const escaped = text => renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+    assert.ok(html.includes(escaped(m.meaning_personal)))
+    assert.ok(!html.includes('<canvas'))
+    assert.ok(!html.includes('starMap.'))
+    const back = render(locale, React.createElement(ReturnLink, {origin:'personal-star-map-saved-list'}))
+    assert.ok(back.includes(escaped(m.returnPersonalMap)))
+    assert.ok(back.includes('href="/star-map?mode=personal&amp;collection=saved&amp;view=list"'))
+    for (const key of ['mode_personal','personalSubtitle','personalFilters','collection_all','collection_saved','collection_following','collection_mutual','personalScope','personalEmpty','exploreGlobal']) assert.ok(m[key])
+  })
+}
+test('personal map origins preserve collection and view and reject arbitrary origins', () => {
+  const { personalMapOrigin } = require('../lib/exploration-return.ts')
+  for (const collection of ['all','saved','following','mutual']) for (const list of [true,false]) {
+    const origin = personalMapOrigin(collection,list)
+    assert.equal(explorationOrigin(origin), origin)
+    assert.equal(explorationReturnHref(origin), `/star-map?mode=personal&collection=${collection}${list ? '&view=list' : ''}`)
+    assert.ok(withExplorationOrigin('/planet/p',origin).endsWith(`from=${origin}`))
+  }
+  assert.equal(explorationOrigin('personal-star-map-unknown'),null)
+  assert.equal(explorationOrigin('https://example.test'),null)
+})

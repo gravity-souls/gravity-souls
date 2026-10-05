@@ -90,3 +90,32 @@ export async function discoveryPlanetWhere(viewerId: string): Promise<import('@p
     user: { deletedAt: null, OR: [{ profile: null }, { profile: { is: { visibility: { not: 'PRIVATE' } } } }] },
   }
 }
+
+/** Owner-only map collection. Uses the same PRIVATE follow-connected rule as
+ * canViewProfile; saves and conversations never grant access by themselves.
+ * Relationship predicates stay in SQL so large collections need no ID preload.
+ */
+export async function personalMapPlanetWhere(
+  viewerId: string,
+  collection: import('@/types/star-map').PersonalMapCollection,
+): Promise<Prisma.PlanetWhereInput> {
+  const excluded = await blockedUserIds(viewerId)
+  excluded.add(viewerId)
+  const outgoing = { user: { followers: { some: { followerId: viewerId } } } }
+  const incoming = { user: { following: { some: { followingId: viewerId } } } }
+  const saved = { savedBy: { some: { userId: viewerId } } }
+  const membership: Prisma.PlanetWhereInput = collection === 'saved' ? saved
+    : collection === 'following' ? outgoing
+    : collection === 'mutual' ? { AND: [outgoing, incoming] }
+    : { OR: [saved, outgoing] }
+  return {
+    active: true,
+    userId: { notIn: [...excluded] },
+    user: { deletedAt: null },
+    AND: [membership, { OR: [
+      { user: { profile: null } },
+      { user: { profile: { is: { visibility: 'MEMBERS' } } } },
+      outgoing, incoming,
+    ] }],
+  }
+}

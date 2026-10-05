@@ -31,7 +31,8 @@
     "savedOrbit": "Orbite enregistrée",
     "search": "Rechercher",
     "allSections": "Toutes les rubriques",
-    "relationships": "Abonnements et abonnés"
+    "relationships": "Abonnements et abonnés",
+    "personalStarMap": "Ma carte stellaire"
   },
   "topbar": {
     "searchPlaceholder": "Chercher planètes, galaxies, événements...",
@@ -1770,7 +1771,21 @@
     "viewMode": "Affichage",
     "mapView": "Carte stellaire",
     "resonancePurpose": "La carte regroupe les planètes chargées selon leur principale raison de résonance. La rubrique Résonance propose jusqu’à cinq recommandations et leurs scores détaillés.",
-    "openRecommendations": "Voir les recommandations de résonance"
+    "openRecommendations": "Voir les recommandations de résonance",
+    "mode_personal": "Ma carte stellaire",
+    "personalSubtitle": "Une carte privée des planètes enregistrées dans votre orbite ou suivies. Explorez le ciel pour en découvrir davantage.",
+    "personalFilters": "Collections de ma carte",
+    "collection_all": "Toute ma carte",
+    "collection_saved": "Orbite enregistrée",
+    "collection_following": "Abonnements",
+    "collection_mutual": "Abonnements mutuels",
+    "meaning_personal": "Vos enregistrements et abonnements définissent cette carte. Les groupes de climats facilitent la navigation ; les lignes guident l’exploration.",
+    "personalScope": "Seule votre collection actuellement accessible est affichée. Une planète enregistrée et suivie apparaît une seule fois ; les planètes privées accessibles peuvent être absentes de la découverte globale.",
+    "personalEmpty": "Aucune planète visible dans cette collection. Enregistrez une planète dans votre orbite ou abonnez-vous lors de votre exploration.",
+    "exploreGlobal": "Explorer le ciel entier",
+    "firstBatch": "Revenir au premier lot",
+    "personalTotal": "{count} planètes dans votre collection",
+    "returnPersonalMap": "← Revenir à ma carte stellaire"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",
