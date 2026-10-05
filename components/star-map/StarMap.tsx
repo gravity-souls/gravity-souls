@@ -864,10 +864,10 @@ export default function StarMap({
           )}
         </aside>
       </div>
-      <p className={styles.mapNote}>
-        {t(mode === 'personal' ? 'personalDecoration' : mode === 'galaxies' ? 'galaxyDecoration' : 'decoration')}{' '}
-        {t(contextLayer ? `scope_${layer}` : mode === 'galaxies' ? 'galaxyScope' : data.scope === 'personal' ? 'personalScope' : data.scope === 'batch' ? 'batchScope' : 'allScope')}
-      </p>
+      {mode !== 'discover' && <p className={styles.mapNote}>
+        {t(mode === 'personal' ? 'personalDecoration' : 'galaxyDecoration')}{' '}
+        {t(contextLayer ? `scope_${layer}` : mode === 'galaxies' ? 'galaxyScope' : 'personalScope')}
+      </p>}
     </div>
   )
 }
