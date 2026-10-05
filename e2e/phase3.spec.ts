@@ -65,7 +65,7 @@ test.describe('sign-in ?next redirect', () => {
 
     // After successful sign-in the JS calls router.push(next) → /resonance
     // The page then loads /resonance and calls GET /api/my-planet (real DB, returns planet)
-    await page.waitForURL('**/resonance', { timeout: 25_000 })
+    await page.waitForURL('**/resonance', { timeout: 25_000, waitUntil: 'domcontentloaded' })
     // Wait for the page to stabilize — router.refresh() called after router.push() can cause
     // a brief intermediate state before the final URL settles.
     await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {})
@@ -198,7 +198,7 @@ test.describe('onboarding handoff', () => {
     await page.fill('#password', E2E.handoff.password)
     await page.click('button[type="submit"]')
 
-    await page.waitForURL('**/resonance', { timeout: 15_000 })
+    await page.waitForURL('**/resonance', { timeout: 15_000, waitUntil: 'domcontentloaded' })
     expect(new URL(page.url()).pathname).toBe('/resonance')
     expect(completeCalled).toBe(true)
 

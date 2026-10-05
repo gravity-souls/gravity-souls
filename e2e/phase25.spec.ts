@@ -94,7 +94,7 @@ test.describe.serial('Phase 25 — sign-up policy acceptance', () => {
     await page.click('button[type="submit"]')
 
     // Hard navigation via window.location.href once sign-up + follow-up calls resolve.
-    await page.waitForURL((url) => !url.pathname.startsWith('/sign-up'), { timeout: 25_000 })
+    await page.waitForURL((url) => !url.pathname.startsWith('/sign-up'), { timeout: 25_000, waitUntil: 'domcontentloaded' })
 
     const user = await prisma.user.findUniqueOrThrow({ where: { email: signUpEmail } })
     signUpUserId = user.id

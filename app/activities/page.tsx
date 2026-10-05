@@ -25,7 +25,7 @@ const TABS: { value: EventListTab; labelKey: string; emptyKey: string }[] = [
 
 export default function GalaxyEventsPage() {
   const tw = useTranslations('galaxyWorkflow')
-  const [page,setPage] = useState(1), [total,setTotal] = useState(0), [pageSize,setPageSize] = useState(20), [error,setError] = useState(''), [selectedAdmin,setSelectedAdmin] = useState(false), [revision,setRevision] = useState(0)
+  const [page,setPage] = useState(1), [total,setTotal] = useState(0), [pageSize,setPageSize] = useState(20), [error,setError] = useState(''), [detailError,setDetailError] = useState(''), [selectedAdmin,setSelectedAdmin] = useState(false), [revision,setRevision] = useState(0)
   const t = useTranslations('eventsPage')
   const tAuth = useTranslations('auth')
   const [events, setEvents] = useState<GalaxyEventSummary[]>([])
@@ -109,12 +109,13 @@ export default function GalaxyEventsPage() {
     try {
     const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`, { cache: 'no-store' })
     if (requestId !== detailRequest.current) return
-    if (!res.ok) { setSelectedEvent(null); setError(tw('failed'));return }
+    if (!res.ok) { setSelectedEvent(null); setDetailError(tw('failed'));return }
     const data = await res.json() as { event: GalaxyEventDetail; isAdmin?: boolean }
     if (requestId !== detailRequest.current) return
+    setDetailError('')
     setSelectedEvent(data.event)
     setSelectedAdmin(data.isAdmin ?? false)
-    } catch { if (requestId === detailRequest.current) { setSelectedEvent(null); setError(tw('failed')) } }
+    } catch { if (requestId === detailRequest.current) { setSelectedEvent(null); setDetailError(tw('failed')) } }
   }, [tw])
 
   async function applyRSVPChange(eventId: string, state: AttendanceState) {
@@ -180,7 +181,7 @@ export default function GalaxyEventsPage() {
           <input aria-label={t('searchPlaceholder')} maxLength={80} value={search} onChange={(event) => {setSearch(event.target.value);setPage(1)}} placeholder={t('searchPlaceholder')} className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
         </div>
 
-        {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}<button className="ml-3 underline" onClick={()=>setRevision(v=>v+1)}>{tw('retry')}</button></p>}
+        {(error || detailError) && <p role="alert" className="mt-4 text-sm text-red-300">{error || detailError}<button className="ml-3 underline" onClick={()=>{setDetailError('');setRevision(v=>v+1)}}>{tw('retry')}</button></p>}
         {tab === 'review' && <p className="mt-4 text-sm text-slate-400">{t('reviewHelp')}</p>}
         <div className="mt-6 grid gap-3">
           {loading ? (

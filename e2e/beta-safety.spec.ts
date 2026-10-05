@@ -142,13 +142,16 @@ test.describe('authenticated API protections', () => {
       await composer.dispatchEvent('keydown', { key: 'Enter', isComposing: true })
       await expect(composer).toHaveValue('你好，世界')
       expect(posts).toBe(0)
-      await composer.press('Enter')
+      const desktop = await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)
+      if (desktop) await composer.press('Enter')
+      else await page.getByRole('button', {name:'Send signal',exact:true}).click()
       // Next.js's own route announcer also carries role="alert" — scope to the composer's own alert element.
       await expect(page.locator('p[role="alert"]')).toContainText('Your draft is kept')
       await expect(composer).toHaveValue('你好，世界')
       expect(await prisma.directMessage.count({ where: { conversationId: thread.id } })).toBe(0)
       await page.unroute(`**/api/conversations/${thread.id}`)
-      await composer.press('Enter')
+      if (desktop) await composer.press('Enter')
+      else await page.getByRole('button', {name:'Send signal',exact:true}).click()
       await expect(composer).toHaveValue('')
       await expect(page.getByText('你好，世界', { exact: true })).toBeVisible()
       expect(await prisma.directMessage.count({ where: { conversationId: thread.id } })).toBe(1)
@@ -170,6 +173,9 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       if (fail) await route.fulfill({ status: 503, json: { error: 'unavailable' } })
       else await route.continue()
     })
+    // Let navigation prefetches settle before explicitly replacing the document.
+    // WebKit reports an interrupted prefetch as a page error during reload.
+    await page.waitForLoadState('networkidle')
     await page.reload()
     await expect(page.getByText('Community posts could not be loaded.')).toBeVisible()
     fail = false

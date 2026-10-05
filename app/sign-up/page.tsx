@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { authClient } from "@/lib/auth-client";
+import { authClient, waitForSession } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
@@ -71,6 +71,7 @@ function SignUpForm() {
         return;
       }
 
+      if (!await waitForSession()) throw new Error('Session unavailable');
       const fromOnboarding = searchParams.get('from') === 'onboarding';
 
       // These follow-up calls are independent of each other (and, for the

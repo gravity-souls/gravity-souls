@@ -53,6 +53,7 @@ function SignInForm() {
         return;
       }
 
+      if (!await waitForSession()) throw new Error('Session unavailable');
       await fetch("/api/user/language", { cache: "no-store" }).catch(() => null);
 
       const fromOnboarding = searchParams.get('from') === 'onboarding';
@@ -91,14 +92,12 @@ function SignInForm() {
         // immediately on load (e.g. /resonance's my-planet check) — confirm
         // the session is actually readable first so that fetch doesn't lose
         // the same WebKit cookie-commit race Priority 3 already guards against.
-        await waitForSession()
         window.location.href = raw
         return
       }
 
       // Priority 3: route based on DB planet state
       try {
-        await waitForSession()
         const res = await fetch('/api/my-planet')
         window.location.href = res.ok ? '/resonance' : '/onboarding'
       } catch {

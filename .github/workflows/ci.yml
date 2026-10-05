@@ -76,6 +76,14 @@ jobs:
       # playwright.mobile.config.ts for why this is a standalone invocation
       # rather than a second project on playwright.config.ts.
       - run: npm run test:e2e:mobile
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: database-browser-failures
+          path: |
+            test-results/
+            test-results-mobile/
+          retention-days: 3
 
   demo-suite:
     runs-on: ubuntu-latest
@@ -96,3 +104,9 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:e2e -- --project=${{ matrix.project }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: demo-browser-failures-${{ matrix.project }}
+          path: test-results/
+          retention-days: 3

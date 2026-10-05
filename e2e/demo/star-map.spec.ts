@@ -101,6 +101,7 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
     exact: true,
   })
   if (await closePanel.isVisible()) await closePanel.click()
+  await page.locator('canvas[aria-label]').scrollIntoViewIfNeeded()
   const box = await page.locator('canvas[aria-label]').boundingBox()
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height * 0.44)
   await page.mouse.wheel(0, -550)
