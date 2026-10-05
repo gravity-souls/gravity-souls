@@ -1844,7 +1844,17 @@
     "relation_going": "Attendance approved · solid",
     "relation_past": "History / withdrawn · spaced dots",
     "relationScope": "Lines connect your center only to real objects in the current layer and loaded batch. One object can have several relations. Focus a group or open the list to read all labels.",
-    "personalDecoration": "Particles and groups are decorative. In overview, connections describe your current private relationships; they do not represent sent beams. A missing center has no connection lines."
+    "personalDecoration": "Particles and groups are decorative. In overview, connections describe your current private relationships; they do not represent sent beams. A missing center has no connection lines.",
+    "layer_constellations": "Activity star groups",
+    "meaning_personal_constellations": "Your related activities form temporary groups by their real galaxy. Upcoming activities and history stay separate.",
+    "empty_constellations": "No accessible activity star groups yet. Mark interest or request attendance in a galaxy activity.",
+    "scope_constellations": "Each star group contains your related, currently accessible activities from one galaxy in this loaded batch. Counts are activities, not people. Grouping creates no membership or attendance.",
+    "constellationName": "{name} · {phase}",
+    "constellation_active": "Upcoming",
+    "constellation_past": "History",
+    "constellationBatchCount": "{count} activities in this batch",
+    "constellationLifecycle": "Open an activity to mark interest, request attendance or withdraw. Each activity is reviewed separately. Ended, cancelled or withdrawn activities move to history; leaving the galaxy hides its groups. Removing interest also removes an activity with no attendance record.",
+    "constellationRequests": "View my pending attendance requests →"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

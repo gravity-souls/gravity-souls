@@ -16,6 +16,7 @@ export const LAYER_RELATIONS: Record<PersonalMapLayer, PersonalMapRelation[]> = 
   planets: ['saved', 'following', 'mutual'],
   galaxies: ['created', 'joined'],
   activities: ['interested', 'requested', 'going', 'past'],
+  constellations: ['interested', 'requested', 'going', 'past'],
 }
 
 // Relationship evidence, never decorative clusters, scores, chat or a received beam.
@@ -28,7 +29,7 @@ export function personalNodeRelations(node: StarMapNode): PersonalMapRelation[] 
   }
   if (node.kind === 'activity') {
     // History describes the current lifecycle, not an active attendance promise.
-    if (node.groupId === 'past') return ['past']
+    if (node.activityState === 'past' || node.groupId === 'past') return ['past']
     return [
       ...(node.userInterested ? ['interested' as const] : []),
       ...(node.userAttendance === 'PENDING' ? ['requested' as const] : []),

@@ -20,7 +20,7 @@ function StarMapPageContent() {
   const choice = params.get('collection')
   const collection: PersonalMapCollection = choice === 'saved' || choice === 'following' || choice === 'mutual' ? choice : 'all'
   const requestedLayer = params.get('layer')
-  const layer: PersonalMapLayer = mode === 'personal' && (requestedLayer === 'galaxies' || requestedLayer === 'activities') ? requestedLayer : 'planets'
+  const layer: PersonalMapLayer = mode === 'personal' && (requestedLayer === 'galaxies' || requestedLayer === 'activities' || requestedLayer === 'constellations') ? requestedLayer : 'planets'
   const listOnly = mode === 'personal' && params.get('view') === 'list'
   const personalHref = (value: PersonalMapCollection, list: boolean) => `/star-map?mode=personal&${layer === 'planets' ? `collection=${value}` : `layer=${layer}`}${list ? '&view=list' : ''}`
   if (requested === 'resonance') return null
@@ -42,7 +42,7 @@ function StarMapPageContent() {
           ))}
         </nav>
         {mode === 'personal' && <nav className="mt-5 flex flex-wrap gap-2" aria-label={t('personalLayers')}>
-          {(['planets', 'galaxies', 'activities'] as const).map(value => <Link key={value} href={`/star-map?mode=personal&layer=${value}${listOnly ? '&view=list' : ''}`} aria-current={value === layer ? 'page' : undefined} className={`min-h-11 rounded-lg px-4 py-3 text-sm ${value === layer ? 'bg-violet-400/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'}`}>{t(`layer_${value}`)}</Link>)}
+          {(['planets', 'galaxies', 'activities', 'constellations'] as const).map(value => <Link key={value} href={`/star-map?mode=personal&layer=${value}${listOnly ? '&view=list' : ''}`} aria-current={value === layer ? 'page' : undefined} className={`min-h-11 rounded-lg px-4 py-3 text-sm ${value === layer ? 'bg-violet-400/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'}`}>{t(`layer_${value}`)}</Link>)}
         </nav>}
         {mode === 'personal' && layer === 'planets' && <nav className="mt-5 flex flex-wrap gap-2" aria-label={t('personalFilters')}>
           {(['all', 'saved', 'following', 'mutual'] as const).map(value => <Link key={value}

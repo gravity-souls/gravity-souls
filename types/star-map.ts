@@ -1,12 +1,13 @@
 import type { PlanetConfig } from './planet'
 export type StarMapMode = 'discover' | 'galaxies' | 'personal'
-export type PersonalMapLayer = 'planets' | 'galaxies' | 'activities'
+export type PersonalMapLayer = 'planets' | 'galaxies' | 'activities' | 'constellations'
 export type PersonalMapCollection = 'all' | 'saved' | 'following' | 'mutual'
 export interface StarMapGroup {
   id: string
   name?: string
   count: number
   color: string
+  phase?: 'active' | 'past'
 }
 export interface StarMapNode {
   id: string
@@ -15,6 +16,7 @@ export interface StarMapNode {
   eventStatus?: 'APPROVED' | 'PASSED' | 'CANCELLED'
   userAttendance?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | null
   userInterested?: boolean
+  activityState?: 'going' | 'requested' | 'interested' | 'past'
   userId?: string
   relationship?: StarMapRelationship
   galaxyRelationship?: { created: boolean; joined: boolean }
@@ -41,6 +43,7 @@ export interface StarMapSelfPlanet {
   level: number
 }
 export interface StarMapData {
+  groupScope?: 'batch'
   selfPlanet?: StarMapSelfPlanet | null
   groups: StarMapGroup[]
   nodes: StarMapNode[]

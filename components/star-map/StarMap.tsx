@@ -477,7 +477,10 @@ export default function StarMap({
     setCursor(null)
     view.current.zoom = 2.4
   }
-  const groupLabel = (id: string, name?: string) => name ?? t(`group_${id}`)
+  const groupLabel = (id: string, name?: string) => {
+    const group = data.groups.find(item => item.id === id)
+    return group?.phase ? t('constellationName', { name: name ?? '', phase: t(`constellation_${group.phase}`) }) : name ?? t(`group_${id}`)
+  }
   const focusedGroup = clusters.find((group) => group.id === focus)
   const visibleNodes = focus
     ? data.nodes.filter((node) => node.groupId === focus)
@@ -517,6 +520,10 @@ export default function StarMap({
         </button>}
       </div>
       {mode === 'personal' && <PersonalRelationLegend layer={layer} />}
+      {mode === 'personal' && layer === 'constellations' && <div className={styles.relationLegend}>
+        <p>{t('constellationLifecycle')}</p>
+        <Link href="/activities?status=pending">{t('constellationRequests')}</Link>
+      </div>}
       {focus && (
         <button
           className={styles.back}
@@ -720,7 +727,7 @@ export default function StarMap({
                     <span className={styles.dot} />
                     <span>{groupLabel(group.id, group.name)}</span>
                     <span className={styles.clusterCaption}>
-                      {t(contextLayer ? layer === 'galaxies' ? 'galaxyCount' : 'activityCount' : mode === 'galaxies' ? 'members' : 'planets', {
+                      {t(data.groupScope === 'batch' ? 'constellationBatchCount' : contextLayer ? layer === 'galaxies' ? 'galaxyCount' : 'activityCount' : mode === 'galaxies' ? 'members' : 'planets', {
                         count: group.count,
                       })}
                     </span>

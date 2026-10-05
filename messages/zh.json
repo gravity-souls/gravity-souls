@@ -1844,7 +1844,17 @@
     "relation_going": "报名已通过 · 实线",
     "relation_past": "历史／已退出 · 稀疏点线",
     "relationScope": "连线只连接当前层、当前已加载批次的真实对象。同一对象可有多种关系。打开分组或列表可查看完整关系说明。",
-    "personalDecoration": "粒子与分组为装饰。总览中的连线表示你当前的私人关系，不代表已发送的光束。没有中心星球时不绘制关系连线。"
+    "personalDecoration": "粒子与分组为装饰。总览中的连线表示你当前的私人关系，不代表已发送的光束。没有中心星球时不绘制关系连线。",
+    "layer_constellations": "活动星群",
+    "meaning_personal_constellations": "与你关联的活动按真实所属星系形成临时星群，即将开展与历史活动分开展示。",
+    "empty_constellations": "还没有可访问的活动星群。可在星系活动中标记兴趣或申请参加。",
+    "scope_constellations": "每个星群聚合当前批次中同一星系内与你关联且可访问的活动。数量表示活动，不是人数；聚合不会自动加入星系或报名。",
+    "constellationName": "{name} · {phase}",
+    "constellation_active": "即将开展",
+    "constellation_past": "历史",
+    "constellationBatchCount": "当前批次 {count} 个活动",
+    "constellationLifecycle": "打开活动可标记兴趣、申请参加或退出；每个活动独立审核。结束、取消或退出的活动转入历史；离开星系后该星系的星群隐藏。仅有兴趣的活动取消兴趣后移出星群。",
+    "constellationRequests": "查看我的待审核报名 →"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",
