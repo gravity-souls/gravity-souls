@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
-import { INBOX_CHANGED, notifyInboxChanged } from '@/lib/inbox-client'
+import { notifyInboxChanged } from '@/lib/inbox-client'
 import type { PlanetConfig } from '@/types/planet'
 import { withExplorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
+
+import { subscribeSocialRefresh } from '@/lib/social-refresh'
+import { announcePlanetAction } from '@/lib/planet-actions'
 
 type Direction = 'received' | 'sent'
 type Row = { id: string; status: string; createdAt: string; otherUser: { id: string; name: string }; planet: { id: string; name: string; planetConfig?: PlanetConfig | null } | null; conversationId: string | null }
@@ -29,39 +32,46 @@ export default function BeamInvitations({ initialDirection = 'received', selecte
   const [nextCursor, setNextCursor] = useState<string | null>(null), [loading, setLoading] = useState(true)
   const [error, setError] = useState(''), [busy, setBusy] = useState<string | null>(null), [revision, setRevision] = useState(0)
   const [actionError, setActionError] = useState('')
-  const generation = useRef(0)
+  const generation = useRef(0), mutating = useRef(false)
   useEffect(() => {
     let cancelled = false
     const invalidate = () => { generation.current++ }
     async function refresh() {
+      if (mutating.current) return
       const current = ++generation.current
       try {
         const response = await fetch(`/api/beam-invitations?direction=${direction}`, { cache: 'no-store' })
         if (!response.ok) throw new Error('failed')
         const data = await response.json()
         if (!cancelled && current === generation.current) { setRows(data.invitations); setNextCursor(data.nextCursor); setError('') }
-      } catch { if (!cancelled && current === generation.current) setError('failed') }
+      } catch { if (!cancelled && current === generation.current) { setRows([]); setNextCursor(null); setError('failed') } }
       finally { if (!cancelled && current === generation.current) setLoading(false) }
     }
     void refresh()
     const timer = setInterval(() => { if (!document.hidden) void refresh() }, 20_000)
-    window.addEventListener('focus', refresh); window.addEventListener(INBOX_CHANGED, refresh)
-    return () => { cancelled = true; invalidate(); clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener(INBOX_CHANGED, refresh) }
+    const unsubscribe = subscribeSocialRefresh(() => { void refresh() })
+    return () => { cancelled = true; invalidate(); clearInterval(timer); unsubscribe() }
   }, [direction, revision])
   async function act(id: string, action: string) {
+    if (mutating.current) return
+    const current = ++generation.current
+    mutating.current = true
+    const target = rows.find(row => row.id === id)
     setBusy(id); setActionError('')
     try {
       const response = await fetch(`/api/beam-invitations/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) })
       const data = await response.json()
       if (!response.ok) throw new Error(t.has(data.error) ? data.error : 'failed')
+      if (current !== generation.current) return
       setRows(current => current.map(row => row.id === id ? { ...row, status: data.status, conversationId: data.conversationId } : row))
       notifyInboxChanged()
+      if (data.conversationId && target) announcePlanetAction({ kind: 'conversation', userId: target.otherUser.id, conversationId: data.conversationId })
       if (data.conversationId) router.push(withExplorationOrigin(`/messages/${encodeURIComponent(data.conversationId)}`, origin))
     } catch (cause) { setActionError(cause instanceof Error && t.has(cause.message) ? cause.message : 'failed'); setRevision(v => v + 1) }
-    finally { setBusy(null) }
+    finally { mutating.current = false; setBusy(null); setRevision(v => v + 1) }
   }
   async function more() {
-    if (!nextCursor || loading) return
+    if (!nextCursor || loading || mutating.current) return
     const currentGeneration = ++generation.current
     setLoading(true)
     try {

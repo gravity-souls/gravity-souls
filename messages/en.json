@@ -1330,7 +1330,12 @@
     "confirmLegacySave": "Confirm saving this planet to your private orbit.",
     "followingLabel": "Following",
     "mutualLabel": "Mutual",
-    "followersLabel": "Follows you"
+    "followersLabel": "Follows you",
+    "saveDone": "Planet saved in your orbit.",
+    "removeSaveDone": "Planet removed from your orbit.",
+    "followDone": "You now follow this planet.",
+    "unfollowDone": "You unfollowed this planet.",
+    "stateFailed": "The latest state could not be confirmed. Retry to read it again."
   },
   "sbti": {
     "protocol": "Soul Scan Protocol",

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import SavePlanetButton from '@/components/social/SavePlanetButton'
-import { PLANET_ACTION_CHANGED } from '@/lib/planet-actions'
+import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -97,15 +97,15 @@ export default function SavedPage() {
       if (current !== generation.current) return
       setItems(savedPlanets.map(row => ({ saved: { planetId: row.planetId, savedAt: row.savedAt, label: row.label ?? undefined }, planet: savedPlanetToProfile(row.planet) })))
       setLoadError(null)
-    } catch (cause) { if (current === generation.current) setLoadError(cause instanceof Error && cause.message === 'unauthorized' ? 'unauthorized' : 'network') }
+    } catch (cause) { if (current === generation.current) { setItems(null); setLoadError(cause instanceof Error && cause.message === 'unauthorized' ? 'unauthorized' : 'network') } }
   }, [])
   useEffect(() => {
     function refresh() { void load() }
     const add = new URLSearchParams(window.location.search).get('add')
     if (add && add.length <= 100) Promise.resolve().then(() => setLegacyAdd(add))
     refresh()
-    window.addEventListener('focus', refresh); window.addEventListener(PLANET_ACTION_CHANGED, refresh)
-    return () => { invalidate(); window.removeEventListener('focus', refresh); window.removeEventListener(PLANET_ACTION_CHANGED, refresh) }
+    const unsubscribe = subscribeSocialRefresh(refresh)
+    return () => { invalidate(); unsubscribe() }
   }, [load, invalidate])
 
   function handleUnsave(planetId: string) {
@@ -116,7 +116,7 @@ export default function SavedPage() {
     <AppShell>
       <div className="px-6 pt-8 pb-16 max-w-5xl mx-auto">
 
-        {loadError && items && <p role="alert" className="mt-4 text-sm text-red-300">{ta('failed')} <button type="button" className="underline" onClick={() => void load()}>{ta('retry')}</button></p>}
+        {loadError && items && <p role="alert" className="mt-4 text-sm text-red-300">{ta('stateFailed')} <button type="button" className="underline" onClick={() => void load()}>{ta('retry')}</button></p>}
         {legacyAdd && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 p-4">
           <p className="text-sm text-white/60">{ta('confirmLegacySave')}</p>
           <SavePlanetButton planetId={legacyAdd} onChange={saved => { if (saved) { setLegacyAdd(null); const url = new URL(window.location.href); url.searchParams.delete('add'); window.history.replaceState(null, '', url) } }} />
@@ -145,7 +145,7 @@ export default function SavedPage() {
         {loadError === 'network' && !items && (
           <div className="mt-16 flex flex-col items-center gap-4 text-center max-w-sm mx-auto">
             <p className="text-sm" style={{ color: 'var(--ghost)', opacity: 0.6 }}>
-              {ta('failed')}
+              {ta('stateFailed')}
             </p>
           </div>
         )}

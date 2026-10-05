@@ -1330,7 +1330,12 @@
     "confirmLegacySave": "Confirmez l’enregistrement de cette planète dans votre orbite privée.",
     "followingLabel": "Suivi",
     "mutualLabel": "Mutuel",
-    "followersLabel": "Vous suit"
+    "followersLabel": "Vous suit",
+    "saveDone": "Planète enregistrée dans votre orbite.",
+    "removeSaveDone": "Planète retirée de votre orbite.",
+    "followDone": "Vous suivez maintenant cette planète.",
+    "unfollowDone": "Vous ne suivez plus cette planète.",
+    "stateFailed": "Impossible de confirmer l’état actuel. Réessayez pour le relire."
   },
   "sbti": {
     "protocol": "Protocole Soul Scan",

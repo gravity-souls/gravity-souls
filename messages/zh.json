@@ -1330,7 +1330,12 @@
     "confirmLegacySave": "确认将这颗星球保存到你的私人轨道。",
     "followingLabel": "已关注",
     "mutualLabel": "互关",
-    "followersLabel": "关注你"
+    "followersLabel": "关注你",
+    "saveDone": "已收藏到你的轨道。",
+    "removeSaveDone": "已从你的轨道移除。",
+    "followDone": "已关注这颗星球。",
+    "unfollowDone": "已取消关注这颗星球。",
+    "stateFailed": "无法确认最新状态，请重试重新读取。"
   },
   "sbti": {
     "protocol": "灵魂扫描协议",

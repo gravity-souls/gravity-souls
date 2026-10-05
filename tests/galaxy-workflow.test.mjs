@@ -77,6 +77,7 @@ const saved = require('../app/api/saved-planets/route.ts')
 const removeSaved = require('../app/api/saved-planets/[planetId]/route.ts')
 const invitations = require('../app/api/beam-invitations/route.ts')
 const invitationAction = require('../app/api/beam-invitations/[id]/route.ts')
+const invitationStatus = require('../app/api/beam-invitations/status/route.ts')
 const blocks = require('../app/api/blocks/route.ts')
 const request = (data = {}, url = 'https://example.com/api') =>
   new Request(url, {
@@ -199,6 +200,50 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       assert.equal((await (await invitations.POST(request({ recipientId: recipient }))).json()).conversationId, conversationId)
       assert.equal(await db.notification.count({ where: { type: 'NEW_MESSAGE', userId: recipient } }), 0)
       await db.user.deleteMany({ where: { id: { in: [sender, recipient, outsider] } } })
+    })
+    await t.test('invitation status reads current viewer consent and thread without sending, following or redirecting',async()=>{
+      const ids=['sync-sender','sync-recipient','sync-outsider','sync-cancel']
+      for(const id of ids) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const read=recipientId=>invitationStatus.GET(new Request(`https://example.test/api?recipientId=${recipientId}`))
+      const data=async id=>(await read(id)).json()
+      try {
+        as(null);assert.equal((await read(ids[1])).status,401)
+        as(ids[0]);assert.equal((await data(ids[1])).status,null)
+        const sent=await (await invitations.POST(request({recipientId:ids[1]}))).json()
+        const pending=await data(ids[1]);assert.equal(pending.status,'PENDING');assert.equal(pending.invitationId,sent.invitationId)
+        assert.equal((await read(ids[1])).headers.get('cache-control'),'private, no-store')
+        as(ids[1]);assert.equal((await data(ids[0])).incomingPending,true);assert.equal((await data(ids[0])).invitationId,null)
+        as(ids[2]);assert.equal((await data(ids[1])).status,null);assert.equal((await data(ids[1])).conversationId,null)
+        as(ids[1]);const accepted=await (await invitationAction.PATCH(request({action:'accept'}),{params:Promise.resolve({id:sent.invitationId})})).json()
+        as(ids[0]);const confirmed=await data(ids[1]);assert.equal(confirmed.status,'ACCEPTED');assert.equal(confirmed.conversationId,accepted.conversationId)
+        const cancelled=await (await invitations.POST(request({recipientId:ids[3]}))).json()
+        await invitationAction.PATCH(request({action:'cancel'}),{params:Promise.resolve({id:cancelled.invitationId})})
+        assert.equal((await data(ids[3])).status,'CANCELLED')
+        const before=await db.notification.count()
+        await data(ids[1]);await data(ids[3])
+        assert.equal(await db.notification.count(),before)
+        assert.equal(await db.directMessage.count({where:{conversationId:accepted.conversationId}}),0)
+        assert.equal(await db.follow.count({where:{followerId:{in:ids}}}),0)
+        assert.deepEqual(Object.keys(confirmed).sort(),['available','conversationId','incomingPending','invitationId','status'].sort())
+      } finally { await db.user.deleteMany({where:{id:{in:ids}}});as('owner') }
+    })
+    await t.test('invitation status hides blocked or deleted pairs and rejects caller-selected owners',async()=>{
+      const ids=['sync-private-a','sync-private-b']
+      for(const id of ids) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const read=(extra='')=>invitationStatus.GET(new Request(`https://example.test/api?recipientId=${ids[1]}${extra}`))
+      try {
+        as(ids[0]);await invitations.POST(request({recipientId:ids[1]}))
+        for(const extra of ['&userId=sync-private-b','&senderId=sync-private-b','&direction=sent']) assert.equal((await read(extra)).status,400)
+        for(const [blockerId,blockedId] of [[ids[0],ids[1]],[ids[1],ids[0]]]) {
+          const block=await db.block.create({data:{blockerId,blockedId}})
+          const hidden=await (await read()).json();assert.equal(hidden.available,false);assert.equal(hidden.invitationId,null);assert.equal(hidden.status,null)
+          await db.block.delete({where:{id:block.id}})
+        }
+        await db.user.update({where:{id:ids[1]},data:{deletedAt:new Date()}})
+        assert.equal((await (await read()).json()).available,false)
+        await db.user.update({where:{id:ids[0]},data:{deletedAt:new Date()}})
+        assert.equal((await read()).status,401)
+      } finally {await db.user.deleteMany({where:{id:{in:ids}}});as('owner')}
     })
     await t.test('invitation rejection and cancellation remain terminal; visibility and blocks cannot be bypassed', async () => {
       const a = 'invite-privacy-a', b = 'invite-privacy-b', c = 'invite-privacy-c'

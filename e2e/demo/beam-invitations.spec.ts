@@ -16,6 +16,7 @@ test('sending needs an explicit invitation action and a failed cancellation keep
   await page.route('**/api/follows/target', route => route.fulfill({ json: { following: false, followedBy: false, available: true } }))
   await page.route('**/api/conversations', route => route.fulfill(route.request().method() === 'POST' ? { status: 403, json: { code: 'mutualFollowRequired' } } : { json: [] }))
   await page.route('**/api/beam-invitations**', route => {
+    if (route.request().url().includes('/status?')) return route.fulfill({ json: { available: true, invitationId: creates ? 'invite' : null, status: creates ? state : null, conversationId: null, incomingPending: false } })
     if (route.request().method() === 'POST') { creates++; return route.fulfill({ json: { invitationId: 'invite', status: state } }) }
     if (route.request().method() === 'PATCH') {
       if (failCancel) return route.fulfill({ status: 500, json: {} })
@@ -58,4 +59,46 @@ test('accepting an incoming invitation opens an empty conversation without sendi
   await expect(page).toHaveURL(/\/messages\/invite-thread$/)
   await expect(page.getByText('Your first beam is sent', { exact: true })).toHaveCount(0)
   expect(sends).toBe(0)
+})
+
+test('foreground refresh discovers accepted consent without navigation or another write', async ({ page }) => {
+  let accepted = false, writes = 0
+  const planet = { id: 'sync-planet', userId: 'target', name: 'Sync planet', mood: 'calm', lifestyle: 'solitary', coreThemes: [], visual: {} }
+  await page.route('**/api/my-planet', route => route.fulfill({ json: { id: 'mine' } }))
+  await page.route('**/api/saved-planets', route => route.fulfill({ json: { savedPlanets: [{ id: 'save', planetId: planet.id, savedAt: '2026-10-05T10:00:00Z', planet }] } }))
+  await page.route('**/api/saved-planets/sync-planet', route => route.fulfill({ json: { saved: true } }))
+  await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: 'invite', status: accepted ? 'ACCEPTED' : 'PENDING', conversationId: accepted ? 'sync-thread' : null, incomingPending: false } }))
+  await page.route('**/api/conversations', route => {
+    if (route.request().method() === 'POST') writes++
+    return route.fulfill({ json: [] })
+  })
+  await page.goto('/saved')
+  await expect(page.getByRole('button', { name: 'Send beam · Open chat', exact: true })).toBeVisible()
+  accepted = true
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByRole('button', { name: 'Continue chat', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/saved$/)
+  expect(writes).toBe(0)
+})
+
+test('an uncertain orbit removal retries by reading state instead of saving it again', async ({ page }) => {
+  let saved = true, writes = 0
+  const planet = { id: 'retry-planet', userId: 'target', name: 'Retry planet', mood: 'calm', lifestyle: 'solitary', coreThemes: [], visual: {} }
+  await page.route('**/api/my-planet', route => route.fulfill({ json: { id: 'mine' } }))
+  await page.route('**/api/saved-planets', route => route.fulfill({ json: { savedPlanets: [{ id: 'save', planetId: planet.id, savedAt: '2026-10-05T10:00:00Z', planet }] } }))
+  await page.route('**/api/saved-planets/retry-planet', route => {
+    if (route.request().method() !== 'GET') {
+      saved = false; writes++
+      return route.fulfill({ status: 500, json: {} })
+    }
+    return route.fulfill({ json: { saved } })
+  })
+  await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: null, status: null, conversationId: null, incomingPending: false } }))
+  await page.goto('/saved')
+  await page.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
+  const alert = page.getByRole('alert').filter({ hasText: 'The latest state could not be confirmed' })
+  await expect(alert).toBeVisible()
+  await alert.getByRole('button', { name: 'Retry', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Save to orbit', exact: true })).toBeVisible()
+  expect(writes).toBe(1)
 })
