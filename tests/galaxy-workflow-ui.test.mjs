@@ -186,8 +186,8 @@ for (const locale of ['en', 'zh', 'fr']) {
       assert.ok(html.includes(messages.gestures))
       assert.ok(html.includes('aria-controls="star-map-sidebar"'))
       assert.ok(html.includes('id="star-map-sidebar"'))
-      assert.ok(html.includes(messages.browseObjects.replaceAll('&', '&amp;')))
-      assert.ok(html.includes(messages.decoration.replaceAll('&', '&amp;')))
+      assert.ok(html.includes((mode === 'galaxies' ? messages.browseGalaxies : messages.browseObjects).replaceAll('&', '&amp;')))
+      assert.ok(html.includes((mode === 'galaxies' ? messages.galaxyDecoration : messages.decoration).replaceAll('&', '&amp;')))
       assert.ok(!html.includes('starMap.'))
       assert.ok(!html.includes('Reset view'))
       assert.ok(!html.includes('Zoom in'))
@@ -411,3 +411,29 @@ test('personal map origins preserve collection and view and reject arbitrary ori
   assert.equal(explorationOrigin('personal-star-map-unknown'),null)
   assert.equal(explorationOrigin('https://example.test'),null)
 })
+
+test('resonance positions revolve predictably without changing recommendation identity', () => {
+  const { resonancePosition } = require('../lib/resonance-motion.ts')
+  for (const count of [1,3,5]) for (let i=0;i<count;i++) {
+    const a = resonancePosition(i,count), b = resonancePosition(i,count,Math.PI/2)
+    assert.notDeepEqual(a,b)
+    assert.ok(a.x >= 16 && a.x <= 84 && a.y >= 17 && a.y <= 79)
+    assert.ok(Math.abs(resonancePosition(i,count,Math.PI*2).x-a.x)<1e-8)
+    assert.ok(Math.abs(resonancePosition(i,count,Math.PI*2).y-a.y)<1e-8)
+  }
+})
+for (const locale of ['en','fr','zh']) {
+  test(`review cards distinguish pending attendees and proposals in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`)
+    const html = render(locale,React.createElement(EventCard,{event:{...event,status:'PENDING',canReviewEvent:true,pendingAttendanceCount:2}}))
+    const escaped = value => renderToStaticMarkup(React.createElement('span',null,value)).slice(6,-7)
+    assert.ok(html.includes(escaped(m.galaxyWorkflow.pending)))
+    assert.ok(html.includes(escaped(m.eventForms.pendingAttendanceCount.replace('{count}','2'))))
+    assert.ok(m.eventsPage.tabs.review && m.eventsPage.reviewHelp && m.eventsPage.emptyReview)
+    const map = render(locale,React.createElement(StarMap,{mode:'galaxies'}))
+    assert.ok(map.includes(escaped(m.starMap.meaning_galaxies)))
+    assert.ok(map.includes(escaped(m.starMap.galaxyDecoration)))
+    assert.ok(map.includes(escaped(m.starMap.galaxyScope)))
+    assert.ok(!map.includes(escaped(m.starMap.decoration)))
+  })
+}

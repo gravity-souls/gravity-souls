@@ -775,7 +775,8 @@
       "passed": "历史活动",
       "mine": "我的活动提案",
       "requests": "待审核报名",
-      "interested": "感兴趣"
+      "interested": "感兴趣",
+      "review": "待我处理"
     },
     "categories": {
       "all": "全部",
@@ -788,7 +789,9 @@
     },
     "emptyMine": "你还没有提交活动提案。",
     "emptyRequests": "没有待审核的报名申请。",
-    "emptyInterested": "还没有收藏活动。点击“感兴趣”后，可以在这里找到。"
+    "emptyInterested": "还没有收藏活动。点击“感兴趣”后，可以在这里找到。",
+    "emptyReview": "暂无需要你处理的活动提案或报名申请。",
+    "reviewHelp": "星系创建者和管理员审核活动提案；活动组织者及星系管理员审核报名申请。这里与“我的待审核报名”分开。"
   },
   "eventForms": {
     "databaseLocked": "该星系连接数据库后会解锁活动。",
@@ -844,7 +847,8 @@
       "stargazing": "观星",
       "discussion": "讨论",
       "other": "其他"
-    }
+    },
+    "pendingAttendanceCount": "有 {count} 项报名申请待处理"
   },
   "discover": {
     "eyebrow": "共鸣地图",
@@ -1722,7 +1726,7 @@
     "search": "搜索名称",
     "searchAction": "搜索",
     "meaning_discover": "星群按星球自己填写的气候分组，不是对用户的心理判断。",
-    "meaning_galaxies": "每个星群代表一个真实星系，数量表示成员数。",
+    "meaning_galaxies": "每个星团代表一个真实社区；数字是当前成员人数，不是你能看到的星球数。",
     "meaning_resonance": "星群按推荐最主要的共鸣维度分组。",
     "group_calm": "平静",
     "group_melancholic": "忧郁",
@@ -1785,7 +1789,12 @@
     "exploreGlobal": "前往全域探索",
     "firstBatch": "返回首批",
     "personalTotal": "此集合中有 {count} 个星球",
-    "returnPersonalMap": "← 返回我的星图"
+    "returnPersonalMap": "← 返回我的星图",
+    "browseGalaxies": "浏览星系",
+    "chooseGalaxy": "选择星系",
+    "galaxyDecoration": "粒子用于描绘社区氛围，每个可选节点进入对应星系；粒子不会展示成员的真实星球。",
+    "galaxyScope": "每批最多展示 24 个星系。进入星系后，按权限查看成员星球、动态和活动。",
+    "galaxyTotal": "此搜索中有 {count} 个星系"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",

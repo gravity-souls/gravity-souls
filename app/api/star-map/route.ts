@@ -57,7 +57,7 @@ export async function GET(request: Request) {
             slug: true,
             tagline: true,
             accentColor: true,
-            _count: { select: { memberships: true } },
+            _count: { select: { memberships: { where: { user: { deletedAt: null } } } } },
           },
         }),
         prisma.community.count({ where }),

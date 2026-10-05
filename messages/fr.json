@@ -775,7 +775,8 @@
       "passed": "Historique",
       "mine": "Mes propositions",
       "requests": "Inscriptions en attente",
-      "interested": "Mes intérêts"
+      "interested": "Mes intérêts",
+      "review": "À examiner"
     },
     "categories": {
       "all": "Tout",
@@ -788,7 +789,9 @@
     },
     "emptyMine": "Aucune proposition pour le moment.",
     "emptyRequests": "Aucune inscription en attente.",
-    "emptyInterested": "Aucune activité enregistrée. Enregistrez une activité pour la retrouver ici."
+    "emptyInterested": "Aucune activité enregistrée. Enregistrez une activité pour la retrouver ici.",
+    "emptyReview": "Aucune proposition d’activité ni demande de participation à examiner.",
+    "reviewHelp": "Les propriétaires et administrateurs examinent les propositions d’activité. Les organisateurs et administrateurs examinent les demandes de participation. Vos propres demandes en attente restent séparées."
   },
   "eventForms": {
     "databaseLocked": "Les événements se déverrouillent quand cette galaxie est connectée à la base de données.",
@@ -844,7 +847,8 @@
       "stargazing": "Observation",
       "discussion": "Discussion",
       "other": "Autre"
-    }
+    },
+    "pendingAttendanceCount": "{count} demandes de participation à examiner"
   },
   "discover": {
     "eyebrow": "Carte de résonance",
@@ -1722,7 +1726,7 @@
     "search": "Rechercher un nom",
     "searchAction": "Rechercher",
     "meaning_discover": "Les constellations regroupent les planètes selon leur climat déclaré.",
-    "meaning_galaxies": "Chaque constellation est une galaxie réelle ; le nombre indique ses membres.",
+    "meaning_galaxies": "Chaque groupe représente une communauté réelle. Le nombre indique ses membres actuels, pas ses planètes visibles.",
     "meaning_resonance": "Les suggestions sont regroupées selon leur dimension de résonance principale.",
     "group_calm": "Calme",
     "group_melancholic": "Mélancolique",
@@ -1785,7 +1789,12 @@
     "exploreGlobal": "Explorer le ciel entier",
     "firstBatch": "Revenir au premier lot",
     "personalTotal": "{count} planètes dans votre collection",
-    "returnPersonalMap": "← Revenir à ma carte stellaire"
+    "returnPersonalMap": "← Revenir à ma carte stellaire",
+    "browseGalaxies": "Parcourir les galaxies",
+    "chooseGalaxy": "Choisir une galaxie",
+    "galaxyDecoration": "Les particules illustrent une communauté ; un nœud sélectionnable ouvre sa galaxie. Elles ne révèlent pas les planètes de ses membres.",
+    "galaxyScope": "Cette vue charge jusqu’à 24 galaxies par lot. Ouvrez une galaxie pour voir les planètes et activités autorisées.",
+    "galaxyTotal": "{count} galaxies dans cette recherche"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",

@@ -44,7 +44,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
   const t = useTranslations('galaxyWorkflow'), te = useTranslations('eventForms'), locale = useLocale()
   const spotsLeft = event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - event.rsvpCount)
   const isPassed = event.status === 'PASSED'
-  const showPending = event.status === 'PENDING' && isProposer
+  const showPending = event.status === 'PENDING' && (isProposer || event.canReviewEvent)
 
   return (
     <article
@@ -102,6 +102,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
           )}
         </div>
 
+        {event.pendingAttendanceCount != null && event.pendingAttendanceCount > 0 && <p className="text-xs text-amber-200">{te('pendingAttendanceCount', { count: event.pendingAttendanceCount })}</p>}
         {!compact && (
           <p className="line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.72 }}>
             {event.description}

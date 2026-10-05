@@ -7,9 +7,11 @@ import type { GalaxyEventDetail } from '@/types/event'
 export default function EventManagement({
   event,
   onChanged,
+  onAttendanceChanged,
 }: {
   event: GalaxyEventDetail
   onChanged: () => void
+  onAttendanceChanged?: () => void
 }) {
   const t = useTranslations('galaxyWorkflow')
   const [editing, setEditing] = useState(false),
@@ -24,10 +26,10 @@ export default function EventManagement({
     let alive = true
     galaxyRequest<{ attendees: typeof attendees }>(`${endpoint}/attendees`)
       .then((data) => {
-        if (alive) setAttendees(data.attendees)
+        if (alive) { setAttendees(data.attendees); setError('') }
       })
       .catch((err) => {
-        if (alive) setError(t.has(err.message) ? t(err.message) : t('failed'))
+        if (alive) { setAttendees([]); setError(t.has(err.message) ? t(err.message) : t('failed')) }
       })
     return () => {
       alive = false
@@ -41,6 +43,7 @@ export default function EventManagement({
     try {
       await galaxyRequest(`${endpoint}/attendees`, 'PATCH', { userId, status })
       setRevision((v) => v + 1)
+      onAttendanceChanged?.()
     } catch (err) {
       const key = err instanceof Error ? err.message : 'failed'
       setError(t.has(key) ? t(key) : t('failed'))

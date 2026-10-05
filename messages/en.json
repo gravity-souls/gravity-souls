@@ -775,7 +775,8 @@
       "passed": "History",
       "mine": "My proposals",
       "requests": "Pending attendance",
-      "interested": "Interested"
+      "interested": "Interested",
+      "review": "To review"
     },
     "categories": {
       "all": "All",
@@ -788,7 +789,9 @@
     },
     "emptyMine": "No event proposals yet.",
     "emptyRequests": "No attendance requests awaiting review.",
-    "emptyInterested": "No saved activities yet. Save an activity to find it here."
+    "emptyInterested": "No saved activities yet. Save an activity to find it here.",
+    "emptyReview": "No activity proposals or attendance requests need your review.",
+    "reviewHelp": "Galaxy owners and administrators review activity proposals. Organizers and galaxy administrators review attendance requests. This is separate from your own pending applications."
   },
   "eventForms": {
     "databaseLocked": "Events unlock once this galaxy is connected to the database.",
@@ -844,7 +847,8 @@
       "stargazing": "Stargazing",
       "discussion": "Discussion",
       "other": "Other"
-    }
+    },
+    "pendingAttendanceCount": "{count} attendance requests to review"
   },
   "discover": {
     "eyebrow": "Resonance map",
@@ -1722,7 +1726,7 @@
     "search": "Search names",
     "searchAction": "Search",
     "meaning_discover": "Constellations group planets by their self-described climate.",
-    "meaning_galaxies": "Each constellation is a real galaxy; its count is its membership.",
+    "meaning_galaxies": "Each constellation represents a real community. The number is its current member count, not a count of visible planets.",
     "meaning_resonance": "Constellations group suggestions by their strongest resonance dimension.",
     "group_calm": "Calm",
     "group_melancholic": "Melancholic",
@@ -1785,7 +1789,12 @@
     "exploreGlobal": "Explore the wider sky",
     "firstBatch": "Back to first batch",
     "personalTotal": "{count} planets in your collection",
-    "returnPersonalMap": "← Return to my star map"
+    "returnPersonalMap": "← Return to my star map",
+    "browseGalaxies": "Browse galaxies",
+    "chooseGalaxy": "Choose a galaxy",
+    "galaxyDecoration": "Particles illustrate each community; one selectable node opens that galaxy. They do not reveal its member planets.",
+    "galaxyScope": "This view loads up to 24 galaxies per batch. Open a galaxy to see its permitted member planets and activities.",
+    "galaxyTotal": "{count} galaxies in this search"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

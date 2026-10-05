@@ -171,3 +171,15 @@ interest → membership approval → attendance approval → cancellation/histor
 management, then permission-aware return paths between dynamic posts, galaxies and events.
 Personal galaxy/event overlays and temporary activity clusters follow separately; they must
 use genuine memberships/interests and current visibility, never decorative edges as proof.
+
+## 活动待处理与展示含义（2026-10-05，本轮开发）
+
+- MR39 已合并；聊天后续继续延后至配置之后。
+- 活动增加“待我处理”：星系管理员／创建者审批活动提案，组织者／管理员审批报名，
+  与自己待审核的报名分开。补审批、人数、列表、取消／历史同步及权限复查。
+- 共鸣推荐星球随场景转动，内置纹理自转；定制上传头像保留原图。悬停或键盘聚焦时
+  稳定目标，减少动态效果／隐藏／离屏停转；分数和推荐身份不变。
+- 星图星系代表真实 Community，成员数不等于可见星球数；粒子不代表成员名单。
+  星系数量和成员单位、节点入口、三语说明区分清楚，并排除注销账号的成员数。
+- 本轮实现与验收边界见 `activity-review-motion-review.md`；浏览器／真机仍待验收。
+- 后续仍需完善动态与星系／活动的返回链路，以及个人星图的真实成员／活动叠层。

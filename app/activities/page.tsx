@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -11,13 +11,14 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import type { EventCategory, GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 
 const CATEGORIES: ('ALL' | EventCategory)[] = ['ALL', 'MEETUP', 'ONLINE', 'WORKSHOP', 'STARGAZING', 'DISCUSSION', 'OTHER']
-type EventListTab = 'upcoming' | 'going' | 'passed' | 'mine' | 'requests' | 'interested'
+type EventListTab = 'upcoming' | 'going' | 'passed' | 'mine' | 'requests' | 'interested' | 'review'
 
 const TABS: { value: EventListTab; labelKey: string; emptyKey: string }[] = [
   { value: 'upcoming', labelKey: 'tabs.upcoming', emptyKey: 'emptyUpcoming' },
   { value: 'interested', labelKey: 'tabs.interested', emptyKey: 'emptyInterested' },
   { value: 'going', labelKey: 'tabs.going', emptyKey: 'emptyGoing' },
   { value: 'mine', labelKey: 'tabs.mine', emptyKey: 'emptyMine' },
+  { value: 'review', labelKey: 'tabs.review', emptyKey: 'emptyReview' },
   { value: 'requests', labelKey: 'tabs.requests', emptyKey: 'emptyRequests' },
   { value: 'passed', labelKey: 'tabs.passed', emptyKey: 'emptyPassed' },
 ]
@@ -33,6 +34,7 @@ export default function GalaxyEventsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [authRequired, setAuthRequired] = useState(false)
+  const detailRequest = useRef(0)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
 
   const queryString = useMemo(() => {
@@ -47,7 +49,7 @@ export default function GalaxyEventsPage() {
   useEffect(() => {
     let cancelled = false
     const requestedStatus = new URLSearchParams(window.location.search).get('status')
-    if (requestedStatus === 'upcoming' || requestedStatus === 'going' || requestedStatus === 'passed' || requestedStatus === 'mine' || requestedStatus === 'requests' || requestedStatus === 'interested') {
+    if (requestedStatus === 'upcoming' || requestedStatus === 'going' || requestedStatus === 'passed' || requestedStatus === 'mine' || requestedStatus === 'requests' || requestedStatus === 'interested' || requestedStatus === 'review') {
       Promise.resolve().then(() => {
         if (!cancelled) setTab(requestedStatus)
       })
@@ -71,7 +73,7 @@ export default function GalaxyEventsPage() {
     fetch(`/api/galaxies/events?${queryString}`)
       .then((res) => {
         if (res.status === 401) {
-          if (!cancelled) setAuthRequired(true)
+          if (!cancelled) { setAuthRequired(true); detailRequest.current++; setSelectedEvent(null) }
           return { events: [] }
         }
         if (!cancelled) setAuthRequired(false)
@@ -82,7 +84,7 @@ export default function GalaxyEventsPage() {
         if (!cancelled) { setEvents(data.events ?? []);setTotal(data.total??0);setPageSize(data.pageSize??20);setPage(p=>Math.min(p,Math.max(1,Math.ceil((data.total??0)/(data.pageSize??20)))));setError('') }
       })
       .catch(() => {
-        if (!cancelled) setError(tw('failed'))
+        if (!cancelled) { setError(tw('failed')); setEvents([]); setTotal(0); detailRequest.current++; setSelectedEvent(null) }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -102,28 +104,40 @@ export default function GalaxyEventsPage() {
     return () => window.removeEventListener('event-interest:changed', sync)
   }, [tab])
 
-  async function openDetail(event: GalaxyEventSummary) {
+  const openDetail = useCallback(async (event: GalaxyEventSummary) => {
+    const requestId = ++detailRequest.current
     try {
-    const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`)
-    if (!res.ok) { setError(tw('failed'));return }
+    const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`, { cache: 'no-store' })
+    if (requestId !== detailRequest.current) return
+    if (!res.ok) { setSelectedEvent(null); setError(tw('failed'));return }
     const data = await res.json() as { event: GalaxyEventDetail; isAdmin?: boolean }
+    if (requestId !== detailRequest.current) return
     setSelectedEvent(data.event)
     setSelectedAdmin(data.isAdmin ?? false)
-    } catch { setError(tw('failed')) }
-  }
+    } catch { if (requestId === detailRequest.current) { setSelectedEvent(null); setError(tw('failed')) } }
+  }, [tw])
 
   async function applyRSVPChange(eventId: string, state: AttendanceState) {
     setEvents((prev) => prev.map((event) => event.id === eventId ? { ...event, ...state } : event))
     setSelectedEvent((event) => event?.id === eventId ? { ...event, ...state, spotsRemaining: event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - state.rsvpCount) } : event)
-    const summary = events.find(event => event.id === eventId)
-    if (!summary) return
-    try {
-      const response = await fetch(`/api/galaxies/${summary.galaxyId}/events/${eventId}`, { cache: 'no-store' })
-      if (!response.ok) throw new Error('failed')
-      const data = await response.json() as { event: GalaxyEventDetail }
-      setSelectedEvent(previous => previous?.id === eventId && previous.rsvpCount === state.rsvpCount && previous.userHasRSVPed === state.userHasRSVPed ? data.event : previous)
-    } catch { setError(tw('failed')) }
+    setRevision(value => value + 1)
+    if (selectedEvent?.id === eventId) await openDetail({ ...selectedEvent, ...state })
   }
+
+  useEffect(() => {
+    const refresh = () => {
+      setRevision(value => value + 1)
+      if (!selectedEvent) return
+      void openDetail(selectedEvent)
+    }
+    const visible = () => { if (!document.hidden) refresh() }
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', visible)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', visible)
+    }
+  }, [selectedEvent, openDetail])
 
   return (
     <AppShell>
@@ -167,6 +181,7 @@ export default function GalaxyEventsPage() {
         </div>
 
         {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}<button className="ml-3 underline" onClick={()=>setRevision(v=>v+1)}>{tw('retry')}</button></p>}
+        {tab === 'review' && <p className="mt-4 text-sm text-slate-400">{t('reviewHelp')}</p>}
         <div className="mt-6 grid gap-3">
           {loading ? (
             <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t('loading')}</p>
@@ -177,7 +192,7 @@ export default function GalaxyEventsPage() {
                 {tAuth('signIn')}
               </Link>
             </div>
-          ) : events.length === 0 ? (
+          ) : error ? null : events.length === 0 ? (
             <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}>
               <p className="text-sm" style={{ color: 'var(--ghost)' }}>{t(currentTab.emptyKey)}</p>
             </div>
@@ -190,12 +205,13 @@ export default function GalaxyEventsPage() {
 
         {total>pageSize && <div className="mt-5 flex justify-between text-sm"><button disabled={page===1||loading} onClick={()=>setPage(p=>p-1)}>{tw('previous')}</button><span>{page} / {Math.ceil(total/pageSize)}</span><button disabled={page*pageSize>=total||loading} onClick={()=>setPage(p=>p+1)}>{tw('next')}</button></div>}
         <EventDetail
+          key={selectedEvent?.id ?? 'closed'}
           event={selectedEvent}
           open={!!selectedEvent}
           isAdmin={selectedAdmin}
-          onUpdated={()=>setRevision(v=>v+1)}
-          onStatusChange={()=>{setSelectedEvent(null);setRevision(v=>v+1)}}
-          onClose={() => setSelectedEvent(null)}
+          onUpdated={()=>{setRevision(v=>v+1);if(selectedEvent) void openDetail(selectedEvent)}}
+          onStatusChange={()=>{detailRequest.current++;setSelectedEvent(null);setRevision(v=>v+1)}}
+          onClose={() => {detailRequest.current++;setSelectedEvent(null)}}
           onRSVPChange={applyRSVPChange}
         />
       </div>

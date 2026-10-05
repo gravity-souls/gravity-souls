@@ -404,7 +404,7 @@ export default function StarMap({
 
   function enter(id: string) {
     setFocus(id)
-    setSelectedId(null)
+    setSelectedId(mode === 'galaxies' ? id : null)
     setCursor(null)
     view.current.zoom = 2.4
   }
@@ -443,7 +443,7 @@ export default function StarMap({
           aria-controls="star-map-sidebar"
           onClick={() => setSidebarOpen((open) => !open)}
         >
-          {t('browseObjects')}
+          {t(mode === 'galaxies' ? 'browseGalaxies' : 'browseObjects')}
         </button>}
       </div>
       {focus && (
@@ -470,7 +470,7 @@ export default function StarMap({
             <span>
               {loading
                 ? t('loading')
-                : t(mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
+                : t(mode === 'galaxies' ? 'galaxyTotal' : mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
             </span>
             <span>{t('gestures')}</span>
           </div>
@@ -607,10 +607,10 @@ export default function StarMap({
           id="star-map-sidebar"
           className={styles.sidebar}
           data-open={sidebarOpen}
-          aria-label={t('browseObjects')}
+          aria-label={t(mode === 'galaxies' ? 'browseGalaxies' : 'browseObjects')}
         >
           <div className={styles.sidebarHeader}>
-            <h2>{t('browseObjects')}</h2>
+            <h2>{t(mode === 'galaxies' ? 'browseGalaxies' : 'browseObjects')}</h2>
             <button
               type="button"
               className={styles.sidebarToggle}
@@ -620,10 +620,10 @@ export default function StarMap({
             </button>
           </div>
           {listOnly && <div role={error ? 'alert' : 'status'} className={styles.listStatus}>
-            {loading ? t('loading') : error ? t(error) : data.total === 0 ? t('personalEmpty') : t(mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
+            {loading ? t('loading') : error ? t(error) : data.total === 0 ? t('personalEmpty') : t(mode === 'galaxies' ? 'galaxyTotal' : mode === 'personal' ? 'personalTotal' : 'visibleTotal', { count: data.total })}
             {!loading && error && <button type="button" className={styles.next} onClick={() => setRevision(value => value + 1)}>{ta('retry')}</button>}
           </div>}
-          <ScrollRegion label={t('browseObjects')}>
+          <ScrollRegion label={t(mode === 'galaxies' ? 'browseGalaxies' : 'browseObjects')}>
             <nav className={styles.clusters} aria-label={t('chooseGroup')}>
               {clusters.map((group) => (
                 <div key={group.id}>
@@ -656,7 +656,7 @@ export default function StarMap({
                   {(focus === group.id || (listOnly && !focus)) && (
                     <div
                       className={styles.nodeList}
-                      aria-label={t('choosePlanet')}
+                      aria-label={t(mode === 'galaxies' ? 'chooseGalaxy' : 'choosePlanet')}
                     >
                       {(listOnly && !focus ? data.nodes.filter(node => node.groupId === group.id) : visibleNodes).map((node) => (
                         <button
@@ -749,8 +749,8 @@ export default function StarMap({
         </aside>
       </div>
       <p className={styles.mapNote}>
-        {t('decoration')}{' '}
-        {t(data.scope === 'personal' ? 'personalScope' : data.scope === 'batch' ? 'batchScope' : 'allScope')}
+        {t(mode === 'galaxies' ? 'galaxyDecoration' : 'decoration')}{' '}
+        {t(mode === 'galaxies' ? 'galaxyScope' : data.scope === 'personal' ? 'personalScope' : data.scope === 'batch' ? 'batchScope' : 'allScope')}
       </p>
     </div>
   )
