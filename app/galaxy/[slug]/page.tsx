@@ -8,6 +8,7 @@ import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
 import { galaxyRequest } from '@/lib/galaxy-client'
 import { useTranslations, useLocale } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
+import ChatReturnLink from '@/components/messages/ChatReturnLink'
 import DiscussionComposer from '@/components/galaxy/DiscussionComposer'
 import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
@@ -630,6 +631,7 @@ export default function GalaxyPage({ params }: Props) {
   if (!community) {
     return (
       <AppShell>
+      <ChatReturnLink />
         <div className="px-4 sm:px-6 py-16 max-w-5xl mx-auto" role={communityError ? 'alert' : 'status'}>
           <p className="text-sm" style={{ color: 'var(--ghost)' }}>
             {communityError || t('loadingCommunity')}
@@ -665,6 +667,7 @@ export default function GalaxyPage({ params }: Props) {
   return (
     <>
       <AppShell>
+      <ChatReturnLink />
         <div className="pb-20">
 
           {/* -- Galaxy hero ------------------------------------------------ */}

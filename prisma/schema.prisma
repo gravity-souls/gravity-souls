@@ -647,6 +647,9 @@ model DirectMessage {
   content          String
   type             String   @default("text")
   readAt           DateTime?
+  // Stable references only; current presentation is permission-checked on reads.
+  shareKind        String?
+  shareTargetId    String?
   // Client-generated per-compose-attempt key. Lets a retried send (e.g. after
   // a dropped response) return the already-created message instead of
   // creating a duplicate. Nullable/non-unique-alone so existing rows and any

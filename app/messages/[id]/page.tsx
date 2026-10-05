@@ -7,9 +7,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { notifyInboxChanged } from '@/lib/inbox-client'
 import SignalComposer from '@/components/social/SignalComposer'
 import MessageContent from '@/components/messages/MessageContent'
+import SharedMessageCard from '@/components/messages/SharedMessageCard'
+import ShareComposer from '@/components/messages/ShareComposer'
+import type { SharedCard, ShareSelection } from '@/lib/chat-share-types'
 import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
-import { explorationOrigin } from '@/lib/exploration-return'
+import { explorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types ---
@@ -21,6 +24,7 @@ interface MsgData {
   type: string
   sentAt: string
   readAt?: string
+  share?: SharedCard
 }
 
 interface PlanetData {
@@ -45,10 +49,14 @@ function MessageBubble({
   msg,
   isOwn,
   color,
+  conversationId,
+  origin,
 }: {
   msg: MsgData
   isOwn: boolean
   color: string
+  conversationId: string
+  origin?: ExplorationOrigin | null
 }) {
   const t = useTranslations('inboxWorkflow')
   const locale = useLocale()
@@ -61,7 +69,7 @@ function MessageBubble({
           border: `1px solid ${isOwn ? `${color}33` : 'rgba(255,255,255,0.06)'}`,
         }}
       >
-        <MessageContent content={msg.content} />
+        {msg.type === 'share' ? <SharedMessageCard card={msg.share ?? { available: false }} conversationId={conversationId} origin={origin} /> : <MessageContent content={msg.content} />}
         <span
           className="block text-[10px] mt-1 text-right"
           style={{ color: 'var(--ghost)', opacity: 0.5 }}
@@ -153,6 +161,7 @@ function ConversationPageInner({ params }: Props) {
   const t = useTranslations('messagesPage')
   const tCommon = useTranslations('common')
   const tw = useTranslations('inboxWorkflow')
+  const ts = useTranslations('chatShares')
   const { id } = use(params)
   const router = useRouter()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -166,6 +175,10 @@ function ConversationPageInner({ params }: Props) {
   } | null>(null)
 
   const [messages, setMessages] = useState<MsgData[]>([])
+  const messagesRef = useRef<MsgData[]>([])
+  const pendingShareRef = useRef<{ selection: ShareSelection; clientMessageId: string } | null>(null)
+  const sendLock = useRef(false)
+  useEffect(() => { messagesRef.current = messages }, [messages])
   const [otherPlanet, setOtherPlanet] = useState<PlanetData | null>(null)
   // Fallback display name when the other participant has no active planet —
   // notably a self-deleted account, whose Planet[] rows are gone but whose
@@ -210,6 +223,22 @@ function ConversationPageInner({ params }: Props) {
           historyLoaded.current ? previous : result.olderCursor,
         )
         setLoadError('')
+        // The latest page does not include previously loaded history; refresh its cards too.
+        const incoming = new Set(result.messages.map((message: MsgData) => message.id))
+        const olderIds = messagesRef.current.filter(message => message.type === 'share' && !incoming.has(message.id)).map(message => message.id)
+        for (let start = 0; start < olderIds.length; start += 100) {
+          const ids = olderIds.slice(start, start + 100)
+          try {
+            const refreshed = await fetch(`/api/conversations/${id}/shared-cards`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }), signal: controller.signal })
+            if (!refreshed.ok) throw new Error('failed')
+            const cards = await refreshed.json()
+            if (controller.signal.aborted) return
+            const returned = new Set(cards.messages.map((message: MsgData) => message.id))
+            setMessages(previous => mergeMessages(previous.map(message => ids.includes(message.id) && !returned.has(message.id) ? { ...message, share: { available: false } } : message), cards.messages))
+          } catch {
+            if (!controller.signal.aborted) setMessages(previous => previous.map(message => ids.includes(message.id) ? { ...message, share: { available: false } } : message))
+          }
+        }
         const unread = result.messages
           .filter(
             (message: MsgData) =>
@@ -229,8 +258,10 @@ function ConversationPageInner({ params }: Props) {
           }
         }
       } catch {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setLoadError(tw('conversationUnavailable'))
+          setMessages(previous => previous.map(message => message.type === 'share' ? { ...message, share: { available: false } } : message))
+        }
       } finally {
         inFlight = false
         if (!controller.signal.aborted) setLoading(false)
@@ -302,7 +333,8 @@ function ConversationPageInner({ params }: Props) {
   }, [messages])
 
   async function handleSend(content: string) {
-    if (sending) return false
+    if (sendLock.current) return false
+    sendLock.current = true
     setSending(true)
     setSendError('')
 
@@ -331,8 +363,27 @@ function ConversationPageInner({ params }: Props) {
       setSendError(t('deliveryUnconfirmed'))
       return false
     } finally {
+      sendLock.current = false
       setSending(false)
     }
+  }
+
+  async function handleShare(selection: ShareSelection) {
+    if (sendLock.current) return false
+    sendLock.current = true
+    setSending(true); setSendError('')
+    if (pendingShareRef.current?.selection.kind !== selection.kind || pendingShareRef.current.selection.targetId !== selection.targetId) pendingShareRef.current = { selection, clientMessageId: crypto.randomUUID() }
+    try {
+      const response = await fetch(`/api/conversations/${id}/shares`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...selection, clientMessageId: pendingShareRef.current.clientMessageId }) })
+      if (!response.ok) throw new Error('failed')
+      const message = await response.json() as MsgData
+      followingLatest.current = true
+      setMessages(previous => mergeMessages(previous, [message]))
+      pendingShareRef.current = null
+      notifyInboxChanged()
+      return true
+    } catch { setSendError(ts('sendFailed')); return false }
+    finally { sendLock.current = false; setSending(false) }
   }
 
   if (loading) {
@@ -408,6 +459,8 @@ function ConversationPageInner({ params }: Props) {
             msg={msg}
             isOwn={msg.fromId === myUserId}
             color={accentColor}
+            conversationId={id}
+            origin={origin}
           />
         ))}
 
@@ -447,6 +500,7 @@ function ConversationPageInner({ params }: Props) {
       {!canSend && (
         <p className="px-4 py-3 text-xs text-slate-400">{tw('archived')}</p>
       )}
+      <ShareComposer conversationId={id} disabled={sending || !canSend || !!loadError} onSend={handleShare} />
       <SignalComposer
         onSend={handleSend}
         disabled={sending || !canSend || !!loadError}
@@ -459,6 +513,10 @@ function ConversationPageInner({ params }: Props) {
   )
 }
 
+function ConversationRoute(props: Props) {
+  const { id } = use(props.params)
+  return <ConversationPageInner key={id} {...props} />
+}
 export default function ConversationPage(props: Props) {
-  return <Suspense><ConversationPageInner {...props} /></Suspense>
+  return <Suspense><ConversationRoute {...props} /></Suspense>
 }

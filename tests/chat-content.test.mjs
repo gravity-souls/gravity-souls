@@ -79,3 +79,31 @@ test('typing and paste truncation match server Unicode validation without cuttin
   assert.equal(messageLength('🪐'.repeat(2000)), 2000)
   assert.equal(messageSchema.safeParse({ content: '🪐'.repeat(2000) }).success, true)
 })
+
+const SharedMessageCard = require('../components/messages/SharedMessageCard.tsx').default
+const ShareComposer = require('../components/messages/ShareComposer.tsx').default
+const { chatReturnHref, withChatReturn } = require('../lib/chat-return.ts')
+for (const locale of ['en', 'fr', 'zh']) test(`share cards distinguish unavailable content, destinations and selector labels in ${locale}`, () => {
+  const translations = require(`../messages/${locale}.json`).chatShares
+  const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)
+  const hidden = render(locale, React.createElement(SharedMessageCard, { card: { available: false }, conversationId: 'thread' }))
+  assert.ok(hidden.includes(escaped(translations.unavailable)))
+  assert.ok(!hidden.includes('href=')); assert.ok(!hidden.includes('<img'))
+  for (const kind of ['planet', 'galaxy', 'event']) {
+    const card = { available: true, kind, id: 'target', title: 'Visible target', href: kind === 'planet' ? '/planet/target' : '/galaxy/example?event=target#events', planetConfig: { customTextureUrl: 'https://example.test/current-diy.png' } }
+    const html = render(locale, React.createElement(SharedMessageCard, { card, conversationId: 'thread' }))
+    assert.ok(html.includes(escaped(translations[kind])))
+    assert.ok(html.includes('Visible target')); assert.ok(html.includes('chat=thread'))
+    if (kind === 'planet') assert.ok(html.includes('current-diy.png'))
+    const fromMap = render(locale, React.createElement(SharedMessageCard, { card, conversationId: 'thread', origin: 'star-map' }))
+    assert.ok(fromMap.includes('from=star-map')); assert.ok(fromMap.includes('chat=thread'))
+  }
+  const composer = render(locale, React.createElement(ShareComposer, { conversationId: 'thread', disabled: true, onSend: async () => true }))
+  assert.ok(composer.includes(escaped(translations.share)))
+  assert.ok(composer.includes('disabled=""'))
+})
+test('chat return links only accept a bounded resource ID and preserve event deep links', () => {
+  for (const invalid of ['', '//external.test', '../../other', 'https://external.test', 'thread?x=1', 'x'.repeat(129)]) assert.equal(chatReturnHref(invalid), null)
+  assert.equal(chatReturnHref('thread-uuid_123'), '/messages/thread-uuid_123')
+  assert.equal(withChatReturn('/galaxy/renamed?event=evt#events', 'thread'), '/galaxy/renamed?event=evt&chat=thread#events')
+})

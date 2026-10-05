@@ -1868,5 +1868,30 @@
       "celebrate": "庆祝",
       "hug": "拥抱"
     }
+  },
+  "chatShares": {
+    "share": "分享星球、星系或活动",
+    "picker": "分享到当前聊天",
+    "explanation": "请选择双方当前都可访问的内容。分享不会赋予权限，也不会自动加入星系或活动。",
+    "planet": "星球",
+    "galaxy": "星系",
+    "event": "活动",
+    "kinds": "内容类型",
+    "search": "按名称搜索",
+    "loading": "加载中…",
+    "empty": "本页没有可分享的内容。",
+    "more": "查看更多",
+    "selected": "已选择：{title}",
+    "send": "发送卡片",
+    "sending": "发送中…",
+    "close": "关闭分享",
+    "loadFailed": "暂时无法加载内容。",
+    "sendFailed": "暂时无法确认送达，已保留选择，请重试发送。",
+    "retry": "重试",
+    "unavailable": "分享内容暂不可用",
+    "unavailableHint": "内容可能已变更、被移除或暂时无法访问。",
+    "open": "打开分享内容",
+    "backChat": "返回聊天",
+    "messagePreview": "分享了一张卡片"
   }
 }
