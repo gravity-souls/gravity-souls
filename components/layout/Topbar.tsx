@@ -1,5 +1,7 @@
 'use client'
 
+import { stopPushBeforeSignOut } from '@/lib/push-client'
+import { clearBrowserChatDrafts } from '@/lib/chat-drafts'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -123,7 +125,9 @@ export default function Topbar() {
   }
 
   const handleSignOut = async () => {
+    await stopPushBeforeSignOut()
     await authClient.signOut()
+    clearBrowserChatDrafts()
     setIsMenuOpen(false)
     router.push('/sign-in')
     router.refresh()

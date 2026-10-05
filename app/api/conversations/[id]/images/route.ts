@@ -1,3 +1,4 @@
+import { queueMessagePush, schedulePushDelivery } from '@/lib/push-notifications'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
@@ -34,10 +35,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const recipient = await tx.user.findUniqueOrThrow({ where: { id: otherId }, select: { language: true } })
       const notice = await NotificationTemplates.newMessage(user.name, `/messages/${id}`, resolveLocale(recipient.language))
       await tx.notification.create({ data: { userId: otherId, ...notice } })
+      await queueMessagePush(tx, message.id, otherId)
       return { message, created: true, first: await tx.directMessage.count({ where: { conversationId: id } }) === 1 }
     })
+    if (result.created) schedulePushDelivery()
     if (result.first) { try { await grantXP(user.id, 'RESONANCE_SENT') } catch { console.error('Could not grant image message XP') } }
     const [message] = await hydrateMessageState([result.message], user)
     return Response.json(message, { status: result.created ? 201 : 200, headers: imageHeaders })
   } catch (error) { return safeApiError(error) }
 }
+
+export const maxDuration = 60

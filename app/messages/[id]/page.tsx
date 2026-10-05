@@ -13,6 +13,7 @@ import OriginalMessageDialog from '@/components/messages/OriginalMessageDialog'
 import { quotePreview, preserveReactionState, type ReactionEmoji } from '@/lib/chat-interaction-types'
 import type { ChatMessage as MsgData } from '@/lib/chat-message-types'
 import SignalComposer from '@/components/social/SignalComposer'
+import { useChatDraft } from '@/lib/use-chat-draft'
 import MessageContent from '@/components/messages/MessageContent'
 import SharedMessageCard from '@/components/messages/SharedMessageCard'
 import ShareComposer from '@/components/messages/ShareComposer'
@@ -168,7 +169,6 @@ function ConversationPageInner({ params }: Props) {
   const tw = useTranslations('inboxWorkflow')
   const ts = useTranslations('chatShares')
   const ti = useTranslations('chatInteractions')
-  const [replyToId,setReplyToId] = useState<string|null>(null)
   const [originalId,setOriginalId] = useState<string|null>(null)
   const [highlighted,setHighlighted] = useState<string|null>(null)
   const [attachmentBusy,setAttachmentBusy] = useState(false)
@@ -182,11 +182,6 @@ function ConversationPageInner({ params }: Props) {
   const olderAnchor = useRef<{ height: number; top: number } | null>(null)
   const followingLatest = useRef(true)
   const historyLoaded = useRef(false)
-  const pendingSendRef = useRef<{
-    content: string
-    clientMessageId: string
-    replyToId: string|null
-  } | null>(null)
 
   const [messages, setMessages] = useState<MsgData[]>([])
   const messagesRef = useRef<MsgData[]>([])
@@ -199,6 +194,10 @@ function ConversationPageInner({ params }: Props) {
   // (now tombstoned) user.name still resolves via the API's `otherUser`.
   const [otherUserName, setOtherUserName] = useState('')
   const [myUserId, setMyUserId] = useState('')
+  const draft = useChatDraft(myUserId, id)
+  const replyToId = draft.draft?.replyToId ?? null
+  const setReplyToId = (replyId: string | null) => draft.store.change(draft.draft?.text ?? '', replyId)
+  const td = useTranslations('chatDrafts')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
@@ -207,6 +206,31 @@ function ConversationPageInner({ params }: Props) {
   const [loadingOlder, setLoadingOlder] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [readError, setReadError] = useState(false)
+  const [restoredReply, setRestoredReply] = useState<MsgData | null>(null)
+  const replyInHistory = messages.find(message => message.id === replyToId)
+
+  useEffect(() => {
+    if (!replyToId || replyInHistory || loadError || !myUserId) return
+    const controller = new AbortController()
+    let inFlight = false
+    const sync = async () => {
+      if (inFlight || document.hidden) return
+      inFlight = true
+      try {
+        const response = await fetch(`/api/conversations/${id}/messages/${encodeURIComponent(replyToId)}`, { cache: 'no-store', signal: controller.signal })
+        if (!response.ok) throw new Error('unavailable')
+        const message = await response.json() as MsgData
+        if (!controller.signal.aborted) setRestoredReply(message)
+      } catch { if (!controller.signal.aborted) setRestoredReply(null) }
+      finally { inFlight = false }
+    }
+    const refresh = () => void sync()
+    refresh()
+    const interval = window.setInterval(refresh, 10000)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => { controller.abort(); clearInterval(interval); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh) }
+  }, [id, replyToId, replyInHistory, loadError, myUserId])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -348,18 +372,15 @@ function ConversationPageInner({ params }: Props) {
   }, [messages])
 
   async function handleSend(content: string) {
-    if (sendLock.current) return false
+    if (sendLock.current || draft.conflict || !draft.ready) return false
+    const sentDraft = draft.store.prepareSend(content)
+    if (!sentDraft || sentDraft.replyToId !== replyToId) return false
     sendLock.current = true
     setSending(true)
     setSendError('')
 
-    // Reuse the same clientMessageId across retries of the same draft (the
-    // composer only clears its text on success), so a resend after a
-    // dropped response can't create a duplicate message server-side.
-    if (pendingSendRef.current?.content !== content || pendingSendRef.current.replyToId !== replyToId) {
-      pendingSendRef.current = { content, clientMessageId: crypto.randomUUID(), replyToId }
-    }
-    const clientMessageId = pendingSendRef.current.clientMessageId
+    // The persisted draft keeps this key across retries and page reloads.
+    const clientMessageId = sentDraft.clientMessageId
 
     try {
       const res = await fetch(`/api/conversations/${id}`, {
@@ -372,8 +393,7 @@ function ConversationPageInner({ params }: Props) {
       followingLatest.current = true
       setMessages((prev) => mergeMessages(prev, [real]))
       notifyInboxChanged()
-      pendingSendRef.current = null
-      setReplyToId(null)
+      draft.store.acknowledge(sentDraft)
       return true
     } catch (error) {
       setSendError(error instanceof Error && error.message==='replyUnavailable' ? ti('replyUnavailable') : t('deliveryUnconfirmed'))
@@ -451,8 +471,8 @@ function ConversationPageInner({ params }: Props) {
     )
   }
 
-  const selectedReply = replyToId ? (loadError ? { available:false as const } : quotePreview(messages.find(message=>message.id===replyToId))) : null
-  const composerDisabled = sending || attachmentBusy || !canSend || !!loadError
+  const selectedReply = replyToId ? (loadError ? { available:false as const } : quotePreview(replyInHistory ?? (restoredReply?.id === replyToId ? restoredReply : undefined))) : null
+  const composerDisabled = sending || attachmentBusy || !canSend || !!loadError || !draft.ready || draft.conflict
   const accentColor =
     otherPlanet?.planetConfig?.tintColor ??
     otherPlanet?.visual?.coreColor ??
@@ -563,8 +583,17 @@ function ConversationPageInner({ params }: Props) {
       {selectedReply && <div className="shrink-0 px-4 pt-2"><div className="flex items-center justify-between gap-2 text-xs text-violet-200"><span>{ti('replying')}</span><button disabled={sending||attachmentBusy} onClick={()=>setReplyToId(null)} className="min-h-9 px-2">{ti('cancelReply')}</button></div><MessageQuote quote={selectedReply} viewerId={myUserId} partnerName={otherUserName}/></div>}
       <ImageComposer conversationId={id} disabled={composerDisabled} onBusyChange={setAttachmentBusy} onSend={handleImage} />
       <ShareComposer conversationId={id} disabled={composerDisabled} onSend={handleShare} />
+      {!loadError && canSend && <div className="shrink-0 px-4 pt-2 text-xs text-slate-400">
+        <p>{td('localOnly')}</p>
+        {draft.unavailable && <p role="status" className="text-amber-200">{td('unavailable')}</p>}
+        {draft.restored && <p role="status">{td('restored')}</p>}
+        {draft.conflict && <div role="status" className="text-amber-200"><p>{td('conflict')}</p><div className="flex flex-wrap gap-2"><button disabled={sending || attachmentBusy} className="min-h-11 px-2" onClick={() => draft.store.useOther()}>{td('useOther')}</button><button disabled={sending || attachmentBusy} className="min-h-11 px-2" onClick={() => draft.store.keepMine()}>{td('keepMine')}</button></div></div>}
+        {(draft.draft?.text || replyToId) && !draft.conflict && <button className="min-h-11" disabled={composerDisabled} onClick={() => draft.store.change('', null)}>{td('discard')}</button>}
+      </div>}
       <div id={`composer-${id}`} className="shrink-0"><SignalComposer
         onSend={handleSend}
+        value={loadError || !canSend ? '' : draft.draft?.text ?? ''}
+        onValueChange={value => draft.store.change(value, replyToId)}
         disabled={composerDisabled}
         accentColor={accentColor}
         placeholder={t('transmitTo', {

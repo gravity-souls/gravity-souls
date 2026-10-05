@@ -50,6 +50,7 @@ model user {
   beamInvitationsReceived BeamInvitation[] @relation("BeamInvitationRecipient")
   sentMessages   DirectMessage[]
   messageReactions DirectMessageReaction[]
+  pushSubscriptions PushSubscription[]
   communityPosts CommunityPost[]
   communityPostReplies CommunityPostReply[]
   communityPostLikes CommunityPostLike[]
@@ -118,6 +119,7 @@ model XPEvent {
 }
 
 model Session {
+  pushSubscriptions PushSubscription[]
   id        String   @id
   expiresAt DateTime
   token     String   @unique
@@ -639,6 +641,7 @@ model BeamInvitation {
 }
 
 model DirectMessage {
+  pushDeliveries PushDelivery[]
   id               String   @id @default(cuid())
   conversationId   String
   conversation     ConversationThread @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -846,4 +849,43 @@ model DirectMessageReaction {
   @@unique([messageId, userId])
   @@index([userId])
   @@map("direct_message_reaction")
+}
+
+model PushSubscription {
+  sessionId String
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+  userId String
+  endpointHash String @unique
+  endpoint String
+  p256dh String
+  auth String
+  preview String @default("generic")
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries PushDelivery[]
+  @@index([userId])
+  @@map("push_subscription")
+}
+
+model PushDelivery {
+  id String @id @default(cuid())
+  subscriptionId String
+  messageId String
+  subscriptionRevision Int
+  status String @default("pending")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  expiresAt DateTime
+  leaseUntil DateTime?
+  leaseToken String?
+  createdAt DateTime @default(now())
+  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  message DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  @@unique([subscriptionId, messageId])
+  @@index([status, nextAttemptAt])
+  @@index([expiresAt])
+  @@map("push_delivery")
 }

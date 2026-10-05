@@ -2043,5 +2043,34 @@
     "cancelled": "Activity cancelled. Remove any calendar copy; no reminder should remain.",
     "past": "The start time has passed. This activity is shown in your history.",
     "withdrawn": "You withdrew from this activity. Remove any calendar copy if you added one."
+  },
+  "chatDrafts": {
+    "localOnly": "Text drafts can be restored in this browser for 7 days. Signing out removes them. Photos are not saved as drafts.",
+    "unavailable": "Browser storage is unavailable. Keep this page open to retain your draft.",
+    "restored": "Your draft was restored. Nothing has been sent.",
+    "conflict": "Another tab changed this conversation’s draft. Choose which version to use before sending.",
+    "useOther": "Use the other tab’s draft",
+    "keepMine": "Keep this draft",
+    "discard": "Discard draft"
+  },
+  "pushSettings": {
+    "title": "System notifications",
+    "description": "Receive new private-message notifications on this browser. Enabling asks for your permission. Signing out turns them off here.",
+    "iphone": "On iPhone, add Gravity Souls to the Home Screen and open it there before enabling notifications.",
+    "loading": "Checking notification settings…",
+    "unsupported": "This browser does not support push here. In-app notifications remain available.",
+    "unconfigured": "System notifications are not configured yet. In-app notifications remain available.",
+    "enabled": "Enabled on this browser",
+    "disabled": "Disabled on this browser",
+    "preview": "Lock-screen content",
+    "generic": "Generic notice only",
+    "sender": "Show sender name, never message text",
+    "enable": "Enable notifications",
+    "disable": "Disable notifications",
+    "working": "Updating…",
+    "failed": "Could not update notifications. Try again.",
+    "denied": "Notifications are blocked. Allow them in your browser or device settings, then try again.",
+    "bound": "This browser has a subscription for another account. Disable it here, then enable again.",
+    "deviceLimit": "You have reached the limit of 5 subscribed browsers. Disable one of them before adding another."
   }
 }

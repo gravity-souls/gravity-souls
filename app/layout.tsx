@@ -20,6 +20,7 @@ const notoSansSC = Noto_Sans_SC({
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata')
   return {
+    manifest: '/manifest.webmanifest',
     title: t('title'),
     description: t('description'),
   }

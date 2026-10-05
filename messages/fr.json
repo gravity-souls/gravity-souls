@@ -2043,5 +2043,34 @@
     "cancelled": "Activité annulée. Supprimez la copie du calendrier et son rappel.",
     "past": "L’heure de début est passée. Cette activité figure dans votre historique.",
     "withdrawn": "Vous vous êtes désisté. Supprimez la copie du calendrier si vous l’avez ajoutée."
+  },
+  "chatDrafts": {
+    "localOnly": "Les brouillons texte sont récupérables dans ce navigateur pendant 7 jours. La déconnexion les efface. Les photos ne sont pas sauvegardées en brouillon.",
+    "unavailable": "Le stockage du navigateur est indisponible. Gardez cette page ouverte pour conserver votre brouillon.",
+    "restored": "Votre brouillon a été restauré. Aucun message n’a été envoyé.",
+    "conflict": "Un autre onglet a modifié le brouillon de cette conversation. Choisissez la version à utiliser avant l’envoi.",
+    "useOther": "Utiliser le brouillon de l’autre onglet",
+    "keepMine": "Garder ce brouillon",
+    "discard": "Effacer le brouillon"
+  },
+  "pushSettings": {
+    "title": "Notifications système",
+    "description": "Recevez les nouveaux messages privés dans ce navigateur. L’activation demande votre autorisation. La déconnexion les désactive ici.",
+    "iphone": "Sur iPhone, ajoutez Gravity Souls à l’écran d’accueil et ouvrez l’app depuis celui-ci avant d’activer les notifications.",
+    "loading": "Vérification des notifications…",
+    "unsupported": "Les notifications push ne sont pas prises en charge ici. Les notifications internes restent disponibles.",
+    "unconfigured": "Les notifications système ne sont pas encore configurées. Les notifications internes restent disponibles.",
+    "enabled": "Activées dans ce navigateur",
+    "disabled": "Désactivées dans ce navigateur",
+    "preview": "Contenu sur l’écran verrouillé",
+    "generic": "Notification générique uniquement",
+    "sender": "Afficher le nom de l’expéditeur, jamais le texte du message",
+    "enable": "Activer les notifications",
+    "disable": "Désactiver les notifications",
+    "working": "Mise à jour…",
+    "failed": "Impossible de modifier les notifications. Réessayez.",
+    "denied": "Les notifications sont bloquées. Autorisez-les dans les réglages du navigateur ou de l’appareil, puis réessayez.",
+    "bound": "Ce navigateur a un abonnement pour un autre compte. Désactivez-le ici, puis réactivez-le.",
+    "deviceLimit": "La limite de 5 navigateurs abonnés est atteinte. Désactivez les notifications sur l’un d’eux."
   }
 }

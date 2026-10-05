@@ -1,5 +1,8 @@
 'use client'
 
+import { stopPushBeforeSignOut } from '@/lib/push-client'
+import PushSettings from '@/components/messages/PushSettings'
+import { clearBrowserChatDrafts } from '@/lib/chat-drafts'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -89,7 +92,9 @@ function DeleteSection() {
       // Mirror components/auth/sign-out-button.tsx's sign-out mechanism —
       // the account's Session/Account rows are already gone server-side;
       // this clears the client-side cookie and lands on a signed-out state.
+      await stopPushBeforeSignOut()
       await authClient.signOut()
+      clearBrowserChatDrafts()
       window.location.href = '/sign-in'
     } catch {
       setError(t('deleteFailed'))
@@ -200,6 +205,7 @@ export default function AccountSettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <PushSettings />
           <ExportSection />
           <DeleteSection />
         </div>

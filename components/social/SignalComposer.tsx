@@ -11,12 +11,16 @@ interface Props {
   disabled?: boolean
   placeholder?: string
   accentColor?: string
+  value?: string
+  onValueChange?: (value: string) => void
 }
 
-export default function SignalComposer({ onSend, disabled = false, placeholder, accentColor = '#a78bfa' }: Props) {
+export default function SignalComposer({ onSend, disabled = false, placeholder, accentColor = '#a78bfa', value: controlledValue, onValueChange }: Props) {
   const t = useTranslations('chatContent')
   const tA11y = useTranslations('a11y')
-  const [value, setValue] = useState('')
+  const [localValue, setLocalValue] = useState('')
+  const value = controlledValue ?? localValue
+  const setValue = onValueChange ?? setLocalValue
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -57,7 +61,10 @@ export default function SignalComposer({ onSend, disabled = false, placeholder, 
     sending.current = true
     setPending(true); setOpen(false); setError('')
     try {
-      if (await onSend(trimmed)) setValue('')
+      if (await onSend(trimmed)) {
+        // Controlled composers clear the acknowledged revision in their owner.
+        if (!onValueChange) setLocalValue('')
+      }
     } catch { setError('sendFailed') }
     finally { sending.current = false; setPending(false) }
   }
