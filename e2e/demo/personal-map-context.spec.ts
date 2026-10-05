@@ -56,7 +56,7 @@ for (const [locale, m] of Object.entries({ en, fr, zh })) test(`personal galaxy/
   await expect(page.getByRole('status')).toContainText(m.starMap.empty_activities)
   allowed = true; failed = true
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-  await expect(page.getByRole('alert')).toContainText(m.starMap.loadError)
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText(m.starMap.loadError)
   failed = false
   await page.getByRole('button', { name: m.planetActions.retry, exact: true }).click()
   await expect(page.getByRole('button', { name: /^Personal activity fixture/ })).toBeVisible()

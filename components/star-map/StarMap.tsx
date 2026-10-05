@@ -12,7 +12,7 @@ import PlanetRelationshipStatus from '@/components/social/PlanetRelationshipStat
 import SavePlanetButton from '@/components/social/SavePlanetButton'
 import FollowButton from '@/components/social/FollowButton'
 import BeamButton from '@/components/social/BeamButton'
-import { PLANET_ACTION_CHANGED } from '@/lib/planet-actions'
+import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { withExplorationOrigin, personalMapOrigin } from '@/lib/exploration-return'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { mapCenter, stableUnit } from '@/lib/star-map'
@@ -137,15 +137,7 @@ export default function StarMap({
 
   useEffect(() => {
     const refresh = () => setRevision(value => value + 1)
-    const visible = () => { if (!document.hidden) refresh() }
-    window.addEventListener('focus', refresh)
-    window.addEventListener(PLANET_ACTION_CHANGED, refresh)
-    document.addEventListener('visibilitychange', visible)
-    return () => {
-      window.removeEventListener('focus', refresh)
-      window.removeEventListener(PLANET_ACTION_CHANGED, refresh)
-      document.removeEventListener('visibilitychange', visible)
-    }
+    return subscribeSocialRefresh(refresh)
   }, [])
 
   const queryGroup = mode !== 'galaxies' ? focus : null

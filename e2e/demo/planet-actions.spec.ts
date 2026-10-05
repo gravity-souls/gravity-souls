@@ -27,10 +27,12 @@ test('legacy save link requires a real save, retains failed removal and refreshe
   await page.reload()
   await expect(page.getByText('轨道测试星球', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '已保存 · 移出轨道', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('已保留原状态')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('无法确认最新状态')
   await expect(page.getByText('轨道测试星球', { exact: true })).toBeVisible()
   failRemoval = false
   await page.getByRole('button', { name: '重试', exact: true }).click()
+  await expect(page.getByRole('button', { name: '已保存 · 移出轨道', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '已保存 · 移出轨道', exact: true }).click()
   await expect(page.getByText('轨道测试星球', { exact: true })).toHaveCount(0)
 })
 
@@ -44,7 +46,7 @@ test('failed unfollow preserves the relationship and shows localized retry', asy
   await page.route('**/api/follows/target', route => route.fulfill({ status: 500, json: {} }))
   await page.goto('/relationships')
   await page.getByRole('button', { name: '取消关注', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('已保留原状态')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('已保留原状态')
   await expect(page.getByText('关注测试星球', { exact: true })).toBeVisible()
 })
 
@@ -58,6 +60,7 @@ test('beam explains mutual follow and opens a thread without sending a message',
   await page.route('**/api/saved-planets', route => route.fulfill({ json: { savedPlanets: [{ id: 'save', planetId: 'planet-fixture', savedAt: '2026-10-04T10:00:00Z', planet: { id: 'planet-fixture', userId: 'target', name: '聊天测试星球', mood: 'calm', lifestyle: 'solitary', coreThemes: [], visual: {} } }] } }))
   await page.route('**/api/saved-planets/planet-fixture', route => route.fulfill({ json: { saved: true } }))
   await page.route('**/api/follows/target', route => route.fulfill({ json: { following: true, followedBy: mutual, available: true } }))
+  await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: null, status: null, conversationId: null, incomingPending: false } }))
   await page.route('**/api/conversations', route => route.request().method() === 'POST'
     ? route.fulfill(mutual ? { json: { conversationId: 'thread-fixture' } } : { status: 403, json: { code: 'mutualFollowRequired' } })
     : route.fulfill({ json: [] }))
@@ -67,7 +70,7 @@ test('beam explains mutual follow and opens a thread without sending a message',
   })
   await page.goto('/saved')
   await page.getByRole('button', { name: '发送光束 · 打开聊天', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('新聊天需要双方互关')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('新聊天需要双方互关')
   await expect(page.getByRole('link', { name: '查看关注与粉丝', exact: true })).toBeVisible()
   expect(sentMessages).toBe(0)
   mutual = true

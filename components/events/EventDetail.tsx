@@ -10,6 +10,8 @@ import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import EventManagement from '@/components/events/EventManagement'
 import RSVPButton from '@/components/events/RSVPButton'
 import InterestButton from '@/components/events/InterestButton'
+import CalendarReminder from '@/components/events/CalendarReminder'
+import { useActivityStatus } from '@/lib/hooks/useActivityStatus'
 import type { GalaxyEventDetail } from '@/types/event'
 
 function formatEventDate(value: string, locale: string) {
@@ -40,14 +42,17 @@ interface EventDetailProps {
 export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, onStatusChange, onRSVPChange }: EventDetailProps) {
   const t = useTranslations('galaxies')
   const tEvents = useTranslations('eventForms')
+  const tr = useTranslations('activityReminders')
   const locale = useLocale()
   const [rejecting, setRejecting] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [reviewing, setReviewing] = useState(false)
   const [reviewError, setReviewError] = useState('')
 
+  const effectiveStatus = useActivityStatus(event?.status ?? 'PENDING', event?.date ?? '')
   if (!open || !event) return null
 
+  const history = effectiveStatus === 'CANCELLED' ? 'cancelled' : effectiveStatus === 'PASSED' ? 'past' : event.userAttendance === 'CANCELLED' ? 'withdrawn' : null
   const visibleAttendees = event.rsvps.slice(0, 8)
   const hiddenCount = Math.max(0, event.rsvps.length - visibleAttendees.length)
 
@@ -109,7 +114,8 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
           </span>
         </div>
 
-        {event.onlineUrl && event.userHasRSVPed && <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm text-violet-200 underline">{tEvents('online')}</a>}
+        {history && <p role="status" className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-white/60">{tr(history)}</p>}
+        {effectiveStatus === 'APPROVED' && event.onlineUrl && event.userHasRSVPed && <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm text-violet-200 underline">{tEvents('online')}</a>}
         <p className="mt-5 text-sm leading-7" style={{ color: 'var(--ink)', opacity: 0.78 }}>
           {event.description}
         </p>
@@ -150,7 +156,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
         )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={event} />}
+          {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={{ ...event, status: effectiveStatus }} />}
           <RSVPButton
             eventId={event.id}
             galaxyId={event.galaxyId}
@@ -159,13 +165,15 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
             initialAttendance={event.userAttendance}
             requiresApproval={event.requiresApproval}
             maxAttendees={event.maxAttendees}
-            status={event.status}
+            status={effectiveStatus}
             onChange={(state) => onRSVPChange?.(event.id, state)}
           />
           {event.spotsRemaining !== null && (
             <span className="text-xs" style={{ color: 'var(--ghost)' }}>{tEvents('spotsRemaining', { count: event.spotsRemaining })}</span>
           )}
         </div>
+
+        <CalendarReminder key={`calendar-${event.id}`} event={{ ...event, status: effectiveStatus }} />
 
         <RelatedSignals key={`signals-${event.id}`} galaxyId={event.galaxyId} eventId={event.id} />
         {event.rejectionReason && <p className="mt-4 text-sm text-red-200">{event.rejectionReason}</p>}

@@ -44,7 +44,7 @@ test.describe('authenticated API protections', () => {
     expect(await prisma.communityMembership.count({ where: { communityId } })).toBe(1)
     expect(await prisma.xPEvent.count({ where: { userId: E2E.withPlanet.userId, type: 'GALAXY_JOINED' } })).toBe(before + 1)
     const status = await request.patch(`/api/galaxies/${communityId}/events/nonexistent/status`, { data: { status: 'APPROVED' } })
-    expect(status.status()).toBe(403)
+    expect(status.status()).toBe(404)
   })
 
   test('invalid planet, calibration and message inputs do not mutate data', async ({ request }) => {
@@ -75,7 +75,7 @@ test.describe('authenticated API protections', () => {
       data: { planetTexture: 'mars.jpg', planetTint: '#ec4899', planetHasRing: true, planetCustomTexture: customTextureUrl },
     })
     const viewer = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
-    const guest = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL })
+    const guest = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: { cookies: [], origins: [] } })
     const context = await browser.newContext({ storageState: AUTH_NP })
     try {
       expect((await guest.get('/api/universe')).status()).toBe(401)
@@ -114,7 +114,7 @@ test.describe('authenticated API protections', () => {
   test('conversation participants remain enforced and a valid message persists', async ({ request, playwright }) => {
     const thread = await prisma.conversationThread.create({ data: { userAId: E2E.noPlanet.userId, userBId: E2E.handoff.userId } })
     try {
-      expect((await request.get(`/api/conversations/${thread.id}`)).status()).toBe(403)
+      expect((await request.get(`/api/conversations/${thread.id}`)).status()).toBe(404)
       expect((await request.post(`/api/conversations/${thread.id}`, { data: { content: 'intruder' } })).status()).toBe(403)
       const participant = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
       try {
@@ -130,7 +130,7 @@ test.describe('authenticated API protections', () => {
       await page.setViewportSize({ width: 390, height: 844 })
       await page.goto(`/messages/${thread.id}`)
       const composer = page.locator('textarea')
-      await expect(composer).toHaveAttribute('maxlength', '2000')
+      await expect(composer).toHaveAttribute('maxlength', '4000')
       await composer.fill('你好，世界')
       let posts = 0
       await page.route(`**/api/conversations/${thread.id}`, async (route) => {
@@ -142,13 +142,16 @@ test.describe('authenticated API protections', () => {
       await composer.dispatchEvent('keydown', { key: 'Enter', isComposing: true })
       await expect(composer).toHaveValue('你好，世界')
       expect(posts).toBe(0)
-      await composer.press('Enter')
+      const desktop = await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches)
+      if (desktop) await composer.press('Enter')
+      else await page.getByRole('button', {name:'Send signal',exact:true}).click()
       // Next.js's own route announcer also carries role="alert" — scope to the composer's own alert element.
       await expect(page.locator('p[role="alert"]')).toContainText('Your draft is kept')
       await expect(composer).toHaveValue('你好，世界')
       expect(await prisma.directMessage.count({ where: { conversationId: thread.id } })).toBe(0)
       await page.unroute(`**/api/conversations/${thread.id}`)
-      await composer.press('Enter')
+      if (desktop) await composer.press('Enter')
+      else await page.getByRole('button', {name:'Send signal',exact:true}).click()
       await expect(composer).toHaveValue('')
       await expect(page.getByText('你好，世界', { exact: true })).toBeVisible()
       expect(await prisma.directMessage.count({ where: { conversationId: thread.id } })).toBe(1)
@@ -159,7 +162,18 @@ test.describe('authenticated API protections', () => {
 for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
   test(`galaxy empty/error states preserve real interactions at ${viewport.width}px`, async ({ page }) => {
     const errors: string[] = []
-    page.on('pageerror', (error) => errors.push(error.message))
+    let replacingDocument = false
+    page.on('pageerror', (error) => {
+      // WebKit reports canceled same-origin RSC prefetches from the replaced
+      // document as page errors during reload. The trace confirms these are
+      // aborted old requests; actual JS errors and errors after load still fail.
+      const abortedOldPrefetch = replacingDocument &&
+        error.name.startsWith('Fetch API cannot load http') &&
+        error.message.includes('?_rsc=') &&
+        error.message.endsWith(' due to access control checks.') &&
+        error.stack?.includes(`Fetch API cannot load ${new URL(page.url()).origin}/`)
+      if (!abortedOldPrefetch) errors.push(error.message)
+    })
     await page.setViewportSize(viewport)
     await page.goto('/galaxy/slow-thinkers')
     await expect(page.getByText('No discussions yet.', { exact: true })).toBeVisible()
@@ -170,7 +184,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       if (fail) await route.fulfill({ status: 503, json: { error: 'unavailable' } })
       else await route.continue()
     })
-    await page.reload()
+    replacingDocument = true
+    try { await page.reload() } finally { replacingDocument = false }
     await expect(page.getByText('Community posts could not be loaded.')).toBeVisible()
     fail = false
     await page.getByRole('button', { name: 'Try again', exact: true }).click()

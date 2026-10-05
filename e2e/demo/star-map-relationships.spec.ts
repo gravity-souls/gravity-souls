@@ -32,6 +32,7 @@ test('map actions preserve selection, failures retain state, and chat returns to
     starts++; conversationId = 'map-thread'
     return route.fulfill({ json: { conversationId } })
   })
+  await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: null, status: null, conversationId, incomingPending: false } }))
   await page.route('**/api/conversations/map-thread', route => {
     if (route.request().method() === 'POST') sent++
     return route.fulfill({ json: { conversation: { id: 'map-thread' }, viewerId: 'viewer', otherUser: { id: 'map-target', name: planet.name }, otherPlanet: null, messages: [], olderCursor: null, canSend: true } })
@@ -41,6 +42,7 @@ test('map actions preserve selection, failures retain state, and chat returns to
 
   await page.goto('/star-map?mode=discover')
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('textbox', { name: 'Search names' }).fill('Browser')
   await page.getByRole('button', { name: 'Search', exact: true }).click()
@@ -51,10 +53,12 @@ test('map actions preserve selection, failures retain state, and chat returns to
   await expect(card.getByRole('group')).toContainText('In your orbit')
   await expect(page.getByRole('button', { name: /^Browser relationship planet/ })).toContainText('In your orbit')
   await card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
-  await expect(card.getByRole('alert')).toContainText('previous state has been kept')
+  await expect(card.getByRole('alert')).toContainText('latest state could not be confirmed')
   await expect(card.getByRole('group')).toContainText('In your orbit')
   failRemoval = false
   await card.getByRole('button', { name: 'Retry', exact: true }).click()
+  await expect(card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true })).toBeVisible()
+  await card.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
   await expect(card.getByRole('group')).not.toContainText('In your orbit')
   await card.getByRole('button', { name: 'Follow back', exact: true }).click()
   await expect(card.getByRole('group')).toContainText('Mutual follows')
@@ -87,6 +91,7 @@ test('returning to a map removes a now unavailable selection and its relationshi
   await page.route('**/api/star-map?**', route => route.fulfill({ json: { groups: [{ id: 'calm', count: visible ? 1 : 0, color: '#b89afa' }], nodes: visible ? [node] : [], total: visible ? 1 : 0, nextCursor: null, scope: 'allVisible' } }))
   await page.goto('/star-map')
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('button', { name: 'Calm 1 planets' }).click()
   await page.getByRole('button', { name: /^Permission fixture/ }).click()

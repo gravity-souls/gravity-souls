@@ -38,7 +38,7 @@ test('failed notification mutations preserve unread notice and show localized er
   await page.goto('/notifications')
   await expect(page.getByText('测试通知', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '标为已读', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('已保留之前的状态')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('已保留之前的状态')
   await expect(
     page.getByRole('button', { name: '标为已读', exact: true }),
   ).toBeVisible()

@@ -19,6 +19,7 @@ import HorizontalCarousel from '@/components/ui/HorizontalCarousel'
 import SectionHeader from '@/components/ui/SectionHeader'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
+import { useUpcomingEvents } from '@/lib/hooks/useUpcomingEvents'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import {
   buildRealPositionedPlanets,
@@ -42,7 +43,8 @@ export default function HomeDashboard() {
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
   const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
-  const [upcomingEvent, setUpcomingEvent] = useState<GalaxyEventSummary | null>(null)
+  const [upcomingEvents, setUpcomingEvents] = useUpcomingEvents(1, !sessionPending && !!session?.user)
+  const upcomingEvent = upcomingEvents[0] ?? null
   const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
   const [selectedStreamPost, setSelectedStreamPost] = useState<StreamPost | null>(null)
 
@@ -130,27 +132,6 @@ export default function HomeDashboard() {
     return () => { cancelled = true }
   }, [session])
 
-  useEffect(() => {
-    if (sessionPending || !session?.user) {
-      let cancelled = false
-      Promise.resolve().then(() => {
-        if (!cancelled) setUpcomingEvent(null)
-      })
-      return () => { cancelled = true }
-    }
-
-    let cancelled = false
-    fetch('/api/user/upcoming-events')
-      .then((res) => res.ok ? res.json() : { event: null })
-      .then((data: { event?: GalaxyEventSummary | null }) => {
-        if (!cancelled) setUpcomingEvent(data.event ?? null)
-      })
-      .catch(() => {
-        if (!cancelled) setUpcomingEvent(null)
-      })
-    return () => { cancelled = true }
-  }, [session, sessionPending])
-
   async function openUpcomingEvent(event: GalaxyEventSummary) {
     const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`)
     if (!res.ok) return
@@ -159,7 +140,7 @@ export default function HomeDashboard() {
   }
 
   function applyUpcomingRSVPChange(eventId: string, state: { rsvpCount: number; userHasRSVPed: boolean }) {
-    setUpcomingEvent((event) => event?.id === eventId ? { ...event, ...state } : event)
+    setUpcomingEvents(events => events.map(event => event.id === eventId ? { ...event, ...state } : event))
     setSelectedEvent((event) => event?.id === eventId ? { ...event, ...state, spotsRemaining: event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - state.rsvpCount) } : event)
   }
 

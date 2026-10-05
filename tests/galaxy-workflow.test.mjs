@@ -77,6 +77,9 @@ const saved = require('../app/api/saved-planets/route.ts')
 const removeSaved = require('../app/api/saved-planets/[planetId]/route.ts')
 const invitations = require('../app/api/beam-invitations/route.ts')
 const invitationAction = require('../app/api/beam-invitations/[id]/route.ts')
+const invitationStatus = require('../app/api/beam-invitations/status/route.ts')
+const upcomingEvents = require('../app/api/user/upcoming-events/route.ts')
+const calendar = require('../app/api/galaxies/[id]/events/[eventId]/calendar/route.ts')
 const blocks = require('../app/api/blocks/route.ts')
 const request = (data = {}, url = 'https://example.com/api') =>
   new Request(url, {
@@ -140,6 +143,99 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       if (id !== 'noPlanet')
         await db.planet.create({ data: { userId: id, name: `${id} planet` } })
     }
+    await t.test('upcoming reminders prioritize confirmed attendance without leaking suggestions or writing lifecycle status', async () => {
+      const owner='reminder-owner', viewer='reminder-viewer'
+      for(const id of [owner,viewer]) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const g=await db.community.create({data:{...galaxyData,slug:'reminder-feed',creatorId:owner}})
+      try {
+        await db.communityMembership.create({data:{communityId:g.id,userId:viewer}})
+        const make=(title,hours)=>db.event.create({data:{...eventData,galaxyId:g.id,proposerId:owner,title,onlineUrl:'https://example.test/private-room',date:new Date(Date.now()+hours*3600000),status:'APPROVED'}})
+        const suggestion=await make('Suggestion',1), going=await make('Confirmed',48), soon=await make('Soon',2), pending=await make('Pending',3), withdrawn=await make('Withdrawn',4), expired=await make('Expired',-1)
+        for(const [item,status] of [[going,'APPROVED'],[soon,'APPROVED'],[pending,'PENDING'],[withdrawn,'CANCELLED']]) await db.eventRSVP.create({data:{eventId:item.id,userId:viewer,status}})
+        const get=(query='?limit=6')=>upcomingEvents.GET(new Request('https://example.test/api'+query))
+        as(null);assert.equal((await get()).status,401)
+        as(viewer)
+        for(const query of ['?limit=0','?limit=7','?limit=1.5','?userId='+owner]) assert.equal((await get(query)).status,400)
+        const before=await db.notification.count(),response=await get()
+        assert.equal(response.headers.get('cache-control'),'private, no-store')
+        const data=await response.json()
+        assert.deepEqual(data.events.map(e=>e.id),[soon.id,going.id,suggestion.id])
+        assert.equal(data.event.id,soon.id)
+        assert.deepEqual(data.events.map(e=>e.reminderState),['soon','scheduled',null])
+        assert.equal(data.events[2].onlineUrl,null)
+        assert.equal(data.events[0].onlineUrl,'https://example.test/private-room')
+        assert.equal((await db.event.findUnique({where:{id:expired.id}})).status,'APPROVED')
+        assert.equal(await db.notification.count(),before)
+        await db.eventRSVP.update({where:{eventId_userId:{eventId:soon.id,userId:viewer}},data:{status:'CANCELLED'}})
+        assert.deepEqual((await (await get('?limit=1')).json()).events.map(e=>e.id),[going.id])
+        await db.communityMembership.deleteMany({where:{communityId:g.id,userId:viewer}})
+        assert.deepEqual(await (await get()).json(),{event:null,events:[]})
+        as(owner);assert.ok((await (await get()).json()).events.length>0)
+      } finally {await db.community.delete({where:{id:g.id}});await db.user.deleteMany({where:{id:{in:[owner,viewer]}}});as('owner')}
+    })
+    await t.test('upcoming reminders recheck both block directions and deleted organizer or viewer', async () => {
+      const owner='reminder-private-owner', viewer='reminder-private-viewer'
+      for(const id of [owner,viewer]) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const g=await db.community.create({data:{...galaxyData,slug:'reminder-private',creatorId:owner}})
+      try {
+        await db.communityMembership.create({data:{communityId:g.id,userId:viewer}})
+        await db.event.create({data:{...eventData,galaxyId:g.id,proposerId:owner,date:new Date(eventData.date),status:'APPROVED'}})
+        const get=()=>upcomingEvents.GET(new Request('https://example.test/api'))
+        as(viewer);assert.ok((await (await get()).json()).event)
+        for(const [blockerId,blockedId] of [[owner,viewer],[viewer,owner]]) {
+          await db.block.create({data:{blockerId,blockedId}})
+          assert.equal((await (await get()).json()).event,null)
+          await db.block.deleteMany({where:{blockerId,blockedId}})
+        }
+        await db.user.update({where:{id:owner},data:{deletedAt:new Date()}})
+        assert.equal((await (await get()).json()).event,null)
+        await db.user.update({where:{id:viewer},data:{deletedAt:new Date()}})
+        assert.equal((await get()).status,401)
+      } finally {await db.community.delete({where:{id:g.id}});await db.user.deleteMany({where:{id:{in:[owner,viewer]}}});as('owner')}
+    })
+    await t.test('calendar exports require current approved attendance and visibility, escape content and never enroll or notify', async () => {
+      const owner='calendar-owner',viewer='calendar-viewer',outsider='calendar-outsider'
+      for(const id of [owner,viewer,outsider]) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const g=await db.community.create({data:{...galaxyData,slug:'calendar-test',creatorId:owner}})
+      try {
+        await db.communityMembership.create({data:{communityId:g.id,userId:viewer}})
+        const e=await db.event.create({data:{...eventData,galaxyId:g.id,proposerId:owner,title:'星群🌌'.repeat(30)+'\r\nBEGIN:VEVENT,;\\',date:new Date(eventData.date),status:'APPROVED',onlineUrl:'https://example.test/private-room'}})
+        const get=(galaxyId=g.id)=>calendar.GET(new Request('https://example.test/api'),context(galaxyId,e.id))
+        as(null);assert.equal((await get()).status,401)
+        as(outsider);assert.equal((await get()).status,404)
+        as(viewer);assert.equal((await get()).status,403)
+        const attendance=await db.eventRSVP.create({data:{eventId:e.id,userId:viewer,status:'PENDING'}})
+        assert.equal((await get()).status,403)
+        await db.eventRSVP.update({where:{id:attendance.id},data:{status:'APPROVED'}})
+        const before=await db.notification.count(),response=await get(),ics=await response.text()
+        assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'private, no-store')
+        assert.match(response.headers.get('content-type'),/text\/calendar/)
+        assert.match(response.headers.get('content-disposition'),/attachment/)
+        assert.ok(ics.includes('DTSTART:20300101T120000Z\r\n'))
+        assert.ok(ics.includes('TRIGGER:-PT15M\r\n'))
+        const unfolded=ics.replace(/\r\n /g,'')
+        assert.equal(unfolded.split('\r\n').filter(line=>line==='BEGIN:VEVENT').length,1)
+        assert.ok(unfolded.includes('\\nBEGIN:VEVENT\\,\\;\\\\'))
+        assert.ok(!ics.includes('private-room'));assert.ok(!ics.includes(viewer+'@example.test'))
+        for(const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line)<=75)
+        assert.equal(await db.notification.count(),before)
+        assert.equal(await db.eventRSVP.count({where:{eventId:e.id}}),1)
+        assert.equal((await get('wrong-galaxy')).status,404)
+        for(const [blockerId,blockedId] of [[owner,viewer],[viewer,owner]]) {
+          await db.block.create({data:{blockerId,blockedId}});assert.equal((await get()).status,404);await db.block.deleteMany({where:{blockerId,blockedId}})
+        }
+        for(const status of ['CANCELLED','REJECTED','PENDING']) {await db.eventRSVP.update({where:{id:attendance.id},data:{status}});assert.equal((await get()).status,403)}
+        as(owner);assert.equal((await get()).status,200)
+        for(const status of ['PENDING','PASSED','CANCELLED','REJECTED']) {await db.event.update({where:{id:e.id},data:{status}});assert.equal((await get()).status,409)}
+        await db.event.update({where:{id:e.id},data:{status:'APPROVED',date:new Date('2020-01-01')}});assert.equal((await get()).status,409)
+        await db.event.update({where:{id:e.id},data:{date:new Date(eventData.date)}})
+        as(viewer);await db.eventRSVP.update({where:{id:attendance.id},data:{status:'APPROVED'}})
+        await db.communityMembership.deleteMany({where:{communityId:g.id,userId:viewer}});assert.equal((await get()).status,404)
+        await db.communityMembership.create({data:{communityId:g.id,userId:viewer}})
+        await db.user.update({where:{id:owner},data:{deletedAt:new Date()}});assert.equal((await get()).status,404)
+        await db.user.update({where:{id:viewer},data:{deletedAt:new Date()}});assert.equal((await get()).status,401)
+      } finally {await db.community.delete({where:{id:g.id}});await db.user.deleteMany({where:{id:{in:[owner,viewer,outsider]}}});as('owner')}
+    })
     await t.test('beam invitation consent is owner-bound, idempotent, localized and opens chat without sending or following', async () => {
       const sender = 'invite-sender', recipient = 'invite-recipient', outsider = 'invite-outsider'
       for (const id of [sender, recipient, outsider]) await db.user.create({ data: { id, name: id, email: `${id}@example.test`, language: id === recipient ? 'zh' : 'fr' } })
@@ -199,6 +295,50 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       assert.equal((await (await invitations.POST(request({ recipientId: recipient }))).json()).conversationId, conversationId)
       assert.equal(await db.notification.count({ where: { type: 'NEW_MESSAGE', userId: recipient } }), 0)
       await db.user.deleteMany({ where: { id: { in: [sender, recipient, outsider] } } })
+    })
+    await t.test('invitation status reads current viewer consent and thread without sending, following or redirecting',async()=>{
+      const ids=['sync-sender','sync-recipient','sync-outsider','sync-cancel']
+      for(const id of ids) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const read=recipientId=>invitationStatus.GET(new Request(`https://example.test/api?recipientId=${recipientId}`))
+      const data=async id=>(await read(id)).json()
+      try {
+        as(null);assert.equal((await read(ids[1])).status,401)
+        as(ids[0]);assert.equal((await data(ids[1])).status,null)
+        const sent=await (await invitations.POST(request({recipientId:ids[1]}))).json()
+        const pending=await data(ids[1]);assert.equal(pending.status,'PENDING');assert.equal(pending.invitationId,sent.invitationId)
+        assert.equal((await read(ids[1])).headers.get('cache-control'),'private, no-store')
+        as(ids[1]);assert.equal((await data(ids[0])).incomingPending,true);assert.equal((await data(ids[0])).invitationId,null)
+        as(ids[2]);assert.equal((await data(ids[1])).status,null);assert.equal((await data(ids[1])).conversationId,null)
+        as(ids[1]);const accepted=await (await invitationAction.PATCH(request({action:'accept'}),{params:Promise.resolve({id:sent.invitationId})})).json()
+        as(ids[0]);const confirmed=await data(ids[1]);assert.equal(confirmed.status,'ACCEPTED');assert.equal(confirmed.conversationId,accepted.conversationId)
+        const cancelled=await (await invitations.POST(request({recipientId:ids[3]}))).json()
+        await invitationAction.PATCH(request({action:'cancel'}),{params:Promise.resolve({id:cancelled.invitationId})})
+        assert.equal((await data(ids[3])).status,'CANCELLED')
+        const before=await db.notification.count()
+        await data(ids[1]);await data(ids[3])
+        assert.equal(await db.notification.count(),before)
+        assert.equal(await db.directMessage.count({where:{conversationId:accepted.conversationId}}),0)
+        assert.equal(await db.follow.count({where:{followerId:{in:ids}}}),0)
+        assert.deepEqual(Object.keys(confirmed).sort(),['available','conversationId','incomingPending','invitationId','status'].sort())
+      } finally { await db.user.deleteMany({where:{id:{in:ids}}});as('owner') }
+    })
+    await t.test('invitation status hides blocked or deleted pairs and rejects caller-selected owners',async()=>{
+      const ids=['sync-private-a','sync-private-b']
+      for(const id of ids) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const read=(extra='')=>invitationStatus.GET(new Request(`https://example.test/api?recipientId=${ids[1]}${extra}`))
+      try {
+        as(ids[0]);await invitations.POST(request({recipientId:ids[1]}))
+        for(const extra of ['&userId=sync-private-b','&senderId=sync-private-b','&direction=sent']) assert.equal((await read(extra)).status,400)
+        for(const [blockerId,blockedId] of [[ids[0],ids[1]],[ids[1],ids[0]]]) {
+          const block=await db.block.create({data:{blockerId,blockedId}})
+          const hidden=await (await read()).json();assert.equal(hidden.available,false);assert.equal(hidden.invitationId,null);assert.equal(hidden.status,null)
+          await db.block.delete({where:{id:block.id}})
+        }
+        await db.user.update({where:{id:ids[1]},data:{deletedAt:new Date()}})
+        assert.equal((await (await read()).json()).available,false)
+        await db.user.update({where:{id:ids[0]},data:{deletedAt:new Date()}})
+        assert.equal((await read()).status,401)
+      } finally {await db.user.deleteMany({where:{id:{in:ids}}});as('owner')}
     })
     await t.test('invitation rejection and cancellation remain terminal; visibility and blocks cannot be bypassed', async () => {
       const a = 'invite-privacy-a', b = 'invite-privacy-b', c = 'invite-privacy-c'

@@ -8,6 +8,7 @@ import { authClient, waitForSession } from "@/lib/auth-client";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import LegalFooter from "@/components/auth/LegalFooter";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useClientReady } from "@/lib/hooks/useBrowserPreferences";
 
 export default function SignInPage() {
   return (
@@ -19,6 +20,7 @@ export default function SignInPage() {
 
 function SignInForm() {
   const searchParams = useSearchParams();
+  const clientReady = useClientReady();
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
 
@@ -53,6 +55,7 @@ function SignInForm() {
         return;
       }
 
+      if (!await waitForSession()) throw new Error('Session unavailable');
       await fetch("/api/user/language", { cache: "no-store" }).catch(() => null);
 
       const fromOnboarding = searchParams.get('from') === 'onboarding';
@@ -91,14 +94,12 @@ function SignInForm() {
         // immediately on load (e.g. /resonance's my-planet check) — confirm
         // the session is actually readable first so that fetch doesn't lose
         // the same WebKit cookie-commit race Priority 3 already guards against.
-        await waitForSession()
         window.location.href = raw
         return
       }
 
       // Priority 3: route based on DB planet state
       try {
-        await waitForSession()
         const res = await fetch('/api/my-planet')
         window.location.href = res.ok ? '/resonance' : '/onboarding'
       } catch {
@@ -122,12 +123,13 @@ function SignInForm() {
 
       <SocialAuthButtons onGoogle={handleGoogleSignIn} />
 
-      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+      <form aria-busy={!clientReady || loading} onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("email")}
           </label>
           <input
+            disabled={!clientReady}
             id="email"
             type="email"
             value={email}
@@ -153,6 +155,7 @@ function SignInForm() {
             </Link>
           </div>
           <PasswordInput
+            disabled={!clientReady}
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -169,7 +172,7 @@ function SignInForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={!clientReady || loading}
           className="w-full rounded-xl px-4 py-3 text-sm font-medium transition-opacity disabled:opacity-50"
           style={{
             background: "linear-gradient(135deg, var(--nebula), var(--aurora))",

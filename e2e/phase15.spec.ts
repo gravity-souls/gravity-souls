@@ -22,6 +22,7 @@ test.describe('resonance orbit — real planet data', () => {
   test.use({ storageState: AUTH_WP })
 
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/resonance', { waitUntil: 'domcontentloaded' })
     await page.evaluate((key) => localStorage.setItem(key, '1'), P14_KEY)
   })
@@ -31,7 +32,7 @@ test.describe('resonance orbit — real planet data', () => {
   test('orbit nodes are visible for authenticated resonator', async ({ page }) => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
     // ResonancePlanetNode aria-label: "{name} — resonance score {score}"
-    const node = page.getByRole('button', { name: /resonance score/i }).first()
+    const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
   })
 
@@ -39,8 +40,9 @@ test.describe('resonance orbit — real planet data', () => {
 
   test('selecting a node opens the drawer with planet identity', async ({ page }) => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
-    const node = page.getByRole('button', { name: /resonance score/i }).first()
+    const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
+    await node.focus() // Keyboard focus pauses the moving node before activation.
     await node.click()
 
     const drawer = page.getByRole('dialog')
@@ -53,8 +55,9 @@ test.describe('resonance orbit — real planet data', () => {
 
   test('drawer closes on Escape', async ({ page }) => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
-    const node = page.getByRole('button', { name: /resonance score/i }).first()
+    const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
+    await node.focus() // Keyboard focus pauses the moving node before activation.
     await node.click()
 
     await expect(page.getByRole('dialog')).toBeVisible()

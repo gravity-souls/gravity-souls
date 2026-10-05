@@ -1330,7 +1330,12 @@
     "confirmLegacySave": "Confirmez l’enregistrement de cette planète dans votre orbite privée.",
     "followingLabel": "Suivi",
     "mutualLabel": "Mutuel",
-    "followersLabel": "Vous suit"
+    "followersLabel": "Vous suit",
+    "saveDone": "Planète enregistrée dans votre orbite.",
+    "removeSaveDone": "Planète retirée de votre orbite.",
+    "followDone": "Vous suivez maintenant cette planète.",
+    "unfollowDone": "Vous ne suivez plus cette planète.",
+    "stateFailed": "Impossible de confirmer l’état actuel. Réessayez pour le relire."
   },
   "sbti": {
     "protocol": "Protocole Soul Scan",
@@ -2024,5 +2029,19 @@
     "replying": "Réponse à un message",
     "cancelReply": "Annuler la réponse",
     "replyUnavailable": "Le message original n’est plus disponible. Annulez cette réponse pour envoyer un nouveau message."
+  },
+  "activityReminders": {
+    "addCalendar": "Ajouter au calendrier · rappel 15 minutes avant",
+    "explanation": "Importez cette activité et vérifiez les réglages de rappel du calendrier. En cas de changement, d’annulation ou de désistement, mettez à jour ou supprimez vous-même la copie.",
+    "downloaded": "Fichier téléchargé. Ouvrez-le et confirmez l’ajout ; le téléchargement seul n’active pas de rappel.",
+    "working": "Préparation…",
+    "signInRequired": "Reconnectez-vous pour ajouter cette activité.",
+    "unavailable": "Cette activité ne peut plus être ajoutée. Actualisez ses détails.",
+    "failed": "Impossible de télécharger le calendrier. Réessayez.",
+    "soon": "Inscription confirmée · début dans les 24 heures",
+    "confirmed": "Inscription confirmée · à venir",
+    "cancelled": "Activité annulée. Supprimez la copie du calendrier et son rappel.",
+    "past": "L’heure de début est passée. Cette activité figure dans votre historique.",
+    "withdrawn": "Vous vous êtes désisté. Supprimez la copie du calendrier si vous l’avez ajoutée."
   }
 }

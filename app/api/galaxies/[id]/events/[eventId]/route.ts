@@ -54,6 +54,7 @@ export async function GET(
         onlineUrl: attendance?.status === 'APPROVED' || access.isAdmin || isProposer ? event.onlineUrl : null,
         userAttendance: attendance?.status ?? null,
         canManage: access.isAdmin || isProposer,
+        isOrganizer: isProposer,
       },
       isAdmin: access.isAdmin,
     })

@@ -1330,7 +1330,12 @@
     "confirmLegacySave": "Confirm saving this planet to your private orbit.",
     "followingLabel": "Following",
     "mutualLabel": "Mutual",
-    "followersLabel": "Follows you"
+    "followersLabel": "Follows you",
+    "saveDone": "Planet saved in your orbit.",
+    "removeSaveDone": "Planet removed from your orbit.",
+    "followDone": "You now follow this planet.",
+    "unfollowDone": "You unfollowed this planet.",
+    "stateFailed": "The latest state could not be confirmed. Retry to read it again."
   },
   "sbti": {
     "protocol": "Soul Scan Protocol",
@@ -2024,5 +2029,19 @@
     "replying": "Replying to a message",
     "cancelReply": "Cancel reply",
     "replyUnavailable": "The original message is no longer available. Cancel this reply to send a new message."
+  },
+  "activityReminders": {
+    "addCalendar": "Add to calendar · 15-minute reminder",
+    "explanation": "Import this activity into your calendar and check its reminder settings. If the activity changes, is cancelled or you withdraw, update or remove the calendar copy yourself.",
+    "downloaded": "Calendar file downloaded. Open it and confirm adding the activity; downloading alone does not enable a reminder.",
+    "working": "Preparing…",
+    "signInRequired": "Sign in again to add this activity.",
+    "unavailable": "This activity is no longer available for your calendar. Refresh its details.",
+    "failed": "Could not download the calendar file. Try again.",
+    "soon": "Confirmed attendance · starts within 24 hours",
+    "confirmed": "Confirmed attendance · upcoming",
+    "cancelled": "Activity cancelled. Remove any calendar copy; no reminder should remain.",
+    "past": "The start time has passed. This activity is shown in your history.",
+    "withdrawn": "You withdrew from this activity. Remove any calendar copy if you added one."
   }
 }

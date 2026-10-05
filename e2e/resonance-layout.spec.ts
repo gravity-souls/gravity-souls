@@ -4,6 +4,7 @@ import { AUTH_WP } from './test-ids'
 test.use({ storageState: AUTH_WP })
 
 test('resonance title is readable and selected score stays centered below the navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/resonance')
   const heading = page.getByRole('heading', { name: 'Resonance', exact: true, level: 1 })
   await expect(heading).toBeVisible()
@@ -14,12 +15,13 @@ test('resonance title is readable and selected score stays centered below the na
   expect(titleStyle.background).toBe('none')
   expect(titleStyle.color).not.toBe('rgba(0, 0, 0, 0)')
   expect(titleStyle.fill).not.toBe('transparent')
-  const node = page.getByRole('button', { name: /resonance score/ }).first()
+  const node = page.getByRole('button', { name: /signal score/i }).first()
   const label = await node.getAttribute('aria-label')
-  const selectedScore = label?.match(/resonance score (\d+)/)?.[1]
+  const selectedScore = label?.match(/signal score (\d+)/i)?.[1]
   expect(selectedScore).toBeTruthy()
+  await node.focus() // Keyboard focus pauses the moving node before activation.
   await node.click()
-  const score = page.getByTestId('resonance-score')
+  const score = page.getByRole('dialog').getByTestId('resonance-score')
   await expect(score).toHaveText(selectedScore!)
   await expect(score).toBeVisible()
   await expect.poll(async () => {

@@ -4,11 +4,12 @@ import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { authClient } from "@/lib/auth-client";
+import { authClient, waitForSession } from "@/lib/auth-client";
 import PlanetPicker from "@/components/planet/PlanetPicker";
 import { PRESET_PLANETS, type PlanetConfig } from "@/types/planet";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { useClientReady } from "@/lib/hooks/useBrowserPreferences";
 
 // Phase 1: planet visual is determined during /onboarding — re-enable once onboarding-complete API is wired
 const PLANET_PICKER_ENABLED = false
@@ -23,6 +24,7 @@ export default function SignUpPage() {
 
 function SignUpForm() {
   const searchParams = useSearchParams();
+  const clientReady = useClientReady();
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
 
@@ -71,6 +73,7 @@ function SignUpForm() {
         return;
       }
 
+      if (!await waitForSession()) throw new Error('Session unavailable');
       const fromOnboarding = searchParams.get('from') === 'onboarding';
 
       // These follow-up calls are independent of each other (and, for the
@@ -157,12 +160,13 @@ function SignUpForm() {
 
       <SocialAuthButtons onGoogle={handleGoogleSignIn} />
 
-      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+      <form aria-busy={!clientReady || loading} onSubmit={handleSubmit} className="space-y-4 mt-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium" style={{ color: "var(--ink)" }}>
             {tAuth("name")}
           </label>
           <input
+            disabled={!clientReady}
             id="name"
             type="text"
             value={name}
@@ -183,6 +187,7 @@ function SignUpForm() {
             {tAuth("email")}
           </label>
           <input
+            disabled={!clientReady}
             id="email"
             type="email"
             value={email}
@@ -203,6 +208,7 @@ function SignUpForm() {
             {tAuth("password")}
           </label>
           <PasswordInput
+            disabled={!clientReady}
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -225,6 +231,7 @@ function SignUpForm() {
 
         <div className="flex items-start gap-2 pt-1">
           <input
+            disabled={!clientReady}
             id="policyAcceptance"
             type="checkbox"
             checked={policyAccepted}
@@ -277,7 +284,7 @@ function SignUpForm() {
 
         <button
           type="submit"
-          disabled={loading || !policyAccepted}
+          disabled={!clientReady || loading || !policyAccepted}
           className="w-full rounded-xl px-4 py-3 text-sm font-medium transition-opacity disabled:opacity-50"
           style={{
             background: "linear-gradient(135deg, var(--nebula), var(--aurora))",

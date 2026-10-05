@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { PLANET_ACTION_CHANGED, setUserFollowing } from '@/lib/planet-actions'
+import { setUserFollowing } from '@/lib/planet-actions'
+import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -51,7 +52,7 @@ export default function RelationshipsPage() {
       if (!response.ok) throw new Error(response.status === 401 ? 'auth' : 'failed')
       const json = await response.json() as FollowsResponse
       if (current === generation.current) { setData({ following: json.following.filter(row => row.planet), followers: json.followers.filter(row => row.planet) }); setError('') }
-    } catch (cause) { if (current === generation.current) setError(cause instanceof Error ? cause.message : 'failed') }
+    } catch (cause) { if (current === generation.current) { setData(null); setError(cause instanceof Error ? cause.message : 'failed') } }
     finally { if (current === generation.current) setLoading(false) }
   }, [])
 
@@ -68,9 +69,8 @@ export default function RelationshipsPage() {
     if (!hasPlanet) { if (hasPlanet === false) Promise.resolve().then(() => setLoading(false)); return }
     function refresh() { void load() }
     refresh()
-    window.addEventListener('focus', refresh)
-    window.addEventListener(PLANET_ACTION_CHANGED, refresh)
-    return () => { invalidate(); window.removeEventListener('focus', refresh); window.removeEventListener(PLANET_ACTION_CHANGED, refresh) }
+    const unsubscribe = subscribeSocialRefresh(refresh)
+    return () => { invalidate(); unsubscribe() }
   }, [hasPlanet, load, invalidate])
 
   async function changeFollow(userId: string, following: boolean) {
@@ -97,7 +97,7 @@ export default function RelationshipsPage() {
           subtitle={t('subtitle')}
         />
 
-        {error && <p role="alert" className="mt-4 text-sm text-red-300">{ta(error === 'auth' ? 'signInRequired' : 'failed')} <button type="button" className="underline" disabled={!!busyUserId} onClick={() => failedAction ? void changeFollow(failedAction.userId, failedAction.following) : hasPlanet === null ? void checkRole() : void load()}>{ta('retry')}</button></p>}
+        {error && <p role="alert" className="mt-4 text-sm text-red-300">{ta(error === 'auth' ? 'signInRequired' : failedAction ? 'failed' : 'stateFailed')} <button type="button" className="underline" disabled={!!busyUserId} onClick={() => failedAction ? void changeFollow(failedAction.userId, failedAction.following) : hasPlanet === null ? void checkRole() : void load()}>{ta('retry')}</button></p>}
         {loading && <p role="status" className="mt-4 text-sm text-white/50">{ta('loading')}</p>}
 
         {hasPlanet === false && (
