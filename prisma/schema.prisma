@@ -648,6 +648,8 @@ model DirectMessage {
   type             String   @default("text")
   readAt           DateTime?
   // Stable references only; current presentation is permission-checked on reads.
+  imageId          String? @unique
+  image            ChatImage? @relation(fields: [imageId], references: [id], onDelete: Restrict)
   shareKind        String?
   shareTargetId    String?
   // Client-generated per-compose-attempt key. Lets a retried send (e.g. after
@@ -806,4 +808,24 @@ model EventInterest {
   @@index([userId, createdAt])
   @@index([eventId])
   @@map("event_interest")
+}
+
+model ChatImage {
+  id String @id
+  ownerId String
+  conversationId String
+  objectKey String @unique
+  rawDigest String
+  width Int
+  height Int
+  bytes Int
+  ready Boolean @default(false)
+  deleteRequested Boolean @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  message DirectMessage?
+  @@index([expiresAt])
+  @@index([ownerId, conversationId])
+  @@map("chat_image")
 }

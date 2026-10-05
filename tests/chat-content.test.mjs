@@ -107,3 +107,17 @@ test('chat return links only accept a bounded resource ID and preserve event dee
   assert.equal(chatReturnHref('thread-uuid_123'), '/messages/thread-uuid_123')
   assert.equal(withChatReturn('/galaxy/renamed?event=evt#events', 'thread'), '/galaxy/renamed?event=evt&chat=thread#events')
 })
+
+const ImageComposer = require('../components/messages/ImageComposer.tsx').default
+const ImageMessage = require('../components/messages/ImageMessage.tsx').default
+for (const locale of ['en', 'fr', 'zh']) test(`private image controls and unavailable state are localized in ${locale}`, () => {
+  const messages = require(`../messages/${locale}.json`).chatImages
+  const escaped = text => renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  const composer = render(locale,React.createElement(ImageComposer,{conversationId:'thread',disabled:true,onSend:async()=>true}))
+  assert.ok(composer.includes(escaped(messages.choose)))
+  assert.ok(composer.includes('accept="image/jpeg,image/png,image/webp"'))
+  assert.equal((composer.match(/disabled=""/g)??[]).length,2)
+  const unavailable = render(locale,React.createElement(ImageMessage,{image:null}))
+  assert.ok(unavailable.includes(escaped(messages.unavailable))); assert.ok(!unavailable.includes('<img'))
+  assert.deepEqual(Object.keys(messages).sort(),Object.keys(require('../messages/en.json').chatImages).sort())
+})

@@ -66,7 +66,8 @@ function ConversationCard({ conv }: { conv: ConversationItem }) {
   const color =
     planet?.planetConfig?.tintColor ?? planet?.visual?.coreColor ?? '#a78bfa'
   const ts = useTranslations('chatShares')
-  const preview = conv.lastMessage?.type === 'share' ? ts('messagePreview') : conv.lastMessage?.content ?? t('noMessagesYet')
+  const ti = useTranslations('chatImages')
+  const preview = conv.lastMessage?.type === 'image' ? ti('photo') : conv.lastMessage?.type === 'share' ? ts('messagePreview') : conv.lastMessage?.content ?? t('noMessagesYet')
 
   return (
     <Link href={`/messages/${conv.id}`}>

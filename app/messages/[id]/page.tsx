@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { notifyInboxChanged } from '@/lib/inbox-client'
+import ImageComposer from '@/components/messages/ImageComposer'
+import ImageMessage from '@/components/messages/ImageMessage'
+import type { ChatImageCard } from '@/lib/chat-image-types'
 import SignalComposer from '@/components/social/SignalComposer'
 import MessageContent from '@/components/messages/MessageContent'
 import SharedMessageCard from '@/components/messages/SharedMessageCard'
@@ -24,6 +27,7 @@ interface MsgData {
   type: string
   sentAt: string
   readAt?: string
+  image?: ChatImageCard | null
   share?: SharedCard
 }
 
@@ -69,7 +73,7 @@ function MessageBubble({
           border: `1px solid ${isOwn ? `${color}33` : 'rgba(255,255,255,0.06)'}`,
         }}
       >
-        {msg.type === 'share' ? <SharedMessageCard card={msg.share ?? { available: false }} conversationId={conversationId} origin={origin} /> : <MessageContent content={msg.content} />}
+        {msg.type === 'image' ? <ImageMessage image={msg.image} /> : msg.type === 'share' ? <SharedMessageCard card={msg.share ?? { available: false }} conversationId={conversationId} origin={origin} /> : <MessageContent content={msg.content} />}
         <span
           className="block text-[10px] mt-1 text-right"
           style={{ color: 'var(--ghost)', opacity: 0.5 }}
@@ -162,6 +166,7 @@ function ConversationPageInner({ params }: Props) {
   const tCommon = useTranslations('common')
   const tw = useTranslations('inboxWorkflow')
   const ts = useTranslations('chatShares')
+  const pendingImageRef = useRef<{ id: string; key: string } | null>(null)
   const { id } = use(params)
   const router = useRouter()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -386,6 +391,20 @@ function ConversationPageInner({ params }: Props) {
     finally { sendLock.current = false; setSending(false) }
   }
 
+  async function handleImage(imageId: string): Promise<boolean | string> {
+    if (sendLock.current) return false
+    sendLock.current = true; setSending(true); setSendError('')
+    if (pendingImageRef.current?.id !== imageId) pendingImageRef.current = { id: imageId, key: crypto.randomUUID() }
+    try {
+      const response = await fetch(`/api/conversations/${id}/images`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageId, clientMessageId: pendingImageRef.current.key }) })
+      const result = await response.json()
+      if (!response.ok) return result.error ?? 'sendFailed'
+      followingLatest.current = true; setMessages(previous => mergeMessages(previous, [result])); notifyInboxChanged(); pendingImageRef.current = null
+      return true
+    } catch { return false }
+    finally { sendLock.current = false; setSending(false) }
+  }
+
   if (loading) {
     return (
       <div
@@ -500,6 +519,7 @@ function ConversationPageInner({ params }: Props) {
       {!canSend && (
         <p className="px-4 py-3 text-xs text-slate-400">{tw('archived')}</p>
       )}
+      <ImageComposer conversationId={id} disabled={sending || !canSend || !!loadError} onSend={handleImage} />
       <ShareComposer conversationId={id} disabled={sending || !canSend || !!loadError} onSend={handleShare} />
       <SignalComposer
         onSend={handleSend}

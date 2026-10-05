@@ -1,3 +1,4 @@
 {
-  "buildCommand": "npm run build:deploy"
+  "buildCommand": "npm run build:deploy",
+  "crons": [{ "path": "/api/cron/chat-image-cleanup", "schedule": "0 3 * * *" }]
 }

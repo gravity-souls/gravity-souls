@@ -1,3 +1,4 @@
+import { imageMetadata } from '@/lib/chat-images'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { canViewProfile } from '@/lib/visibility'
@@ -30,10 +31,14 @@ export async function resolveSharedCard(kind: ShareKind, targetId: string, viewe
   }
 }
 
-export async function hydrateSharedMessages(rows: (Parameters<typeof serializeMessage>[0] & { shareKind?: string | null; shareTargetId?: string | null })[], viewer: Actor, db: Prisma.TransactionClient = prisma) {
+export async function hydrateSharedMessages(rows: (Parameters<typeof serializeMessage>[0] & { shareKind?: string | null; shareTargetId?: string | null; imageId?: string | null })[], viewer: Actor, db: Prisma.TransactionClient = prisma) {
   const cache = new Map<string, Promise<SharedCard>>()
   return Promise.all(rows.map(async row => {
     const message = serializeMessage(row)
+    if (row.type === 'image') {
+      const image = row.imageId ? await db.chatImage.findUnique({ where: { id: row.imageId } }) : null
+      return { ...message, content: '', image: image?.ready && !image.deleteRequested ? imageMetadata(image) : null }
+    }
     if (row.type !== 'share') return message
     let share: SharedCard = { available: false }
     if (isShareKind(row.shareKind) && row.shareTargetId) {

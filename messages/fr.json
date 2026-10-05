@@ -1893,5 +1893,26 @@
     "open": "Ouvrir le contenu partagé",
     "backChat": "Retour à la conversation",
     "messagePreview": "Une carte a été partagée"
+  },
+  "chatImages": {
+    "choose": "Ajouter une photo",
+    "preview": "Aperçu de la photo sélectionnée",
+    "privateHint": "Seuls les participants à la conversation peuvent voir les photos envoyées. JPEG, PNG ou WebP, jusqu’à 3 Mo.",
+    "remove": "Retirer",
+    "sending": "Envoi de la photo…",
+    "send": "Envoyer la photo",
+    "retry": "Réessayer",
+    "invalidImage": "Choisissez une image fixe JPEG, PNG ou WebP valide (16 mégapixels maximum).",
+    "tooLarge": "Cette photo est trop grande. Choisissez une image de moins de 3 Mo.",
+    "storageUnavailable": "Le stockage des photos n’est pas encore configuré. Réessayez plus tard.",
+    "uploadBusy": "Cet envoi est en cours de traitement. Réessayez bientôt.",
+    "uploadExpired": "Cet envoi a expiré. Réessayez pour renvoyer la photo sélectionnée.",
+    "rateLimited": "Trop d’envois ou de messages. Réessayez plus tard.",
+    "sendFailed": "La réception n’a pas pu être confirmée. La photo est conservée pour réessayer.",
+    "unavailable": "Photo indisponible",
+    "loading": "Chargement de la photo…",
+    "open": "Agrandir la photo",
+    "photo": "Photo",
+    "close": "Fermer"
   }
 }

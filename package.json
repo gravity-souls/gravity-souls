@@ -24,7 +24,8 @@
     "test:models": "ts-node --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' prisma/test-models.ts",
     "test:chat": "node --import ./tests/register.mjs --test tests/chat-content.test.mjs",
     "test:galaxy": "node --import ./tests/register.mjs --test tests/galaxy-workflow.test.mjs tests/galaxy-workflow-ui.test.mjs",
-    "build:deploy": "prisma migrate deploy && npm run build"
+    "build:deploy": "prisma migrate deploy && npm run build",
+    "test:chat-images": "node --import ./tests/register.mjs --test tests/chat-images.test.mjs"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -51,7 +52,8 @@
     "resend": "^6.28.1",
     "tailwind-merge": "^3.5.0",
     "three": "^0.184.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.4.3",
