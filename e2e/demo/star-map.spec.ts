@@ -248,6 +248,8 @@ test('global map appends visible batches and clears them after revoked access', 
     return route.fulfill({ json: { ...fixture, total: 2, scope: 'batch', nextCursor: next ? null : 'next', nodes: [{ ...fixture.nodes[0], id: next ? 'second' : 'first', name: next ? 'Second visible planet' : 'First visible planet' }] } })
   })
   await page.goto('/star-map')
+  await expect(page.locator('#star-map-sidebar')).toContainText('Calm')
+  await expect(page.locator('canvas[aria-label]')).toBeVisible()
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('button', { name: 'Calm 1 planets', exact: true }).click()
