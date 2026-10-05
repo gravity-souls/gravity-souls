@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { personalMapSelf } from '@/lib/personal-map-self'
 import { personalMapContext } from '@/lib/personal-map-context'
 import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
@@ -40,7 +41,8 @@ export async function GET(request: Request) {
       return Response.json({ error: 'invalidQuery' }, { status: 400 })
     const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
     if (!viewer || viewer.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    if (contextLayer) return Response.json(await personalMapContext(user.id, { layer: contextLayer, group, cursor, search }), { headers: { 'Cache-Control': 'private, no-store' } })
+    const selfPlanet = mode === 'personal' ? await personalMapSelf(user.id) : undefined
+    if (contextLayer) return Response.json({ ...await personalMapContext(user.id, { layer: contextLayer, group, cursor, search }), selfPlanet }, { headers: { 'Cache-Control': 'private, no-store' } })
     if (mode === 'galaxies') {
       const where = search
         ? {
@@ -189,6 +191,7 @@ export async function GET(request: Request) {
         total,
         nextCursor: more ? rows.at(-1)!.id : null,
         scope: mode === 'personal' ? 'personal' : 'allVisible',
+        ...(mode === 'personal' ? { selfPlanet } : {}),
       } satisfies StarMapData,
       { headers: { 'Cache-Control': 'private, no-store' } },
     )

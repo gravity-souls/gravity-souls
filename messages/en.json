@@ -1827,7 +1827,12 @@
     "empty_activities": "No accessible activity interests or attendance match this view.",
     "contextDecoration": "Particles illustrate the layout; only selectable nodes represent real records.",
     "scope_galaxies": "Counts reflect your accessible created or joined galaxies. Member counts are living memberships, not visible planets.",
-    "scope_activities": "Counts reflect your accessible activity records. One activity appears once; leaving its galaxy or losing access hides it."
+    "scope_activities": "Counts reflect your accessible activity records. One activity appears once; leaving its galaxy or losing access hides it.",
+    "selfCenter": "My center planet",
+    "openSelf": "Open my planet: {name}",
+    "selfMissing": "No active planet yet. Your collections remain available.",
+    "createSelf": "Create my planet",
+    "selfExcluded": "Your center is separate and is not included in collection counts."
   },
   "inboxWorkflow": {
     "systemAndInteractions": "System and interaction notices",

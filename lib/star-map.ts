@@ -59,9 +59,10 @@ export function mapProfile(p: {
 export function mapCenter(
   index: number,
   count: number,
+  personal = false,
 ): [number, number, number] {
   const angle = index * 2.3999632297
-  const radius = count <= 1 ? 0 : 65 + 190 * Math.sqrt((index + 0.5) / count)
+  const radius = personal ? 180 + 110 * Math.sqrt((index + 0.5) / Math.max(1, count)) : count <= 1 ? 0 : 65 + 190 * Math.sqrt((index + 0.5) / count)
   return [
     Math.cos(angle) * radius,
     Math.sin(angle) * radius * 0.72,

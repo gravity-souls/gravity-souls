@@ -1541,6 +1541,68 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
         })
       } finally {await db.community.deleteMany({where:{slug:{startsWith:'mapctx-'}}});await db.user.deleteMany({where:{id:{in:[viewer,owner,outsider,deleted]}}});as('owner')}
     })
+    await t.test('personal map center stays owner-only, live and separate from collection counts', async t => {
+      const viewer='center-viewer', target='center-target', outsider='center-outsider'
+      for (const id of [viewer,target,outsider]) await db.user.create({data:{id,name:id,email:`${id}@example.test`}})
+      const own=await db.planet.create({data:{userId:viewer,name:'Private center fixture',active:true}})
+      const other=await db.planet.create({data:{userId:target,name:'Saved center target fixture',active:true}})
+      await db.profile.create({data:{userId:viewer,visibility:'PRIVATE'}})
+      await db.savedPlanet.create({data:{userId:viewer,planetId:other.id}})
+      await db.user.update({where:{id:viewer},data:{planetCustomTexture:'https://example.test/center-original.png',planetHasRing:true}})
+      const read=layer=>starMap.GET(new Request(`https://example.test/api?mode=personal&layer=${layer}`))
+      const data=async layer=>(await read(layer)).json()
+      as(viewer)
+      try {
+        await t.test('all personal layers expose the current owner center but do not count it as a node',async()=>{
+          for (const layer of ['planets','galaxies','activities']) {
+            const result=await data(layer)
+            assert.equal(result.selfPlanet.id,own.id)
+            assert.equal(result.selfPlanet.name,own.name)
+            assert.equal(result.selfPlanet.href,`/planet/${own.id}`)
+            assert.equal(result.selfPlanet.planetConfig.customTextureUrl,'https://example.test/center-original.png')
+            assert.equal(result.selfPlanet.planetConfig.hasRing,false)
+            assert.ok(!result.nodes.some(n=>n.id===own.id))
+            assert.equal(result.total,layer==='planets'?1:0)
+            assert.equal(result.groups.reduce((sum,g)=>sum+g.count,0),result.total)
+            assert.equal((await read(layer)).headers.get('cache-control'),'private, no-store')
+          }
+          const filtered=await starMap.GET(new Request('https://example.test/api?mode=personal&collection=mutual&search=No-match')).then(r=>r.json())
+          assert.equal(filtered.total,0);assert.equal(filtered.selfPlanet.id,own.id)
+        })
+        await t.test('other readers cannot select or see a private owner center through map parameters',async()=>{
+          as(outsider)
+          const result=await data('planets')
+          assert.equal(result.selfPlanet,null)
+          assert.ok(!JSON.stringify(result).includes(own.id));assert.ok(!JSON.stringify(result).includes('center-original.png'))
+          assert.equal((await starMap.GET(new Request(`https://example.test/api?mode=personal&userId=${viewer}`))).status,400)
+          as(null);assert.equal((await read('planets')).status,401)
+          as(viewer)
+          for (const mode of ['discover','galaxies']) {
+            const global=await starMap.GET(new Request(`https://example.test/api?mode=${mode}`)).then(r=>r.json())
+            assert.ok(!('selfPlanet' in global))
+          }
+        })
+        await t.test('fresh avatar and name changes replace the center without writes or notifications',async()=>{
+          const notices=await db.notification.count(), relationships=await db.savedPlanet.count({where:{userId:viewer}})
+          await db.user.update({where:{id:viewer},data:{planetCustomTexture:'https://example.test/center-updated.png'}})
+          await db.planet.update({where:{id:own.id},data:{name:'Renamed center fixture'}})
+          const result=await data('activities')
+          assert.equal(result.selfPlanet.name,'Renamed center fixture')
+          assert.equal(result.selfPlanet.planetConfig.customTextureUrl,'https://example.test/center-updated.png')
+          assert.equal(await db.notification.count(),notices)
+          assert.equal(await db.savedPlanet.count({where:{userId:viewer}}),relationships)
+        })
+        await t.test('inactive or replaced owner planets do not suppress personal collections',async()=>{
+          await db.planet.update({where:{id:own.id},data:{active:false}})
+          const inactive=await data('planets')
+          assert.equal(inactive.selfPlanet,null);assert.equal(inactive.total,1)
+          const replacement=await db.planet.create({data:{userId:viewer,name:'Replacement center fixture',active:true}})
+          assert.equal((await data('galaxies')).selfPlanet.id,replacement.id)
+          await db.user.update({where:{id:viewer},data:{deletedAt:new Date()}})
+          assert.equal((await read('activities')).status,401)
+        })
+      } finally {await db.user.deleteMany({where:{id:{in:[viewer,target,outsider]}}});as('owner')}
+    })
     await t.test(
       'star map bounded pages have no missing or duplicate planet nodes',
       async () => {

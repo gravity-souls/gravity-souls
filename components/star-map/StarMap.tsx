@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
+import PersonalMapAnchor from '@/components/star-map/PersonalMapAnchor'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetRelationshipStatus from '@/components/social/PlanetRelationshipStatus'
 import SavePlanetButton from '@/components/social/SavePlanetButton'
@@ -196,7 +197,7 @@ export default function StarMap({
         .filter((group) => group.count > 0 || mode === 'galaxies')
         .map((group, index, all) => ({
           ...group,
-          center: mapCenter(index, all.length),
+          center: mapCenter(index, all.length, mode === 'personal'),
         })),
     [data.groups, mode],
   )
@@ -424,6 +425,7 @@ export default function StarMap({
     : []
   return (
     <div className={`${styles.map} ${compact ? styles.compact : ''} ${listOnly ? styles.listView : ''}`}>
+      {mode === 'personal' && listOnly && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} summary />}
       <div className={styles.mapToolbar}>
         <form
           onSubmit={(event) => {
@@ -471,7 +473,7 @@ export default function StarMap({
       )}
       <div className={styles.explorer}>
         {!listOnly && <section
-          className={styles.stage}
+          className={`${styles.stage} ${mode === 'personal' && !focus ? styles.centeredStage : ''}`}
           aria-label={t('title')}
           aria-busy={loading}
         >
@@ -590,6 +592,7 @@ export default function StarMap({
               pointers.current.delete(event.pointerId)
             }
           />
+          {mode === 'personal' && !focus && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
           {!canvasAvailable && (
             <p className={styles.fallback}>{t('fallback')}</p>
           )}

@@ -1827,7 +1827,12 @@
     "empty_activities": "Aucun intérêt ou inscription accessible ne correspond à cette vue.",
     "contextDecoration": "Les particules illustrent la disposition ; seuls les nœuds sélectionnables représentent de vrais éléments.",
     "scope_galaxies": "Les nombres concernent vos galaxies créées ou rejointes accessibles. Les membres sont des adhésions de comptes non supprimés, pas des planètes visibles.",
-    "scope_activities": "Les nombres concernent vos activités accessibles. Chaque activité apparaît une fois ; quitter sa galaxie ou perdre l’accès la masque."
+    "scope_activities": "Les nombres concernent vos activités accessibles. Chaque activité apparaît une fois ; quitter sa galaxie ou perdre l’accès la masque.",
+    "selfCenter": "Ma planète centrale",
+    "openSelf": "Ouvrir ma planète : {name}",
+    "selfMissing": "Aucune planète active. Vos collections restent accessibles.",
+    "createSelf": "Créer ma planète",
+    "selfExcluded": "Votre centre est distinct et ne compte pas dans les collections."
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",

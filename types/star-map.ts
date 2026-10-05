@@ -32,7 +32,15 @@ export interface StarMapRelationship {
   followedBy: boolean
   conversationId: string | null
 }
+export interface StarMapSelfPlanet {
+  id: string
+  name: string
+  href: string
+  planetConfig?: PlanetConfig
+  level: number
+}
 export interface StarMapData {
+  selfPlanet?: StarMapSelfPlanet | null
   groups: StarMapGroup[]
   nodes: StarMapNode[]
   total: number

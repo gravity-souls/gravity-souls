@@ -1827,7 +1827,12 @@
     "empty_activities": "此视图暂无有权限查看的活动兴趣或报名记录。",
     "contextDecoration": "粒子仅用于展示布局，只有可选节点代表真实记录。",
     "scope_galaxies": "数量代表有权限查看的已创建或已加入星系；成员数为未注销账号的成员关系，并非可见星球数量。",
-    "scope_activities": "数量代表有权限查看的个人活动记录；同一活动只出现一次，离开所属星系或失去权限后隐藏。"
+    "scope_activities": "数量代表有权限查看的个人活动记录；同一活动只出现一次，离开所属星系或失去权限后隐藏。",
+    "selfCenter": "我的中心星球",
+    "openSelf": "查看我的星球：{name}",
+    "selfMissing": "你还没有活跃星球，仍然可以查看个人收藏。",
+    "createSelf": "创建我的星球",
+    "selfExcluded": "中心星球单独展示，不计入收藏或图层数量。"
   },
   "inboxWorkflow": {
     "systemAndInteractions": "系统与互动提示",

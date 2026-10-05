@@ -484,3 +484,29 @@ for (const locale of ['en','fr','zh']) test(`personal context layers localize ex
     assert.ok(back.includes(`href="/star-map?mode=personal&amp;layer=${layer}&amp;view=list"`))
   }
 })
+
+
+test('personal overview reserves its origin while global layout retains its existing center',()=>{
+  const {mapCenter}=require('../lib/star-map.ts')
+  assert.deepEqual(mapCenter(0,1),[0,0,0])
+  for (let count=1;count<=6;count++) for (let index=0;index<count;index++) {
+    const center=mapCenter(index,count,true)
+    assert.ok(center.every(Number.isFinite))
+    assert.ok(Math.hypot(center[0],center[1]/0.72)>=180)
+    assert.deepEqual(center,mapCenter(index,count,true))
+  }
+})
+for (const locale of ['en','fr','zh']) test(`personal center is translated, preserves portraits and has a safe return link in ${locale}`,()=>{
+  const Anchor=require('../components/star-map/PersonalMapAnchor.tsx').default
+  const m=require(`../messages/${locale}.json`).starMap
+  const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  const planet={id:'own',name:'My own planet',href:'/planet/own',level:2,planetConfig:{baseTexture:'mars.jpg',customTextureUrl:'https://example.test/center-portrait.png',tintColor:'#a78bfa'}}
+  const html=render(locale,React.createElement(Anchor,{planet,origin:'personal-star-map-activities-list',summary:true}))
+  assert.ok(html.includes(escape(m.selfCenter)));assert.ok(html.includes(escape(m.selfExcluded)))
+  assert.ok(html.includes('src="https://example.test/center-portrait.png"'))
+  assert.ok(html.includes('href="/planet/own?from=personal-star-map-activities-list"'))
+  assert.ok(!html.includes('planet-surface-drift'));assert.ok(!html.includes('<canvas'))
+  const missing=render(locale,React.createElement(Anchor,{planet:null,origin:'personal-star-map-saved'}))
+  assert.ok(missing.includes(escape(m.selfMissing)));assert.ok(missing.includes(escape(m.createSelf)))
+  assert.ok(missing.includes('href="/onboarding"'));assert.ok(!missing.includes('<img'))
+})
