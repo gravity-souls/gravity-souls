@@ -24,19 +24,20 @@ interface PostDetailProps {
   onDeleted?: (postId: string) => void
   onTagClick?: (tag: string) => void
   onPostUpdated?: (post: StreamPost) => void
+  returnHref?: string | null
 }
 
 function countCommentTree(comments: StreamComment[] = []) {
   return comments.reduce((total, comment) => total + 1 + (comment.replies?.length ?? 0), 0)
 }
 
-export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated }: PostDetailProps) {
+export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated, returnHref }: PostDetailProps) {
   const t = useTranslations('stream')
   const router = useRouter()
   const tc = useTranslations('postContext')
   const [readError, setReadError] = useState(false), [unavailable, setUnavailable] = useState(false), [revision, setRevision] = useState(0)
   const tCommon = useTranslations('common')
-  const [detail, setDetail] = useState<StreamPost | null>(post)
+  const [detail, setDetail] = useState<StreamPost | null>(null)
   const [commentText, setCommentText] = useState('')
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null)
   const [commentCursor, setCommentCursor] = useState<string | null>(null)
@@ -46,22 +47,59 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   const [expandedReplyThreads, setExpandedReplyThreads] = useState<Record<string, boolean>>({})
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const onPostUpdatedRef = useRef(onPostUpdated)
+  useEffect(() => { onPostUpdatedRef.current = onPostUpdated }, [onPostUpdated])
+  const requestGeneration = useRef(0)
+  const [verifiedScope, setVerifiedScope] = useState('')
+  const postId = post?.id
+  const scope = `${postId ?? ''}:${currentUserId ?? 'guest'}`
   useEffect(() => {
-    if (!open || !post) return
     let cancelled = false
-    Promise.resolve().then(() => { if (!cancelled) { setDetail(post); setUnavailable(false); setReplyTarget(null); setExpandedReplyThreads({}) } })
-    fetch(`/api/posts/${post.id}`, { cache: 'no-store' }).then(async response => {
-      if ([401, 403, 404].includes(response.status)) { if (!cancelled) { setDetail(null); setUnavailable(true) }; return }
-      if (!response.ok) throw new Error('failed')
-      const data = await response.json()
-      if (!cancelled) { setDetail(data.post); setReadError(false); const comments = data.post?.comments ?? []; setCommentCursor(comments.length === 20 ? comments.at(-1)?.id ?? null : null) }
-    }).catch(() => { if (!cancelled) setReadError(true) })
+    Promise.resolve().then(() => { if (!cancelled) { setCommentText(''); setSubmittingComment(false) } })
     return () => { cancelled = true }
-  }, [open, post, revision])
+  }, [scope])
+
+  useEffect(() => {
+    if (!open || !postId) return
+    let controller: AbortController | undefined
+    async function refresh() {
+      const request = ++requestGeneration.current
+      controller?.abort()
+      controller = new AbortController()
+      setReadError(false); setUnavailable(false); setLoadingMore(false)
+      try {
+        const response = await fetch(`/api/posts/${encodeURIComponent(postId!)}`, { cache: 'no-store', signal: controller.signal })
+        if (request !== requestGeneration.current) return
+        if ([401, 403, 404].includes(response.status)) {
+          setDetail(null); setVerifiedScope(scope); setUnavailable(true); setCommentCursor(null); setReplyTarget(null); return
+        }
+        if (!response.ok) throw new Error('failed')
+        const data = await response.json()
+        if (!data.post || data.post.id !== postId) throw new Error('failed')
+        if (request !== requestGeneration.current) return
+        setDetail(data.post); setVerifiedScope(scope); onPostUpdatedRef.current?.(data.post)
+        const comments = data.post.comments ?? []
+        setCommentCursor(comments.length === 20 ? comments.at(-1)?.id ?? null : null)
+      } catch {
+        if (request === requestGeneration.current) { setDetail(null); setVerifiedScope(scope); setReadError(true); setCommentCursor(null); setReplyTarget(null) }
+      }
+    }
+    const foreground = () => { if (document.visibilityState !== 'hidden') void refresh() }
+    Promise.resolve().then(() => { if (controller?.signal.aborted) return; setReplyTarget(null); setExpandedReplyThreads({}) })
+    void refresh()
+    window.addEventListener('focus', foreground)
+    document.addEventListener('visibilitychange', foreground)
+    const invalidate = () => { ++requestGeneration.current }
+    return () => { invalidate(); setVerifiedScope(''); controller?.abort(); window.removeEventListener('focus', foreground); document.removeEventListener('visibilitychange', foreground) }
+  }, [open, postId, currentUserId, scope, revision])
 
   if (!open) return null
-  if (unavailable) return <div role="dialog" aria-modal="true" className="fixed inset-0 z-80 grid place-items-center bg-black/80 p-6"><div className="rounded-xl bg-[#11152a] p-6 text-white/70"><p>{tc('unavailable')}</p><button type="button" onClick={onClose} className="mt-3 underline">{tc('close')}</button></div></div>
-  if (!detail) return null
+  if (verifiedScope !== scope || !detail || unavailable) return <div role="dialog" aria-modal="true" aria-label={t('postDetail')} className="fixed inset-0 z-80 grid place-items-center bg-black/80 p-6"><div className="rounded-xl bg-[#11152a] p-6 text-white/70">
+    <p role={readError ? 'alert' : 'status'}>{tc(verifiedScope !== scope ? 'loading' : unavailable ? 'unavailable' : readError ? 'readFailed' : 'loading')}</p>
+    {verifiedScope === scope && (readError || unavailable) && <button type="button" onClick={() => setRevision(v => v + 1)} className="mt-3 mr-4 underline">{tc('retry')}</button>}
+    {returnHref && <Link href={returnHref} className="mt-3 mr-4 inline-block underline">← {tc(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
+    <button type="button" onClick={onClose} className="mt-3 underline">{tc('close')}</button>
+  </div></div>
 
   const ownPost = currentUserId === detail.authorId
   const accent = detail.author.tintColor || '#a78bfa'
@@ -76,24 +114,36 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
     return t('daysAgo', { count: Math.floor(hours / 24) })
   }
 
+  function denied(response: Response) {
+    if (![401, 403, 404].includes(response.status)) return false
+    ++requestGeneration.current
+    setDetail(null); setUnavailable(true); setReadError(false); setReplyTarget(null); setCommentCursor(null)
+    return true
+  }
+
   async function toggleLike() {
     if (!detail) return
     if (!currentUserId) {
       router.push(`/sign-in?next=/stream/${detail.id}`)
       return
     }
+    const request = requestGeneration.current
     const previous = detail
     const optimistic = { ...detail, userHasLiked: !detail.userHasLiked, likeCount: Math.max(0, detail.likeCount + (detail.userHasLiked ? -1 : 1)) }
     setDetail(optimistic)
     onPostUpdated?.(optimistic)
     try {
       const res = await fetch(`/api/posts/${detail.id}/like`, { method: 'POST' })
+      if (request !== requestGeneration.current) return
+      if (denied(res)) return
       if (!res.ok) throw new Error('like failed')
       const data = await res.json() as { liked: boolean; likeCount: number }
+      if (request !== requestGeneration.current) return
       const updated = { ...detail, userHasLiked: data.liked, likeCount: data.likeCount }
       setDetail(updated)
       onPostUpdated?.(updated)
     } catch {
+      if (request !== requestGeneration.current) return
       setDetail(previous)
       onPostUpdated?.(previous)
     }
@@ -101,6 +151,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
   async function submitComment() {
     if (!detail || !commentText.trim()) return
+    const request = requestGeneration.current
     setSubmittingComment(true)
     try {
       const parentId = replyTarget?.id ?? null
@@ -109,8 +160,9 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parentId ? { content: commentText.trim(), parentId } : { content: commentText.trim() }),
       })
+      if (request !== requestGeneration.current || denied(res)) return
       const data = await res.json() as { comment?: StreamComment }
-      if (!res.ok || !data.comment) return
+      if (request !== requestGeneration.current || !res.ok || !data.comment) return
       const updatedComments = data.comment.parentId
         ? (detail.comments ?? []).map((comment) => (
           comment.id === data.comment?.parentId
@@ -152,6 +204,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
       return
     }
 
+    const request = requestGeneration.current
     const previous = detail
     const optimisticComments = updateCommentById(detail.comments ?? [], comment.id, (targetComment) => ({
       ...targetComment,
@@ -164,8 +217,11 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
     try {
       const res = await fetch(`/api/posts/${detail.id}/comments/${comment.id}/like`, { method: 'POST' })
+      if (request !== requestGeneration.current) return
+      if (denied(res)) return
       if (!res.ok) throw new Error('comment like failed')
       const data = await res.json() as { liked: boolean; likeCount: number }
+      if (request !== requestGeneration.current) return
       const updated = {
         ...optimistic,
         comments: updateCommentById(optimistic.comments ?? [], comment.id, (targetComment) => ({
@@ -177,6 +233,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
       setDetail(updated)
       onPostUpdated?.(updated)
     } catch {
+      if (request !== requestGeneration.current) return
       setDetail(previous)
       onPostUpdated?.(previous)
     }
@@ -226,23 +283,27 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   }
 
   async function loadMoreComments() {
-    if (!detail || !commentCursor) return
+    if (!detail || !commentCursor || loadingMore) return
+    const request = requestGeneration.current
     setLoadingMore(true)
     try {
-      const res = await fetch(`/api/posts/${detail.id}/comments?cursor=${commentCursor}`)
+      const res = await fetch(`/api/posts/${encodeURIComponent(detail.id)}/comments?${new URLSearchParams({ cursor: commentCursor })}`, { cache: 'no-store' })
+      if (request !== requestGeneration.current || denied(res)) return
+      if (!res.ok) throw new Error('failed')
       const data = await res.json() as { comments?: StreamComment[]; nextCursor?: string | null }
-      const comments = data.comments ?? []
-      setDetail({ ...detail, comments: [...(detail.comments ?? []), ...comments] })
+      if (request !== requestGeneration.current) return
+      setDetail(previous => previous ? { ...previous, comments: [...new Map([...(previous.comments ?? []), ...(data.comments ?? [])].map(comment => [comment.id, comment])).values()] } : null)
       setCommentCursor(data.nextCursor ?? null)
-    } finally {
-      setLoadingMore(false)
-    }
+    } catch {
+      if (request === requestGeneration.current) { setDetail(null); setReadError(true); setCommentCursor(null); setRevision(v => v + 1) }
+    } finally { if (request === requestGeneration.current) setLoadingMore(false) }
   }
 
   async function deletePost() {
     if (!detail) return
+    const request = requestGeneration.current
     const res = await fetch(`/api/posts/${detail.id}`, { method: 'DELETE' })
-    if (!res.ok) return
+    if (request !== requestGeneration.current || denied(res) || !res.ok) return
     onDeleted?.(detail.id)
     onClose()
   }
@@ -298,9 +359,9 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
             {detail.author.planetId && <Link href={`/planet/${detail.author.planetId}`} className="rounded-full px-3 py-1.5 text-[11px] font-semibold" style={{ color: 'var(--star)', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', textDecoration: 'none' }}>{t('viewPlanet')}</Link>}
           </div>
 
-          {readError && <p role="alert" className="text-xs text-red-300">{tc('failed')} <button type="button" onClick={() => setRevision(v => v + 1)}>{tc('retry')}</button></p>}
+          {returnHref && <Link href={returnHref} className="mt-3 text-sm text-violet-200 underline">← {tc(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
           <PostContextCard post={detail} />
-          {ownPost && <PostEditor key={detail.updatedAt} post={detail} onUpdated={updated => { const merged = { ...updated, comments: detail.comments }; setDetail(merged); onPostUpdated?.(merged) }} />}
+          {ownPost && <PostEditor key={detail.updatedAt} post={detail} onUpdated={() => setRevision(v => v + 1)} />}
           <p className="mt-5 whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink)' }}>{detail.content}</p>
           {detail.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{detail.tags.map((tag) => <button key={tag} type="button" onClick={() => onTagClick?.(tag)} className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `${accent}14`, border: `1px solid ${accent}28`, color: accent }}>#{tag}</button>)}</div>}
 

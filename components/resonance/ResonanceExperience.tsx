@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
+import { resonancePosition as position } from '@/lib/resonance-motion'
+import { createMotionLoop } from '@/lib/motion-loop'
 import { stableUnit } from '@/lib/star-map'
 import { orbitColorHex } from '@/lib/match'
 import type { PlanetProfile } from '@/types/planet'
@@ -11,10 +13,6 @@ import type { ResonanceSession, OrbitMatch } from '@/types/match'
 import { ResonanceDetails } from './ResonanceDrawer'
 import styles from './resonance-experience.module.css'
 
-function position(index: number, count: number) {
-  const angle = -Math.PI / 2 + (index * Math.PI * 2) / Math.max(1, count)
-  return { x: 50 + Math.cos(angle) * 34, y: 48 + Math.sin(angle) * 31 }
-}
 function Field({
   source,
   session,
@@ -32,6 +30,10 @@ function Field({
   const reduced = useReducedMotionPreference()
   const canvas = useRef<HTMLCanvasElement>(null)
   const phase = useRef(0)
+  const nodes = useRef(new Map<string, HTMLButtonElement>())
+  const motion = useRef<ReturnType<typeof createMotionLoop> | null>(null)
+  const hold = useRef({ pointer: false, keyboard: false })
+  const pause = (kind: 'pointer' | 'keyboard', value: boolean) => { hold.current[kind] = value; motion.current?.setPaused(hold.current.pointer || hold.current.keyboard) }
   const particles = useMemo(
     () =>
       Array.from({ length: 900 }, (_, i) => ({
@@ -45,21 +47,9 @@ function Field({
     const el = canvas.current!
     const ctx = el.getContext('2d')
     if (!ctx) return
-    let frame = 0,
-      width = 0,
-      height = 0,
-      last = 0,
-      visible = true,
-      disposed = false
-    const draw = (time: number) => {
-      frame = 0
-      if (disposed || document.hidden || !visible) {
-        last = 0
-        return
-      }
-      if (!reduced)
-        phase.current += Math.min(time - (last || time), 45) * 0.00032
-      last = time
+    let width = 0, height = 0
+    const loop = createMotionLoop(el, ({ delta, animate }) => {
+      if (animate) phase.current += delta * 0.14
       ctx.clearRect(0, 0, width, height)
       for (const particle of particles) {
         const a = particle.angle + phase.current
@@ -73,7 +63,9 @@ function Field({
         )
       }
       session.matches.forEach((match, i) => {
-        const p = position(i, session.matches.length)
+        const p = position(i, session.matches.length, phase.current)
+        const node = nodes.current.get(match.planetId)
+        if (node) { node.style.left = `${p.x}%`; node.style.top = `${p.y}%` }
         const x = (p.x * width) / 100,
           y = (p.y * height) / 100
         const gradient = ctx.createLinearGradient(
@@ -91,11 +83,9 @@ function Field({
         ctx.lineTo(x, y)
         ctx.stroke()
       })
-      if (!reduced) frame = requestAnimationFrame(draw)
-    }
-    const redraw = () => {
-      if (!frame && !disposed) frame = requestAnimationFrame(draw)
-    }
+    })
+    motion.current = loop
+    loop.setPaused(hold.current.pointer || hold.current.keyboard)
     const resize = () => {
       const rect = el.getBoundingClientRect()
       width = rect.width
@@ -104,27 +94,15 @@ function Field({
       el.width = width * dpr
       el.height = height * dpr
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      redraw()
+      loop.invalidate()
     }
     const observer = new ResizeObserver(resize)
     observer.observe(el)
-    const intersection = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting
-      if (visible) redraw()
-    })
-    intersection.observe(el)
-    const visibility = () => {
-      last = 0
-      if (!document.hidden) redraw()
-    }
-    document.addEventListener('visibilitychange', visibility)
     resize()
     return () => {
-      disposed = true
-      cancelAnimationFrame(frame)
+      loop.dispose()
+      motion.current = null
       observer.disconnect()
-      intersection.disconnect()
-      document.removeEventListener('visibilitychange', visibility)
     }
   }, [session, reduced, particles])
   return (
@@ -148,13 +126,18 @@ function Field({
         return (
           <button
             key={p.id}
+            ref={element => { if (element) nodes.current.set(p.id, element); else nodes.current.delete(p.id) }}
+            onPointerEnter={() => pause('pointer', true)}
+            onPointerLeave={() => pause('pointer', false)}
+            onFocus={() => pause('keyboard', true)}
+            onBlur={() => pause('keyboard', false)}
             className={styles.node}
             style={{ left: `${xy.x}%`, top: `${xy.y}%` }}
             aria-pressed={activeId === p.id}
             onClick={() => onSelect(p.id)}
             aria-label={`${p.name} · ${t('signalScore')} ${match.score}`}
           >
-            <PlanetAvatar planetConfig={p.planetConfig} size={42} />
+            <PlanetAvatar planetConfig={p.planetConfig} size={42} rotating={!reduced && !p.planetConfig?.customTextureUrl} rotationDuration={16} />
             <span>{p.name}</span>
             <strong>{match.score}</strong>
           </button>

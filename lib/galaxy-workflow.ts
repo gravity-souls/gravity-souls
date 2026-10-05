@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { isBlocked } from '@/lib/visibility'
 import { prisma } from '@/lib/prisma'
 import { isOperatorEmail } from '@/lib/operator'
 import { resolveLocale } from '@/lib/i18n-locales'
@@ -137,6 +138,9 @@ export async function lockedEvent(
     include: eventInclude,
   })
   if (!event || event.galaxyId !== galaxyId) deny('notFound', 404)
+  const viewer = await tx.user.findUnique({ where: { id: actor.id }, select: { deletedAt: true } })
+  if (!viewer || viewer.deletedAt) deny('Unauthorized', 401)
+  if (event.proposer.deletedAt || await isBlocked(actor.id, event.proposerId, tx)) deny('notFound', 404)
   return { ...access, event }
 }
 export async function capacity(tx: Tx, eventId: string, max: number | null) {
@@ -232,4 +236,12 @@ export async function members(id: string, actor: Actor | null) {
       })),
     }
   })
+}
+
+/** Same owner/admin/operator rule as galaxyAccess, expressed as a list predicate. */
+export function managedGalaxyWhere(actor: Actor): Prisma.CommunityWhereInput {
+  return isOperatorEmail(actor.email) ? {} : { OR: [
+    { creatorId: actor.id },
+    { memberships: { some: { userId: actor.id, role: 'ADMIN' } } },
+  ] }
 }

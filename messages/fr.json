@@ -775,7 +775,8 @@
       "passed": "Historique",
       "mine": "Mes propositions",
       "requests": "Inscriptions en attente",
-      "interested": "Mes intérêts"
+      "interested": "Mes intérêts",
+      "review": "À examiner"
     },
     "categories": {
       "all": "Tout",
@@ -788,7 +789,9 @@
     },
     "emptyMine": "Aucune proposition pour le moment.",
     "emptyRequests": "Aucune inscription en attente.",
-    "emptyInterested": "Aucune activité enregistrée. Enregistrez une activité pour la retrouver ici."
+    "emptyInterested": "Aucune activité enregistrée. Enregistrez une activité pour la retrouver ici.",
+    "emptyReview": "Aucune proposition d’activité ni demande de participation à examiner.",
+    "reviewHelp": "Les propriétaires et administrateurs examinent les propositions d’activité. Les organisateurs et administrateurs examinent les demandes de participation. Vos propres demandes en attente restent séparées."
   },
   "eventForms": {
     "databaseLocked": "Les événements se déverrouillent quand cette galaxie est connectée à la base de données.",
@@ -844,7 +847,8 @@
       "stargazing": "Observation",
       "discussion": "Discussion",
       "other": "Autre"
-    }
+    },
+    "pendingAttendanceCount": "{count} demandes de participation à examiner"
   },
   "discover": {
     "eyebrow": "Carte de résonance",
@@ -1722,7 +1726,7 @@
     "search": "Rechercher un nom",
     "searchAction": "Rechercher",
     "meaning_discover": "Les constellations regroupent les planètes selon leur climat déclaré.",
-    "meaning_galaxies": "Chaque constellation est une galaxie réelle ; le nombre indique ses membres.",
+    "meaning_galaxies": "Chaque groupe représente une communauté réelle. Le nombre indique ses membres actuels, pas ses planètes visibles.",
     "meaning_resonance": "Les suggestions sont regroupées selon leur dimension de résonance principale.",
     "group_calm": "Calme",
     "group_melancholic": "Mélancolique",
@@ -1785,7 +1789,50 @@
     "exploreGlobal": "Explorer le ciel entier",
     "firstBatch": "Revenir au premier lot",
     "personalTotal": "{count} planètes dans votre collection",
-    "returnPersonalMap": "← Revenir à ma carte stellaire"
+    "returnPersonalMap": "← Revenir à ma carte stellaire",
+    "browseGalaxies": "Parcourir les galaxies",
+    "chooseGalaxy": "Choisir une galaxie",
+    "galaxyDecoration": "Les particules illustrent une communauté ; un nœud sélectionnable ouvre sa galaxie. Elles ne révèlent pas les planètes de ses membres.",
+    "galaxyScope": "Cette vue charge jusqu’à 24 galaxies par lot. Ouvrez une galaxie pour voir les planètes et activités autorisées.",
+    "galaxyTotal": "{count} galaxies dans cette recherche",
+    "personalLayers": "Couches de ma carte",
+    "layer_planets": "Planètes",
+    "layer_galaxies": "Mes galaxies",
+    "layer_activities": "Mes activités",
+    "meaning_personal_galaxies": "Chaque nœud sélectionnable est une galaxie que vous avez créée ou rejointe. Une demande en attente ne vaut pas adhésion.",
+    "meaning_personal_activities": "Chaque nœud est une activité qui vous intéresse, à laquelle vous avez demandé à participer, participé ou dont vous vous êtes retiré. L’intérêt ne vaut pas inscription.",
+    "myGalaxyTotal": "{count} de mes galaxies",
+    "myActivityTotal": "{count} de mes activités",
+    "browseActivities": "Parcourir les activités",
+    "chooseActivity": "Choisir une activité",
+    "galaxyCount": "{count} galaxies",
+    "activityCount": "{count} activités",
+    "group_owned": "Créées par moi",
+    "group_joined": "Galaxies rejointes",
+    "group_interested": "Intérêt marqué",
+    "group_going": "Participation approuvée",
+    "group_requested": "Participation en attente",
+    "group_past": "Terminées, annulées ou quittées",
+    "kind_galaxy": "Galaxie",
+    "kind_activity": "Activité",
+    "openActivity": "Ouvrir l’activité",
+    "activity_approved": "Activité approuvée",
+    "activity_passed": "Activité terminée",
+    "activity_cancelled": "Activité annulée",
+    "attendance_approved": "Votre participation est approuvée",
+    "attendance_pending": "Votre demande de participation est en attente",
+    "attendance_rejected": "Votre demande de participation a été refusée",
+    "attendance_cancelled": "Vous vous êtes retiré de cette activité",
+    "empty_galaxies": "Aucune galaxie créée ou rejointe ne correspond à cette vue.",
+    "empty_activities": "Aucun intérêt ou inscription accessible ne correspond à cette vue.",
+    "contextDecoration": "Les particules illustrent la disposition ; seuls les nœuds sélectionnables représentent de vrais éléments.",
+    "scope_galaxies": "Les nombres concernent vos galaxies créées ou rejointes accessibles. Les membres sont des adhésions de comptes non supprimés, pas des planètes visibles.",
+    "scope_activities": "Les nombres concernent vos activités accessibles. Chaque activité apparaît une fois ; quitter sa galaxie ou perdre l’accès la masque.",
+    "selfCenter": "Ma planète centrale",
+    "openSelf": "Ouvrir ma planète : {name}",
+    "selfMissing": "Aucune planète active. Vos collections restent accessibles.",
+    "createSelf": "Créer ma planète",
+    "selfExcluded": "Votre centre est distinct et ne compte pas dans les collections."
   },
   "inboxWorkflow": {
     "systemAndInteractions": "Notifications système et interactions",
@@ -1848,7 +1895,11 @@
     "related": "Signaux associés du flux global",
     "empty": "Aucun signal associé pour le moment.",
     "more": "Afficher plus",
-    "mediaVisibility": "Les liens des fichiers médias peuvent être partagés. Ne téléversez pas de fichiers confidentiels."
+    "mediaVisibility": "Les liens des fichiers médias peuvent être partagés. Ne téléversez pas de fichiers confidentiels.",
+    "backPost": "Revenir au signal d’origine",
+    "backGalaxy": "Revenir à la galaxie",
+    "backEvent": "Revenir à l’activité",
+    "readFailed": "Impossible de charger ce contenu. Réessayez."
   },
   "chatContent": {
     "placeholder": "Écrire un message…",

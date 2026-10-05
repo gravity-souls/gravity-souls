@@ -481,3 +481,28 @@
 .map.listView .sidebarToggle { display: none; }
 .listView .sidebar .nodeList { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .listStatus { color: #9eacc1; font-size: 13px; padding-bottom: 12px; }
+
+/* The owner is a separate origin, not a node in a saved/followed collection. */
+.selfCenter {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: min(180px, 48%);
+  text-align: center;
+  padding: 10px;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at center, #080d18eb, #080d1800);
+}
+.selfLink { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #ddd9f5; text-decoration: none; }
+.selfLink:focus-visible, .selfMissing a:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 5px; border-radius: 8px; }
+.selfName { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.selfCaption { display: block; font-size: 11px; color: #c4b5fd; }
+.selfNote { margin: 6px 0 0; font-size: 10px; line-height: 1.5; color: #94a3b8; }
+.selfSummary { margin-bottom: 14px; padding: 12px 16px; border: 1px solid #ffffff14; border-radius: 12px; }
+.selfSummary .selfLink { flex-direction: row; justify-content: flex-start; }
+.selfMissing { font-size: 12px; line-height: 1.6; color: #b8c2d4; }
+.selfMissing a { display: inline-block; color: #c4b5fd; padding: 8px 0; }
+.centeredStage .fallback { top: auto; bottom: 24px; height: auto; padding: 0 16px; pointer-events: none; }
+.centeredStage .fallback a, .centeredStage .fallback button { pointer-events: auto; }

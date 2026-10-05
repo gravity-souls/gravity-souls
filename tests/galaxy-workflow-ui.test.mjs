@@ -186,8 +186,8 @@ for (const locale of ['en', 'zh', 'fr']) {
       assert.ok(html.includes(messages.gestures))
       assert.ok(html.includes('aria-controls="star-map-sidebar"'))
       assert.ok(html.includes('id="star-map-sidebar"'))
-      assert.ok(html.includes(messages.browseObjects.replaceAll('&', '&amp;')))
-      assert.ok(html.includes(messages.decoration.replaceAll('&', '&amp;')))
+      assert.ok(html.includes((mode === 'galaxies' ? messages.browseGalaxies : messages.browseObjects).replaceAll('&', '&amp;')))
+      assert.ok(html.includes((mode === 'galaxies' ? messages.galaxyDecoration : messages.decoration).replaceAll('&', '&amp;')))
       assert.ok(!html.includes('starMap.'))
       assert.ok(!html.includes('Reset view'))
       assert.ok(!html.includes('Zoom in'))
@@ -376,10 +376,10 @@ for (const locale of ['en', 'zh', 'fr']) {
     assert.ok(picker.includes(escaped(messages.memberAudience)))
     assert.ok(picker.includes(escaped(messages.clear)))
     assert.ok(picker.includes('fieldset'))
-    const post = { contextRestricted: true, context: { galaxy: { id: 'g', name: 'Galaxy', slug: 'galaxy', href: '/galaxy/galaxy' }, event: { id: 'e', title: 'Activity', date: '2030-01-01T12:00:00Z', status: 'CANCELLED', href: '/galaxy/galaxy?event=e#events' } } }
+    const post = { id: 'original-post', contextRestricted: true, context: { galaxy: { id: 'g', name: 'Galaxy', slug: 'galaxy', href: '/galaxy/galaxy' }, event: { id: 'e', title: 'Activity', date: '2030-01-01T12:00:00Z', status: 'CANCELLED', href: '/galaxy/galaxy?event=e#events' } } }
     const card = render(locale, React.createElement(Card, { post }))
     assert.ok(card.includes(escaped(messages.cancelled)))
-    assert.ok(card.includes('href="/galaxy/galaxy?event=e#events"'))
+    assert.ok(card.includes('href="/galaxy/galaxy?event=e&amp;returnPost=original-post#events"'))
     const unavailable = render(locale, React.createElement(Card, { post: { contextRestricted: true, context: null } }))
     assert.ok(unavailable.includes(escaped(messages.unavailable)))
     assert.ok(!unavailable.includes('href='))
@@ -410,4 +410,103 @@ test('personal map origins preserve collection and view and reject arbitrary ori
   }
   assert.equal(explorationOrigin('personal-star-map-unknown'),null)
   assert.equal(explorationOrigin('https://example.test'),null)
+})
+
+test('resonance positions revolve predictably without changing recommendation identity', () => {
+  const { resonancePosition } = require('../lib/resonance-motion.ts')
+  for (const count of [1,3,5]) for (let i=0;i<count;i++) {
+    const a = resonancePosition(i,count), b = resonancePosition(i,count,Math.PI/2)
+    assert.notDeepEqual(a,b)
+    assert.ok(a.x >= 16 && a.x <= 84 && a.y >= 17 && a.y <= 79)
+    assert.ok(Math.abs(resonancePosition(i,count,Math.PI*2).x-a.x)<1e-8)
+    assert.ok(Math.abs(resonancePosition(i,count,Math.PI*2).y-a.y)<1e-8)
+  }
+})
+for (const locale of ['en','fr','zh']) {
+  test(`review cards distinguish pending attendees and proposals in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`)
+    const html = render(locale,React.createElement(EventCard,{event:{...event,status:'PENDING',canReviewEvent:true,pendingAttendanceCount:2}}))
+    const escaped = value => renderToStaticMarkup(React.createElement('span',null,value)).slice(6,-7)
+    assert.ok(html.includes(escaped(m.galaxyWorkflow.pending)))
+    assert.ok(html.includes(escaped(m.eventForms.pendingAttendanceCount.replace('{count}','2'))))
+    assert.ok(m.eventsPage.tabs.review && m.eventsPage.reviewHelp && m.eventsPage.emptyReview)
+    const map = render(locale,React.createElement(StarMap,{mode:'galaxies'}))
+    assert.ok(map.includes(escaped(m.starMap.meaning_galaxies)))
+    assert.ok(map.includes(escaped(m.starMap.galaxyDecoration)))
+    assert.ok(map.includes(escaped(m.starMap.galaxyScope)))
+    assert.ok(!map.includes(escaped(m.starMap.decoration)))
+  })
+}
+
+
+test('post return navigation bounds IDs and retains only internal galaxy/activity origins', () => {
+  const { postReturnHref, postContextReturnHref, withPostOrigin, withPostReturn } = require('../lib/post-return.ts')
+  assert.equal(postReturnHref('post-123'), '/stream/post-123')
+  for (const invalid of [null, '', '../private', 'x?event=secret', 'x'.repeat(129), 'https://example.test']) assert.equal(postReturnHref(invalid), null)
+  const event = '/galaxy/night-sky?event=evt_123#events'
+  assert.equal(withPostReturn(event, 'post-123'), '/galaxy/night-sky?event=evt_123&returnPost=post-123#events')
+  const postLink = new URL(withPostOrigin('post-123', event), 'https://local.invalid')
+  assert.equal(postLink.pathname, '/stream/post-123')
+  assert.equal(postContextReturnHref(postLink.searchParams.get('fromContext')), event)
+  assert.equal(postContextReturnHref('/galaxy/%E6%98%9F%E7%A9%BA'), '/galaxy/%E6%98%9F%E7%A9%BA')
+  for (const invalid of ['https://evil.test/galaxy/g', '//evil.test/galaxy/g', '/galaxy/g/../../messages/p', '/galaxy/%2e%2e', '/galaxy/g\\evil', '/galaxy/g%2Fprivate', '/galaxy/%ZZ', '/galaxy/g?event=../../secret', '/galaxy/g?event=e&event=f', '/galaxy/g?chat=secret', '/galaxy/g#other', '/messages/p', '/galaxy/' + 'x'.repeat(129)]) {
+    assert.equal(postContextReturnHref(invalid), null, invalid)
+    assert.equal(withPostOrigin('post-123', invalid), '/stream/post-123')
+    assert.equal(withPostReturn(invalid, 'post-123'), '/stream')
+  }
+})
+for (const locale of ['en', 'fr', 'zh']) test(`post return and read failures have real localized copy in ${locale}`, () => {
+  const m = require(`../messages/${locale}.json`).postContext
+  for (const key of ['backPost', 'backGalaxy', 'backEvent', 'readFailed']) assert.ok(m[key] && !m[key].includes('postContext.'))
+})
+
+
+test('personal context return restores layers and views while preserving activity fragments',()=>{
+  const {personalMapOrigin}=require('../lib/exploration-return.ts')
+  for (const layer of ['galaxies','activities']) for (const list of [false,true]) {
+    const origin=personalMapOrigin('all',list,layer)
+    assert.equal(explorationOrigin(origin),origin)
+    assert.equal(explorationReturnHref(origin),`/star-map?mode=personal&layer=${layer}${list?'&view=list':''}`)
+    const url=new URL(withExplorationOrigin('/galaxy/sky?event=e#events',origin),'https://example.test')
+    assert.equal(url.searchParams.get('from'),origin);assert.equal(url.searchParams.get('event'),'e');assert.equal(url.hash,'#events')
+  }
+  assert.equal(explorationOrigin('personal-star-map-other-layer'),null)
+})
+for (const locale of ['en','fr','zh']) test(`personal context layers localize explanation, units and return links in ${locale}`,()=>{
+  const m=require(`../messages/${locale}.json`).starMap
+  const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  for (const layer of ['galaxies','activities']) {
+    const html=render(locale,React.createElement(StarMap,{mode:'personal',layer,listOnly:true}))
+    assert.ok(html.includes(escape(m[`meaning_personal_${layer}`])))
+    assert.ok(html.includes(escape(m[`scope_${layer}`])))
+    assert.ok(!html.includes('<canvas'));assert.ok(!html.includes('starMap.'))
+    const back=render(locale,React.createElement(ReturnLink,{origin:`personal-star-map-${layer}-list`}))
+    assert.ok(back.includes(`href="/star-map?mode=personal&amp;layer=${layer}&amp;view=list"`))
+  }
+})
+
+
+test('personal overview reserves its origin while global layout retains its existing center',()=>{
+  const {mapCenter}=require('../lib/star-map.ts')
+  assert.deepEqual(mapCenter(0,1),[0,0,0])
+  for (let count=1;count<=6;count++) for (let index=0;index<count;index++) {
+    const center=mapCenter(index,count,true)
+    assert.ok(center.every(Number.isFinite))
+    assert.ok(Math.hypot(center[0],center[1]/0.72)>=180)
+    assert.deepEqual(center,mapCenter(index,count,true))
+  }
+})
+for (const locale of ['en','fr','zh']) test(`personal center is translated, preserves portraits and has a safe return link in ${locale}`,()=>{
+  const Anchor=require('../components/star-map/PersonalMapAnchor.tsx').default
+  const m=require(`../messages/${locale}.json`).starMap
+  const escape=text=>renderToStaticMarkup(React.createElement('span',null,text)).slice(6,-7)
+  const planet={id:'own',name:'My own planet',href:'/planet/own',level:2,planetConfig:{baseTexture:'mars.jpg',customTextureUrl:'https://example.test/center-portrait.png',tintColor:'#a78bfa'}}
+  const html=render(locale,React.createElement(Anchor,{planet,origin:'personal-star-map-activities-list',summary:true}))
+  assert.ok(html.includes(escape(m.selfCenter)));assert.ok(html.includes(escape(m.selfExcluded)))
+  assert.ok(html.includes('src="https://example.test/center-portrait.png"'))
+  assert.ok(html.includes('href="/planet/own?from=personal-star-map-activities-list"'))
+  assert.ok(!html.includes('planet-surface-drift'));assert.ok(!html.includes('<canvas'))
+  const missing=render(locale,React.createElement(Anchor,{planet:null,origin:'personal-star-map-saved'}))
+  assert.ok(missing.includes(escape(m.selfMissing)));assert.ok(missing.includes(escape(m.createSelf)))
+  assert.ok(missing.includes('href="/onboarding"'));assert.ok(!missing.includes('<img'))
 })

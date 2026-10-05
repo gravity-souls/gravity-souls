@@ -20,6 +20,8 @@ export async function GET(
   try {
     const { user } = await requireUser()
     const { id, eventId } = await params
+    const viewer = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
+    if (!viewer || viewer.deletedAt) deny('Unauthorized', 401)
     const access = await galaxyAccess(prisma, id, user)
     const event = await prisma.event.findUnique({
       where: { id: eventId },

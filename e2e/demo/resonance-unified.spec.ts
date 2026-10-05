@@ -82,7 +82,7 @@ test('legacy resonance map link opens the canonical resonance page', async ({
   await page.goto('/star-map')
   await expect(
     page.getByRole('navigation', { name: 'Map modes' }).getByRole('link'),
-  ).toHaveCount(2)
+  ).toHaveCount(3)
 })
 
 test('mobile list opens the same detail and can dismiss the drawer', async ({
@@ -107,4 +107,25 @@ test('mobile list opens the same detail and can dismiss the drawer', async ({
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true)
+})
+
+test('recommended planets move with the field and stop for reduced motion and keyboard selection', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion:'no-preference' })
+  await page.goto('/resonance')
+  const planet = page.getByRole('button',{name:/Fixture amber · Signal Score/})
+  await expect(planet).toBeVisible()
+  const initial = await planet.getAttribute('style')
+  await expect.poll(() => planet.getAttribute('style')).not.toBe(initial)
+  const label = await planet.getAttribute('aria-label')
+  await planet.focus()
+  const held = await planet.getAttribute('style')
+  await page.waitForTimeout(350)
+  await expect(planet).toHaveAttribute('style',held!)
+  await expect(planet).toHaveAttribute('aria-label',label!)
+  await page.emulateMedia({ reducedMotion:'reduce' })
+  await page.reload()
+  await expect(planet).toBeVisible()
+  const staticStyle = await planet.getAttribute('style')
+  await page.waitForTimeout(350)
+  await expect(planet).toHaveAttribute('style',staticStyle!)
 })

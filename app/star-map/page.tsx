@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
 import StarMap from '@/components/star-map/StarMap'
-import type { StarMapMode, PersonalMapCollection } from '@/types/star-map'
+import type { StarMapMode, PersonalMapCollection, PersonalMapLayer } from '@/types/star-map'
 
 function StarMapPageContent() {
   const t = useTranslations('starMap')
@@ -19,8 +19,10 @@ function StarMapPageContent() {
   const mode: StarMapMode = requested === 'galaxies' ? 'galaxies' : requested === 'personal' ? 'personal' : 'discover'
   const choice = params.get('collection')
   const collection: PersonalMapCollection = choice === 'saved' || choice === 'following' || choice === 'mutual' ? choice : 'all'
+  const requestedLayer = params.get('layer')
+  const layer: PersonalMapLayer = mode === 'personal' && (requestedLayer === 'galaxies' || requestedLayer === 'activities') ? requestedLayer : 'planets'
   const listOnly = mode === 'personal' && params.get('view') === 'list'
-  const personalHref = (value: PersonalMapCollection, list: boolean) => `/star-map?mode=personal&collection=${value}${list ? '&view=list' : ''}`
+  const personalHref = (value: PersonalMapCollection, list: boolean) => `/star-map?mode=personal&${layer === 'planets' ? `collection=${value}` : `layer=${layer}`}${list ? '&view=list' : ''}`
   if (requested === 'resonance') return null
   return (
     <AppShell personalMapActive={mode === 'personal'}>
@@ -39,7 +41,10 @@ function StarMapPageContent() {
             </Link>
           ))}
         </nav>
-        {mode === 'personal' && <nav className="mt-5 flex flex-wrap gap-2" aria-label={t('personalFilters')}>
+        {mode === 'personal' && <nav className="mt-5 flex flex-wrap gap-2" aria-label={t('personalLayers')}>
+          {(['planets', 'galaxies', 'activities'] as const).map(value => <Link key={value} href={`/star-map?mode=personal&layer=${value}${listOnly ? '&view=list' : ''}`} aria-current={value === layer ? 'page' : undefined} className={`min-h-11 rounded-lg px-4 py-3 text-sm ${value === layer ? 'bg-violet-400/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'}`}>{t(`layer_${value}`)}</Link>)}
+        </nav>}
+        {mode === 'personal' && layer === 'planets' && <nav className="mt-5 flex flex-wrap gap-2" aria-label={t('personalFilters')}>
           {(['all', 'saved', 'following', 'mutual'] as const).map(value => <Link key={value}
             href={personalHref(value, listOnly)} aria-current={value === collection ? 'page' : undefined}
             className={`min-h-11 rounded-lg px-4 py-3 text-sm ${value === collection ? 'bg-violet-400/20 text-violet-200' : 'text-slate-400 hover:bg-white/5'}`}>
@@ -55,7 +60,7 @@ function StarMapPageContent() {
             <Link className="px-4 py-3 hover:bg-white/5" href={mode === 'galaxies' ? '/galaxies' : '/discover'}>{t('listView')}</Link>
           </>}
         </div>
-        <StarMap key={`${mode}:${collection}`} mode={mode} collection={collection} listOnly={listOnly} />
+        <StarMap key={`${mode}:${layer}:${collection}`} mode={mode} collection={collection} layer={layer} listOnly={listOnly} />
         {mode === 'personal' && <Link className="mt-4 inline-block py-3 text-sm text-violet-200" href="/star-map?mode=discover">{t('exploreGlobal')}</Link>}
         <p className="mt-5 text-xs text-slate-400">{t('paths')}</p>
       </main>

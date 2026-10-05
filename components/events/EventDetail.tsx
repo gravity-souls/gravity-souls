@@ -1,6 +1,8 @@
 'use client'
 
 import RelatedSignals from '@/components/stream/RelatedSignals'
+import PostReturnLink from '@/components/stream/PostReturnLink'
+import ContextMapReturnLink from '@/components/social/ContextMapReturnLink'
 import { useState } from 'react'
 import { CalendarDays, Check, MapPin, Monitor, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -87,6 +89,8 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
           <X size={16} />
         </button>
 
+        <PostReturnLink eventId={event.id} />
+        <ContextMapReturnLink />
         <div className="pr-10">
           <p className="text-eyebrow mb-2">{tEvents(`categories.${event.category.toLowerCase()}`)}</p>
           <h2 className="text-xl font-semibold leading-tight" style={{ color: 'var(--foreground)' }}>
@@ -165,7 +169,7 @@ export default function EventDetail({ event, open, isAdmin, onClose, onUpdated, 
 
         <RelatedSignals key={`signals-${event.id}`} galaxyId={event.galaxyId} eventId={event.id} />
         {event.rejectionReason && <p className="mt-4 text-sm text-red-200">{event.rejectionReason}</p>}
-        {event.canManage && <EventManagement key={`management-${event.id}`} event={event} onChanged={() => { onUpdated?.(); onClose() }} />}
+        {event.canManage && <EventManagement key={`management-${event.id}`} event={event} onAttendanceChanged={onUpdated} onChanged={() => { onUpdated?.(); onClose() }} />}
         {isAdmin && event.status === 'PENDING' && (
           <div className="mt-6 rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <p className="text-data-label mb-3">{tEvents('adminReview')}</p>

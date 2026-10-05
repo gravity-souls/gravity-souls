@@ -41,6 +41,8 @@ export interface GalaxyEventSummary {
   requiresApproval?: boolean
   rejectionReason?: string | null
   canManage?: boolean
+  canReviewEvent?: boolean
+  pendingAttendanceCount?: number
   proposer: EventProposer
   galaxy?: {
     id: string
