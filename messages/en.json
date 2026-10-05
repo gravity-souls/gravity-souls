@@ -229,7 +229,8 @@
     "note_expression-style": "Your ways of expressing yourselves resonate.",
     "note_culture-travel": "Your cultural and travel interests meet.",
     "note_art-books-music": "You connect through art, books or music.",
-    "note_worldview-complement": "Your worldviews offer complementary perspectives."
+    "note_worldview-complement": "Your worldviews offer complementary perspectives.",
+    "fullReport": "Open full match report"
   },
   "stream": {
     "searchPlaceholder": "Search signals...",
@@ -465,10 +466,10 @@
     "earlyAccess": "✦ Early Access - all customizations unlocked",
     "base": "Base",
     "color": "Color",
-    "planetTint": "Planet tint",
+    "planetTint": "Glow color",
     "atmosphere": "Atmosphere",
-    "atmosphereDensity": "Atmosphere density",
-    "motionSurface": "Motion & Surface",
+    "atmosphereDensity": "Glow intensity",
+    "motionSurface": "Surface",
     "rotationSpeed": "Rotation speed",
     "slow": "Slow",
     "medium": "Medium",
@@ -477,15 +478,15 @@
     "none": "None",
     "light": "Light",
     "dense": "Dense",
-    "customTexture": "Custom Texture",
+    "customTexture": "Custom photo",
     "uploading": "Uploading",
-    "uploadTexture": "Upload texture",
-    "removeTexture": "Remove custom texture",
+    "uploadTexture": "Choose a photo",
+    "removeTexture": "Remove photo",
     "savePlanet": "Save Planet",
     "unsavedChanges": "Unsaved changes",
     "resetPreset": "Reset to preset",
     "saved": "Saved",
-    "textureUploaded": "Texture uploaded",
+    "textureUploaded": "Photo uploaded",
     "saveError": "Could not save planet",
     "fileTypeError": "Use JPG, PNG, or WEBP",
     "fileSizeError": "Max file size is 5MB",
@@ -539,7 +540,8 @@
       }
     },
     "uploadSignIn": "Sign in before uploading a custom texture",
-    "uploadLocked": "Custom textures are locked for this planet"
+    "uploadLocked": "Custom textures are locked for this planet",
+    "flatPhotoHint": "Your image appears as a still circular photo, just like in resonance. It is not wrapped around a rotating sphere."
   },
   "messagesPage": {
     "eyebrow": "Signals",
@@ -1335,7 +1337,8 @@
     "removeSaveDone": "Planet removed from your orbit.",
     "followDone": "You now follow this planet.",
     "unfollowDone": "You unfollowed this planet.",
-    "stateFailed": "The latest state could not be confirmed. Retry to read it again."
+    "stateFailed": "The latest state could not be confirmed. Retry to read it again.",
+    "viewSavedList": "View saved list"
   },
   "sbti": {
     "protocol": "Soul Scan Protocol",
@@ -2072,5 +2075,34 @@
     "denied": "Notifications are blocked. Allow them in your browser or device settings, then try again.",
     "bound": "This browser has a subscription for another account. Disable it here, then enable again.",
     "deviceLimit": "You have reached the limit of 5 subscribed browsers. Disable one of them before adding another."
+  },
+  "matchReport": {
+    "title": "Match report",
+    "eyebrow": "Your resonance, explained",
+    "subtitle": "A dedicated view of your current matches, the signals you share and your differences.",
+    "navigation": "Report navigation",
+    "back": "Back to my planet",
+    "resonance": "Open resonance map",
+    "refresh": "Refresh report",
+    "loading": "Preparing your report…",
+    "auth": "Sign in to view your personal report.",
+    "missing": "Create a planet to see your matches.",
+    "failed": "The report could not be loaded. Please try again.",
+    "signIn": "Sign in",
+    "create": "Create my planet",
+    "overview": "Report overview",
+    "updated": "Updated {date}",
+    "matches": "Matches in this report",
+    "average": "Average resonance",
+    "strongest": "Strongest resonance",
+    "scope": "Based on this batch of {count} visible planets and the same scoring rules as resonance. Scores describe profile similarities, not a guarantee of compatibility or an existing relationship.",
+    "empty": "No matches yet",
+    "emptyHint": "There are no visible candidates in the current batch. Explore and return later.",
+    "explore": "Explore planets",
+    "entry": "Match with {name}",
+    "rank": "Match {rank}",
+    "dimensions": "Resonance dimensions",
+    "noShared": "No specific shared traits were identified from the available profile information.",
+    "noContrast": "No notable differences were identified from the available profile information."
   }
 }

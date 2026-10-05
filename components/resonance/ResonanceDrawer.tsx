@@ -374,6 +374,7 @@ export function ResonanceDetails({
           paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
         }}
       >
+        <Link href="/my-planet/report" className="min-h-11 py-3 text-center text-sm text-violet-200 underline">{t('fullReport')}</Link>
         <GlowButton
           href={`/messages?to=${encodeURIComponent(planet.id)}`}
           variant="primary"

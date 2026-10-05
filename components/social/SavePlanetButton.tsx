@@ -45,7 +45,7 @@ export default function SavePlanetButton({ planetId, initialSaved, onChange }: {
       className="rounded-xl border border-white/15 px-4 py-2 text-sm text-violet-200 hover:bg-white/5 disabled:opacity-50">
       {busy ? t('working') : saved === null ? t('loading') : saved ? t('removeSave') : t('save')}
     </button>
-    {saved && <Link href="/saved" className="text-xs text-violet-300 underline">{t('viewOrbit')}</Link>}
+    {saved && <><Link href="/star-map?mode=personal&collection=saved" className="min-h-11 py-2 text-xs text-violet-300 underline">{t('viewOrbit')}</Link><Link href="/saved" className="text-xs text-slate-400 underline">{t('viewSavedList')}</Link></>}
     {notice && !error && <p role="status" className="text-xs text-violet-200">{t(notice)}</p>}
     {error && <div role="alert" className="text-xs text-red-300">{t(error === 'auth' ? 'signInRequired' : 'stateFailed')} {error === 'auth' ? <Link href="/sign-in">{t('signIn')}</Link> : <button type="button" className="underline" onClick={requestSocialRefresh}>{t('retry')}</button>}</div>}
   </div>

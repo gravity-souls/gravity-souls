@@ -231,7 +231,8 @@ export default function StarMap({
     let disposed = false
     let visible = true
     let last = 0
-    const focused = clusters.find((group) => group.id === focus)
+    // Personal filters keep the owner and actual relationship edges visible.
+    const focused = mode === 'personal' ? undefined : clusters.find((group) => group.id === focus)
     const centers = new Map(clusters.map((group) => [group.id, group.center]))
     const project = (x: number, y: number, z: number) => {
       if (focused) {
@@ -317,8 +318,8 @@ export default function StarMap({
                 const nx = -dy / length * shift, ny = dx / length * shift
                 const start = { x: hub.x + dx / length * 85 + nx, y: hub.y + dy / length * 85 + ny }
                 const end = { x: p.x - dx / length * 9 + nx, y: p.y - dy / length * 9 + ny }
-                ctx.strokeStyle = style.color + (node.id === selected?.id ? 'e0' : '80')
-                ctx.lineWidth = node.id === selected?.id ? 1.8 : 1
+                ctx.strokeStyle = style.color + (node.id === selected?.id ? 'e0' : 'b0')
+                ctx.lineWidth = node.id === selected?.id ? 2.2 : 1.4
                 ctx.setLineDash([...style.dash])
                 ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke()
                 ctx.setLineDash([])
@@ -333,7 +334,7 @@ export default function StarMap({
             }
             ctx.fillStyle = group.color
             ctx.beginPath()
-            const size = node.id === selected?.id ? 7 : 5
+            const size = node.id === selected?.id ? 10 : 7
             if (node.kind === 'galaxy') ctx.rect(p.x - size, p.y - size, size * 2, size * 2)
             else if (node.kind === 'activity') { ctx.moveTo(p.x, p.y - size - 1); ctx.lineTo(p.x + size + 1, p.y); ctx.lineTo(p.x, p.y + size + 1); ctx.lineTo(p.x - size - 1, p.y); ctx.closePath() }
             else ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
@@ -425,7 +426,7 @@ export default function StarMap({
           setFocus(nearest.groupId)
           setSelectedId(null)
           setCursor(null)
-          view.current.zoom = 2.4
+          view.current.zoom = mode === 'personal' ? 1 : 2.4
         }
       } else if (focus && view.current.zoom <= 1.2) {
         setFocus(null)
@@ -467,7 +468,7 @@ export default function StarMap({
     setFocus(id)
     setSelectedId(mode === 'galaxies' ? id : null)
     setCursor(null)
-    view.current.zoom = 2.4
+    view.current.zoom = mode === 'personal' ? 1 : 2.4
   }
   const groupLabel = (id: string, name?: string) => {
     const group = data.groups.find(item => item.id === id)
@@ -532,7 +533,7 @@ export default function StarMap({
       )}
       <div className={styles.explorer}>
         {!listOnly && <section
-          className={`${styles.stage} ${mode === 'personal' && !focus ? styles.centeredStage : ''}`}
+          className={`${styles.stage} ${mode === 'personal' ? styles.centeredStage : ''}`}
           aria-label={t('title')}
           aria-busy={loading}
         >
@@ -651,7 +652,7 @@ export default function StarMap({
               pointers.current.delete(event.pointerId)
             }
           />
-          {mode === 'personal' && !focus && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
+          {mode === 'personal' && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
           {!canvasAvailable && (
             <p className={styles.fallback}>{t('fallback')}</p>
           )}

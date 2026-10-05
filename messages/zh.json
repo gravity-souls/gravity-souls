@@ -229,7 +229,8 @@
     "note_expression-style": "你们的表达方式相互呼应。",
     "note_culture-travel": "你们在文化与旅行兴趣中相遇。",
     "note_art-books-music": "艺术、书籍或音乐连接着你们。",
-    "note_worldview-complement": "你们的世界观带来互补视角。"
+    "note_worldview-complement": "你们的世界观带来互补视角。",
+    "fullReport": "查看完整匹配报告"
   },
   "stream": {
     "searchPlaceholder": "搜索动态...",
@@ -465,10 +466,10 @@
     "earlyAccess": "✦ 抢先体验 - 所有定制已解锁",
     "base": "基础",
     "color": "颜色",
-    "planetTint": "星球色调",
+    "planetTint": "光晕颜色",
     "atmosphere": "氛围",
-    "atmosphereDensity": "氛围密度",
-    "motionSurface": "运动与表面",
+    "atmosphereDensity": "光晕强度",
+    "motionSurface": "表面",
     "rotationSpeed": "旋转速度",
     "slow": "慢",
     "medium": "中",
@@ -477,15 +478,15 @@
     "none": "无",
     "light": "轻",
     "dense": "浓",
-    "customTexture": "自定义纹理",
+    "customTexture": "自定义照片",
     "uploading": "上传中",
-    "uploadTexture": "上传纹理",
-    "removeTexture": "移除自定义纹理",
+    "uploadTexture": "选择照片",
+    "removeTexture": "移除照片",
     "savePlanet": "保存星球",
     "unsavedChanges": "未保存的更改",
     "resetPreset": "重置为预设",
     "saved": "已保存",
-    "textureUploaded": "纹理已上传",
+    "textureUploaded": "照片已上传",
     "saveError": "无法保存星球",
     "fileTypeError": "请使用 JPG、PNG 或 WEBP",
     "fileSizeError": "文件最大 5MB",
@@ -539,7 +540,8 @@
       }
     },
     "uploadSignIn": "请登录后上传定制纹理",
-    "uploadLocked": "此星球尚未解锁定制纹理"
+    "uploadLocked": "此星球尚未解锁定制纹理",
+    "flatPhotoHint": "照片以静态圆形图片展示，与共鸣中的展示一致，不再包裹到旋转球体上。"
   },
   "messagesPage": {
     "eyebrow": "信号",
@@ -1335,7 +1337,8 @@
     "removeSaveDone": "已从你的轨道移除。",
     "followDone": "已关注这颗星球。",
     "unfollowDone": "已取消关注这颗星球。",
-    "stateFailed": "无法确认最新状态，请重试重新读取。"
+    "stateFailed": "无法确认最新状态，请重试重新读取。",
+    "viewSavedList": "查看收藏列表"
   },
   "sbti": {
     "protocol": "灵魂扫描协议",
@@ -2072,5 +2075,34 @@
     "denied": "通知权限已被拒绝，请先在浏览器或设备设置中允许通知，再重试。",
     "bound": "当前浏览器订阅仍属于其他账号，请先关闭此处推送，再重新开启。",
     "deviceLimit": "最多可订阅 5 个浏览器，请先在其中一个浏览器关闭推送。"
+  },
+  "matchReport": {
+    "title": "匹配报告",
+    "eyebrow": "理解你的共鸣",
+    "subtitle": "独立查看当前匹配、共同信号与差异，了解每一份共鸣的来源。",
+    "navigation": "报告导航",
+    "back": "返回我的星球",
+    "resonance": "打开共鸣星图",
+    "refresh": "刷新报告",
+    "loading": "正在生成你的报告…",
+    "auth": "登录后查看你的个人匹配报告。",
+    "missing": "创建星球后即可查看匹配报告。",
+    "failed": "暂时无法加载报告，请重试。",
+    "signIn": "登录",
+    "create": "创建我的星球",
+    "overview": "报告概览",
+    "updated": "更新于 {date}",
+    "matches": "本次匹配数",
+    "average": "平均共鸣",
+    "strongest": "最高共鸣",
+    "scope": "依据当前批次的 {count} 个可见星球，采用与共鸣相同的评分规则。分数描述资料中的相似性，不代表一定合适，也不代表已经关注或建立关系。",
+    "empty": "暂时没有匹配",
+    "emptyHint": "当前批次没有可见候选星球，可以先探索，稍后再来查看。",
+    "explore": "探索星球",
+    "entry": "与 {name} 的匹配",
+    "rank": "匹配 {rank}",
+    "dimensions": "共鸣维度",
+    "noShared": "现有资料中暂未识别到具体共同特征。",
+    "noContrast": "现有资料中暂未识别到显著差异。"
   }
 }

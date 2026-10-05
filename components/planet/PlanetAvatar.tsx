@@ -25,7 +25,7 @@ interface Props {
 
 /**
  * PlanetAvatar — lightweight planet image for lists, cards, and match tiles.
- * Uses a lightweight image with CSS glow, clouds and a small ring. No WebGL.
+ * Uses a lightweight circular image. Uploaded photos stay flat and still.
  */
 export default function PlanetAvatar({
   planetConfig,
@@ -43,6 +43,8 @@ export default function PlanetAvatar({
   const resolvedGlowColor = planetConfig?.tintColor ?? glowColor
   const textureSrc = planetConfig?.customTextureUrl ?? `/textures/${resolvedTexture}`
   const failed = failedSrc === textureSrc
+  const photo = !!planetConfig?.customTextureUrl
+  const haloAlpha = Math.round(Math.min(0.3, Math.max(0, planetConfig?.atmosphereDensity ?? 0.12)) / 0.3 * 96).toString(16).padStart(2, '0')
 
   return (
     <div
@@ -55,7 +57,7 @@ export default function PlanetAvatar({
       <div
         className="absolute inset-0 overflow-hidden rounded-full"
         style={{
-          boxShadow: `0 0 ${Math.round(size * 0.4)}px ${resolvedGlowColor}80, 0 0 ${size}px ${planetConfig?.atmosphereColor ?? resolvedGlowColor}30`,
+          boxShadow: `0 0 ${Math.round(size * 0.4)}px ${resolvedGlowColor}80, 0 0 ${size}px ${planetConfig?.atmosphereColor ?? resolvedGlowColor}${haloAlpha}`,
         }}
       >
       {failed ? (
@@ -66,7 +68,7 @@ export default function PlanetAvatar({
             background: `radial-gradient(circle at 35% 30%, ${resolvedGlowColor}cc 0%, ${resolvedGlowColor}44 60%, ${resolvedGlowColor}18 100%)`,
           }}
         />
-      ) : rotating ? (
+      ) : rotating && !photo ? (
         <div
           className="planet-avatar-rotating w-full h-full rounded-full select-none"
           style={{
@@ -95,14 +97,14 @@ export default function PlanetAvatar({
       )}
 
       {/* Specular highlight overlay for sphere illusion */}
-      <div
+      {!photo && <div
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{
           background: 'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.18) 0%, transparent 55%)',
         }}
-      />
+      />}
 
-      {planetConfig && planetConfig.cloudOpacity > 0 && (
+      {!photo && planetConfig && planetConfig.cloudOpacity > 0 && (
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
@@ -113,13 +115,13 @@ export default function PlanetAvatar({
       )}
       </div>
 
-      {/* Terminator shadow for depth */}
-      <div
+      {/* Preset shading never overlays an uploaded photograph. */}
+      {!photo && <div
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{
           background: 'radial-gradient(circle at 72% 68%, rgba(0,0,0,0.35) 0%, transparent 50%)',
         }}
-      />
+      />}
 
       {showBadge && (
         <span className="absolute -right-1 -top-1 z-10">
