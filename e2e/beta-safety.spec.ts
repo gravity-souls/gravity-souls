@@ -162,7 +162,18 @@ test.describe('authenticated API protections', () => {
 for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
   test(`galaxy empty/error states preserve real interactions at ${viewport.width}px`, async ({ page }) => {
     const errors: string[] = []
-    page.on('pageerror', (error) => errors.push(error.message))
+    let replacingDocument = false
+    page.on('pageerror', (error) => {
+      // WebKit reports canceled same-origin RSC prefetches from the replaced
+      // document as page errors during reload. The trace confirms these are
+      // aborted old requests; actual JS errors and errors after load still fail.
+      const abortedOldPrefetch = replacingDocument &&
+        error.name.startsWith('Fetch API cannot load http') &&
+        error.message.includes('?_rsc=') &&
+        error.message.endsWith(' due to access control checks.') &&
+        error.stack?.includes(`Fetch API cannot load ${new URL(page.url()).origin}/`)
+      if (!abortedOldPrefetch) errors.push(error.message)
+    })
     await page.setViewportSize(viewport)
     await page.goto('/galaxy/slow-thinkers')
     await expect(page.getByText('No discussions yet.', { exact: true })).toBeVisible()
@@ -173,10 +184,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       if (fail) await route.fulfill({ status: 503, json: { error: 'unavailable' } })
       else await route.continue()
     })
-    // Let navigation prefetches settle before explicitly replacing the document.
-    // WebKit reports an interrupted prefetch as a page error during reload.
-    await page.waitForLoadState('networkidle')
-    await page.reload()
+    replacingDocument = true
+    try { await page.reload() } finally { replacingDocument = false }
     await expect(page.getByText('Community posts could not be loaded.')).toBeVisible()
     fail = false
     await page.getByRole('button', { name: 'Try again', exact: true }).click()
