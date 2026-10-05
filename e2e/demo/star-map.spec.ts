@@ -84,7 +84,7 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
 
 test('wheel zoom enters a real cluster, and reduced motion has no playback controls', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/star-map')
   const panelToggle = page.getByRole('button', {
@@ -104,7 +104,11 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
   await page.locator('canvas[aria-label]').scrollIntoViewIfNeeded()
   const box = await page.locator('canvas[aria-label]').boundingBox()
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height * 0.44)
-  await page.mouse.wheel(0, -550)
+  if (testInfo.project.name === 'iphone-safari') {
+    // Playwright cannot drive a mouse wheel in mobile WebKit. Exercise the
+    // browser wheel listener directly; physical pinch remains a device check.
+    await page.locator('canvas[aria-label]').dispatchEvent('wheel', {deltaY:-550,clientX:box!.x + box!.width / 2,clientY:box!.y + box!.height * 0.44})
+  } else await page.mouse.wheel(0, -550)
   await expect(
     page.getByRole('button', { name: /Back to overview/ }),
   ).toBeVisible()
