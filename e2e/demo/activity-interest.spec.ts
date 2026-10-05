@@ -34,7 +34,7 @@ test('interest remains independent of RSVP and failed removal preserves the save
   expect(attendanceWrites).toBe(0)
   await page.getByRole('button', { name: '感兴趣', exact: true }).first().click()
   await page.getByRole('button', { name: '已收藏 · 感兴趣', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('无法更新活动收藏')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('无法更新活动收藏')
   await expect(page.getByText('测试活动', { exact: true })).toBeVisible()
   failRemoval = false
   await page.getByRole('button', { name: '已收藏 · 感兴趣', exact: true }).click()

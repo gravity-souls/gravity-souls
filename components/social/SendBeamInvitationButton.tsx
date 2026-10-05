@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { notifyInboxChanged } from '@/lib/inbox-client'
 import { withExplorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import { announcePlanetAction } from '@/lib/planet-actions'
-import { subscribeSocialRefresh } from '@/lib/social-refresh'
+import { requestSocialRefresh, subscribeSocialRefresh } from '@/lib/social-refresh'
 
 type Status = { available: boolean; invitationId: string | null; status: string | null; conversationId: string | null; incomingPending: boolean }
 export default function SendBeamInvitationButton({ userId, origin }: { userId: string; origin?: ExplorationOrigin | null }) {
@@ -59,6 +59,6 @@ export default function SendBeamInvitationButton({ userId, origin }: { userId: s
         {state.status === 'PENDING' && <button type="button" disabled={busy} onClick={() => void change(true)} className="min-h-10 rounded-xl border border-white/15 px-4 py-2 text-sm text-violet-200">{t(busy ? 'working' : 'cancel')}</button>}</>
       : <button type="button" disabled={busy || !state} onClick={() => void change()} className="rounded-xl border border-violet-300/30 px-4 py-2 text-sm text-violet-200 disabled:opacity-50">{t(busy ? 'working' : 'send')}</button>}
     <Link href={withExplorationOrigin(`/messages?invitations=${state?.incomingPending || error === 'incomingPending' ? 'received' : 'sent'}`, origin)} className="text-xs underline">{t(state?.incomingPending || error === 'incomingPending' ? 'received' : 'sent')}</Link>
-    {error && <p role="alert" className="text-xs text-red-300">{t(error)} <button type="button" disabled={busy} className="underline" onClick={() => setRevision(v => v + 1)}>{t('retry')}</button></p>}
+    {error && <p role="alert" className="text-xs text-red-300">{t(error)} <button type="button" disabled={busy} className="underline" onClick={requestSocialRefresh}>{t('retry')}</button></p>}
   </div>
 }

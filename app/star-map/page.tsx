@@ -26,7 +26,7 @@ function StarMapPageContent() {
   if (requested === 'resonance') return null
   return (
     <AppShell personalMapActive={mode === 'personal'}>
-      <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6">
         <h1 className="text-3xl font-semibold text-white">{t('title')}</h1>
         <p className="mt-3 text-sm text-slate-400">{t(mode === 'personal' ? 'personalSubtitle' : 'subtitle')}</p>
         <nav className="mt-5 flex flex-wrap gap-3" aria-label={t('modes')}>
@@ -63,7 +63,7 @@ function StarMapPageContent() {
         <StarMap key={`${mode}:${layer}:${collection}`} mode={mode} collection={collection} layer={layer} listOnly={listOnly} />
         {mode === 'personal' && <Link className="mt-4 inline-block py-3 text-sm text-violet-200" href="/star-map?mode=discover">{t('exploreGlobal')}</Link>}
         <p className="mt-5 text-xs text-slate-400">{t('paths')}</p>
-      </main>
+      </section>
     </AppShell>
   )
 }

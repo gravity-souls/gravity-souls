@@ -24,7 +24,7 @@ for(const locale of ['en','zh','fr'] as const)test(`quoted reply retry and expli
  await page.goto('/messages/interaction-fixture')
  await page.getByRole('button',{name:t.chatInteractions.reply,exact:true}).click();expect(sends).toHaveLength(0)
  await expect(page.getByText(t.chatInteractions.replying,{exact:true})).toBeVisible()
- await page.getByRole('textbox').fill('A quoted reply')
+ await page.locator('textarea[aria-label]').fill('A quoted reply')
  await page.getByRole('button',{name:t.a11y.sendSignal,exact:true}).click()
  await expect(page.getByText(t.messagesPage.deliveryUnconfirmed,{exact:true})).toBeVisible()
  await page.getByRole('button',{name:t.a11y.sendSignal,exact:true}).click()

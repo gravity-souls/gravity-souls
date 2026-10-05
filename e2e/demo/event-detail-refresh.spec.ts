@@ -7,7 +7,7 @@ test('RSVP refreshes avatars and management without duplicating related signals'
   const event = () => ({ id: 'event', galaxyId: 'galaxy', title: 'Refresh fixture', description: 'Test', date: '2030-01-01T19:00:00Z', category: 'MEETUP', status: 'APPROVED', location: 'Test', onlineUrl: null, maxAttendees: null, coverImage: null, proposer: { id: 'viewer', name: 'Viewer', planetTexture: null, userLevel: 2 }, canManage: true, requiresApproval: false, rsvpCount: attending ? 1 : 0, userHasRSVPed: attending, userAttendance: attending ? 'APPROVED' : null, spotsRemaining: null, rsvps: attending ? [{ id: 'viewer', name: 'Viewer', planetTexture: null, userLevel: 2 }] : [] })
   await page.route('**/api/galaxies/events?*', route => route.fulfill({ json: { events: [event()], total: 1, pageSize: 20 } }))
   await page.route('**/api/posts?*', route => route.fulfill({ json: { posts: [], nextCursor: null } }))
-  await page.route('**/api/galaxies/galaxy/events/event*', route => {
+  await page.route('**/api/galaxies/galaxy/events/event**', route => {
     const url = route.request().url()
     if (url.endsWith('/rsvp')) { attending = route.request().method() === 'POST'; return route.fulfill({ json: { rsvpCount: attending ? 1 : 0, userHasRSVPed: attending, userAttendance: attending ? 'APPROVED' : null } }) }
     if (url.endsWith('/attendees')) return route.fulfill({ json: { attendees: attending ? [{ userId: 'viewer', name: 'Viewer', status: 'APPROVED' }] : [] } })

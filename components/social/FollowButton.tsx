@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { setUserFollowing } from '@/lib/planet-actions'
 
-import { subscribeSocialRefresh } from '@/lib/social-refresh'
+import { requestSocialRefresh, subscribeSocialRefresh } from '@/lib/social-refresh'
 
 export default function FollowButton({ userId }: { userId: string }) {
   const t = useTranslations('planetActions')
@@ -47,6 +47,6 @@ export default function FollowButton({ userId }: { userId: string }) {
     </button>
     {state?.available !== false && state && <span className="text-xs text-white/50">{t(state.following && state.followedBy ? 'mutual' : state.following ? 'following' : state.followedBy ? 'followsYou' : 'notFollowing')}</span>}
     {notice && !error && <p role="status" className="text-xs text-violet-200">{t(notice)}</p>}
-    {error && <div role="alert" className="text-xs text-red-300">{t(error === 'auth' ? 'signInRequired' : 'stateFailed')} {error === 'auth' ? <Link href="/sign-in">{t('signIn')}</Link> : <button type="button" className="underline" onClick={() => setRevision(v => v + 1)}>{t('retry')}</button>}</div>}
+    {error && <div role="alert" className="text-xs text-red-300">{t(error === 'auth' ? 'signInRequired' : 'stateFailed')} {error === 'auth' ? <Link href="/sign-in">{t('signIn')}</Link> : <button type="button" className="underline" onClick={requestSocialRefresh}>{t('retry')}</button>}</div>}
   </div>
 }

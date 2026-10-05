@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test'
 test('calendar reminder is opt-in, retries a failed read and disappears after withdrawal', async ({ page, context, baseURL }) => {
   await context.addCookies([{ name: 'better-auth.session_token', value: 'fixture', url: baseURL! }, { name: 'locale', value: 'en', url: baseURL! }])
   let attending = true, fail = true, calendarReads = 0, attendanceWrites = 0
-  const event = () => ({ id: 'calendar-event', galaxyId: 'calendar-galaxy', title: 'Calendar fixture', description: 'Test', date: '2030-01-01T12:00:00Z', category: 'MEETUP', status: 'APPROVED', location: 'Test', onlineUrl: null, maxAttendees: null, coverImage: null, proposer: { id: 'organizer', name: 'Organizer', planetTexture: null }, isOrganizer: false, requiresApproval: true, rsvpCount: attending ? 1 : 0, userHasRSVPed: attending, userAttendance: attending ? 'APPROVED' : 'CANCELLED', spotsRemaining: null, rsvps: [] })
+  const event = () => ({ id: 'calendar-event', galaxyId: 'calendar-galaxy', title: 'Calendar fixture', description: 'Test', date: '2030-01-01T12:00:00Z', category: 'MEETUP', status: 'APPROVED', location: 'Test', onlineUrl: null, maxAttendees: null, coverImage: null, proposer: { id: 'organizer', name: 'Organizer', planetTexture: null }, isOrganizer: false, userInterested: false, requiresApproval: true, rsvpCount: attending ? 1 : 0, userHasRSVPed: attending, userAttendance: attending ? 'APPROVED' : 'CANCELLED', spotsRemaining: null, rsvps: [] })
   await page.route('**/api/galaxies/events?*', route => route.fulfill({ json: { events: [event()], total: 1, pageSize: 20 } }))
   await page.route('**/api/posts?*', route => route.fulfill({ json: { posts: [], nextCursor: null } }))
-  await page.route('**/api/galaxies/calendar-galaxy/events/calendar-event*', route => {
+  await page.route('**/api/galaxies/calendar-galaxy/events/calendar-event**', route => {
     if (route.request().url().endsWith('/calendar')) {
       calendarReads++
       return fail ? route.fulfill({ status: 500, json: {} }) : route.fulfill({ contentType: 'text/calendar', body: 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n' })
@@ -23,7 +23,7 @@ test('calendar reminder is opt-in, retries a failed read and disappears after wi
   await expect(add).toBeVisible()
   expect(calendarReads).toBe(0)
   await add.click()
-  await expect(dialog.getByRole('alert')).toContainText('Could not download')
+  await expect(dialog.locator('p[role="alert"]')).toContainText('Could not download')
   fail = false
   const download = page.waitForEvent('download')
   await add.click()

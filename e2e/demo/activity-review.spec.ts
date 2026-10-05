@@ -35,6 +35,6 @@ for (const [locale,m] of Object.entries({en,fr,zh})) {
     allowed = false
     await page.evaluate(()=>window.dispatchEvent(new Event('focus')))
     await expect(dialog).toHaveCount(0)
-    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toBeVisible()
   })
 }

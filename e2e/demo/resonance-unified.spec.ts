@@ -54,6 +54,7 @@ test('canonical recommendation identity and score survive map/list switches', as
   await expect(planet).toBeVisible()
   const label = await planet.getAttribute('aria-label')
   const score = label!.match(/(\d+)$/)![1]
+  await planet.focus()
   await planet.click()
   await expect(
     page.getByTestId('resonance-score').filter({ visible: true }),

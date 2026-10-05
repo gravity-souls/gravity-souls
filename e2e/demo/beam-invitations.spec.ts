@@ -85,7 +85,7 @@ test('an uncertain orbit removal retries by reading state instead of saving it a
   let saved = true, writes = 0
   const planet = { id: 'retry-planet', userId: 'target', name: 'Retry planet', mood: 'calm', lifestyle: 'solitary', coreThemes: [], visual: {} }
   await page.route('**/api/my-planet', route => route.fulfill({ json: { id: 'mine' } }))
-  await page.route('**/api/saved-planets', route => route.fulfill({ json: { savedPlanets: [{ id: 'save', planetId: planet.id, savedAt: '2026-10-05T10:00:00Z', planet }] } }))
+  await page.route('**/api/saved-planets', route => route.fulfill({ json: { savedPlanets: saved ? [{ id: 'save', planetId: planet.id, savedAt: '2026-10-05T10:00:00Z', planet }] : [] } }))
   await page.route('**/api/saved-planets/retry-planet', route => {
     if (route.request().method() !== 'GET') {
       saved = false; writes++
@@ -96,9 +96,9 @@ test('an uncertain orbit removal retries by reading state instead of saving it a
   await page.route('**/api/beam-invitations/status?**', route => route.fulfill({ json: { available: true, invitationId: null, status: null, conversationId: null, incomingPending: false } }))
   await page.goto('/saved')
   await page.getByRole('button', { name: 'Saved · Remove from orbit', exact: true }).click()
-  const alert = page.getByRole('alert').filter({ hasText: 'The latest state could not be confirmed' })
+  const alert = page.locator('[role="alert"]:not(#__next-route-announcer__)').filter({ hasText: 'The latest state could not be confirmed' })
   await expect(alert).toBeVisible()
   await alert.getByRole('button', { name: 'Retry', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Save to orbit', exact: true })).toBeVisible()
+  await expect(page.getByText('Retry planet', { exact: true })).toHaveCount(0)
   expect(writes).toBe(1)
 })

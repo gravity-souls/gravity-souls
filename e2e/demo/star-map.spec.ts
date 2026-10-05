@@ -66,9 +66,9 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
     page.getByRole('link', { name: 'View planet →' }),
   ).toHaveAttribute('href', '/planet/fixture-planet?from=star-map')
   await expect(
-    page.locator('aside img[src="/textures/earth_day.jpg"]'),
+    page.locator('aside [aria-live="polite"] img[src="/textures/earth_day.jpg"]'),
   ).toBeVisible()
-  await expect(page.locator('canvas')).toHaveCSS('touch-action', 'none')
+  await expect(page.locator('canvas[aria-label]')).toHaveCSS('touch-action', 'none')
   await page.getByRole('button', { name: /Back to overview/ }).click()
   await expect(
     page.getByRole('heading', { name: 'Browser fixture planet' }),
@@ -99,7 +99,7 @@ test('wheel zoom enters a real cluster, and reduced motion has no playback contr
     exact: true,
   })
   if (await closePanel.isVisible()) await closePanel.click()
-  const box = await page.locator('canvas').boundingBox()
+  const box = await page.locator('canvas[aria-label]').boundingBox()
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height * 0.44)
   await page.mouse.wheel(0, -550)
   await expect(
@@ -145,7 +145,7 @@ test('map data failure clears stale objects and explains failure', async ({
   )
   await page.getByRole('textbox', { name: 'Search names' }).fill('new search')
   await page.getByRole('button', { name: 'Search', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('The map could not load')
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)')).toContainText('The map could not load')
   await expect(
     page.getByRole('button', { name: 'Calm 1 planets' }),
   ).toHaveCount(0)
@@ -160,7 +160,7 @@ test('view switch stays above the map and objects occupy a side panel', async ({
     exact: true,
   })
   await expect(switcher).toHaveAttribute('href', '/discover')
-  const canvas = await page.locator('canvas').boundingBox()
+  const canvas = await page.locator('canvas[aria-label]').boundingBox()
   const switchBox = await switcher.boundingBox()
   expect(switchBox!.y + switchBox!.height).toBeLessThan(canvas!.y)
   const toggle = page.getByRole('button', {
@@ -212,7 +212,7 @@ test('phone exposes language and complete navigation from the account menu', asy
     .getByRole('button', { name: 'Open user menu', exact: true })
     .click()
   const menu = page.getByRole('navigation', { name: 'All sections' })
-  for (const href of ['/star-map', '/discover', '/galaxies/events', '/saved'])
+  for (const href of ['/star-map', '/discover', '/activities', '/saved'])
     await expect(menu.locator(`a[href="${href}"]`)).toBeVisible()
   await expect(menu.getByRole('textbox')).toBeVisible()
   await menu.locator('a[href="/star-map"]').click()

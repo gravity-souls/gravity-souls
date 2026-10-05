@@ -38,5 +38,5 @@ test('revoked image read hides preview and closes the photo dialog',async({page,
   await page.route('**/api/conversations/image-fixture',route=>route.fulfill({json:{conversation:{id:'image-fixture'},viewerId:'viewer',otherUser:{id:'other',name:'Other'},canSend:true,messages:[{id:'image',fromId:'viewer',type:'image',content:'',image,sentAt:'2026-10-05T10:00:00Z'}],olderCursor:null}}))
   await page.goto('/messages/image-fixture');await page.getByRole('button',{name:en.chatImages.open,exact:true}).click();revoked=true
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')))
-  await expect(page.getByText(en.chatImages.unavailable,{exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('status').filter({hasText:en.chatImages.unavailable})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0)
 })

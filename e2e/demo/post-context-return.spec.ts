@@ -87,7 +87,7 @@ for (const [locale, messages] of Object.entries({ en, fr, zh })) test(`same-gala
   allowed = false
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(activity).toHaveCount(0)
-  await expect(page.getByRole('alert').first()).toBeVisible()
+  await expect(page.locator('[role="alert"]:not(#__next-route-announcer__)').first()).toBeVisible()
 })
 test('related signals discard a late page after refresh and clear failed reads', async ({ page, context, baseURL }) => {
   await setup(page, context, baseURL!, 'en')
