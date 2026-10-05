@@ -18,6 +18,7 @@ const ReturnLink = require('../components/social/ExplorationReturnLink.tsx').def
 const Beam = require('../components/social/BeamButton.tsx').default
 const { BeamInvitationCard } = require('../components/social/BeamInvitations.tsx')
 const SendInvitation = require('../components/social/SendBeamInvitationButton.tsx').default
+const CalendarReminder = require('../components/events/CalendarReminder.tsx').default
 const { explorationOrigin, explorationReturnHref, withExplorationOrigin } = require('../lib/exploration-return.ts')
 const event = {
   id: 'evt',
@@ -52,6 +53,31 @@ function render(locale, child) {
   )
 }
 for (const locale of ['en', 'zh', 'fr']) {
+  test(`calendar reminder is explicit, localized and limited to confirmed attendance or the organizer in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`).activityReminders
+    const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)
+    const calendar = extra => render(locale, React.createElement(CalendarReminder, { event: { ...event, ...extra } }))
+    assert.equal(calendar({}), '')
+    assert.equal(calendar({ userAttendance: 'CANCELLED' }), '')
+    const approved = calendar({ userHasRSVPed: true, userAttendance: 'APPROVED' })
+    assert.ok(approved.includes(escaped(m.addCalendar)))
+    assert.ok(approved.includes(escaped(m.explanation)))
+    assert.ok(!approved.includes('<a'))
+    assert.ok(calendar({ isOrganizer: true }).includes(escaped(m.addCalendar)))
+    for (const status of ['PENDING', 'REJECTED', 'PASSED', 'CANCELLED']) assert.equal(calendar({ status, userHasRSVPed: true }), '')
+    assert.equal(calendar({ date: '2020-01-01T12:00:00Z', userHasRSVPed: true }), '')
+  })
+  test(`expired activity cards close attendance controls before persisted status changes in ${locale}`, () => {
+    const m = require(`../messages/${locale}.json`)
+    const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)
+    const expired = render(locale, React.createElement(EventCard, { event: { ...event, date: '2020-01-01T12:00:00Z', userInterested: false } }))
+    assert.ok(expired.includes(escaped(m.galaxyWorkflow.passed)))
+    assert.ok(!expired.includes(escaped(m.galaxyWorkflow.cancelAttendanceRequest)))
+    const near = render(locale, React.createElement(EventCard, { event: { ...event, reminderState: 'soon', userHasRSVPed: true, userAttendance: 'APPROVED' } }))
+    assert.ok(near.includes(escaped(m.activityReminders.soon)))
+    const pending = render(locale, React.createElement(EventCard, { event: { ...event, reminderState: 'soon' } }))
+    assert.ok(!pending.includes(escaped(m.activityReminders.soon)))
+  })
   test(`beam invitation decisions and existing chat distinguish sender and recipient in ${locale}`, () => {
     const m = require(`../messages/${locale}.json`).beamInvitations
     const escaped = text => renderToStaticMarkup(React.createElement('span', null, text)).slice(6, -7)

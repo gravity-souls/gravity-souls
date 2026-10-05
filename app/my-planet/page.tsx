@@ -20,6 +20,7 @@ import ResonanceRadar from '@/components/planet/ResonanceRadar'
 import ResonantMatchesCarousel from '@/components/planet/ResonantMatchesCarousel'
 import EventDetail from '@/components/events/EventDetail'
 import UpcomingActivityCard from '@/components/planet/UpcomingActivityCard'
+import { useUpcomingEvents } from '@/lib/hooks/useUpcomingEvents'
 import InboxPreview from '@/components/messages/InboxPreview'
 import RecommendedCommunities from '@/components/planet/RecommendedCommunities'
 import CreatePostModal from '@/components/stream/CreatePostModal'
@@ -158,7 +159,7 @@ export default function MyPlanetPage() {
   const [xpSummary, setXpSummary] = useState<XPSummary | null>(null)
   const [universeSummary, setUniverseSummary] = useState<UniverseSummary | null>(null)
   const [otherPlanets, setOtherPlanets] = useState<PlanetProfile[]>([])
-  const [upcomingEvents, setUpcomingEvents] = useState<GalaxyEventSummary[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useUpcomingEvents(2, !!planet?.userId)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [communities, setCommunities] = useState<(GalaxyPreview & { joined?: boolean; requestStatus?: string | null; joinPolicy?: string })[]>([])
   const [createPostOpen, setCreatePostOpen] = useState(false)
@@ -245,7 +246,7 @@ export default function MyPlanetPage() {
         setDraft(planetProfileToDraft(p))
         setStoredUser({ planetConfig: userPlanetConfig ?? planetConfigFromSource(null, p), userLevel })
 
-        // These five reads are independent of each other, so they run concurrently
+        // These four reads are independent of each other, so they run concurrently
         // instead of as a serial waterfall.
         await Promise.all([
           (async () => {
@@ -260,20 +261,6 @@ export default function MyPlanetPage() {
               }
             } catch {
               // XP is available for authenticated users only.
-            }
-          })(),
-
-          (async () => {
-            try {
-              const upcomingRes = await fetch('/api/user/upcoming-events?limit=2')
-              if (upcomingRes.ok) {
-                const upcomingData = await upcomingRes.json() as { event?: GalaxyEventSummary | null; events?: GalaxyEventSummary[] }
-                setUpcomingEvents(upcomingData.events ?? (upcomingData.event ? [upcomingData.event] : []))
-              } else {
-                setUpcomingEvents([])
-              }
-            } catch {
-              setUpcomingEvents([])
             }
           })(),
 

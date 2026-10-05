@@ -6,6 +6,7 @@ import { CalendarDays, MapPin, Monitor, Users } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import RSVPButton from '@/components/events/RSVPButton'
 import InterestButton from '@/components/events/InterestButton'
+import { useActivityStatus } from '@/lib/hooks/useActivityStatus'
 import type { GalaxyEventSummary } from '@/types/event'
 
 const CATEGORY_GRADIENTS: Record<GalaxyEventSummary['category'], string> = {
@@ -42,8 +43,10 @@ interface EventCardProps {
 
 export default function EventCard({ event, isProposer = false, compact = false, onOpen, onRSVPChange }: EventCardProps) {
   const t = useTranslations('galaxyWorkflow'), te = useTranslations('eventForms'), locale = useLocale()
+  const tr = useTranslations('activityReminders')
   const spotsLeft = event.maxAttendees == null ? null : Math.max(0, event.maxAttendees - event.rsvpCount)
-  const isPassed = event.status === 'PASSED'
+  const effectiveStatus = useActivityStatus(event.status, event.date)
+  const isPassed = effectiveStatus === 'PASSED'
   const showPending = event.status === 'PENDING' && (isProposer || event.canReviewEvent)
 
   return (
@@ -102,6 +105,8 @@ export default function EventCard({ event, isProposer = false, compact = false, 
           )}
         </div>
 
+        {event.reminderState && effectiveStatus === 'APPROVED' && event.userHasRSVPed && <p role="status" className="text-xs text-violet-200">{tr(event.reminderState === 'soon' ? 'soon' : 'confirmed')}</p>}
+        {event.userAttendance === 'CANCELLED' && effectiveStatus === 'APPROVED' && <p className="text-xs text-white/60">{tr('withdrawn')}</p>}
         {event.pendingAttendanceCount != null && event.pendingAttendanceCount > 0 && <p className="text-xs text-amber-200">{te('pendingAttendanceCount', { count: event.pendingAttendanceCount })}</p>}
         {!compact && (
           <p className="line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.72 }}>
@@ -126,7 +131,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
             {t('goingCount', { count: event.rsvpCount })}{spotsLeft !== null ? ` · ${te('spotsRemaining', { count: spotsLeft })}` : ''}
           </span>
           <span className="flex flex-wrap gap-2" onClick={(clickEvent) => clickEvent.stopPropagation()}>
-            {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={event} />}
+            {event.status !== 'PENDING' && event.status !== 'REJECTED' && <InterestButton event={{ ...event, status: effectiveStatus }} />}
             <RSVPButton
               eventId={event.id}
               galaxyId={event.galaxyId}
@@ -135,7 +140,7 @@ export default function EventCard({ event, isProposer = false, compact = false, 
               initialAttendance={event.userAttendance}
               requiresApproval={event.requiresApproval}
               maxAttendees={event.maxAttendees}
-              status={event.status}
+              status={effectiveStatus}
               onChange={(state) => onRSVPChange?.(event.id, state)}
             />
           </span>

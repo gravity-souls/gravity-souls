@@ -40,6 +40,8 @@ export interface GalaxyEventSummary {
   userAttendance?: string | null
   requiresApproval?: boolean
   rejectionReason?: string | null
+  isOrganizer?: boolean
+  reminderState?: 'soon' | 'scheduled' | null
   canManage?: boolean
   canReviewEvent?: boolean
   pendingAttendanceCount?: number
