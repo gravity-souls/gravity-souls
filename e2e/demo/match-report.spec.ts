@@ -28,7 +28,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(page.getByRole('heading', { name: 'Report candidate', exact: true })).toBeVisible()
     failed = true
     await page.evaluate(() => window.dispatchEvent(new Event('focus')))
-    await expect(page.getByRole('alert')).toContainText(copy.matchReport.auth)
+    await expect(page.locator('section[role="alert"]')).toContainText(copy.matchReport.auth)
     await expect(page.getByText('Report candidate', { exact: true })).toHaveCount(0)
     await expect(page.getByRole('link', { name: copy.matchReport.signIn, exact: true })).toHaveAttribute('href', '/sign-in?next=/my-planet/report')
   })
