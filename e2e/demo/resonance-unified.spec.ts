@@ -115,6 +115,8 @@ test('recommended planets move with the field and stop for reduced motion and ke
   await page.goto('/resonance')
   const planet = page.getByRole('button',{name:/Fixture amber · Signal Score/})
   await expect(planet).toBeVisible()
+  await planet.scrollIntoViewIfNeeded()
+  await expect(planet).toBeInViewport()
   const initial = await planet.getAttribute('style')
   await expect.poll(() => planet.getAttribute('style')).not.toBe(initial)
   const label = await planet.getAttribute('aria-label')
