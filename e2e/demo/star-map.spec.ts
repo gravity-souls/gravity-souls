@@ -250,6 +250,7 @@ test('global map appends visible batches and clears them after revoked access', 
   await page.goto('/star-map')
   const toggle = page.getByRole('button', { name: 'Constellations & planets', exact: true })
   if (await toggle.isVisible()) await toggle.click()
+  await page.getByRole('button', { name: 'Calm 1 planets', exact: true }).click()
   await expect(page.getByText('First visible planet', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Load more planets', exact: true }).click()
   await expect(page.getByText('Second visible planet', { exact: true })).toBeVisible()

@@ -11,9 +11,9 @@ test('activity filters reach the server, preference order is explicit and cleari
   await page.goto('/activities')
   const t = en.discoveryPreferences
   await page.getByLabel(t.region, { exact: true }).fill('Paris')
-  await page.getByLabel(t.language, { exact: true }).selectOption('fr')
-  await page.getByLabel(t.interest, { exact: true }).selectOption('art')
-  await page.getByLabel(t.sort, { exact: true }).selectOption('recommended')
+  await page.getByRole('combobox', { name: t.language, exact: true }).selectOption('fr')
+  await page.getByRole('combobox', { name: t.interest, exact: true }).selectOption('art')
+  await page.getByRole('combobox', { name: t.sort, exact: true }).selectOption('recommended')
   await expect.poll(() => Object.fromEntries(query)).toMatchObject({ region: 'Paris', language: 'fr', interest: 'art', sort: 'recommended', page: '1' })
   await expect(page.getByText(t.batchHint, { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
