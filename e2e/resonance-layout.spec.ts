@@ -19,6 +19,7 @@ test('resonance title is readable and selected score stays centered below the na
   const label = await node.getAttribute('aria-label')
   const selectedScore = label?.match(/signal score (\d+)/i)?.[1]
   expect(selectedScore).toBeTruthy()
+  await node.focus() // Keyboard focus pauses the moving node before activation.
   await node.click()
   const score = page.getByRole('dialog').getByTestId('resonance-score')
   await expect(score).toHaveText(selectedScore!)

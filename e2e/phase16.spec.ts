@@ -32,6 +32,7 @@ test.describe('planet detail — real DB planet via resonance drawer', () => {
     // Open the resonance drawer on the first orbit node
     const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
+    await node.focus() // Keyboard focus pauses the moving node before activation.
     await node.click()
 
     const drawer = page.getByRole('dialog')

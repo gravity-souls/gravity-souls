@@ -115,7 +115,7 @@ test.describe('authenticated API protections', () => {
     const thread = await prisma.conversationThread.create({ data: { userAId: E2E.noPlanet.userId, userBId: E2E.handoff.userId } })
     try {
       expect((await request.get(`/api/conversations/${thread.id}`)).status()).toBe(404)
-      expect((await request.post(`/api/conversations/${thread.id}`, { data: { content: 'intruder' } })).status()).toBe(404)
+      expect((await request.post(`/api/conversations/${thread.id}`, { data: { content: 'intruder' } })).status()).toBe(403)
       const participant = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: AUTH_NP })
       try {
         expect((await participant.post(`/api/conversations/${thread.id}`, { data: { content: '  Hello  ' } })).status()).toBe(201)

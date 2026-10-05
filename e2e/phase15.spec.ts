@@ -42,6 +42,7 @@ test.describe('resonance orbit — real planet data', () => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
     const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
+    await node.focus() // Keyboard focus pauses the moving node before activation.
     await node.click()
 
     const drawer = page.getByRole('dialog')
@@ -56,6 +57,7 @@ test.describe('resonance orbit — real planet data', () => {
     await page.goto('/resonance', { waitUntil: 'networkidle' })
     const node = page.getByRole('button', { name: /signal score/i }).first()
     await expect(node).toBeVisible({ timeout: 8000 })
+    await node.focus() // Keyboard focus pauses the moving node before activation.
     await node.click()
 
     await expect(page.getByRole('dialog')).toBeVisible()
