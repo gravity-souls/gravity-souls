@@ -38,6 +38,8 @@ model user {
 
   sessions Session[]
   accounts Account[]
+  registrationRequired Boolean @default(true)
+  registrationBasics RegistrationBasics?
   profile  Profile?
   questionnaires QuestionnaireResult[]
   planets  Planet[]
@@ -888,4 +890,20 @@ model PushDelivery {
   @@index([status, nextAttemptAt])
   @@index([expiresAt])
   @@map("push_delivery")
+}
+
+// Private registration data; never included in public profile DTOs.
+model RegistrationBasics {
+  userId String @id
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender String @default("undisclosed")
+  languages String[] @default([])
+  region String @default("")
+  interests String[] @default([])
+  connectionGoals String[] @default([])
+  peoplePreferences String[] @default([])
+  gatheringPreferences String[] @default([])
+  adultConfirmedAt DateTime
+  ageMethod String
+  updatedAt DateTime @updatedAt
 }

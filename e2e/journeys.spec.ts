@@ -12,6 +12,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import en from '../messages/en.json'
 import { E2E, JOURNEY, AUTH_WP, AUTH_SO } from './test-ids'
 
 // ── Journey 1 ─────────────────────────────────────────────────────────────────
@@ -23,7 +24,8 @@ import { E2E, JOURNEY, AUTH_WP, AUTH_SO } from './test-ids'
 test.describe('Journey 1 — new user sign-up', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('sign-up → /api/onboarding/complete → /resonance → reload → /my-planet (no bounce to /sign-in)', async ({ page }) => {
+  test('sign-up → adult basics → calibration save → /resonance → reload → /my-planet', async ({ page }, testInfo) => {
+    testInfo.setTimeout(60_000)
     // Capture API response statuses for diagnostic output on failure
     const apiLog: Record<string, number> = {}
     page.on('response', (res) => {
@@ -68,11 +70,20 @@ test.describe('Journey 1 — new user sign-up', () => {
     console.log('[journey1] landed on:', afterSignUp)
     console.log('[journey1] API statuses:', JSON.stringify(apiLog))
 
-    // Primary assertion: must land on /resonance, not /onboarding or /sign-in
-    expect(afterSignUp, `Expected /resonance but got ${afterSignUp}. API log: ${JSON.stringify(apiLog)}`).toBe('/resonance')
-
-    // /api/onboarding/complete must have been called and must have returned 200
-    expect(apiLog['onboarding/complete'], '/api/onboarding/complete was not called or returned non-200').toBe(200)
+    // New registrations must finish their private basics before saving the
+    // existing anonymous calibration draft. The server refuses the shortcut.
+    expect(afterSignUp).toBe('/onboarding')
+    const wizard = page.getByTestId('registration-basics')
+    await expect(wizard).toBeVisible()
+    await wizard.getByRole('checkbox', { name: en.registrationBasics.adultDeclaration }).check()
+    await wizard.getByRole('button', { name: en.registrationBasics.continue, exact: true }).click()
+    for (let i = 1; i < 7; i++) await wizard.getByRole('button', { name: en.registrationBasics.skip, exact: true }).click()
+    await wizard.getByRole('button', { name: en.registrationBasics.startCalibration, exact: true }).click()
+    await expect(wizard).toHaveCount(0)
+    await page.getByRole('button', { name: en.createPlanet.saveMyPlanet, exact: true }).click()
+    await expect.poll(() => apiLog['onboarding/complete']).toBe(200)
+    await page.getByRole('link', { name: 'See my resonances', exact: true }).click()
+    await page.waitForURL('**/resonance')
 
     // Hard reload — session must persist (cookie survives a full page refresh)
     await page.reload({ waitUntil: 'networkidle' })

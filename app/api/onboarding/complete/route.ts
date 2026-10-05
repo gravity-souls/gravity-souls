@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id
+    const [registrationUser, basics] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { registrationRequired: true } }),
+      prisma.registrationBasics.findUnique({ where: { userId } }),
+    ])
+    if (registrationUser?.registrationRequired && !basics) {
+      return NextResponse.json({ error: 'REGISTRATION_REQUIRED' }, { status: 403 })
+    }
 
     const input = await readJson(req, onboardingSchema)
     if (!input.ok) return input.response

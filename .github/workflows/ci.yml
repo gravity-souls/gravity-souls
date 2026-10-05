@@ -42,6 +42,7 @@ jobs:
       - run: npm run test:chat-interactions
       - run: npm run test:push
       - run: npm run test:galaxy
+      - run: npm run test:registration
 
   database-suite:
     runs-on: ubuntu-latest

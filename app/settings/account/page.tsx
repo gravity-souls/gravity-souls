@@ -175,6 +175,7 @@ function DeleteSection() {
 
 export default function AccountSettingsPage() {
   const t = useTranslations('accountSettings')
+  const basics = useTranslations('registrationBasics')
 
   return (
     <AppShell>
@@ -205,6 +206,7 @@ export default function AccountSettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <OrbitCard className="p-6"><h2 className="font-semibold">{basics('editTitle')}</h2><p className="my-3 text-sm opacity-70">{basics('editHint')}</p><Link href="/settings/basics" className="underline">{basics('editTitle')}</Link></OrbitCard>
           <PushSettings />
           <ExportSection />
           <DeleteSection />

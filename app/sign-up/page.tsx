@@ -141,7 +141,7 @@ function SignUpForm() {
       }
 
       await Promise.all([languageCall, planetConfigCall, policyCall]);
-      window.location.href = nextDest || '/onboarding'
+      window.location.href = '/onboarding'
     } catch {
       setError(tCommon("error"));
     } finally {
