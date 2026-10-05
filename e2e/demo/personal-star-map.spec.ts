@@ -44,6 +44,8 @@ for (const [locale, messages] of Object.entries({ en, fr, zh })) {
     await expect(card).toContainText(messages.starMap.savedStatus)
     failRemove = false
     await card.getByRole('button',{name:messages.planetActions.retry, exact:true}).click()
+    await expect(card.getByRole('button',{name:messages.planetActions.removeSave, exact:true})).toBeVisible()
+    await card.getByRole('button',{name:messages.planetActions.removeSave, exact:true}).click()
     await expect(page.getByRole('button',{name:/^Personal browser fixture/})).toHaveCount(0)
     await expect(page.getByRole('status')).toContainText(messages.starMap.personalEmpty)
     await page.getByRole('link',{name:messages.starMap.collection_following,exact:true}).click()
