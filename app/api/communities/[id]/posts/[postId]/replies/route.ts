@@ -1,42 +1,25 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
-
-function serializeReply(reply: {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  author: { id: string; name: string; planets: { id: string; name: string }[] };
-}) {
-  const authorPlanet = reply.author.planets[0] ?? null;
-
-  return {
-    id: reply.id,
-    content: reply.content,
-    createdAt: reply.createdAt.toISOString(),
-    updatedAt: reply.updatedAt.toISOString(),
-    author: {
-      id: reply.author.id,
-      name: reply.author.name,
-      planet: authorPlanet
-        ? {
-            id: authorPlanet.id,
-            name: authorPlanet.name,
-          }
-        : null,
-    },
-  };
-}
+import { requireUser, getOptionalUserSession } from "@/lib/session";
+import { communityReplyInclude, serializeCommunityReply as serializeReply } from '@/lib/community-author'
+import { blockedUserIds, isBlocked } from '@/lib/visibility'
+import { readJson, safeApiError } from '@/lib/api-input'
+import { communityReplySchema } from '@/lib/input-schemas'
+import { checkRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/rate-limit'
+import { deny, galaxyAccess } from '@/lib/galaxy-workflow'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string; postId: string }> },
 ) {
+  try {
   const { id, postId } = await params;
+  const session = await getOptionalUserSession()
+  const viewerId = session?.user.id ?? null
+  const excluded = viewerId ? [...await blockedUserIds(viewerId)] : []
 
   const post = await prisma.communityPost.findFirst({
-    where: { id: postId, communityId: id },
+    where: { id: postId, communityId: id, authorId: { notIn: excluded } },
     select: { id: true },
   });
 
@@ -45,87 +28,50 @@ export async function GET(
   }
 
   const replies = await prisma.communityPostReply.findMany({
-    where: { postId },
+    where: { postId, authorId: { notIn: excluded } },
     orderBy: { createdAt: "asc" },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          planets: {
-            where: { active: true },
-            take: 1,
-            select: { id: true, name: true },
-          },
-        },
-      },
-    },
+    include: communityReplyInclude(viewerId),
   });
 
-  return NextResponse.json({ replies: replies.map(serializeReply) });
+  return NextResponse.json({ replies: await Promise.all(replies.map(reply => serializeReply(reply, viewerId))) });
+  } catch (error) { return safeApiError(error) }
 }
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string; postId: string }> },
 ) {
-  let session;
   try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
-  }
+  const session = await requireUser();
 
   const { id, postId } = await params;
   const userId = session.user.id;
-  const body = await request.json();
-  const content = typeof body.content === "string" ? body.content.trim() : "";
-
-  if (content.length < 2) {
-    return NextResponse.json({ error: "Reply content is required" }, { status: 400 });
-  }
-
-  if (content.length > 600) {
-    return NextResponse.json({ error: "Reply content is too long" }, { status: 400 });
-  }
-
-  const [post, membership] = await Promise.all([
-    prisma.communityPost.findFirst({
+  const input = await readJson(request, communityReplySchema)
+  if (!input.ok) return input.response
+  const { content } = input.data
+  const excluded = [...await blockedUserIds(userId)]
+  const { reply, replies } = await prisma.$transaction(async tx => {
+  const access = await galaxyAccess(tx, id, session.user, true)
+  const post = await tx.communityPost.findFirst({
       where: { id: postId, communityId: id },
-      select: { id: true },
-    }),
-    prisma.communityMembership.findUnique({
-      where: { userId_communityId: { userId, communityId: id } },
-      select: { id: true },
-    }),
-  ]);
+      select: { id: true, authorId: true },
+    })
 
-  if (!post) {
-    return NextResponse.json({ error: "Post not found" }, { status: 404 });
-  }
+  if (!post || await isBlocked(userId, post.authorId, tx)) deny('notFound', 404)
 
-  if (!membership) {
-    return NextResponse.json({ error: "Join this community before replying" }, { status: 403 });
-  }
+  if (!access.membership) deny('joinFirst')
+  const limit = RATE_LIMITS.MESSAGE_SEND
+  if (!await checkRateLimit(rateLimitKey('MESSAGE_SEND', userId), limit.limit, limit.windowMs, tx)) deny('rateLimited', 429)
 
-  const reply = await prisma.communityPostReply.create({
+  const reply = await tx.communityPostReply.create({
     data: { postId, authorId: userId, content },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          planets: {
-            where: { active: true },
-            take: 1,
-            select: { id: true, name: true },
-          },
-        },
-      },
-    },
+    include: communityReplyInclude(userId),
   });
 
-  const replies = await prisma.communityPostReply.count({ where: { postId } });
+  const replies = await tx.communityPostReply.count({ where: { postId, authorId: { notIn: excluded } } });
+  return { reply, replies }
+  })
 
-  return NextResponse.json({ reply: serializeReply(reply), replies }, { status: 201 });
+  return NextResponse.json({ reply: await serializeReply(reply, userId), replies }, { status: 201 });
+  } catch (error) { return safeApiError(error) }
 }

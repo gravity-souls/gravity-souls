@@ -65,6 +65,32 @@ not yet enforce the approved future product defaults.
 - Community discussion GET no longer creates/updates topics, replies, or heat.
 - Galaxy post/discussion empty and error states no longer substitute canned content;
   likes and replies only succeed after a real API write.
+- Galaxy community posts/discussion replies now show the current public pseudonym,
+  never the separate planet name. The two sections reuse the compact planet loader,
+  preserve multiline content and failure drafts, lock pending actions, and reconcile
+  confirmed writes/deletes without reloading the catalogue. Authors can delete their
+  own replies through existing routes; community editing remains absent (no PATCH
+  routes or editor). Community publication/XP/notices are atomic, JSON inputs are
+  bounded and strictly validated, and existing post/message rate buckets are reused.
+  Server-side block filtering and private planet appearance use `lib/visibility.ts`;
+  no public traits or database model changes are added.
+  See [galaxy workflows](./galaxy-workflows.md) for limits and verification boundaries.
+- Approved community post-reply and discussion-reply likes are relational edges,
+  with live counts and viewer-only liked state on all list/create/refresh replies.
+  Authenticated members set `{ liked: boolean }` explicitly; repeated requests are
+  idempotent. Parent and reply authors must pass `canViewProfile` (including blocks),
+  and IDs are scoped to their galaxy/parent. Own replies may be liked, matching
+  stream comment precedent; no XP or notifications are added.
+  Localized heart actions acknowledge only valid server state, expose pressed/busy
+  state, and retain independent drafts and failed-action errors.
+  Own minimal reply-like target IDs are included in self-export; account tombstoning
+  removes own edges, and reply/parent/user hard deletion cascades.
+  Additive reviewed SQL: `prisma/migrations/20261006210000_add_community_reply_likes/migration.sql`.
+  **Migration target is unselected and unapplied to any persistent database.**
+  Only disposable embedded PGlite verification applies this SQL; no backfill,
+  persistent DB-writing command, external service, deployment or release report
+  is part of this increment. Apply the reviewed migration with founder approval
+  before serving the new Prisma-backed routes.
 - Joining never assigns community ownership/admin roles, including concurrent joins.
 - Planet, calibration, message, event, and join input schemas reject malformed,
   oversized, out-of-range, and unknown fields. JSON parsing has a 64 KiB byte limit.

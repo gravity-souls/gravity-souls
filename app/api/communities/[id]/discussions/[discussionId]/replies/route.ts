@@ -1,96 +1,53 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-
-function serializeReply(reply: {
-  id: string;
-  content: string;
-  authorName: string;
-  createdAt: Date;
-  updatedAt: Date;
-  author: { id: string; name: string; planets: { id: string; name: string }[] } | null;
-}) {
-  const authorPlanet = reply.author?.planets[0] ?? null;
-
-  return {
-    id: reply.id,
-    content: reply.content,
-    createdAt: reply.createdAt.toISOString(),
-    updatedAt: reply.updatedAt.toISOString(),
-    author: {
-      id: reply.author?.id ?? null,
-      name: authorPlanet?.name ?? reply.authorName,
-      planet: authorPlanet ? { id: authorPlanet.id, name: authorPlanet.name } : null,
-    },
-  };
-}
+import { communityReplyInclude, serializeCommunityReply as serializeReply } from '@/lib/community-author'
+import { blockedUserIds, isBlocked } from '@/lib/visibility'
+import { readJson, safeApiError } from '@/lib/api-input'
+import { communityReplySchema } from '@/lib/input-schemas'
+import { checkRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/rate-limit'
+import { deny, galaxyAccess } from '@/lib/galaxy-workflow'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string; discussionId: string }> },
 ) {
-  let session;
   try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
-  }
+  const session = await requireUser();
 
   const { id, discussionId } = await params;
   const userId = session.user.id;
-  const body = await request.json();
-  const content = typeof body.content === "string" ? body.content.trim() : "";
-
-  if (content.length < 2) {
-    return NextResponse.json({ error: "Reply content is required" }, { status: 400 });
-  }
-
-  if (content.length > 600) {
-    return NextResponse.json({ error: "Reply content is too long" }, { status: 400 });
-  }
-
-  const [discussion, membership] = await Promise.all([
-    prisma.communityDiscussion.findFirst({
+  const input = await readJson(request, communityReplySchema)
+  if (!input.ok) return input.response
+  const { content } = input.data
+  const excluded = [...await blockedUserIds(userId)]
+  const { reply, replies } = await prisma.$transaction(async tx => {
+  const access = await galaxyAccess(tx, id, session.user, true)
+  const discussion = await tx.communityDiscussion.findFirst({
       where: { id: discussionId, communityId: id },
-      select: { id: true },
-    }),
-    prisma.communityMembership.findUnique({
-      where: { userId_communityId: { userId, communityId: id } },
-      select: { id: true },
-    }),
-  ]);
+      select: { id: true, authorId: true },
+    })
 
-  if (!discussion) {
-    return NextResponse.json({ error: "Discussion not found" }, { status: 404 });
-  }
+  if (!discussion || (discussion.authorId && await isBlocked(userId, discussion.authorId, tx))) deny('notFound', 404)
 
-  if (!membership) {
-    return NextResponse.json({ error: "Join this community before replying" }, { status: 403 });
-  }
+  if (!access.membership) deny('joinFirst')
+  const limit = RATE_LIMITS.MESSAGE_SEND
+  if (!await checkRateLimit(rateLimitKey('MESSAGE_SEND', userId), limit.limit, limit.windowMs, tx)) deny('rateLimited', 429)
 
-  const reply = await prisma.communityDiscussionReply.create({
+  const reply = await tx.communityDiscussionReply.create({
     data: {
       discussionId,
       authorId: userId,
-      authorName: session.user.name ?? "Unknown",
+      authorName: session.user.name,
       content,
     },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          planets: {
-            where: { active: true },
-            take: 1,
-            select: { id: true, name: true },
-          },
-        },
-      },
-    },
+    include: communityReplyInclude(userId),
   });
 
-  const replies = await prisma.communityDiscussionReply.count({ where: { discussionId } });
+  const replies = await tx.communityDiscussionReply.count({ where: { discussionId, OR: [{ authorId: null }, { authorId: { notIn: excluded } }] } });
+  return { reply, replies }
+  })
 
-  return NextResponse.json({ reply: serializeReply(reply), replies }, { status: 201 });
+  return NextResponse.json({ reply: await serializeReply(reply, userId), replies }, { status: 201 });
+  } catch (error) { return safeApiError(error) }
 }

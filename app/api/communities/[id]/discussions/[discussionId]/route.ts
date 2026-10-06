@@ -2,21 +2,20 @@ import { galaxyAccess } from '@/lib/galaxy-workflow'
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { safeApiError } from '@/lib/api-input'
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string; discussionId: string }> },
 ) {
-  let session;
   try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
-  }
+  const session = await requireUser();
 
   const { id, discussionId } = await params;
 
-  const discussion = await prisma.communityDiscussion.findFirst({
+  return await prisma.$transaction(async tx => {
+  const access = await galaxyAccess(tx, id, session.user, true)
+  const discussion = await tx.communityDiscussion.findFirst({
     where: { id: discussionId, communityId: id },
     select: { id: true, authorId: true },
   });
@@ -28,12 +27,13 @@ export async function DELETE(
   // authorId is nullable (seeded/system discussions have no author) —
   // strict inequality correctly rejects deletion for those (null !== any
   // real user id), same as an unowned row.
-  const access = await galaxyAccess(prisma, id, session.user)
   if (discussion.authorId !== session.user.id && !access.isAdmin) {
     return NextResponse.json({ error: "Only the author can delete this discussion" }, { status: 403 });
   }
 
-  await prisma.communityDiscussion.delete({ where: { id: discussionId } });
+  await tx.communityDiscussion.delete({ where: { id: discussionId } });
 
   return NextResponse.json({ success: true });
+  })
+  } catch (error) { return safeApiError(error) }
 }

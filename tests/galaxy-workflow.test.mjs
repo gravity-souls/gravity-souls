@@ -50,6 +50,14 @@ const attendees = require('../app/api/galaxies/[id]/events/[eventId]/attendees/r
 const discussion = require('../app/api/communities/[id]/discussions/route.ts')
 const discussionDelete = require('../app/api/communities/[id]/discussions/[discussionId]/route.ts')
 const postDelete = require('../app/api/communities/[id]/posts/[postId]/route.ts')
+const communityPosts = require('../app/api/communities/[id]/posts/route.ts')
+const communityReplies = require('../app/api/communities/[id]/posts/[postId]/replies/route.ts')
+const communityReplyDelete = require('../app/api/communities/[id]/posts/[postId]/replies/[replyId]/route.ts')
+const discussionReplies = require('../app/api/communities/[id]/discussions/[discussionId]/replies/route.ts')
+const discussionReplyDelete = require('../app/api/communities/[id]/discussions/[discussionId]/replies/[replyId]/route.ts')
+const communityLike = require('../app/api/communities/[id]/posts/[postId]/like/route.ts')
+const postReplyLike = require('../app/api/communities/[id]/posts/[postId]/replies/[replyId]/like/route.ts')
+const discussionReplyLike = require('../app/api/communities/[id]/discussions/[discussionId]/replies/[replyId]/like/route.ts')
 const account = require('../app/api/me/route.ts')
 const accountExport = require('../app/api/me/export/route.ts')
 const interest = require('../app/api/galaxies/[id]/events/[eventId]/interest/route.ts')
@@ -2633,6 +2641,249 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
         )
       },
     )
+    await t.test('both community reply likes enforce scope/privacy and idempotent state, serialize counts, export and cascade', async () => {
+      const parentAuthor = 'reply-like-parent', replyAuthor = 'reply-like-author', viewer = 'reply-like-viewer', second = 'reply-like-second'
+      for (const id of [parentAuthor, replyAuthor, viewer, second])
+        await db.user.create({ data: { id, name: id, email: `${id}@example.test` } })
+      const g = await db.community.create({ data: { ...galaxyData, slug: 'reply-likes', creatorId: parentAuthor } })
+      await db.communityMembership.createMany({ data: [parentAuthor, replyAuthor, viewer, second].map(userId => ({ communityId: g.id, userId })) })
+      const p = await db.communityPost.create({ data: { communityId: g.id, authorId: parentAuthor, content: 'Like target post' } })
+      const d = await db.communityDiscussion.create({ data: { communityId: g.id, authorId: parentAuthor, title: 'Like target discussion' } })
+      const pReply = await db.communityPostReply.create({ data: { postId: p.id, authorId: replyAuthor, content: 'Post reply' } })
+      const dReply = await db.communityDiscussionReply.create({ data: { discussionId: d.id, authorId: replyAuthor, authorName: 'Snapshot', content: 'Discussion reply' } })
+      const otherGalaxy = await db.community.create({ data: { ...galaxyData, slug: 'reply-likes-other', creatorId: parentAuthor } })
+      await db.communityMembership.create({ data: { communityId: otherGalaxy.id, userId: viewer } })
+      const otherPost = await db.communityPost.create({ data: { communityId: g.id, authorId: parentAuthor, content: 'Other post' } })
+      const otherDiscussion = await db.communityDiscussion.create({ data: { communityId: g.id, authorId: parentAuthor, title: 'Other discussion' } })
+      const otherPostReply = await db.communityPostReply.create({ data: { postId: otherPost.id, authorId: replyAuthor, content: 'Other post reply' } })
+      const otherDiscussionReply = await db.communityDiscussionReply.create({ data: { discussionId: otherDiscussion.id, authorId: replyAuthor, content: 'Other discussion reply' } })
+      const surfaces = [
+        { route: postReplyLike, edge: db.communityPostReplyLike, parent: p.id, reply: pReply.id, parentKey: 'postId', deleteReply: communityReplyDelete, deleteParent: postDelete },
+        { route: discussionReplyLike, edge: db.communityDiscussionReplyLike, parent: d.id, reply: dReply.id, parentKey: 'discussionId', deleteReply: discussionReplyDelete, deleteParent: discussionDelete },
+      ]
+      const ctx = (s, overrides = {}) => ({ params: Promise.resolve({ id: g.id, [s.parentKey]: s.parent, replyId: s.reply, ...overrides }) })
+      const set = (s, liked, overrides) => s.route.POST(request({ liked }), ctx(s, overrides))
+      const before = await db.user.findUniqueOrThrow({ where: { id: viewer }, select: { xp: true } })
+      const notices = await db.notification.count()
+      for (const s of surfaces) {
+        as(null)
+        assert.equal((await set(s, true)).status, 401)
+        as('outsider')
+        assert.equal((await set(s, true)).status, 403)
+        as(viewer)
+        for (const overrides of [{ id: 'missing-galaxy' }, { [s.parentKey]: 'other-parent' }, { replyId: 'other-reply' }])
+          assert.equal((await set(s, true, overrides)).status, 404)
+        assert.equal((await set(s, true, { id: otherGalaxy.id })).status, 404)
+        assert.equal((await set(s, true, { [s.parentKey]: s.parentKey === 'postId' ? otherPost.id : otherDiscussion.id })).status, 404)
+        assert.equal((await set(s, true, { replyId: s.parentKey === 'postId' ? otherPostReply.id : otherDiscussionReply.id })).status, 404)
+        assert.equal((await set(s, true, { replyId: 'x'.repeat(129) })).status, 400)
+        assert.equal((await s.route.POST(request({ liked: true, extra: true }), ctx(s))).status, 400)
+        assert.equal((await s.route.POST(request({ liked: 'true' }), ctx(s))).status, 400)
+        assert.equal((await s.route.POST(new Request('https://example.test/api', { method: 'POST', body: '{' }), ctx(s))).status, 400)
+        assert.equal((await s.route.POST(request({ liked: true, padding: 'x'.repeat(65536) }), ctx(s))).status, 413)
+        for (const target of [parentAuthor, replyAuthor]) {
+          for (const reverse of [false, true]) {
+            const b = await db.block.create({ data: { blockerId: reverse ? target : viewer, blockedId: reverse ? viewer : target } })
+            assert.equal((await set(s, true)).status, 404)
+            assert.equal((await set(s, false)).status, 404)
+            await db.block.delete({ where: { id: b.id } })
+          }
+          await db.profile.create({ data: { userId: target, visibility: 'PRIVATE' } })
+          assert.equal((await set(s, true)).status, 404)
+          const f = await db.follow.create({ data: { followerId: viewer, followingId: target } })
+          assert.equal((await set(s, true)).status, 200)
+          await db.follow.delete({ where: { id: f.id } })
+          await db.profile.delete({ where: { userId: target } })
+          assert.deepEqual(await (await set(s, false)).json(), { liked: false, likes: 0 })
+        }
+        const attempts = await Promise.all([set(s, true), set(s, true), set(s, true)])
+        for (const response of attempts) {
+          assert.equal(response.status, 200)
+          assert.deepEqual(await response.json(), { liked: true, likes: 1 })
+        }
+        assert.equal(await s.edge.count({ where: { replyId: s.reply } }), 1)
+        as(replyAuthor)
+        assert.deepEqual(await (await set(s, true)).json(), { liked: true, likes: 2 }) // Own reply likes follow comment precedent.
+        as(viewer)
+      }
+      assert.deepEqual((await db.user.findUniqueOrThrow({ where: { id: viewer }, select: { xp: true } })), before)
+      assert.equal(await db.notification.count(), notices)
+      const checkRead = async (likedByMe, likes) => {
+        const posts = await (await communityPosts.GET(request(), context(g.id))).json()
+        const threads = await (await discussion.GET(request(), context(g.id))).json()
+        const replies = await (await communityReplies.GET(request(), { params: Promise.resolve({ id: g.id, postId: p.id }) })).json()
+        for (const reply of [posts.posts.find(row => row.id === p.id).replyItems[0], threads.discussions.find(row => row.id === d.id).replyItems[0], replies.replies[0]]) {
+          assert.equal(reply.likes, likes)
+          assert.equal(reply.likedByMe, likedByMe)
+        }
+      }
+      await checkRead(true, 2)
+      as(null)
+      await checkRead(false, 2)
+      as(second)
+      await checkRead(false, 2)
+      as(viewer)
+      const exported = await (await accountExport.GET()).json()
+      for (const [key, id] of [['communityPostReplyLikes', pReply.id], ['communityDiscussionReplyLikes', dReply.id]]) {
+        assert.equal(exported[key].length, 1)
+        assert.equal(exported[key][0].replyId, id)
+        assert.deepEqual(Object.keys(exported[key][0]).sort(), ['createdAt', 'replyId'])
+      }
+      for (const s of surfaces) {
+        for (let i = 0; i < 2; i++) assert.deepEqual(await (await set(s, false)).json(), { liked: false, likes: 1 })
+      }
+      await checkRead(false, 1)
+      for (const s of surfaces) {
+        const table = s.parentKey === 'postId' ? 'community_post_reply_like' : 'community_discussion_reply_like'
+        await pool.db.exec(`ALTER TABLE "${table}" ADD CONSTRAINT reply_like_test_failure CHECK ("userId" <> '${viewer}') NOT VALID`)
+        try {
+          assert.equal((await set(s, true)).status, 500)
+          assert.equal(await s.edge.count({ where: { replyId: s.reply, userId: viewer } }), 0)
+        } finally { await pool.db.exec(`ALTER TABLE "${table}" DROP CONSTRAINT reply_like_test_failure`) }
+        assert.equal((await set(s, true)).status, 200)
+      }
+      const bucket = await db.rateLimitBucket.findUniqueOrThrow({ where: { bucketKey: `MESSAGE_REACTION:${viewer}` } })
+      await db.rateLimitBucket.update({ where: { id: bucket.id }, data: { count: 120 } })
+      for (const s of surfaces) assert.equal((await set(s, false)).status, 429)
+      await db.rateLimitBucket.delete({ where: { id: bucket.id } })
+      // Tombstone deletion must explicitly remove likes, because it keeps the user row.
+      assert.equal((await account.DELETE(request({ confirm: true }))).status, 200)
+      for (const s of surfaces) {
+        assert.equal(await s.edge.count({ where: { userId: viewer } }), 0)
+        assert.equal((await set(s, true)).status, 401)
+      }
+      as(replyAuthor)
+      for (const s of surfaces) {
+        assert.equal((await s.deleteReply.DELETE(request(), ctx(s))).status, 200)
+        assert.equal(await s.edge.count({ where: { replyId: s.reply } }), 0)
+        assert.equal((await set(s, true)).status, 404)
+      }
+      // Every create serializer, including a discussion's opening reply, returns real zero state.
+      as(parentAuthor)
+      const createdPost = await (await communityPosts.POST(request({ content: 'Fresh post' }), context(g.id))).json()
+      const freshPostReply = await (await communityReplies.POST(request({ content: 'Fresh reply' }), { params: Promise.resolve({ id: g.id, postId: createdPost.post.id }) })).json()
+      const createdTopic = await (await discussion.POST(request({ title: 'Fresh topic', content: 'Opening reply' }), context(g.id))).json()
+      const freshTopicReply = await (await discussionReplies.POST(request({ content: 'Fresh topic reply' }), { params: Promise.resolve({ id: g.id, discussionId: createdTopic.discussion.id }) })).json()
+      for (const reply of [freshPostReply.reply, createdTopic.discussion.replyItems[0], freshTopicReply.reply]) {
+        assert.equal(reply.likes, 0)
+        assert.equal(reply.likedByMe, false)
+      }
+      const fresh = [
+        { ...surfaces[0], parent: createdPost.post.id, reply: freshPostReply.reply.id },
+        { ...surfaces[1], parent: createdTopic.discussion.id, reply: freshTopicReply.reply.id },
+      ]
+      for (const s of fresh) {
+        assert.equal((await set(s, true)).status, 200)
+        as(second)
+        assert.equal((await set(s, true)).status, 200)
+        as(parentAuthor)
+      }
+      // Hard deletion uses FK cascades independently of the tombstone cleanup.
+      await db.user.delete({ where: { id: second } })
+      for (const s of fresh) {
+        assert.equal(await s.edge.count({ where: { replyId: s.reply } }), 1)
+        assert.equal((await s.deleteParent.DELETE(request(), ctx(s))).status, 200)
+        assert.equal(await s.edge.count({ where: { replyId: s.reply } }), 0)
+      }
+      await db.community.delete({ where: { id: g.id } })
+      await db.community.delete({ where: { id: otherGalaxy.id } })
+    })
+    await t.test('community publishing and replies keep pseudonyms, validation, privacy and deletion consistent', async () => {
+      const g = await db.community.create({ data: { ...galaxyData, slug: 'content-integrity', creatorId: 'owner', joinPolicy: 'OPEN' } })
+      await db.communityMembership.createMany({ data: ['owner', 'applicant'].map(userId => ({ communityId: g.id, userId })) })
+      const postContext = postId => ({ params: Promise.resolve({ id: g.id, postId }) })
+      const discussionContext = discussionId => ({ params: Promise.resolve({ id: g.id, discussionId }) })
+      as(null)
+      assert.equal((await communityPosts.POST(request({ content: 'Anonymous' }), context(g.id))).status, 401)
+      as('outsider')
+      assert.equal((await communityPosts.POST(request({ content: 'Not a member' }), context(g.id))).status, 403)
+      as('owner')
+      for (const content of ['x', 'x'.repeat(1001)]) assert.equal((await communityPosts.POST(request({ content }), context(g.id))).status, 400)
+      assert.equal((await communityPosts.POST(request({ content: 'Valid', extra: true }), context(g.id))).status, 400)
+      assert.equal((await communityPosts.POST(new Request('https://example.test/api', { method: 'POST', body: '{' }), context(g.id))).status, 400)
+      const posted = await communityPosts.POST(request({ content: 'A real community signal\nSecond line' }), context(g.id))
+      assert.equal(posted.status, 201)
+      const { post } = await posted.json()
+      assert.equal(post.author.name, 'owner')
+      assert.equal(post.author.planet.name, 'owner planet')
+      assert.equal(post.canDelete, true)
+      const originalBucket = await db.rateLimitBucket.findUniqueOrThrow({ where: { bucketKey: 'POST_CREATE:owner' } })
+      await db.rateLimitBucket.update({ where: { id: originalBucket.id }, data: { count: 30 } })
+      assert.equal((await communityPosts.POST(request({ content: 'Over the exact limit' }), context(g.id))).status, 429)
+      assert.equal(await db.communityPost.count({ where: { communityId: g.id } }), 1)
+      await db.rateLimitBucket.update({ where: { id: originalBucket.id }, data: { count: originalBucket.count, windowStart: originalBucket.windowStart } })
+      const xpBeforeFailure = (await db.user.findUniqueOrThrow({ where: { id: 'owner' } })).xp
+      await pool.db.exec(`ALTER TABLE "Notification" ADD CONSTRAINT content_test_notice_failure CHECK (type <> 'GALAXY_NEW_POST') NOT VALID`)
+      try {
+        assert.equal((await communityPosts.POST(request({ content: 'Notification transaction failure' }), context(g.id))).status, 500)
+        assert.equal(await db.communityPost.count({ where: { communityId: g.id } }), 1)
+        assert.equal((await db.user.findUniqueOrThrow({ where: { id: 'owner' } })).xp, xpBeforeFailure)
+      } finally {
+        await pool.db.exec('ALTER TABLE "Notification" DROP CONSTRAINT content_test_notice_failure')
+      }
+      const opened = await discussion.POST(request({ title: 'Integrity discussion', content: 'Opening message' }), context(g.id))
+      assert.equal(opened.status, 201)
+      const { discussion: topic } = await opened.json()
+      // Current public pseudonym wins over the stored reply snapshot.
+      await db.communityDiscussionReply.updateMany({ where: { discussionId: topic.id }, data: { authorName: 'Stale snapshot' } })
+      const listed = await (await discussion.GET(request(), context(g.id))).json()
+      assert.equal(listed.discussions[0].replyItems[0].author.name, 'owner')
+      assert.equal(listed.discussions[0].replyItems[0].author.planet.name, 'owner planet')
+      as('applicant')
+      const replyResult = await communityReplies.POST(request({ content: 'A real reply' }), postContext(post.id))
+      assert.equal(replyResult.status, 201)
+      const { reply } = await replyResult.json()
+      assert.equal(reply.author.name, 'applicant')
+      assert.equal(reply.author.planet.name, 'applicant planet')
+      assert.equal(reply.canDelete, true)
+      const discussionReplyResult = await discussionReplies.POST(request({ content: 'A discussion reply' }), discussionContext(topic.id))
+      assert.equal(discussionReplyResult.status, 201)
+      const { reply: topicReply } = await discussionReplyResult.json()
+      assert.equal(topicReply.author.name, 'applicant')
+      assert.equal(topicReply.author.planet.name, 'applicant planet')
+      const replyBucket = await db.rateLimitBucket.findUniqueOrThrow({ where: { bucketKey: 'MESSAGE_SEND:applicant' } })
+      await db.rateLimitBucket.update({ where: { id: replyBucket.id }, data: { count: 60 } })
+      assert.equal((await communityReplies.POST(request({ content: 'Over reply limit' }), postContext(post.id))).status, 429)
+      assert.equal((await discussionReplies.POST(request({ content: 'Over reply limit' }), discussionContext(topic.id))).status, 429)
+      assert.equal(await db.communityPostReply.count({ where: { postId: post.id } }), 1)
+      await db.rateLimitBucket.update({ where: { id: replyBucket.id }, data: { count: replyBucket.count, windowStart: replyBucket.windowStart } })
+      for (const content of ['x', 'x'.repeat(601)]) {
+        assert.equal((await communityReplies.POST(request({ content }), postContext(post.id))).status, 400)
+        assert.equal((await discussionReplies.POST(request({ content }), discussionContext(topic.id))).status, 400)
+      }
+      const replyContext = { params: Promise.resolve({ id: g.id, postId: post.id, replyId: reply.id }) }
+      const topicReplyContext = { params: Promise.resolve({ id: g.id, discussionId: topic.id, replyId: topicReply.id }) }
+      as('outsider')
+      assert.equal((await communityReplyDelete.DELETE(request(), replyContext)).status, 403)
+      assert.equal((await discussionReplyDelete.DELETE(request(), topicReplyContext)).status, 403)
+      as('applicant')
+      assert.equal((await postDelete.DELETE(request(), postContext(post.id))).status, 403)
+      assert.equal((await discussionDelete.DELETE(request(), discussionContext(topic.id))).status, 403)
+      const privateProfile = await db.profile.upsert({ where: { userId: 'owner' }, create: { userId: 'owner', visibility: 'PRIVATE' }, update: { visibility: 'PRIVATE' } })
+      assert.equal(privateProfile.visibility, 'PRIVATE')
+      const privatePosts = await (await communityPosts.GET(request(), context(g.id))).json()
+      assert.equal(privatePosts.posts[0].author.name, 'owner')
+      assert.equal(privatePosts.posts[0].author.planet, null)
+      await db.block.create({ data: { blockerId: 'applicant', blockedId: 'owner' } })
+      assert.deepEqual((await (await communityPosts.GET(request(), context(g.id))).json()).posts, [])
+      assert.deepEqual((await (await discussion.GET(request(), context(g.id))).json()).discussions, [])
+      assert.equal((await communityReplies.GET(request(), postContext(post.id))).status, 404)
+      assert.equal((await communityReplies.POST(request({ content: 'Blocked contact' }), postContext(post.id))).status, 404)
+      assert.equal((await discussionReplies.POST(request({ content: 'Blocked contact' }), discussionContext(topic.id))).status, 404)
+      assert.equal((await communityLike.POST(request(), postContext(post.id))).status, 404)
+      await db.block.deleteMany({ where: { blockerId: 'applicant', blockedId: 'owner' } })
+      await db.profile.update({ where: { userId: 'owner' }, data: { visibility: 'MEMBERS' } })
+      assert.equal((await communityReplyDelete.DELETE(request(), { params: Promise.resolve({ id: 'wrong-galaxy', postId: post.id, replyId: reply.id }) })).status, 404)
+      assert.equal((await communityReplyDelete.DELETE(request(), replyContext)).status, 200)
+      assert.equal((await discussionReplyDelete.DELETE(request(), topicReplyContext)).status, 200)
+      assert.equal((await communityReplies.GET(request(), postContext(post.id))).status, 200)
+      assert.deepEqual((await (await communityReplies.GET(request(), postContext(post.id))).json()).replies, [])
+      as('owner')
+      assert.equal((await postDelete.DELETE(request(), postContext(post.id))).status, 200)
+      assert.equal((await discussionDelete.DELETE(request(), discussionContext(topic.id))).status, 200)
+      assert.equal(await db.communityDiscussionReply.count({ where: { discussionId: topic.id } }), 0)
+      await db.community.delete({ where: { id: g.id } })
+    })
     await t.test(
       'moderators can delete content; ordinary members cannot delete another author',
       async () => {

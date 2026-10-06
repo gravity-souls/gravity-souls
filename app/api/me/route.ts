@@ -140,6 +140,8 @@ export async function DELETE(request: Request) {
         tx.postLike.deleteMany({ where: { userId } }),
         tx.postCommentLike.deleteMany({ where: { userId } }),
         tx.communityPostLike.deleteMany({ where: { userId } }),
+        tx.communityPostReplyLike.deleteMany({ where: { userId } }),
+        tx.communityDiscussionReplyLike.deleteMany({ where: { userId } }),
         tx.eventRSVP.deleteMany({ where: { userId } }),
       ]);
 

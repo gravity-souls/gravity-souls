@@ -19,6 +19,10 @@ export const messageSchema = z.object({ content: text(MAX_MESSAGE_LENGTH).min(1)
 // Mirrors lib/stream-posts.ts's MAX_COMMENT_LENGTH (500), used by PATCH
 // /api/posts/[id]/comments/[commentId] — edits are capped the same as creation.
 export const postCommentEditSchema = z.object({ content: text(500).min(1) }).strict()
+export const communityPostSchema = z.object({ content: text(1000).min(2) }).strict()
+export const communityReplySchema = z.object({ content: text(600).min(2) }).strict()
+export const communityReplyLikeSchema = z.object({ liked: z.boolean() }).strict()
+export const communityReplyLikeIds = z.object({ id: resourceId, parentId: resourceId, replyId: resourceId }).strict()
 
 export const followSchema = z.object({ userId: resourceId }).strict()
 export const blockSchema = z.object({ userId: resourceId }).strict()

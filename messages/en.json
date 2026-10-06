@@ -108,6 +108,22 @@
     "openFullMap": "Open full map"
   },
   "galaxyPage": {
+    "loadAllReplies": "Load all replies",
+    "postPlaceholder": "Share a signal with {name}...",
+    "publishFailed": "Your post could not be published. Your draft is still here.",
+    "replyFailed": "Your reply could not be published. Your draft is still here.",
+    "likeFailed": "The like could not be saved. Please try again.",
+    "likeReply": "Like reply ({count} likes)",
+    "unlikeReply": "Unlike reply ({count} likes)",
+    "repliesUnavailable": "Replies could not be loaded. Close and reopen the replies to retry.",
+    "postPublished": "Your community post has been published.",
+    "discussionPublished": "Your discussion has been published.",
+    "replyPublished": "Your reply has been published.",
+    "contentDeleted": "The content has been deleted.",
+    "noReplies": "No replies yet. Start the first one.",
+    "joinToInteract": "Join this galaxy to like and reply.",
+    "like": "Like",
+    "liked": "Liked",
     "galaxy": "Galaxy",
     "planetsCount": "{count} planets",
     "joined": "Joined",
@@ -1592,6 +1608,7 @@
     "sharedTerritory": "Shared territory:"
   },
   "galaxyWorkflow": {
+    "rateLimited": "Too many publications or replies. Please try again later.",
     "createGalaxy": "Create a galaxy",
     "manageGalaxy": "Manage galaxy",
     "allGalaxies": "All galaxies",

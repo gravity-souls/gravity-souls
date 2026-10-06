@@ -108,6 +108,22 @@
     "openFullMap": "Ouvrir la carte complète"
   },
   "galaxyPage": {
+    "loadAllReplies": "Charger toutes les réponses",
+    "postPlaceholder": "Partagez un signal avec {name}...",
+    "publishFailed": "Impossible de publier votre post. Votre brouillon est conservé.",
+    "replyFailed": "Impossible de publier votre réponse. Votre brouillon est conservé.",
+    "likeFailed": "Impossible d'enregistrer ce J'aime. Veuillez réessayer.",
+    "likeReply": "Aimer la réponse ({count} J'aime)",
+    "unlikeReply": "Ne plus aimer la réponse ({count} J'aime)",
+    "repliesUnavailable": "Impossible de charger les réponses. Fermez puis rouvrez les réponses pour réessayer.",
+    "postPublished": "Votre post de communauté a été publié.",
+    "discussionPublished": "Votre discussion a été publiée.",
+    "replyPublished": "Votre réponse a été publiée.",
+    "contentDeleted": "Le contenu a été supprimé.",
+    "noReplies": "Aucune réponse pour le moment. Lancez la conversation.",
+    "joinToInteract": "Rejoignez cette galaxie pour aimer et répondre.",
+    "like": "J'aime",
+    "liked": "Aimé",
     "galaxy": "Galaxie",
     "planetsCount": "{count} planètes",
     "joined": "Rejoint",
@@ -1592,6 +1608,7 @@
     "sharedTerritory": "Territoire partagé :"
   },
   "galaxyWorkflow": {
+    "rateLimited": "Trop de publications ou de réponses. Veuillez réessayer plus tard.",
     "createGalaxy": "Créer une galaxie",
     "manageGalaxy": "Gérer la galaxie",
     "allGalaxies": "Toutes les galaxies",

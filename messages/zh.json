@@ -108,6 +108,22 @@
     "openFullMap": "打开完整星图"
   },
   "galaxyPage": {
+    "loadAllReplies": "加载全部回复",
+    "postPlaceholder": "向 {name} 分享信号...",
+    "publishFailed": "无法发布帖子，草稿已保留。",
+    "replyFailed": "无法发布回复，草稿已保留。",
+    "likeFailed": "无法保存点赞，请重试。",
+    "likeReply": "点赞回复（{count} 个赞）",
+    "unlikeReply": "取消回复点赞（{count} 个赞）",
+    "repliesUnavailable": "无法加载回复，请收起后重新展开以重试。",
+    "postPublished": "社区帖子已发布。",
+    "discussionPublished": "讨论已发布。",
+    "replyPublished": "回复已发布。",
+    "contentDeleted": "内容已删除。",
+    "noReplies": "暂无回复，来发出第一条回复吧。",
+    "joinToInteract": "加入这个星系后即可点赞和回复。",
+    "like": "点赞",
+    "liked": "已点赞",
     "galaxy": "星系",
     "planetsCount": "{count} 颗星球",
     "joined": "已加入",
@@ -1592,6 +1608,7 @@
     "sharedTerritory": "共享领域："
   },
   "galaxyWorkflow": {
+    "rateLimited": "发布或回复过于频繁，请稍后重试。",
     "createGalaxy": "创建星系",
     "manageGalaxy": "管理星系",
     "allGalaxies": "全部星系",

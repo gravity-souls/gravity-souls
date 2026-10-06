@@ -1,7 +1,7 @@
 'use client'
 
 import RelatedSignals from '@/components/stream/RelatedSignals'
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import { notFound, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
@@ -12,6 +12,8 @@ import ChatReturnLink from '@/components/messages/ChatReturnLink'
 import PostReturnLink from '@/components/stream/PostReturnLink'
 import ContextMapReturnLink from '@/components/social/ContextMapReturnLink'
 import DiscussionComposer from '@/components/galaxy/DiscussionComposer'
+import ReplyLikeButton from '@/components/galaxy/ReplyLikeButton'
+import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
 import EventsTab from '@/components/events/EventsTab'
 import PlanetCard from '@/components/planet/PlanetCard'
 import PlanetPreviewDrawer from '@/components/planet/PlanetPreviewDrawer'
@@ -90,6 +92,9 @@ interface CommunityPost {
 }
 
 interface CommunityReply {
+  likes: number
+  likedByMe: boolean
+  canDelete?: boolean
   id: string
   authorName: string
   authorPlanetId?: string
@@ -98,7 +103,10 @@ interface CommunityReply {
 }
 
 interface ApiCommunityReply {
-  id: string
+  likes: number
+  likedByMe: boolean
+  canDelete?: boolean
+  id: string | null
   content: string
   createdAt: string
   author: {
@@ -134,6 +142,9 @@ interface DiscussionTopic {
 }
 
 interface DiscussionReply {
+  likes: number
+  likedByMe: boolean
+  canDelete?: boolean
   id: string
   authorName: string
   content: string
@@ -150,9 +161,14 @@ interface ApiCommunityDiscussion {
 }
 
 function apiReplyToCommunityReply(reply: ApiCommunityReply): CommunityReply {
+  if (!reply || typeof reply.id !== 'string' || typeof reply.content !== 'string' || typeof reply.author?.name !== 'string' || !Number.isFinite(Date.parse(reply.createdAt))) throw new Error('Invalid community reply')
+  if (!Number.isInteger(reply.likes) || reply.likes < 0 || typeof reply.likedByMe !== 'boolean') throw new Error('Invalid reply likes')
   return {
+    likes: reply.likes,
+    likedByMe: reply.likedByMe,
     id: reply.id,
-    authorName: reply.author.planet?.name ?? reply.author.name,
+    canDelete: reply.canDelete,
+    authorName: reply.author.name,
     authorPlanetId: reply.author.planet?.id,
     content: reply.content,
     createdAt: reply.createdAt,
@@ -160,9 +176,10 @@ function apiReplyToCommunityReply(reply: ApiCommunityReply): CommunityReply {
 }
 
 function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
+  if (!post || typeof post.id !== 'string' || typeof post.content !== 'string' || typeof post.author?.name !== 'string' || !Number.isFinite(Date.parse(post.createdAt)) || !Number.isInteger(post.likes) || post.likes < 0 || !Number.isInteger(post.replies) || post.replies < 0) throw new Error('Invalid community post')
   return {
     id: post.id,
-    authorName: post.author.planet?.name ?? post.author.name,
+    authorName: post.author.name,
     authorPlanetId: post.author.planet?.id,
     content: post.content,
     canDelete: post.canDelete,
@@ -175,6 +192,7 @@ function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
 }
 
 function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTopic {
+  if (!discussion || typeof discussion.id !== 'string' || typeof discussion.title !== 'string' || !Number.isInteger(discussion.replies) || discussion.replies < 0) throw new Error('Invalid community discussion')
   return {
     id: discussion.id,
     title: discussion.title,
@@ -205,6 +223,7 @@ export default function GalaxyPage({ params }: Props) {
   const [userRole, setUserRole] = useState<'explorer' | 'resonator'>('explorer')
   const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
   const [community, setCommunity] = useState<CommunityRow | null>(null)
+  const communityId = community?.id
   const [allCommunities, setAllCommunities] = useState<CommunityRow[]>([])
   const [slugMissing, setSlugMissing] = useState(false)
   const [memberPlanets, setMemberPlanets] = useState<PlanetProfile[]>([])
@@ -221,17 +240,55 @@ export default function GalaxyPage({ params }: Props) {
   const [discussionsError, setDiscussionsError] = useState('')
   const [discussionsLoading, setDiscussionsLoading] = useState(true)
   const [reload, setReload] = useState(0)
+  const [postsReload, setPostsReload] = useState(0)
+  const [discussionsReload, setDiscussionsReload] = useState(0)
+  const [contentStatus, setContentStatus] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const pending = useRef(new Set<string>())
+  const contentRevision = useRef(0)
   const [posting, setPosting] = useState(false)
   const [postingDiscussionReply, setPostingDiscussionReply] = useState(false)
   const [postError, setPostError] = useState('')
   const [postDraft, setPostDraft] = useState('')
   const [likingPostId, setLikingPostId] = useState<string | null>(null)
+  const [pendingReplyLikes, setPendingReplyLikes] = useState<Set<string>>(new Set())
+  const discussionLikePending = [...pendingReplyLikes].some(key => key.startsWith('replyLike:discussions:'))
   const [replyingPostId, setReplyingPostId] = useState<string | null>(null)
   const [loadingRepliesPostId, setLoadingRepliesPostId] = useState<string | null>(null)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({})
-  const [discussionReplyDraft, setDiscussionReplyDraft] = useState('')
-  const [discussionReplyOverrides, setDiscussionReplyOverrides] = useState<Record<string, DiscussionReply[]>>({})
+  const [discussionReplyDrafts, setDiscussionReplyDrafts] = useState<Record<string, string>>({})
+  const discussionReplyDraft = selectedTopic ? discussionReplyDrafts[selectedTopic.id] ?? '' : ''
+  function setDiscussionReplyDraft(value: string) {
+    if (selectedTopic) setDiscussionReplyDrafts(prev => ({ ...prev, [selectedTopic.id]: value }))
+  }
+
+  function beginAction(key: string) {
+    if (pending.current.has(key)) return false
+    pending.current.add(key)
+    contentRevision.current += 1
+    setPostError('')
+    setContentStatus('')
+    return true
+  }
+
+  function contentError(error: unknown) {
+    const key = error instanceof Error ? error.message : 'failed'
+    return tw.has(key) ? tw(key) : tw('failed')
+  }
+
+  function endAction(key: string) {
+    contentRevision.current += 1
+    pending.current.delete(key)
+  }
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setCommunityPosts([]); setDiscussionTopics([]); setSelectedTopic(null)
+      setReplyDrafts({}); setDiscussionReplyDrafts({}); setExpandedReplies({})
+      setPostDraft(''); setPostError(''); setContentStatus('')
+    })
+  }, [slug])
 
   useEffect(() => {
     let cancelled = false
@@ -261,8 +318,9 @@ export default function GalaxyPage({ params }: Props) {
 
     Promise.resolve().then(() => {
       if (!cancelled) {
-        setCommunityLoading(true); setCommunityError(''); setCommunity(null)
-        setCommunityJoined(false); setSlugMissing(false)
+        setCommunityLoading(true); setCommunityError('')
+        setCommunity(current => current?.slug === slug ? current : null)
+        setSlugMissing(false)
       }
     })
     fetch('/api/communities')
@@ -294,44 +352,52 @@ export default function GalaxyPage({ params }: Props) {
 
   useEffect(() => {
     let cancelled = false
+    const revision = contentRevision.current
     Promise.resolve().then(() => {
-      if (!cancelled) { setCommunityPosts([]); setPostsError(''); setPostsLoading(!!community) }
+      if (!cancelled) { setPostsError(''); setPostsLoading(!!communityId) }
     })
-    if (!community) return () => { cancelled = true }
-    fetch(`/api/communities/${community.id}/posts`)
+    if (!communityId) return () => { cancelled = true }
+    fetch(`/api/communities/${communityId}/posts`)
       .then(async (res) => {
         if (!res.ok) throw new Error('unavailable')
         return res.json() as Promise<{ joined?: boolean; posts: ApiCommunityPost[] }>
       })
       .then((data) => {
         if (cancelled) return
+        if (revision !== contentRevision.current) { setPostsReload(v => v + 1); return }
         if (typeof data.joined === 'boolean') setCommunityJoined(data.joined)
         setCommunityPosts(data.posts.map(apiPostToCommunityPost))
       })
       .catch(() => { if (!cancelled) setPostsError(t('postsUnavailable')) })
       .finally(() => { if (!cancelled) setPostsLoading(false) })
     return () => { cancelled = true }
-  }, [community, t])
+  }, [communityId, postsReload, t])
 
   useEffect(() => {
     let cancelled = false
+    const revision = contentRevision.current
     Promise.resolve().then(() => {
       if (!cancelled) {
-        setDiscussionTopics([]); setDiscussionsError(''); setDiscussionsLoading(!!community)
-        setSelectedTopic(null); setDiscussionReplyOverrides({})
+        setDiscussionsError(''); setDiscussionsLoading(!!communityId)
       }
     })
-    if (!community) return () => { cancelled = true }
-    fetch(`/api/communities/${community.id}/discussions`)
+    if (!communityId) return () => { cancelled = true }
+    fetch(`/api/communities/${communityId}/discussions`)
       .then(async (res) => {
         if (!res.ok) throw new Error('unavailable')
         return res.json() as Promise<{ discussions: ApiCommunityDiscussion[] }>
       })
-      .then((data) => { if (!cancelled) setDiscussionTopics(data.discussions.map(apiDiscussionToTopic)) })
+      .then((data) => {
+        if (cancelled) return
+        if (revision !== contentRevision.current) { setDiscussionsReload(v => v + 1); return }
+        const topics = data.discussions.map(apiDiscussionToTopic)
+        setDiscussionTopics(topics)
+        setSelectedTopic(current => current ? topics.find(topic => topic.id === current.id) ?? null : null)
+      })
       .catch(() => { if (!cancelled) setDiscussionsError(t('discussionsUnavailable')) })
       .finally(() => { if (!cancelled) setDiscussionsLoading(false) })
     return () => { cancelled = true }
-  }, [community, t])
+  }, [communityId, discussionsReload, t])
 
   // Approved-event notifications link here with #events. The browser's native
   // scroll-to-hash fires on initial load, before this page (gated on
@@ -363,9 +429,40 @@ export default function GalaxyPage({ params }: Props) {
   }
 
   async function deleteContent(kind: 'posts' | 'discussions', id: string) {
-    if (!community || !window.confirm(tw('deleteContentConfirm'))) return
-    try { await galaxyRequest(`/api/communities/${community.id}/${kind}/${id}`, 'DELETE'); setSelectedTopic(null); setReload(v=>v+1) }
-    catch { setPostError(tw('failed')) }
+    if (!community || pending.current.size || !window.confirm(tw('deleteContentConfirm')) || !beginAction('delete')) return
+    setDeletingId(id)
+    try {
+      const result = await galaxyRequest<{ success: boolean }>(`/api/communities/${community.id}/${kind}/${id}`, 'DELETE')
+      if (result.success !== true) throw new Error('failed')
+      if (kind === 'posts') setCommunityPosts(prev => prev.filter(post => post.id !== id))
+      else {
+        setDiscussionTopics(prev => prev.filter(topic => topic.id !== id))
+        setSelectedTopic(current => current?.id === id ? null : current)
+      }
+      setContentStatus(t('contentDeleted'))
+    } catch (error) { setPostError(contentError(error)) }
+    finally { endAction('delete'); setDeletingId(null) }
+  }
+
+  async function deleteReply(kind: 'posts' | 'discussions', parentId: string, replyId: string) {
+    if (!community || pending.current.size || !window.confirm(tw('deleteContentConfirm')) || !beginAction('delete')) return
+    setDeletingId(replyId)
+    try {
+      const result = await galaxyRequest<{ success: boolean }>(`/api/communities/${community.id}/${kind}/${parentId}/replies/${replyId}`, 'DELETE')
+      if (result.success !== true) throw new Error('failed')
+      if (kind === 'posts') updateCommunityPost(parentId, post => ({
+        ...post, replies: Math.max(0, post.replies - 1), replyItems: post.replyItems.filter(reply => reply.id !== replyId),
+      }))
+      else {
+        const remove = (topic: DiscussionTopic) => topic.id === parentId ? {
+          ...topic, replies: Math.max(0, topic.replies - 1), replyItems: topic.replyItems?.filter(reply => reply.id !== replyId),
+        } : topic
+        setDiscussionTopics(prev => prev.map(remove))
+        setSelectedTopic(current => current ? remove(current) : current)
+      }
+      setContentStatus(t('contentDeleted'))
+    } catch (error) { setPostError(contentError(error)) }
+    finally { endAction('delete'); setDeletingId(null) }
   }
 
   async function handleJoinCommunity() {
@@ -399,13 +496,14 @@ export default function GalaxyPage({ params }: Props) {
 
   async function handleCreatePost() {
     const content = postDraft.trim()
-    if (!content || !communityJoined) return
+    if (content.length < 2 || content.length > 1000 || !communityJoined || pending.current.has('delete')) return
 
     if (!community) {
       setPostError(t('communityUnavailable'))
       return
     }
 
+    if (!beginAction('post')) return
     setPosting(true)
     setPostError('')
     try {
@@ -421,23 +519,25 @@ export default function GalaxyPage({ params }: Props) {
       }
 
       if (res.status === 403) {
-        setPostError('Join this community before posting.')
-        setCommunityJoined(false)
+        setPostError(tw('joinFirst'))
         return
       }
 
       if (!res.ok) {
-        setPostError('Your post could not be published yet.')
+        setPostError(res.status === 429 ? tw('rateLimited') : t('publishFailed'))
         return
       }
 
       const data = await res.json() as { post: ApiCommunityPost }
-      setCommunityPosts((prev) => [apiPostToCommunityPost(data.post), ...prev])
+      const post = apiPostToCommunityPost(data.post)
+      setCommunityPosts((prev) => [post, ...prev.filter(current => current.id !== post.id)])
       setPostDraft('')
+      setContentStatus(t('postPublished'))
     } catch {
-      setPostError('Your post could not be published yet.')
+      setPostError(t('publishFailed'))
     } finally {
       setPosting(false)
+      endAction('post')
     }
   }
 
@@ -445,9 +545,31 @@ export default function GalaxyPage({ params }: Props) {
     setCommunityPosts((prev) => prev.map((post) => post.id === postId ? updater(post) : post))
   }
 
+  function replyLikePending(key: string, busy: boolean) {
+    contentRevision.current += 1
+    if (busy) pending.current.add(key)
+    else pending.current.delete(key)
+    setPendingReplyLikes(current => {
+      const next = new Set(current)
+      if (busy) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+
+  function updateReplyLike(kind: 'posts' | 'discussions', parentId: string, replyId: string, result: { likes: number; liked: boolean }) {
+    const update = <T extends CommunityReply | DiscussionReply>(reply: T): T => reply.id === replyId ? { ...reply, likes: result.likes, likedByMe: result.liked } : reply
+    if (kind === 'posts') updateCommunityPost(parentId, post => ({ ...post, replyItems: post.replyItems.map(update) }))
+    else {
+      const updateTopic = (topic: DiscussionTopic) => topic.id === parentId ? { ...topic, replyItems: topic.replyItems?.map(update) } : topic
+      setDiscussionTopics(prev => prev.map(updateTopic))
+      setSelectedTopic(current => current ? updateTopic(current) : current)
+    }
+  }
+
   async function handleToggleLike(post: CommunityPost) {
     if (!communityJoined) {
-      setPostError('Join this community before liking posts.')
+      setPostError(tw('joinFirst'))
       return
     }
 
@@ -455,6 +577,7 @@ export default function GalaxyPage({ params }: Props) {
 
     if (!community) { setPostError(t('communityUnavailable')); return }
 
+    if (pending.current.has('delete') || !beginAction('like')) return
     setLikingPostId(post.id)
     try {
       const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/like`, { method: 'POST' })
@@ -465,31 +588,32 @@ export default function GalaxyPage({ params }: Props) {
       }
 
       if (res.status === 403) {
-        setPostError('Join this community before liking posts.')
-        setCommunityJoined(false)
+        setPostError(tw('joinFirst'))
         return
       }
 
       if (!res.ok) {
-        setPostError('The like could not be saved yet.')
+        setPostError(t('likeFailed'))
         return
       }
 
       const data = await res.json() as { liked: boolean; likes: number }
+      if (typeof data.liked !== 'boolean' || !Number.isInteger(data.likes) || data.likes < 0) throw new Error('Invalid community like')
       updateCommunityPost(post.id, (current) => ({ ...current, likedByMe: data.liked, likes: data.likes }))
     } catch {
-      setPostError('The like could not be saved yet.')
+      setPostError(t('likeFailed'))
     } finally {
       setLikingPostId(null)
+      endAction('like')
     }
   }
 
   async function handleCreateReply(post: CommunityPost) {
     const content = (replyDrafts[post.id] ?? '').trim()
-    if (!content) return
+    if (content.length < 2 || content.length > 600 || pending.current.has('delete') || pending.current.has('replies')) return
 
     if (!communityJoined) {
-      setPostError('Join this community before replying.')
+      setPostError(tw('joinFirst'))
       return
     }
 
@@ -497,6 +621,7 @@ export default function GalaxyPage({ params }: Props) {
 
     if (!community) { setPostError(t('communityUnavailable')); return }
 
+    if (!beginAction('reply')) return
     setReplyingPostId(post.id)
     try {
       const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/replies`, {
@@ -511,17 +636,17 @@ export default function GalaxyPage({ params }: Props) {
       }
 
       if (res.status === 403) {
-        setPostError('Join this community before replying.')
-        setCommunityJoined(false)
+        setPostError(tw('joinFirst'))
         return
       }
 
       if (!res.ok) {
-        setPostError('Your reply could not be published yet.')
+        setPostError(res.status === 429 ? tw('rateLimited') : t('replyFailed'))
         return
       }
 
       const data = await res.json() as { reply: ApiCommunityReply; replies: number }
+      if (!Number.isInteger(data.replies) || data.replies < 0) throw new Error('Invalid reply count')
       const reply = apiReplyToCommunityReply(data.reply)
       updateCommunityPost(post.id, (current) => ({
         ...current,
@@ -530,14 +655,17 @@ export default function GalaxyPage({ params }: Props) {
       }))
       setReplyDrafts((prev) => ({ ...prev, [post.id]: '' }))
       setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
+      setContentStatus(t('replyPublished'))
     } catch {
-      setPostError('Your reply could not be published yet.')
+      setPostError(t('replyFailed'))
     } finally {
       setReplyingPostId(null)
+      endAction('reply')
     }
   }
 
   async function handleToggleReplies(post: CommunityPost) {
+    if (pending.current.has('replies') || pending.current.has('reply') || pending.current.has('delete')) return
     const isOpen = expandedReplies[post.id] ?? post.replyItems.length > 0
     if (isOpen) {
       setExpandedReplies((prev) => ({ ...prev, [post.id]: false }))
@@ -545,29 +673,34 @@ export default function GalaxyPage({ params }: Props) {
     }
 
     setExpandedReplies((prev) => ({ ...prev, [post.id]: true }))
+    if (post.replyItems.length < post.replies) await handleLoadReplies(post)
+  }
 
-    if (!community || post.replyItems.length >= post.replies) return
-
+  async function handleLoadReplies(post: CommunityPost) {
+    if (!community || pending.current.has('reply') || pending.current.has('delete') || [...pending.current].some(key => key.startsWith('replyLike:'))) return
+    if (!beginAction('replies')) return
     setLoadingRepliesPostId(post.id)
     setPostError('')
     try {
       const res = await fetch(`/api/communities/${community.id}/posts/${post.id}/replies`)
       if (!res.ok) {
-        setPostError('Replies could not be loaded yet.')
+        setPostError(t('repliesUnavailable'))
         return
       }
 
       const data = await res.json() as { replies: ApiCommunityReply[] }
       const replyItems = data.replies.map(apiReplyToCommunityReply)
-      updateCommunityPost(post.id, (current) => ({ ...current, replies: replyItems.length, replyItems }))
+      updateCommunityPost(post.id, (current) => ({ ...current, replyItems }))
     } catch {
-      setPostError('Replies could not be loaded yet.')
+      setPostError(t('repliesUnavailable'))
     } finally {
       setLoadingRepliesPostId(null)
+      endAction('replies')
     }
   }
 
   function handleReplyToReply(postId: string, authorName: string) {
+    if (pending.current.has('reply')) return
     setExpandedReplies((prev) => ({ ...prev, [postId]: true }))
     setReplyDrafts((prev) => {
       const current = prev[postId] ?? ''
@@ -577,12 +710,12 @@ export default function GalaxyPage({ params }: Props) {
 
   async function handleAddDiscussionReply() {
     const content = discussionReplyDraft.trim()
-    if (!selectedTopic || !content) return
+    if (!selectedTopic || content.length < 2 || content.length > 600 || !communityJoined || pending.current.has('delete')) return
 
     const key = selectedTopic.id
-    const currentReplies = discussionReplyOverrides[key] ?? selectedTopic.replyItems ?? []
 
     if (community && selectedTopic.id) {
+      if (!beginAction('discussionReply')) return
       setPostingDiscussionReply(true)
       try {
         const res = await fetch(`/api/communities/${community.id}/discussions/${selectedTopic.id}/replies`, {
@@ -597,28 +730,28 @@ export default function GalaxyPage({ params }: Props) {
         }
 
         if (res.status === 403) {
-          setPostError('Join this community before replying.')
-          setCommunityJoined(false)
+          setPostError(tw('joinFirst'))
           return
         }
 
         if (!res.ok) {
-          setPostError('Your discussion reply could not be saved yet.')
+          setPostError(res.status === 429 ? tw('rateLimited') : t('replyFailed'))
           return
         }
 
         const data = await res.json() as { reply: ApiCommunityReply; replies: number }
+        if (!Number.isInteger(data.replies) || data.replies < 0) throw new Error('Invalid reply count')
         const reply = apiReplyToCommunityReply(data.reply)
-        const nextReplies = [...currentReplies, reply]
-
-        setDiscussionReplyOverrides((prev) => ({ ...prev, [key]: nextReplies }))
-        setDiscussionTopics((prev) => prev.map((topic) => topic.id === selectedTopic.id ? { ...topic, replies: data.replies, replyItems: nextReplies } : topic))
-        setSelectedTopic((current) => current ? { ...current, replies: data.replies, replyItems: nextReplies } : current)
+        const append = (topic: DiscussionTopic) => topic.id === key ? { ...topic, replies: data.replies, replyItems: [...topic.replyItems ?? [], reply] } : topic
+        setDiscussionTopics(prev => prev.map(append))
+        setSelectedTopic(current => current ? append(current) : current)
         setDiscussionReplyDraft('')
+        setContentStatus(t('replyPublished'))
       } catch {
-        setPostError('Your discussion reply could not be saved yet.')
+        setPostError(t('replyFailed'))
       } finally {
         setPostingDiscussionReply(false)
+        endAction('discussionReply')
       }
       return
     }
@@ -637,9 +770,7 @@ export default function GalaxyPage({ params }: Props) {
       <PostReturnLink />
       <ContextMapReturnLink />
         <div className="px-4 sm:px-6 py-16 max-w-5xl mx-auto" role={communityError ? 'alert' : 'status'}>
-          <p className="text-sm" style={{ color: 'var(--ghost)' }}>
-            {communityError || t('loadingCommunity')}
-          </p>
+          {communityError ? <p className="text-sm">{communityError}</p> : <PlanetLoadingState label={t('loadingCommunity')} />}
           {communityError && (
             <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">
               {t('retryLoad')}
@@ -665,7 +796,7 @@ export default function GalaxyPage({ params }: Props) {
   const { accentColor } = galaxy
   const isGalaxyAdmin = community.isAdmin ?? false
   const selectedDiscussionReplies = selectedTopic
-    ? discussionReplyOverrides[selectedTopic.id] ?? selectedTopic.replyItems ?? []
+    ? selectedTopic.replyItems ?? []
     : []
 
   return (
@@ -831,6 +962,7 @@ export default function GalaxyPage({ params }: Props) {
               {communityError && <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
             </div>
           )}
+          {contentStatus && <p role="status" className="mx-auto max-w-5xl px-4 py-3 text-sm text-violet-200">{contentStatus}</p>}
 
           {communityJoined && (
             <div className="px-4 max-w-5xl mx-auto mt-3">
@@ -925,15 +1057,13 @@ export default function GalaxyPage({ params }: Props) {
                   <EventsTab galaxyId={community?.id ?? null} isAdmin={isGalaxyAdmin} canPropose={communityJoined || isGalaxyAdmin} />
                 </section>
 
-                {communityJoined && <DiscussionComposer galaxyId={community.id} onCreated={()=>setReload(v=>v+1)} />}
+                {communityJoined && <DiscussionComposer galaxyId={community.id} disabled={discussionsLoading || !!deletingId} onCreated={() => { contentRevision.current += 1; setContentStatus(t('discussionPublished')); setDiscussionsReload(v => v + 1) }} />}
                 {/* Discussions */}
                 {(communityLoading || discussionsLoading || discussionsError || discussions.length === 0) && (
                   <section aria-label={t('recentDiscussions')}>
                     <p className="text-data-label mb-4">{t('recentDiscussions')}</p>
-                    <p role={discussionsError ? 'alert' : 'status'} className="text-sm">
-                      {communityLoading || discussionsLoading ? t('loadingDiscussions') : discussionsError || t('noDiscussions')}
-                    </p>
-                    {discussionsError && <button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
+                    {communityLoading || discussionsLoading ? <PlanetLoadingState compact label={t('loadingDiscussions')} /> : <p role={discussionsError ? 'alert' : 'status'} className="rounded-2xl border border-white/10 bg-white/3 p-5 text-sm">{discussionsError || t('noDiscussions')}</p>}
+                    {discussionsError && <button type="button" onClick={() => setDiscussionsReload(value => value + 1)} className="mt-2 underline">{t('retryLoad')}</button>}
                   </section>
                 )}
                 {discussions.length > 0 && (
@@ -942,9 +1072,9 @@ export default function GalaxyPage({ params }: Props) {
 
                     {userRole === 'resonator' ? (
                       <div className="flex flex-col gap-2">
-                        {discussions.map((topic, i) => (
+                        {discussions.map((topic) => (
                           <button
-                            key={i}
+                            key={topic.id}
                             type="button"
                             className="w-full flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl text-left transition-all duration-200"
                             style={{
@@ -952,7 +1082,7 @@ export default function GalaxyPage({ params }: Props) {
                               border:     '1px solid var(--border-soft)',
                               cursor:     'pointer',
                             }}
-                            onClick={() => setSelectedTopic(topic)}
+                            onClick={() => { setPostError(''); setSelectedTopic(topic) }}
                             onMouseEnter={(e) => {
                               ;(e.currentTarget as HTMLElement).style.borderColor = `${accentColor}35`
                               ;(e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'
@@ -979,6 +1109,7 @@ export default function GalaxyPage({ params }: Props) {
                               <p className="text-xs" style={{ color: 'var(--ghost)' }}>
                                 {tw('replyCount', { count: topic.replies })}
                               </p>
+                              {topic.replyItems?.[0] && <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-white/55 wrap-anywhere">{topic.replyItems[0].authorName} · {topic.replyItems[0].content}</p>}
                             </div>
                           </button>
                         ))}
@@ -986,13 +1117,13 @@ export default function GalaxyPage({ params }: Props) {
                     ) : (
                       <LockedLayer
                         reason={tw('createPlanetFirst')}
-                        ctaLabel="Begin formation"
+                        ctaLabel={t('createPlanetToJoin')}
                         ctaHref="/onboarding"
                       >
                         <div className="flex flex-col gap-2">
-                          {discussions.slice(0, 2).map((topic, i) => (
+                          {discussions.slice(0, 2).map((topic) => (
                             <div
-                              key={i}
+                              key={topic.id}
                               className="flex items-start gap-4 p-4 rounded-xl"
                               style={{ background: 'var(--surface)', border: '1px solid var(--border-soft)' }}
                             >
@@ -1009,7 +1140,7 @@ export default function GalaxyPage({ params }: Props) {
                   </section>
                 )}
 
-                <section>
+                <section aria-label={t('communityPosts')}>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-data-label">{t('communityPosts')}</p>
                     <span className="text-xs" style={{ color: 'var(--ghost)' }}>
@@ -1025,10 +1156,13 @@ export default function GalaxyPage({ params }: Props) {
                       >
                         <textarea
                           value={postDraft}
+                          disabled={posting || !!deletingId}
+                          maxLength={1000}
+                          aria-label={t('postPlaceholder', { name: galaxy.name })}
                           onChange={(event) => setPostDraft(event.target.value)}
                           rows={3}
-                          placeholder={`Post to ${galaxy.name}...`}
-                          className="w-full resize-none rounded-xl px-4 py-3 text-sm outline-none"
+                          placeholder={t('postPlaceholder', { name: galaxy.name })}
+                          className="w-full resize-none rounded-xl px-4 py-3 text-base sm:text-sm outline-none"
                           style={{
                             background: 'rgba(255,255,255,0.03)',
                             border: '1px solid rgba(255,255,255,0.08)',
@@ -1042,7 +1176,7 @@ export default function GalaxyPage({ params }: Props) {
                           <button
                             type="button"
                             onClick={handleCreatePost}
-                            disabled={!postDraft.trim() || posting}
+                            disabled={postDraft.trim().length < 2 || posting || !!deletingId}
                             className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                             style={{
                               color: 'var(--foreground)',
@@ -1082,12 +1216,11 @@ export default function GalaxyPage({ params }: Props) {
                     )}
 
                     {postsError ? (
-                      <div role="alert"><p>{postsError}</p><button type="button" onClick={() => setReload((value) => value + 1)} className="mt-2 underline">{t('retryLoad')}</button></div>
-                    ) : communityLoading || postsLoading ? (
-                      <p className="text-sm py-4" style={{ color: 'var(--ghost)' }}>
-                        {t('loadingPosts')}
-                      </p>
-                    ) : communityPosts.length === 0 ? (
+                      <div role="alert"><p>{postsError}</p><button type="button" onClick={() => setPostsReload(value => value + 1)} className="mt-2 underline">{t('retryLoad')}</button></div>
+                    ) : null}
+                    {posting && <p role="status" className="text-xs text-violet-200">{tw('saving')}</p>}
+                    {(communityLoading || postsLoading) && <PlanetLoadingState compact label={t('loadingPosts')} />}
+                    {!postsError && !postsLoading && communityPosts.length === 0 ? (
                       <p className="text-sm py-4" style={{ color: 'var(--ghost)' }}>
                         {t('noPosts')}
                       </p>
@@ -1117,15 +1250,14 @@ export default function GalaxyPage({ params }: Props) {
                                 {new Date(post.createdAt).toLocaleDateString(locale)}
                               </time>
                             </div>
-                            <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
+                            <p className="whitespace-pre-wrap wrap-anywhere text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.78 }}>
                               {post.content}
-                              {post.canDelete && <button type="button" onClick={()=>deleteContent('posts',post.id)} className="ml-3 text-xs text-red-200">{tw('deleteContent')}</button>}
                             </p>
                             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 text-[10px]">
                               <button
                                 type="button"
                                 onClick={() => handleToggleLike(post)}
-                                disabled={likingPostId === post.id}
+                                disabled={!!likingPostId || !!deletingId}
                                 className="px-2 py-2 sm:py-1 rounded-lg transition-all duration-200"
                                 style={{
                                   color: post.likedByMe ? accentColor : 'var(--ghost)',
@@ -1135,12 +1267,12 @@ export default function GalaxyPage({ params }: Props) {
                                   opacity: likingPostId === post.id ? 0.65 : 1,
                                 }}
                               >
-                                {post.likedByMe ? 'Liked' : 'Like'} · {post.likes}
+                                {t(post.likedByMe ? 'liked' : 'like')} · {post.likes}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleToggleReplies(post)}
-                                disabled={loadingReplies}
+                                disabled={!!loadingRepliesPostId || !!replyingPostId || !!deletingId}
                                 className="px-2 py-2 sm:py-1 rounded-lg transition-all duration-200"
                                 style={{
                                   color: repliesOpen ? accentColor : 'var(--ghost)',
@@ -1152,14 +1284,13 @@ export default function GalaxyPage({ params }: Props) {
                               >
                                 {loadingReplies ? tw('loading') : tw('reply')} · {post.replies}
                               </button>
+                              {post.canDelete && <button type="button" disabled={!!deletingId || posting || !!replyingPostId || !!likingPostId || !!loadingRepliesPostId} onClick={() => deleteContent('posts', post.id)} className="rounded-lg px-2 py-2 text-xs text-red-200 disabled:opacity-40">{deletingId === post.id ? tw('saving') : tw('deleteContent')}</button>}
                             </div>
 
                             {repliesOpen && (
                               <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                                 {loadingReplies && (
-                                  <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                                    {t('loadingReplies')}
-                                  </p>
+                                  <PlanetLoadingState compact label={t('loadingReplies')} />
                                 )}
 
                                 {post.replyItems.length > 0 && (
@@ -1180,16 +1311,18 @@ export default function GalaxyPage({ params }: Props) {
                                               {reply.authorName}
                                             </p>
                                           )}
+                                          {!loadingReplies && post.replyItems.length < post.replies && <button type="button" disabled={!!replyingPostId || !!loadingRepliesPostId || !!deletingId} onClick={() => handleLoadReplies(post)} className="self-start rounded-lg border border-violet-300/20 px-3 py-2 text-xs text-violet-200">{t('loadAllReplies')}</button>}
                                           <time className="text-[9px]" style={{ color: 'var(--ghost)' }} dateTime={reply.createdAt}>
                                             {new Date(reply.createdAt).toLocaleDateString(locale)}
                                           </time>
                                         </div>
-                                        <p className="text-xs leading-relaxed mt-1" style={{ color: 'var(--ink)', opacity: 0.74 }}>
+                                        <p className="whitespace-pre-wrap wrap-anywhere text-xs leading-relaxed mt-1" style={{ color: 'var(--ink)', opacity: 0.74 }}>
                                           {reply.content}
                                         </p>
                                         {communityJoined && (
                                           <button
                                             type="button"
+                                            disabled={!!replyingPostId || !!deletingId}
                                             onClick={() => handleReplyToReply(post.id, reply.authorName)}
                                             className="mt-1 text-[10px] bg-transparent border-none p-0"
                                             style={{ color: accentColor, cursor: 'pointer' }}
@@ -1197,6 +1330,15 @@ export default function GalaxyPage({ params }: Props) {
                                             {tw('reply')}
                                           </button>
                                         )}
+                                        {reply.canDelete && <button type="button" disabled={!!deletingId || !!replyingPostId || !!loadingRepliesPostId} onClick={() => deleteReply('posts', post.id, reply.id)} className="ml-3 py-2 text-xs text-red-200 disabled:opacity-40">{deletingId === reply.id ? tw('saving') : tw('deleteContent')}</button>}
+                                        <ReplyLikeButton
+                                          url={`/api/communities/${community.id}/posts/${post.id}/replies/${reply.id}/like`}
+                                          likes={reply.likes}
+                                          likedByMe={reply.likedByMe}
+                                          disabled={!communityJoined || !!deletingId || !!loadingRepliesPostId || pendingReplyLikes.has(`replyLike:posts:${reply.id}`)}
+                                          onPending={busy => replyLikePending(`replyLike:posts:${reply.id}`, busy)}
+                                          onChange={result => updateReplyLike('posts', post.id, reply.id, result)}
+                                        />
                                       </div>
                                     ))}
                                   </div>
@@ -1204,7 +1346,7 @@ export default function GalaxyPage({ params }: Props) {
 
                                 {!loadingReplies && post.replyItems.length === 0 && (
                                   <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                                    No replies yet. Start the first one.
+                                    {t('noReplies')}
                                   </p>
                                 )}
 
@@ -1212,6 +1354,9 @@ export default function GalaxyPage({ params }: Props) {
                                   <div className="flex flex-col gap-2">
                                     <textarea
                                       value={replyDraft}
+                                      disabled={replyingPostId === post.id || !!deletingId}
+                                      maxLength={600}
+                                      aria-label={tw('replyTo', { name: post.authorName })}
                                       onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [post.id]: event.target.value }))}
                                       rows={2}
                                       placeholder={tw('replyTo', { name: post.authorName })}
@@ -1226,7 +1371,7 @@ export default function GalaxyPage({ params }: Props) {
                                       <button
                                         type="button"
                                         onClick={() => handleCreateReply(post)}
-                                        disabled={!replyDraft.trim() || replyingPostId === post.id}
+                                        disabled={replyDraft.trim().length < 2 || !!replyingPostId || !!loadingRepliesPostId || !!deletingId}
                                         className="px-3 py-2 sm:py-1.5 rounded-lg text-[10px] font-medium w-full sm:w-auto"
                                         style={{
                                           color: 'var(--foreground)',
@@ -1242,7 +1387,7 @@ export default function GalaxyPage({ params }: Props) {
                                   </div>
                                 ) : (
                                   <p className="text-xs" style={{ color: 'var(--ghost)' }}>
-                                    Join this community to like and reply.
+                                    {t('joinToInteract')}
                                   </p>
                                 )}
                               </div>
@@ -1348,7 +1493,7 @@ export default function GalaxyPage({ params }: Props) {
           <div
             className="fixed inset-0 z-50"
             style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setSelectedTopic(null)}
+            onClick={() => { if (!postingDiscussionReply && !deletingId && !discussionLikePending) setSelectedTopic(null) }}
             aria-hidden="true"
           />
           <div
@@ -1374,6 +1519,7 @@ export default function GalaxyPage({ params }: Props) {
               <button
                 type="button"
                 onClick={() => setSelectedTopic(null)}
+                disabled={postingDiscussionReply || !!deletingId || discussionLikePending}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ghost)', cursor: 'pointer' }}
                 aria-label={t('closeDiscussionPreview')}
@@ -1390,13 +1536,13 @@ export default function GalaxyPage({ params }: Props) {
                   aria-hidden="true"
                 />
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
+                  <h2 className="wrap-anywhere text-base sm:text-lg font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>
                     {selectedTopic.title}
                   </h2>
                   <p className="text-xs sm:text-sm leading-relaxed mt-3" style={{ color: 'var(--ink)', opacity: 0.72 }}>
                     {t('discussionIntro', { name: galaxy.name })}
-                    {selectedTopic?.canDelete && <button type="button" onClick={()=>deleteContent('discussions',selectedTopic.id)} className="ml-3 text-xs text-red-200">{tw('deleteContent')}</button>}
                   </p>
+                  {selectedTopic.canDelete && <button type="button" disabled={postingDiscussionReply || !!deletingId} onClick={() => deleteContent('discussions', selectedTopic.id)} className="mt-3 text-xs text-red-200 disabled:opacity-40">{deletingId === selectedTopic.id ? tw('saving') : tw('deleteContent')}</button>}
                 </div>
               </div>
 
@@ -1424,27 +1570,42 @@ export default function GalaxyPage({ params }: Props) {
                         {new Date(reply.createdAt).toLocaleDateString(locale)}
                       </time>
                     </div>
-                    <p className="text-xs leading-relaxed mt-2" style={{ color: 'var(--ink)', opacity: 0.76 }}>
+                    <p className="whitespace-pre-wrap wrap-anywhere text-xs leading-relaxed mt-2" style={{ color: 'var(--ink)', opacity: 0.76 }}>
                       {reply.content}
                     </p>
                     {communityJoined && (
                       <button
                         type="button"
-                        onClick={() => setDiscussionReplyDraft((current) => current.trim() ? current : `@${reply.authorName} `)}
+                        disabled={postingDiscussionReply || !!deletingId}
+                        onClick={() => setDiscussionReplyDraft(discussionReplyDraft.trim() ? discussionReplyDraft : `@${reply.authorName} `)}
                         className="mt-2 text-[10px] bg-transparent border-none p-0"
                         style={{ color: accentColor, cursor: 'pointer' }}
                       >
                         {t('reply')}
                       </button>
                     )}
+                    {reply.canDelete && <button type="button" disabled={postingDiscussionReply || !!deletingId} onClick={() => deleteReply('discussions', selectedTopic.id, reply.id)} className="ml-3 py-2 text-xs text-red-200 disabled:opacity-40">{deletingId === reply.id ? tw('saving') : tw('deleteContent')}</button>}
+                    <ReplyLikeButton
+                      url={`/api/communities/${community.id}/discussions/${selectedTopic.id}/replies/${reply.id}/like`}
+                      likes={reply.likes}
+                      likedByMe={reply.likedByMe}
+                      disabled={!communityJoined || !!deletingId || pendingReplyLikes.has(`replyLike:discussions:${reply.id}`)}
+                      onPending={busy => replyLikePending(`replyLike:discussions:${reply.id}`, busy)}
+                      onChange={result => updateReplyLike('discussions', selectedTopic.id, reply.id, result)}
+                    />
                   </div>
                 ))}
               </div>
+              {postError && <p role="alert" className="text-sm text-red-200">{postError}</p>}
+              {contentStatus && <p role="status" className="text-sm text-violet-200">{contentStatus}</p>}
 
               {communityJoined ? (
                 <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                   <textarea
                     value={discussionReplyDraft}
+                    disabled={postingDiscussionReply || !!deletingId}
+                    maxLength={600}
+                    aria-label={t('addReplyPlaceholder')}
                     onChange={(event) => setDiscussionReplyDraft(event.target.value)}
                     rows={3}
                     placeholder={t('addReplyPlaceholder')}
@@ -1459,7 +1620,7 @@ export default function GalaxyPage({ params }: Props) {
                     <button
                       type="button"
                       onClick={handleAddDiscussionReply}
-                      disabled={!discussionReplyDraft.trim() || postingDiscussionReply}
+                      disabled={discussionReplyDraft.trim().length < 2 || postingDiscussionReply || !!deletingId}
                       className="px-4 py-2 rounded-xl text-xs font-medium w-full sm:w-auto"
                       style={{
                         color: 'var(--foreground)',
@@ -1497,6 +1658,7 @@ export default function GalaxyPage({ params }: Props) {
                 <button
                   type="button"
                   onClick={() => setSelectedTopic(null)}
+                  disabled={postingDiscussionReply || !!deletingId || discussionLikePending}
                   className="rounded-xl px-4 py-2 text-xs font-medium w-full sm:w-auto"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--ink)', cursor: 'pointer' }}
                 >

@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { safeApiError } from '@/lib/api-input'
+import { galaxyAccess } from '@/lib/galaxy-workflow'
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string; postId: string; replyId: string }> },
 ) {
-  let session;
   try {
-    session = await requireUser();
-  } catch (res) {
-    return res as Response;
-  }
+  const session = await requireUser();
 
   const { id, postId, replyId } = await params;
 
-  const post = await prisma.communityPost.findFirst({
+  return await prisma.$transaction(async tx => {
+  await galaxyAccess(tx, id, session.user, true)
+  const post = await tx.communityPost.findFirst({
     where: { id: postId, communityId: id },
     select: { id: true },
   });
@@ -24,7 +24,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const reply = await prisma.communityPostReply.findUnique({
+  const reply = await tx.communityPostReply.findUnique({
     where: { id: replyId },
     select: { id: true, postId: true, authorId: true },
   });
@@ -37,7 +37,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Only the author can delete this reply" }, { status: 403 });
   }
 
-  await prisma.communityPostReply.delete({ where: { id: replyId } });
+  await tx.communityPostReply.delete({ where: { id: replyId } });
 
   return NextResponse.json({ success: true });
+  })
+  } catch (error) { return safeApiError(error) }
 }
