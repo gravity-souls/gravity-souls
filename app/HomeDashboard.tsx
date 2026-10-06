@@ -31,6 +31,9 @@ import type { GalaxyPreview } from '@/types/galaxy'
 import type { StreamPost } from '@/types/stream'
 import { streamPageSchema } from '@/lib/stream-workflow'
 import { useStreamReturn } from '@/lib/hooks/useStreamReturn'
+import { getResonanceMatches } from '@/lib/match'
+import { planetProfileFromApi } from '@/lib/planet-profile-from-api'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 // --- Page --------------------------------------------------------------------
 
@@ -39,12 +42,16 @@ export default function HomeDashboard() {
   const tHome = useTranslations('home')
   const tNav = useTranslations('nav')
   const { data: session, isPending: sessionPending } = authClient.useSession()
+  const currentUserId = session?.user?.id
   const reducedMotion = useReducedMotionPreference()
   const [globeStatus, setGlobeStatus] = useState<GlobeStatus>('loading')
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetProfile | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<GalaxyEventDetail | null>(null)
   const [hasActivePlanet, setHasActivePlanet] = useState<boolean | null>(null)
   const [savedPlanetIds, setSavedPlanetIds] = useState<Set<string> | null>(null)
+  const [featuredPlanet, setFeaturedPlanet] = useState<PlanetProfile | null>(null)
+  const [featuredOrbitError, setFeaturedOrbitError] = useState(false)
+  const [featuredOrbitRevision, setFeaturedOrbitRevision] = useState(0)
   const [upcomingEvents, setUpcomingEvents] = useUpcomingEvents(1, !sessionPending && !!session?.user)
   const upcomingEvent = upcomingEvents[0] ?? null
   const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
@@ -52,7 +59,7 @@ export default function HomeDashboard() {
   const [postsError, setPostsError] = useState(false)
   const [postsLoading, setPostsLoading] = useState(true)
   const [postsRevision, setPostsRevision] = useState(0)
-  const tStream = useTranslations('stream'), tContext = useTranslations('postContext')
+  const tStream = useTranslations('stream'), tContext = useTranslations('postContext'), tResonance = useTranslations('resonance')
   useStreamReturn('/')
   useEffect(() => { if (!postsLoading && !postsError) window.dispatchEvent(new Event('stream-ready')) }, [postsLoading, postsError, sharedPosts])
 
@@ -139,6 +146,57 @@ export default function HomeDashboard() {
       .catch(() => {})
     return () => { cancelled = true }
   }, [session])
+
+  useEffect(() => {
+    if (sessionPending) return
+    if (!currentUserId) {
+      setFeaturedPlanet(null)
+      setFeaturedOrbitError(false)
+      return
+    }
+
+    let cancelled = false
+    const controller = new AbortController()
+    async function loadClosestOrbit() {
+      try {
+        const mineResponse = await fetch('/api/my-planet', { cache: 'no-store', signal: controller.signal })
+        if (mineResponse.status === 404) {
+          if (!cancelled) { setFeaturedPlanet(null); setFeaturedOrbitError(false) }
+          return
+        }
+        if (!mineResponse.ok) throw new Error('Could not load the source planet for resonance matching')
+
+        const mineData = await mineResponse.json() as Record<string, unknown>
+        const candidateData: Record<string, unknown>[] = []
+        let cursor: string | null = null
+        do {
+          const params = new URLSearchParams({ limit: '50' })
+          if (cursor) params.set('cursor', cursor)
+          const candidatesResponse = await fetch(`/api/planets?${params}`, { cache: 'no-store', signal: controller.signal })
+          if (!candidatesResponse.ok) throw new Error('Could not load planets for resonance matching')
+          const page = await candidatesResponse.json() as { planets: Record<string, unknown>[]; nextCursor: string | null }
+          candidateData.push(...page.planets)
+          cursor = page.nextCursor
+        } while (cursor)
+
+        if (cancelled) return
+
+        const ownPlanet = planetProfileFromApi(mineData)
+        const candidates = candidateData.map(planetProfileFromApi)
+        const closestMatch = getResonanceMatches(ownPlanet, candidates, 1)[0]
+        setFeaturedPlanet(closestMatch ? candidates.find(planet => planet.id === closestMatch.id) ?? null : null)
+        setFeaturedOrbitError(false)
+      } catch {
+        if (!cancelled && !controller.signal.aborted) {
+          setFeaturedPlanet(null)
+          setFeaturedOrbitError(true)
+        }
+      }
+    }
+
+    void loadClosestOrbit()
+    return () => { cancelled = true; controller.abort() }
+  }, [currentUserId, sessionPending, featuredOrbitRevision])
 
   async function openUpcomingEvent(event: GalaxyEventSummary) {
     const res = await fetch(`/api/galaxies/${event.galaxyId}/events/${event.id}`)
@@ -233,7 +291,6 @@ export default function HomeDashboard() {
       .finally(() => setJoiningSlug(null))
   }, [session, communities, router])
 
-  const featuredPlanet = nearbyPlanets[0]?.planet
   const homepageStats = [
     { label: tHome('statsPlanetsNearby'), value: String(nearbyPlanets.length) },
     { label: tHome('statsGalaxiesAwake'), value: String(galaxies.length) },
@@ -394,10 +451,16 @@ export default function HomeDashboard() {
                 >
                   <span className="text-data-label shrink-0">{tHome('closestOrbit')}</span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{featuredPlanet.name}</span>
+                    <span className="block text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{planetDisplayName(featuredPlanet)}</span>
                     <span className="block text-xs truncate" style={{ color: 'var(--ghost)' }}>{featuredPlanet.tagline}</span>
                   </span>
                 </button>
+              )}
+              {featuredOrbitError && (
+                <p role="alert" className="mt-4 text-xs text-red-300">
+                  {tResonance('loadError')}{' '}
+                  <button type="button" className="underline" onClick={() => setFeaturedOrbitRevision(value => value + 1)}>{tResonance('retry')}</button>
+                </p>
               )}
             </div>
           </div>
