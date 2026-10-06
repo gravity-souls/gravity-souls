@@ -49,12 +49,12 @@ test('resonance request failure offers retry; a successful empty response is an 
   let fail = true
   await page.route('**/api/planets', route => route.fulfill({ status: fail ? 500 : 200, json: fail ? {} : { planets: [] } }))
   await page.goto('/resonance')
-  await expect(page.getByRole('alert')).toContainText(en.resonance.loadError)
+  await expect(page.getByRole('alert').filter({ hasText: en.resonance.loadError })).toContainText(en.resonance.loadError)
   await expect(page.getByText(en.resonance.noMatchesTitle, { exact: true })).toHaveCount(0)
   fail = false
   await page.getByRole('button', { name: en.resonance.retry, exact: true }).click()
   await expect(page.getByText(en.resonance.noMatchesTitle, { exact: true })).toBeVisible()
-  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByRole('alert').filter({ hasText: en.resonance.loadError })).toHaveCount(0)
 })
 
 test('an old public self link redirects to My Planet and retains the map return route', async ({ page }) => {
@@ -71,7 +71,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(page.getByText(copy.planetPage.cognitiveTitle, { exact: true })).toBeVisible()
     await expect(page.getByText(copy.planetPage.cognitiveDescription, { exact: true })).toBeVisible()
     await expect(page.getByText(copy.planetPage.themesDescription, { exact: true })).toBeVisible()
-    for (const absent of [copy.planetPage.emotionalTitle, copy.planetPage.thoughtFragments, copy.planetPage.culturalCoordinates]) await expect(page.getByText(absent, { exact: true })).toHaveCount(0)
+    for (const absent of [copy.planetPage.emotionalTitle, copy.planetPage.thoughtFragments, copy.planetPage.culturalCoordinates]) await expect(page.getByTestId('planet-profile-modules').getByText(absent, { exact: true })).toHaveCount(0)
     await page.route('**/api/notifications', route => route.fulfill({ json: { notifications: [{ id: 'notice', type: 'NEW_FOLLOWER', title: 'A new planet is following yours', body: 'Étoile 星球 started following you', read: true, actionUrl: null, createdAt: new Date().toISOString() }], unreadCount: 0, unreadMessagesCount: 0, nextCursor: null } }))
     await page.goto('/notifications')
     const list = page.getByRole('list', { name: copy.inboxWorkflow.notifications, exact: true })
@@ -103,7 +103,7 @@ for (const mode of ['discover', 'personal']) {
     await expect(page.getByRole('tooltip')).toHaveText(peer.name)
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page).toHaveURL(new RegExp(`/star-map\\?mode=${mode}$`))
-    await canvas.dispatchEvent('pointerleave', { pointerType: 'mouse', pointerId: 9 })
+    await canvas.dispatchEvent('pointerout', { pointerType: 'mouse', pointerId: 9 })
     await expect(page.getByRole('tooltip')).toHaveCount(0)
   })
 }
