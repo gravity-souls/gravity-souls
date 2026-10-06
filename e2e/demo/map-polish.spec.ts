@@ -52,6 +52,7 @@ test('every galaxy gets an overview beam, including empty and single-member comm
 test('selected planet opens a complete viewport dialog with a labelled score and returns focus on close', async ({ page }) => {
   await page.route('**/api/star-map?**', route => route.fulfill({ json: { groups: [{ id: 'calm', count: 1, color: '#a78bfa' }], nodes: [{ id: 'peer', name: 'Preview planet', groupId: 'calm', href: '/planet/peer', score: 86, planetConfig: config, tagline: 'A long profile preview '.repeat(25) }], total: 1, nextCursor: null, scope: 'allVisible' } }))
   await page.goto('/star-map')
+  await expect(page.locator('#star-map-sidebar')).toContainText('Calm')
   const toggle = page.getByRole('button',{ name: en.starMap.browseObjects, exact: true })
   if (await toggle.isVisible()) await toggle.click()
   await page.getByRole('button',{ name: /Calm 1 planets/ }).click()

@@ -17,7 +17,7 @@ export default function MapObjectDialog({ label, kind = 'planet', children, onCl
     return () => { dialog.close(); document.body.style.overflow = overflow; previous?.focus({ preventScroll: true }) }
   }, [])
   return createPortal(<dialog ref={ref} aria-label={label} className={styles.objectDialog} onCancel={e => { e.preventDefault(); close.current() }} onClick={e => { if (e.target === e.currentTarget) { const rect = e.currentTarget.getBoundingClientRect(); if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) close.current() } }}>
-    <div className={styles.dialogHeader}><span>{map(`kind_${kind}`)}</span><button type="button" aria-label={t('closePreview')} onClick={onClose}>×</button></div>
+    <div className={styles.dialogHeader}><span>{kind === 'planet' ? t('planetPreview') : map(`kind_${kind}`)}</span><button type="button" aria-label={t('closePreview')} onClick={onClose}>×</button></div>
     <div className={styles.dialogBody}>{children}</div>
   </dialog>, document.body)
 }
