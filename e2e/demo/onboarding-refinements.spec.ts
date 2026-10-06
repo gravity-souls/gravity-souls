@@ -70,7 +70,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) test(`first planet 
   await stage.getByRole('button',{ name: copy.onboardingRefinements.enterUniverse, exact: true }).click()
   await expect(page.getByRole('link',{ name: copy.planetAwakening.openPlanet, exact: true })).toBeVisible()
   await expect(page.getByText(copy.planetAwakening.live, { exact: true })).toBeVisible()
-  await expect(page.getByText(copy.creationSteps.climateOptions.calm.description, { exact: false })).toBeVisible()
+  await expect(page.locator('p:visible').filter({ hasText: copy.creationSteps.climateOptions.calm.description })).toBeVisible()
   await page.getByTestId('planet-meaning').locator('summary').click()
   await expect(page.getByText(copy.planetMeaning.nameExplanation, { exact: true })).toBeVisible()
 })

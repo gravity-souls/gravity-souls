@@ -2280,6 +2280,8 @@
     "axesExplanation": "A higher abstract value favours ideas over concrete detail. A higher introspective value favours inward reflection over outward expression. These are self-selected tendencies used in matching, not measured abilities.",
     "appearanceTitle": "Why it looks this way",
     "appearanceExplanation": "Climate sets the initial glow, surface style and default texture. Life rhythm and themes describe your preferences and help shape resonance matching. Changing your photo, texture or color changes your appearance while keeping these preferences.",
-    "editHint": "You can revisit calibration in planet settings and change your appearance through Customize."
+    "editHint": "You can revisit calibration in planet settings and change your appearance through Customize.",
+    "summary": "Your planet carries a {climate} inner climate, moves with a {lifestyle} life rhythm, communicates in a {communication} way, and is drawn to {themes}.",
+    "separator": ", "
   }
 }

@@ -777,7 +777,7 @@ export default function MyPlanetPage() {
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                   style={{ background: `${visual.coreColor}14`, border: `1px solid ${visual.coreColor}28`, color: visual.coreColor }}>
-                  {moodLabel(tCreation, planet.mood)}
+                  {moodLabel(tCreation, planet.mood, planet.visual.climateKey)}
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full capitalize"
                   style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', color: 'var(--star)' }}>

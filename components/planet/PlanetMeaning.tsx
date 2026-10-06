@@ -18,6 +18,7 @@ export default function PlanetMeaning({ planet, draft, expanded = false }: { pla
   return <details open={expanded || undefined} className="w-full min-w-0 rounded-2xl border border-violet-300/20 bg-violet-300/5 text-left" data-testid="planet-meaning">
     <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold text-violet-100 [&::-webkit-details-marker]:hidden"><Sparkles size={16} aria-hidden="true" /><span className="flex-1">{t('title')}</span><ChevronDown size={16} aria-hidden="true" /></summary>
     <div className="space-y-5 border-t border-violet-300/10 px-4 py-5 text-sm leading-relaxed">
+      {climate && lifestyle && communication && themes.length > 0 && <p className="text-base text-violet-100">{t('summary', { climate: known(`climateOptions.${climate}.label`), lifestyle: lifestyleLabel(choices,lifestyle), communication: commStyleLabel(choices,communication), themes: themes.map(theme => themeLabel(choices,theme)).join(t('separator')) })}</p>}
       <p className="text-slate-300">{t('intro')}</p>
       <section><h3 className="font-semibold text-violet-100">{t('nameTitle')}</h3><p className="mt-1 text-slate-300">{t('nameExplanation')}</p></section>
       {climate && <section><h3 className="font-semibold text-violet-100">{t('climateTitle')}: {known(`climateOptions.${climate}.label`)}</h3><p className="mt-1 text-slate-300">{known(`climateOptions.${climate}.description`)}</p></section>}

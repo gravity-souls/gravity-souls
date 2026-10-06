@@ -72,7 +72,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
                 color: visual.coreColor,
               }}
             >
-              {moodLabel(tCreation, planet.mood)}
+              {moodLabel(tCreation, planet.mood, planet.visual.climateKey)}
             </span>
             {/* Lifestyle chip */}
             <span

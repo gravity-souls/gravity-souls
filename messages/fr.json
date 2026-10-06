@@ -2280,6 +2280,8 @@
     "axesExplanation": "Une valeur abstraite élevée privilégie les idées aux détails concrets. Une valeur introspective élevée privilégie la réflexion intérieure à l’expression extérieure. Ces tendances choisies servent aux affinités ; elles ne mesurent pas vos capacités.",
     "appearanceTitle": "Pourquoi cette apparence",
     "appearanceExplanation": "Le climat définit la lueur, le style de surface et la texture par défaut. Le rythme de vie et les thèmes décrivent vos préférences et contribuent aux affinités. Changer la photo, la texture ou la couleur modifie l’apparence en conservant vos préférences.",
-    "editHint": "Vous pouvez reprendre le calibrage dans les paramètres de la planète et modifier son apparence avec Personnaliser."
+    "editHint": "Vous pouvez reprendre le calibrage dans les paramètres de la planète et modifier son apparence avec Personnaliser.",
+    "summary": "Votre planète porte un climat intérieur « {climate} », suit un rythme de vie « {lifestyle} », s’exprime de façon « {communication} » et gravite autour de {themes}.",
+    "separator": ", "
   }
 }
