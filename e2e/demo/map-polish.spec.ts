@@ -98,5 +98,5 @@ test('email-registered owner and saved peers retain planet presets without provi
   const canvas = page.locator('canvas[aria-label]')
   await canvas.scrollIntoViewIfNeeded()
   await expect.poll(() => canvas.evaluate(el => (el as HTMLCanvasElement & { mapStats: Stats }).mapStats?.sources)).toContain('/textures/mars.jpg')
-  await expect(page.locator('a[href*="/planet/email-owner"] img')).toHaveAttribute('src', '/textures/mars.jpg')
+  await expect(page.locator('a[href^="/my-planet"] img')).toHaveAttribute('src', '/textures/mars.jpg')
 })

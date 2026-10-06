@@ -365,7 +365,7 @@ function PlanetPageInner() {
         )}
 
         {/* -- Main content grid ----------------------------------------- */}
-        <div className={`mt-8 grid grid-cols-1 gap-6 ${hasSidebarContent ? "lg:grid-cols-3" : ""}`}>
+        <div data-testid="planet-profile-modules" className={`mt-8 grid grid-cols-1 gap-6 ${hasSidebarContent ? "lg:grid-cols-3" : ""}`}>
 
           {/* -- Left / main column (2 wide) --------------------------- */}
           <div className={`${hasSidebarContent ? "lg:col-span-2" : ""} flex flex-col gap-6`}>
