@@ -530,7 +530,7 @@ for (const locale of ['en','fr','zh']) test(`personal origin uses only name/avat
   const html=render(locale,React.createElement(Anchor,{planet,origin:'personal-star-map-activities-list',summary:true}))
   assert.ok(html.includes('Actual person'));assert.ok(!html.includes(escape(m.selfCenter)));assert.ok(!html.includes(escape(m.selfExcluded)))
   assert.ok(html.includes('src="https://example.test/center-portrait.png"'))
-  assert.ok(html.includes('href="/planet/own?from=personal-star-map-activities-list"'))
+  assert.ok(html.includes('href="/my-planet?from=personal-star-map-activities-list"'))
   assert.ok(!html.includes('planet-surface-drift'));assert.ok(!html.includes('<canvas'))
   const missing=render(locale,React.createElement(Anchor,{planet:null,origin:'personal-star-map-saved'}))
   assert.ok(missing.includes(escape(m.createSelf)))

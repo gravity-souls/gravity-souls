@@ -6,7 +6,8 @@
 // under the flat `notifications.*` namespace.
 //
 // NotificationTemplates resolve recipient-language copy for every template.
-// Previously stored notifications retain their original text.
+// Storage retains the original text; notification-copy localizes known templates
+// at display time when the viewer changes interface language.
 
 import { defaultLocale, resolveLocale, type Locale } from '@/lib/i18n-locales'
 import { prisma } from '@/lib/prisma'

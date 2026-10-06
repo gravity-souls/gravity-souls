@@ -230,7 +230,9 @@
     "note_culture-travel": "你们在文化与旅行兴趣中相遇。",
     "note_art-books-music": "艺术、书籍或音乐连接着你们。",
     "note_worldview-complement": "你们的世界观带来互补视角。",
-    "fullReport": "查看完整匹配报告"
+    "fullReport": "查看完整匹配报告",
+    "loadError": "暂时无法加载共鸣轨道，请重试。",
+    "retry": "重试"
   },
   "stream": {
     "searchPlaceholder": "搜索动态...",
@@ -425,7 +427,19 @@
     "statusQuiet": "沉寂",
     "myPlanetCrumb": "我的星球",
     "galaxiesCrumb": "星系",
-    "save": "保存"
+    "save": "保存",
+    "cognitiveTitle": "思考倾向",
+    "cognitiveDescription": "这些坐标来自侧写时的选择：更偏向抽象想法还是具体体验，以及向内思考还是向外表达。它们不是性格诊断。",
+    "concrete": "具体体验",
+    "abstract": "抽象思考",
+    "outward": "向外表达",
+    "inward": "向内思考",
+    "introspective": "内省倾向",
+    "emotionalTitle": "情绪频率",
+    "themesTitle": "核心主题",
+    "themesDescription": "星球主人选择的兴趣主题与氛围。",
+    "thoughtDescription": "对方主动分享的想法和自我介绍。",
+    "tracesDescription": "对方最近探索过的星球类型。"
   },
   "planetSettings": {
     "updated": "设置已更新",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import ResonanceExperience from '@/components/resonance/ResonanceExperience'
@@ -104,7 +105,9 @@ export default function ResonancePage() {
   const t = useTranslations('resonance')
   const tCommon = useTranslations('common')
   const tTraits = useTranslations('creationSteps')
-  const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [revision, setRevision] = useState(0)
   const [role, setRole] = useState<'explorer' | 'resonator'>('explorer')
   const [myPlanet, setMyPlanet] = useState<PlanetProfile | null>(null)
   const [session, setSession] = useState<ResonanceSession | null>(null)
@@ -131,127 +134,130 @@ export default function ResonancePage() {
       setSession(null)
       setPlanetById({})
       setActiveId(null)
-      setMounted(true)
-
-      let res: Response
+      setLoading(true)
+      setLoadError(false)
       try {
-        res = await fetch('/api/my-planet')
-      } catch {
-        return
-      }
-
-      if (cancelled || current !== generation) return
-
-      // A single 401 right after landing here can be WebKit's cookie jar not
-      // having committed the session yet rather than a real unauthenticated
-      // state — retry once before bouncing to sign-in.
-      if (res.status === 401) {
+        let res: Response
         try {
           res = await fetch('/api/my-planet')
         } catch {
+          throw new Error('networkUnavailable')
+        }
+
+        if (cancelled || current !== generation) return
+
+        // A single 401 right after landing here can be WebKit's cookie jar not
+        // having committed the session yet rather than a real unauthenticated
+        // state — retry once before bouncing to sign-in.
+        if (res.status === 401) {
+          try {
+            res = await fetch('/api/my-planet')
+          } catch {
+            throw new Error('networkUnavailable')
+          }
+          if (cancelled || current !== generation) return
+        }
+
+        if (res.status === 401) {
+          window.location.href = '/sign-in?next=/resonance'
           return
         }
+        if (res.status === 404) {
+          window.location.href = '/onboarding'
+          return
+        }
+        if (!res.ok) throw new Error('myPlanetUnavailable')
+
+        const data = (await res.json()) as Record<string, unknown>
         if (cancelled || current !== generation) return
-      }
-
-      if (res.status === 401) {
-        window.location.href = '/sign-in?next=/resonance'
-        return
-      }
-      if (res.status === 404) {
-        window.location.href = '/onboarding'
-        return
-      }
-      if (!res.ok) return
-
-      const data = (await res.json()) as Record<string, unknown>
-      const p: PlanetProfile = {
-        id: data.id as string,
-        name: (data.name as string) || 'Unknown',
-        avatarSymbol: (data.avatarSymbol as string) || '?',
-        tagline: (data.tagline as string) ?? undefined,
-        role: 'resonator',
-        mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
-        style: (data.style as PlanetProfile['style']) ?? 'minimal',
-        lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-        coreThemes: (data.coreThemes as string[]) ?? [],
-        contentFragments: (data.contentFragments as string[]) ?? [],
-        visual: (data.visual as PlanetProfile['visual']) ?? {
-          coreColor: '#a78bfa',
-          accentColor: '#c4b5fd',
-          ringStyle: 'none' as const,
-          surfaceStyle: 'smooth' as const,
-          satelliteCount: 1,
-          size: 'lg' as const,
-        },
-        planetConfig:
-          (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
-        cognitiveAxes: {
-          abstract: (data.abstractAxis as number) ?? 50,
-          introspective: (data.introspectiveAxis as number) ?? 50,
-        },
-        emotionalBars: [],
-        createdAt: (data.createdAt as string) ?? new Date().toISOString(),
-        userId: (data.userId as string) ?? '',
-      }
-
-      setMyPlanet(p)
-      setRole('resonator')
-
-      // Fetch other planets for resonance session
-      fetch('/api/planets')
-        .then((r) => (r.ok ? r.json() : { planets: [] }))
-        .then(
-          ({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
-            if (cancelled || current !== generation) return
-            const planets = planetData.map(
-              (d) =>
-                ({
-                  id: d.id as string,
-                  publicTags: d.publicTags as PlanetProfile['publicTags'],
-                  preferenceFit: d.preferenceFit as PlanetProfile['preferenceFit'],
-                  name: (d.name as string) || 'Unknown',
-                  avatarSymbol: (d.avatarSymbol as string) || '?',
-                  tagline: (d.tagline as string) ?? undefined,
-                  role: 'resonator' as const,
-                  mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
-                  style: (d.style as PlanetProfile['style']) ?? 'minimal',
-                  lifestyle:
-                    (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
-                  coreThemes: (d.coreThemes as string[]) ?? [],
-                  contentFragments: (d.contentFragments as string[]) ?? [],
-                  visual: (d.visual as PlanetProfile['visual']) ?? {
-                    coreColor: '#a78bfa',
-                    accentColor: '#c4b5fd',
-                    ringStyle: 'none' as const,
-                    surfaceStyle: 'smooth' as const,
-                    satelliteCount: 1,
-                    size: 'lg' as const,
-                  },
-                  planetConfig:
-                    (d.planetConfig as PlanetProfile['planetConfig']) ??
-                    undefined,
-                  cognitiveAxes: {
-                    abstract: (d.abstractAxis as number) ?? 50,
-                    introspective: (d.introspectiveAxis as number) ?? 50,
-                  },
-                  emotionalBars: [],
-                  createdAt:
-                    (d.createdAt as string) ?? new Date().toISOString(),
-                  userId: (d.userId as string) ?? '',
-                }) as PlanetProfile,
-            )
-            if (planets.length > 0) {
-              setSession(buildResonanceSession(p, planets))
-              const byId: Record<string, PlanetProfile> = {}
-              for (const pl of planets) byId[pl.id] = pl
-              setPlanetById(byId)
-            }
+        const p: PlanetProfile = {
+          id: data.id as string,
+          name: (data.name as string) || 'Unknown',
+          avatarSymbol: (data.avatarSymbol as string) || '?',
+          tagline: (data.tagline as string) ?? undefined,
+          role: 'resonator',
+          mood: (data.mood as PlanetProfile['mood']) ?? 'calm',
+          style: (data.style as PlanetProfile['style']) ?? 'minimal',
+          lifestyle: (data.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+          coreThemes: (data.coreThemes as string[]) ?? [],
+          contentFragments: (data.contentFragments as string[]) ?? [],
+          visual: (data.visual as PlanetProfile['visual']) ?? {
+            coreColor: '#a78bfa',
+            accentColor: '#c4b5fd',
+            ringStyle: 'none' as const,
+            surfaceStyle: 'smooth' as const,
+            satelliteCount: 1,
+            size: 'lg' as const,
           },
-        )
-        .catch(() => {
-          /* no session */
-        })
+          planetConfig:
+            (data.planetConfig as PlanetProfile['planetConfig']) ?? undefined,
+          cognitiveAxes: {
+            abstract: (data.abstractAxis as number) ?? 50,
+            introspective: (data.introspectiveAxis as number) ?? 50,
+          },
+          emotionalBars: [],
+          createdAt: (data.createdAt as string) ?? new Date().toISOString(),
+          userId: (data.userId as string) ?? '',
+        }
+
+        setMyPlanet(p)
+        setRole('resonator')
+
+        // Fetch other planets for resonance session
+        await fetch('/api/planets')
+          .then((r) => { if (!r.ok) throw new Error('matchesUnavailable'); return r.json() })
+          .then(
+            ({ planets: planetData }: { planets: Record<string, unknown>[] }) => {
+              if (cancelled || current !== generation) return
+              const planets = planetData.map(
+                (d) =>
+                  ({
+                    id: d.id as string,
+                    publicTags: d.publicTags as PlanetProfile['publicTags'],
+                    preferenceFit: d.preferenceFit as PlanetProfile['preferenceFit'],
+                    name: (d.name as string) || 'Unknown',
+                    avatarSymbol: (d.avatarSymbol as string) || '?',
+                    tagline: (d.tagline as string) ?? undefined,
+                    role: 'resonator' as const,
+                    mood: (d.mood as PlanetProfile['mood']) ?? 'calm',
+                    style: (d.style as PlanetProfile['style']) ?? 'minimal',
+                    lifestyle:
+                      (d.lifestyle as PlanetProfile['lifestyle']) ?? 'solitary',
+                    coreThemes: (d.coreThemes as string[]) ?? [],
+                    contentFragments: (d.contentFragments as string[]) ?? [],
+                    visual: (d.visual as PlanetProfile['visual']) ?? {
+                      coreColor: '#a78bfa',
+                      accentColor: '#c4b5fd',
+                      ringStyle: 'none' as const,
+                      surfaceStyle: 'smooth' as const,
+                      satelliteCount: 1,
+                      size: 'lg' as const,
+                    },
+                    planetConfig:
+                      (d.planetConfig as PlanetProfile['planetConfig']) ??
+                      undefined,
+                    cognitiveAxes: {
+                      abstract: (d.abstractAxis as number) ?? 50,
+                      introspective: (d.introspectiveAxis as number) ?? 50,
+                    },
+                    emotionalBars: [],
+                    createdAt:
+                      (d.createdAt as string) ?? new Date().toISOString(),
+                    userId: (d.userId as string) ?? '',
+                  }) as PlanetProfile,
+              )
+              if (planets.length > 0) {
+                setSession(buildResonanceSession(p, planets))
+                const byId: Record<string, PlanetProfile> = {}
+                for (const pl of planets) byId[pl.id] = pl
+                setPlanetById(byId)
+              }
+            },
+          )
+        if (!cancelled && current === generation) setLoading(false)
+      } catch {
+        if (!cancelled && current === generation) { setLoadError(true); setLoading(false) }
+      }
     }
 
     void load()
@@ -260,7 +266,7 @@ export default function ResonancePage() {
       unsubscribe()
       cancelled = true
     }
-  }, [])
+  }, [revision])
 
   const displaySession = useMemo(
     () =>
@@ -282,7 +288,8 @@ export default function ResonancePage() {
         : session,
     [session, myPlanet, planetById, t, tTraits],
   )
-  if (!mounted) return null
+  if (loading) return <AppShell><PlanetLoadingState /></AppShell>
+  if (loadError) return <AppShell><div role="alert" className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center gap-4 px-6 text-center"><p>{t('loadError')}</p><button className="min-h-11 rounded-xl border border-violet-300/30 px-5" onClick={() => setRevision(value => value + 1)}>{t('retry')}</button></div></AppShell>
 
   const activeMatch: OrbitMatch | null =
     activeId && displaySession
@@ -295,7 +302,7 @@ export default function ResonancePage() {
   // matches yet. These are different situations and must show different copy
   // — a formed planet must never be told to "begin formation" again.
   const unformed = role === 'explorer' || !myPlanet
-  if (unformed || !session) {
+  if (unformed || !session || session.matches.length === 0) {
     return (
       <AppShell>
         <LightCone

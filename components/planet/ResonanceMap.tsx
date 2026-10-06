@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import type { ResonancePlanet, BeamColor } from '@/types/planet'
 
@@ -43,7 +44,7 @@ function ResonanceHub({
       height={H}
       viewBox={`0 0 ${W} ${H}`}
       className="overflow-visible"
-      aria-hidden="true"
+
     >
       <defs>
         {planets.map((p, i) => {
@@ -117,10 +118,12 @@ function ResonanceHub({
         const ey = cy + orbitR * Math.sin(rad)
         const col = BEAM_COLORS[p.beamColor]
         return (
-          <g key={`node-${p.id}`} filter="url(#node-glow)">
-            <circle cx={ex} cy={ey} r={14} fill={`${col.primary}15`} stroke={`${col.primary}50`} strokeWidth="1" />
+          <a key={`node-${p.id}`} href={`/planet/${encodeURIComponent(p.id)}`} aria-label={p.name} className="group outline-none">
+            <title>{p.name}</title>
+          <g filter="url(#node-glow)">
+            <circle className="group-hover:stroke-white group-focus-visible:stroke-white group-hover:stroke-2 group-focus-visible:stroke-2" cx={ex} cy={ey} r={14} fill={`${col.primary}15`} stroke={`${col.primary}50`} strokeWidth="1" />
             <text x={ex} y={ey + 5} textAnchor="middle" fontSize="12" fill={col.primary}>{p.avatarSymbol}</text>
-          </g>
+          </g></a>
         )
       })}
     </svg>
@@ -130,12 +133,13 @@ function ResonanceHub({
 // --- Resonance planet card ----------------------------------------------------
 
 function ResonancePlanetCard({ planet }: { planet: ResonancePlanet }) {
+  const t = useTranslations('matchReasonPanel')
   const col = BEAM_COLORS[planet.beamColor]
 
   return (
     <Link
       href={`/planet/${planet.id}`}
-      className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+      className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:brightness-125 focus-visible:outline-2 focus-visible:outline-violet-200"
       style={{
         background: `${col.primary}08`,
         border: `1px solid ${col.primary}22`,
@@ -161,7 +165,7 @@ function ResonancePlanetCard({ planet }: { planet: ResonancePlanet }) {
             className="text-[9px] uppercase tracking-widest font-bold shrink-0"
             style={{ color: col.primary, opacity: 0.7 }}
           >
-            {col.label}
+            {t(`${col.label.toLowerCase()}Resonance`)}
           </span>
         </div>
         {planet.tagline && (
@@ -195,7 +199,9 @@ interface Props {
   title?: string
 }
 
-export default function ResonanceMap({ planets, hubColor, title = 'Resonance field' }: Props) {
+export default function ResonanceMap({ planets, hubColor, title }: Props) {
+  const t = useTranslations('matchReasonPanel')
+  const nav = useTranslations('nav')
   if (planets.length === 0) return null
 
   return (
@@ -204,7 +210,7 @@ export default function ResonanceMap({ planets, hubColor, title = 'Resonance fie
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        {title}
+        {title ?? nav('resonance')}
       </span>
 
       {/* SVG hub + beam diagram */}
@@ -224,7 +230,7 @@ export default function ResonanceMap({ planets, hubColor, title = 'Resonance fie
         {(Object.entries(BEAM_COLORS) as [BeamColor, typeof BEAM_COLORS[BeamColor]][]).map(([, col]) => (
           <div key={col.label} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full" style={{ background: col.primary }} />
-            <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.7 }}>{col.label}</span>
+            <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--ghost)', opacity: 0.7 }}>{t(`${col.label.toLowerCase()}Resonance`)}</span>
           </div>
         ))}
       </div>

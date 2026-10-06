@@ -140,3 +140,9 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
+.node:hover, .node:focus-visible { background: #c4b5fd18; box-shadow: 0 0 24px #a78bfa30; }
+.node:hover > :first-child, .node:focus-visible > :first-child { scale: 1.12; }
+.node > :first-child { transition: scale .18s ease; }
+.row:hover, .row:focus-visible { background: #a78bfa14; }
+@media (prefers-reduced-motion: reduce) { .node > :first-child { transition: none; } }

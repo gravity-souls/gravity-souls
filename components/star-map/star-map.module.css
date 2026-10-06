@@ -530,3 +530,7 @@
 .objectDialog .card p { display: block; overflow: visible; }
 .objectDialog .planetActions button { min-height: 44px; }
 .objectDialog a:focus-visible, .objectDialog button:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
+.hoverLabel { position: absolute; top: 16px; left: 16px; z-index: 3; max-width: calc(100% - 32px); pointer-events: none; overflow-wrap: anywhere; border: 1px solid #c4b5fd55; border-radius: 12px; padding: 9px 14px; background: #150d30ed; color: #ede9fe; font-size: 13px; box-shadow: 0 0 24px #a78bfa20; }
+.selfLink:hover, .selfLink:focus-visible { border-radius: 16px; background: #c4b5fd15; box-shadow: 0 0 24px #a78bfa44; outline: 1px solid #c4b5fd88; }
+.nodeList button:hover, .nodeList button:focus-visible { background: #a78bfa18; }

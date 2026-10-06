@@ -25,7 +25,7 @@ import styles from './star-map.module.css'
 import MapObjectDialog from './MapObjectDialog'
 
 type Dot = { x: number; y: number; z: number; color: string; groupId: string }
-type Hit = { x: number; y: number; groupId: string; node?: StarMapNode }
+type Hit = { x: number; y: number; p?: number; groupId: string; node?: StarMapNode }
 const EMPTY: StarMapData = {
   groups: [],
   nodes: [],
@@ -70,6 +70,8 @@ export default function StarMap({
   const spin = useRef(0)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const hits = useRef<Hit[]>([])
+  const hoverKey = useRef<string | null>(null)
+  const [hoverLabel, setHoverLabel] = useState<string | null>(null)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const moved = useRef(false)
   const view = useRef({ yaw: -0.12, pitch: -0.1, zoom: 1 })
@@ -159,6 +161,8 @@ export default function StarMap({
       if (abort.signal.aborted) return
       setLoading(true)
       setError(null)
+      hoverKey.current = null
+      setHoverLabel(null)
       try {
         const response = await fetch(`/api/star-map?${params}`, {
           signal: abort.signal,
@@ -282,9 +286,9 @@ export default function StarMap({
         last = 0
         return
       }
-      if (!reduced && pointers.current.size === 0 && !focused)
+      if (!reduced && pointers.current.size === 0 && !hoverKey.current && !focused)
         view.current.yaw += Math.min(time - (last || time), 45) * 0.00007
-      if (!reduced && pointers.current.size === 0)
+      if (!reduced && pointers.current.size === 0 && !hoverKey.current)
         spin.current += Math.min(time - (last || time), 45) * 0.00032
       last = time
       ctx.clearRect(0, 0, width, height)
@@ -475,6 +479,13 @@ export default function StarMap({
         })
       }
       ctx.globalCompositeOperation = 'source-over'
+      const hovered = hits.current.find(hit => (hit.node?.id ?? hit.groupId) === hoverKey.current)
+      if (hovered) {
+        ctx.save(); ctx.strokeStyle = '#e9d5ff'; ctx.lineWidth = 2
+        ctx.shadowColor = '#c4b5fd'; ctx.shadowBlur = 14
+        const radius = mode === 'discover' && hovered.node ? planetGravity(hovered.node.level).radius * Math.min(1.25, (hovered.p ?? 1)) + 5 : 23
+        ctx.beginPath(); ctx.arc(hovered.x, hovered.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore()
+      }
       if (!reduced) frame = requestAnimationFrame(render)
     }
     const redraw = () => {
@@ -628,7 +639,9 @@ export default function StarMap({
                 view.current.zoom = 1
               }
             }}
+            onPointerLeave={() => { hoverKey.current = null; setHoverLabel(null); setZoomTick(value => value + 1) }}
             onPointerDown={(event) => {
+              hoverKey.current = null; setHoverLabel(null)
               event.currentTarget.setPointerCapture(event.pointerId)
               pointers.current.set(event.pointerId, {
                 x: event.clientX,
@@ -638,7 +651,17 @@ export default function StarMap({
             }}
             onPointerMove={(event) => {
               const before = pointers.current.get(event.pointerId)
-              if (!before) return
+              if (!before) {
+                if (event.pointerType !== 'mouse') return
+                const rect = event.currentTarget.getBoundingClientRect()
+                const x = event.clientX - rect.left, y = event.clientY - rect.top
+                const hit = [...hits.current].sort((a,b) => Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0]
+                const target = hit && Math.hypot(hit.x-x,hit.y-y) < 30 ? hit : null
+                hoverKey.current = target ? target.node?.id ?? target.groupId : null
+                setHoverLabel(target ? target.node?.displayName || target.node?.name || groupLabel(target.groupId, clusters.find(group => group.id === target.groupId)?.name) : null)
+                event.currentTarget.style.cursor = target ? 'pointer' : 'grab'
+                return
+              }
               const next = { x: event.clientX, y: event.clientY }
               if (pointers.current.size === 2) {
                 const other = [...pointers.current.entries()].find(
@@ -695,6 +718,7 @@ export default function StarMap({
               pointers.current.delete(event.pointerId)
             }
           />
+          {hoverLabel && <div role="tooltip" className={styles.hoverLabel}>{hoverLabel}</div>}
           {mode !== 'galaxies' && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
           {!canvasAvailable && (
             <p className={styles.fallback}>{t('fallback')}</p>

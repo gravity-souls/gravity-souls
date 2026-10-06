@@ -1,7 +1,8 @@
 'use client'
 
+import { notificationCopy } from '@/lib/notification-copy'
 import type { Notification } from '@prisma/client'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Bell,
   CalendarClock,
@@ -24,21 +25,22 @@ interface Props {
   onDelete: (id: string) => void
 }
 
-function formatNotificationTime(value: string) {
+function formatNotificationTime(value: string, locale: string) {
   const date = new Date(value)
   const diffMs = Date.now() - date.getTime()
   const diffMinutes = Math.max(0, Math.floor(diffMs / 60000))
 
-  if (diffMinutes < 1) return 'now'
-  if (diffMinutes < 60) return `${diffMinutes}m`
+  const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' })
+  if (diffMinutes < 1) return relative.format(0, 'second')
+  if (diffMinutes < 60) return relative.format(-diffMinutes, 'minute')
 
   const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}h`
+  if (diffHours < 24) return relative.format(-diffHours, 'hour')
 
   const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return `${diffDays}d`
+  if (diffDays < 7) return relative.format(-diffDays, 'day')
 
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
 }
 
 function IconForType({ type }: { type: SerializedNotification['type'] }) {
@@ -71,6 +73,8 @@ function IconForType({ type }: { type: SerializedNotification['type'] }) {
 
 export default function NotificationItem({ notification, onSelect, onDelete }: Props) {
   const tA11y = useTranslations('a11y')
+  const locale = useLocale()
+  const copy = notificationCopy(notification, locale)
   return (
     <li className="group grid grid-cols-[minmax(0,1fr)_28px] gap-0 hover:bg-white/6">
       <button
@@ -92,17 +96,17 @@ export default function NotificationItem({ notification, onSelect, onDelete }: P
         <span className="min-w-0">
           <span className="flex items-start gap-2">
             <span className="min-w-0 flex-1 text-sm font-semibold leading-snug text-white">
-              {notification.title}
+              {copy.title}
             </span>
             {!notification.read && (
               <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-label={tA11y('unread')} />
             )}
           </span>
           <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-white/56">
-            {notification.body}
+            {copy.body}
           </span>
           <span className="mt-1.5 block text-[11px] text-white/34">
-            {formatNotificationTime(notification.createdAt)}
+            {formatNotificationTime(notification.createdAt, locale)}
           </span>
         </span>
       </button>

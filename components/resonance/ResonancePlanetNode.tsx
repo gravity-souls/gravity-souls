@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
@@ -18,12 +19,14 @@ interface Props {
 }
 
 export default function ResonancePlanetNode({ match, planet, isActive, onClick, style }: Props) {
+  const t = useTranslations('resonance')
   const color = orbitColorHex(match.orbitColor)
   const size  = isActive ? 52 : 44
 
   return (
     <button
       onClick={onClick}
+      title={planet.name}
       className="absolute flex flex-col items-center gap-1.5 group rounded-xl focus-visible:outline-2 focus-visible:outline-violet-200"
       style={{
         ...style,
@@ -35,10 +38,11 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
         padding: 0,
       }}
       aria-pressed={isActive}
-      aria-label={`${planet.name}  -  resonance score ${match.score}`}
+      aria-label={`${planet.name} · ${t('signalScore')} ${match.score}`}
     >
       {/* Planet orb — texture-based avatar */}
       <div
+        className="group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none"
         style={{
           width:  size,
           height: size,

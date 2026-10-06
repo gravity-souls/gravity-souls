@@ -1781,7 +1781,7 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
             const result=await data(layer)
             assert.equal(result.selfPlanet.id,own.id)
             assert.equal(result.selfPlanet.name,own.name)
-            assert.equal(result.selfPlanet.href,`/planet/${own.id}`)
+            assert.equal(result.selfPlanet.href,"/my-planet")
             assert.equal(result.selfPlanet.planetConfig.customTextureUrl,'https://example.test/center-original.png')
             assert.equal(result.selfPlanet.planetConfig.hasRing,false)
             assert.ok(!result.nodes.some(n=>n.id===own.id))
