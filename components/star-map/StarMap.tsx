@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
@@ -25,7 +25,7 @@ import styles from './star-map.module.css'
 import MapObjectDialog from './MapObjectDialog'
 
 type Dot = { x: number; y: number; z: number; color: string; groupId: string }
-type Hit = { x: number; y: number; p?: number; groupId: string; node?: StarMapNode }
+type Hit = { x: number; y: number; radius: number; p?: number; groupId: string; node?: StarMapNode }
 const EMPTY: StarMapData = {
   groups: [],
   nodes: [],
@@ -71,12 +71,24 @@ export default function StarMap({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const hits = useRef<Hit[]>([])
   const hoverKey = useRef<string | null>(null)
-  const [hoverLabel, setHoverLabel] = useState<string | null>(null)
+  const hoverTip = useRef<HTMLDivElement>(null)
+  const pointerPosition = useRef<{ x: number; y: number } | null>(null)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const moved = useRef(false)
   const view = useRef({ yaw: -0.12, pitch: -0.1, zoom: 1 })
   const [restored, setRestored] = useState(false)
   const reduced = useReducedMotionPreference()
+
+  const clearHover = useCallback(() => {
+    hoverKey.current = null
+    pointerPosition.current = null
+    if (hoverTip.current) hoverTip.current.hidden = true
+    if (canvasRef.current) canvasRef.current.style.cursor = 'grab'
+  }, [])
+  const groupLabel = useCallback((id: string, name?: string) => {
+    const group = data.groups.find(item => item.id === id)
+    return group?.phase ? t('constellationName', { name: name ?? '', phase: t(`constellation_${group.phase}`) }) : name ?? t(`group_${id}`)
+  }, [data.groups, t])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -161,8 +173,7 @@ export default function StarMap({
       if (abort.signal.aborted) return
       setLoading(true)
       setError(null)
-      hoverKey.current = null
-      setHoverLabel(null)
+      clearHover()
       try {
         const response = await fetch(`/api/star-map?${params}`, {
           signal: abort.signal,
@@ -192,7 +203,7 @@ export default function StarMap({
     }
     void load()
     return () => abort.abort()
-  }, [mode, query, cursor, queryGroup, restored, revision, collection, layer])
+  }, [mode, query, cursor, queryGroup, restored, revision, collection, layer, clearHover])
 
   const clusters = useMemo(
     () =>
@@ -286,9 +297,9 @@ export default function StarMap({
         last = 0
         return
       }
-      if (!reduced && pointers.current.size === 0 && !hoverKey.current && !focused)
+      if (!reduced && pointers.current.size === 0 && !focused)
         view.current.yaw += Math.min(time - (last || time), 45) * 0.00007
-      if (!reduced && pointers.current.size === 0 && !hoverKey.current)
+      if (!reduced && pointers.current.size === 0)
         spin.current += Math.min(time - (last || time), 45) * 0.00032
       last = time
       ctx.clearRect(0, 0, width, height)
@@ -364,7 +375,7 @@ export default function StarMap({
           if (portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
           ctx.restore(); ctx.font='11px system-ui'; ctx.fillStyle='#d6deed'; ctx.textAlign='center'
           if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+visibleRadius+13)
-          ctx.textAlign='start'; hits.current.push({...p,groupId:node.groupId,node})
+          ctx.textAlign='start'; hits.current.push({...p,radius,groupId:node.groupId,node})
         }
       } else if (!focused && mode === 'personal') {
         // Render actual bounded-batch objects in overview. Decorative particles
@@ -432,7 +443,7 @@ export default function StarMap({
             ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'; ctx.textAlign = 'center'
             ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+size+14)
             ctx.textAlign = 'start'; ctx.globalCompositeOperation = 'lighter'
-            hits.current.push({ ...p, groupId: group.id, node })
+            hits.current.push({ ...p, radius: size, groupId: group.id, node })
           })
         })
       } else if (!focused) {
@@ -444,7 +455,7 @@ export default function StarMap({
           gradient.addColorStop(1, group.color + '00')
           ctx.fillStyle = gradient
           ctx.fillRect(p.x-magnitude.radius,p.y-magnitude.radius,magnitude.radius*2,magnitude.radius*2)
-          hits.current.push({ ...p, groupId: group.id })
+          hits.current.push({ ...p, radius: magnitude.radius, groupId: group.id })
         })
       } else {
         const nodes = data.nodes.filter((node) => node.groupId === focus)
@@ -475,15 +486,47 @@ export default function StarMap({
           if (node.id === selected?.id || nodes.length <= 6)
             ctx.fillText(node.name.slice(0, 18), p.x + 8, p.y + 3)
           ctx.globalCompositeOperation = 'lighter'
-          hits.current.push({ ...p, groupId: focus!, node })
+          hits.current.push({ ...p, radius: size, groupId: focus!, node })
         })
       }
       ctx.globalCompositeOperation = 'source-over'
+      const pointer = pointerPosition.current
+      let target: Hit | null = null
+      if (pointer) {
+        const nearest = hits.current.reduce<{ hit: Hit; distance: number } | null>((closest, hit) => {
+          const distance = Math.hypot(hit.x - pointer.x, hit.y - pointer.y)
+          return !closest || distance < closest.distance ? { hit, distance } : closest
+        }, null)
+        target = nearest && nearest.distance < 30 ? nearest.hit : null
+      }
+      hoverKey.current = target ? target.node?.id ?? target.groupId : null
+      if (canvasRef.current) canvasRef.current.style.cursor = target ? 'pointer' : 'grab'
+      if (hoverTip.current) hoverTip.current.hidden = !target
+      if (target && hoverTip.current) {
+        const tip = hoverTip.current
+        tip.textContent = target.node?.displayName || target.node?.name || groupLabel(target.groupId, clusters.find(group => group.id === target.groupId)?.name)
+        const margin = 8
+        const halfWidth = tip.offsetWidth / 2
+        tip.style.left = `${Math.max(halfWidth + margin, Math.min(width - halfWidth - margin, target.x))}px`
+        const gap = 6
+        const above = target.y - target.radius - gap - tip.offsetHeight >= margin
+        tip.style.top = `${above ? target.y - target.radius - gap : target.y + target.radius + gap}px`
+        tip.style.transform = above ? 'translate(-50%, -100%)' : 'translate(-50%, 0)'
+      }
       const hovered = hits.current.find(hit => (hit.node?.id ?? hit.groupId) === hoverKey.current)
       if (hovered) {
-        ctx.save(); ctx.strokeStyle = '#e9d5ff'; ctx.lineWidth = 2
-        ctx.shadowColor = '#c4b5fd'; ctx.shadowBlur = 14
-        const radius = mode === 'discover' && hovered.node ? planetGravity(hovered.node.level).radius * Math.min(1.25, (hovered.p ?? 1)) + 5 : 23
+        const radius = hovered.radius + 4
+        ctx.save()
+        ctx.globalCompositeOperation = 'lighter'
+        ctx.fillStyle = '#c4b5fd16'
+        ctx.shadowColor = '#c4b5fd'
+        ctx.shadowBlur = 16
+        ctx.beginPath()
+        ctx.arc(hovered.x, hovered.y, radius, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.strokeStyle = '#e9d5ff'
+        ctx.lineWidth = 2
+        ctx.shadowBlur = 14
         ctx.beginPath(); ctx.arc(hovered.x, hovered.y, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore()
       }
       if (!reduced) frame = requestAnimationFrame(render)
@@ -517,6 +560,8 @@ export default function StarMap({
     }
     const observer = new ResizeObserver(resize)
     observer.observe(canvas)
+    const tooltipObserver = new ResizeObserver(redraw)
+    if (hoverTip.current) tooltipObserver.observe(hoverTip.current)
     const intersection = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting
       if (visible) redraw()
@@ -531,22 +576,19 @@ export default function StarMap({
       portraits.forEach(image => { image.onload = null })
       cancelAnimationFrame(frame)
       observer.disconnect()
+      tooltipObserver.disconnect()
       intersection.disconnect()
       canvas.removeEventListener('wheel', wheel)
       canvas.removeEventListener('pointermove', redraw)
       document.removeEventListener('visibilitychange', visibility)
     }
-  }, [clusters, dots, data.nodes, data.selfPlanet, focus, reduced, selected, zoomTick, listOnly, mode, loading, error])
+  }, [clusters, dots, data.nodes, data.selfPlanet, focus, reduced, selected, zoomTick, listOnly, mode, loading, error, groupLabel])
 
   function enter(id: string) {
     setFocus(id)
     setSelectedId(mode === 'galaxies' ? id : null)
     setCursor(null)
     view.current.zoom = mode !== 'galaxies' ? 1 : 2.4
-  }
-  const groupLabel = (id: string, name?: string) => {
-    const group = data.groups.find(item => item.id === id)
-    return group?.phase ? t('constellationName', { name: name ?? '', phase: t(`constellation_${group.phase}`) }) : name ?? t(`group_${id}`)
   }
   const focusedGroup = clusters.find((group) => group.id === focus)
   const visibleNodes = focus
@@ -639,9 +681,9 @@ export default function StarMap({
                 view.current.zoom = 1
               }
             }}
-            onPointerLeave={() => { hoverKey.current = null; setHoverLabel(null); setZoomTick(value => value + 1) }}
+            onPointerLeave={() => { clearHover(); setZoomTick(value => value + 1) }}
             onPointerDown={(event) => {
-              hoverKey.current = null; setHoverLabel(null)
+              clearHover()
               event.currentTarget.setPointerCapture(event.pointerId)
               pointers.current.set(event.pointerId, {
                 x: event.clientX,
@@ -655,11 +697,7 @@ export default function StarMap({
                 if (event.pointerType !== 'mouse') return
                 const rect = event.currentTarget.getBoundingClientRect()
                 const x = event.clientX - rect.left, y = event.clientY - rect.top
-                const hit = [...hits.current].sort((a,b) => Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0]
-                const target = hit && Math.hypot(hit.x-x,hit.y-y) < 30 ? hit : null
-                hoverKey.current = target ? target.node?.id ?? target.groupId : null
-                setHoverLabel(target ? target.node?.displayName || target.node?.name || groupLabel(target.groupId, clusters.find(group => group.id === target.groupId)?.name) : null)
-                event.currentTarget.style.cursor = target ? 'pointer' : 'grab'
+                pointerPosition.current = { x, y }
                 return
               }
               const next = { x: event.clientX, y: event.clientY }
@@ -718,7 +756,7 @@ export default function StarMap({
               pointers.current.delete(event.pointerId)
             }
           />
-          {hoverLabel && <div role="tooltip" className={styles.hoverLabel}>{hoverLabel}</div>}
+          <div ref={hoverTip} role="tooltip" className={styles.hoverLabel} hidden />
           {mode !== 'galaxies' && !loading && !error && data.selfPlanet !== undefined && <PersonalMapAnchor key={data.selfPlanet?.id ?? 'create'} planet={data.selfPlanet} origin={origin} />}
           {!canvasAvailable && (
             <p className={styles.fallback}>{t('fallback')}</p>

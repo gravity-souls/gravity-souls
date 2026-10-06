@@ -83,12 +83,19 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
   })
 }
 
-for (const mode of ['discover', 'personal']) {
-  test(`${mode} map gives hover feedback without opening a planet`, async ({ page }) => {
+for (const mode of ['discover', 'personal']) for (const reducedMotion of ['reduce', 'no-preference'] as const) {
+  test(`${mode} map gives hover feedback without opening a planet (${reducedMotion})`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion })
     await page.addInitScript(() => {
+      type TrackedCanvas = HTMLCanvasElement & { lastCircle?: { x: number; y: number; radius: number }; peerPoint?: { x: number; y: number; radius: number } }
+      const arc = CanvasRenderingContext2D.prototype.arc
+      CanvasRenderingContext2D.prototype.arc = function(x, y, radius, ...rest) {
+        (this.canvas as TrackedCanvas).lastCircle = { x, y, radius }
+        return arc.call(this, x, y, radius, ...rest)
+      }
       const original = CanvasRenderingContext2D.prototype.fillText
       CanvasRenderingContext2D.prototype.fillText = function(text, x, y, ...rest) {
-        if (text === 'Hover peer') (this.canvas as HTMLCanvasElement & { peerPoint?: { x: number; y: number } }).peerPoint = { x, y }
+        if (text === 'Hover peer') (this.canvas as TrackedCanvas).peerPoint = (this.canvas as TrackedCanvas).lastCircle
         return original.call(this, text, x, y, ...rest)
       }
     })
@@ -97,13 +104,53 @@ for (const mode of ['discover', 'personal']) {
     const canvas = page.locator('canvas[aria-label]')
     await canvas.scrollIntoViewIfNeeded()
     await expect.poll(() => canvas.evaluate(el => (el as HTMLCanvasElement & { peerPoint?: { x: number; y: number } }).peerPoint)).toBeTruthy()
-    const point = await canvas.evaluate(el => (el as HTMLCanvasElement & { peerPoint: { x: number; y: number } }).peerPoint)
-    const box = (await canvas.boundingBox())!
-    await canvas.dispatchEvent('pointermove', { pointerType: 'mouse', pointerId: 9, clientX: box.x + point.x, clientY: box.y + point.y - 28 })
-    await expect(page.getByRole('tooltip')).toHaveText(peer.name)
+    await expect.poll(async () => {
+      await canvas.evaluate(el => {
+        const point = (el as HTMLCanvasElement & { peerPoint: { x: number; y: number } }).peerPoint
+        const rect = el.getBoundingClientRect()
+        el.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', pointerId: 9, clientX: rect.x + point.x, clientY: rect.y + point.y }))
+      })
+      return page.getByRole('tooltip').isVisible()
+    }).toBe(true)
+    const point = await canvas.evaluate(el => {
+      const point = (el as HTMLCanvasElement & { peerPoint: { x: number; y: number; radius: number } }).peerPoint
+      const rect = el.getBoundingClientRect()
+      el.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', pointerId: 9, clientX: rect.x + point.x, clientY: rect.y + point.y }))
+      return point
+    })
+    const tooltip = page.getByRole('tooltip')
+    await expect(tooltip).toHaveText(peer.name)
+    if (reducedMotion === 'no-preference') {
+      await expect.poll(() => canvas.evaluate((el, start) => {
+        const current = (el as HTMLCanvasElement & { peerPoint: { x: number; y: number } }).peerPoint
+        return Math.hypot(current.x - start.x, current.y - start.y)
+      }, point)).toBeGreaterThan(0.1)
+      await expect(tooltip).toHaveText(peer.name)
+    }
+    await expect.poll(async () => {
+      const current = await canvas.evaluate(el => (el as HTMLCanvasElement & { peerPoint: { x: number; y: number; radius: number } }).peerPoint)
+      const tipBox = (await tooltip.boundingBox())!
+      const canvasBox = (await canvas.boundingBox())!
+      const tipCenter = Math.max(tipBox.width / 2 + 8, Math.min(canvasBox.width - tipBox.width / 2 - 8, current.x))
+      return Math.max(
+        Math.abs(tipBox.x + tipBox.width / 2 - (canvasBox.x + tipCenter)),
+        Math.abs(canvasBox.y + current.y - current.radius - (tipBox.y + tipBox.height) - 6),
+      )
+    }).toBeLessThan(2)
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page).toHaveURL(new RegExp(`/star-map\\?mode=${mode}$`))
-    await canvas.dispatchEvent('pointerout', { pointerType: 'mouse', pointerId: 9 })
+    await canvas.evaluate(el => {
+      const rect = el.getBoundingClientRect()
+      el.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', pointerId: 9, clientX: rect.x + 10, clientY: rect.bottom - 10 }))
+    })
     await expect(page.getByRole('tooltip')).toHaveCount(0)
+    const self = page.getByRole('link', { name: /Open my planet/ })
+    await self.focus()
+    const selfTip = page.getByRole('tooltip')
+    await expect(selfTip).toHaveText(source.name)
+    const avatarBox = (await self.locator('img').boundingBox())!
+    const selfTipBox = (await selfTip.boundingBox())!
+    expect(Math.abs(avatarBox.y - selfTipBox.y - selfTipBox.height - 6)).toBeLessThan(2)
+    expect(Math.abs(avatarBox.x + avatarBox.width / 2 - selfTipBox.x - selfTipBox.width / 2)).toBeLessThan(2)
   })
 }

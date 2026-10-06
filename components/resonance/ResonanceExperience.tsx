@@ -32,8 +32,7 @@ function Field({
   const phase = useRef(0)
   const nodes = useRef(new Map<string, HTMLButtonElement>())
   const motion = useRef<ReturnType<typeof createMotionLoop> | null>(null)
-  const hold = useRef({ pointer: false, keyboard: false })
-  const pause = (kind: 'pointer' | 'keyboard', value: boolean) => { hold.current[kind] = value; motion.current?.setPaused(hold.current.pointer || hold.current.keyboard) }
+  const keyboardHold = useRef(false)
   const particles = useMemo(
     () =>
       Array.from({ length: 900 }, (_, i) => ({
@@ -85,7 +84,7 @@ function Field({
       })
     })
     motion.current = loop
-    loop.setPaused(hold.current.pointer || hold.current.keyboard)
+    loop.setPaused(keyboardHold.current)
     const resize = () => {
       const rect = el.getBoundingClientRect()
       width = rect.width
@@ -127,10 +126,8 @@ function Field({
           <button
             key={p.id}
             ref={element => { if (element) nodes.current.set(p.id, element); else nodes.current.delete(p.id) }}
-            onPointerEnter={() => pause('pointer', true)}
-            onPointerLeave={() => pause('pointer', false)}
-            onFocus={() => pause('keyboard', true)}
-            onBlur={() => pause('keyboard', false)}
+            onFocus={() => { keyboardHold.current = true; motion.current?.setPaused(true) }}
+            onBlur={() => { keyboardHold.current = false; motion.current?.setPaused(false) }}
             className={styles.node}
             style={{ left: `${xy.x}%`, top: `${xy.y}%` }}
             aria-pressed={activeId === p.id}

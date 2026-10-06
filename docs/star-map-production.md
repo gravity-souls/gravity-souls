@@ -24,6 +24,11 @@ No migration, account mutation or production deployment is required by this chan
 
 ## Interaction and scale
 
+- Hover feedback stays attached to the rendered avatar: name tooltips sit 6 px
+  outside its actual radius, flip below near the top edge, and stay within the
+  canvas. Personal-map owner tooltips use the avatar wrapper as their anchor,
+  including keyboard focus. Hover never pauses ambient rotation; reduced-motion
+  preferences still apply. Moving onto empty canvas clears the tooltip and glow.
 - No pause, refresh/reset or +/- buttons. Wheel/trackpad and two-finger pinch zoom;
   drag rotates. Zooming in enters the nearest cluster; zooming out returns to overview.
   A semantic Back to overview action and keyboard/list alternatives remain available.
