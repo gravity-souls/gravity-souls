@@ -9,11 +9,15 @@ const require = createRequire(import.meta.url)
 const { PrismaClient } = require('@prisma/client'), { PrismaPg } = require('@prisma/adapter-pg')
 const pool = new EmbeddedPool(), db = new PrismaClient({ adapter: new PrismaPg(pool), transactionOptions: { timeout: 30000 } })
 let actor = null
+let deliveryConfigured = false
+const verificationCalls = []
 const previous = Module._load
 Module._load = function(id, parent, main) {
   if (id === '@/lib/prisma') return { prisma: db }
   if (id === '@/lib/session') return { requireUser: async () => { if (!actor) throw Response.json({}, { status: 401 }); return { user: await db.user.findUniqueOrThrow({ where: { id: actor } }) } } }
   if (id === '@/lib/grantXP') return { grantXP: async () => {} }
+  if (id === '@/lib/email') return { verificationEmailConfigured: () => deliveryConfigured }
+  if (id === '@/lib/auth') return { auth: { api: { sendVerificationEmail: async input => { verificationCalls.push(input.body); return { status: true } } } } }
   return previous.call(this, id, parent, main)
 }
 const registration = require('../app/api/registration/route.ts')
@@ -25,6 +29,8 @@ const starMap = require('../app/api/star-map/route.ts')
 const events = require('../app/api/galaxies/events/route.ts')
 const myPlanet = require('../app/api/my-planet/route.ts')
 const account = require('../app/api/me/route.ts')
+const emailVerification = require('../app/api/user/email-verification/route.ts')
+const regions = require('../app/api/regions/route.ts')
 const { isAdultBirthDate, BASIC_OPTIONS } = require('../lib/registration-basics.ts')
 const request = (data, origin = 'https://test.invalid') => new Request('https://test.invalid/api/registration', { method: 'PUT', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(data) })
 const draft = { selectedThemes: ['art'], abstractAxis: 50, introspectiveAxis: 50 }
@@ -132,8 +138,58 @@ test('private basics registration and edit lifecycle on real migrations and rout
       const url = 'https://test.invalid/api/galaxies/events?status=upcoming&sort=recommended&region=Paris&language=fr&interest=art'
       const response = await events.GET(new Request(url)); assert.equal(response.status, 200)
       const result = await response.json(); assert.deepEqual(result.events.map(e => e.id), [local.id]); assert.ok(result.events[0].recommendation.score > 0)
+      const canonical = await (await events.GET(new Request(url.replace('region=Paris','region=Paris%2C%20FR')))).json()
+      assert.deepEqual(canonical.events.map(e => e.id), [local.id])
       actor = 'other'; const outsider = await (await events.GET(new Request(url))).json(); assert.deepEqual(outsider.events, [])
       actor = 'new'; assert.equal((await events.GET(new Request(url + '&language=invalid'))).status, 400)
+    })
+    await t.test('uploaded planet image replaces Google avatar in self and peer map nodes', async () => {
+      for (const id of ['new','other']) await db.user.update({ where: { id }, data: { image: `https://google.test/${id}.png`, planetCustomTexture: `https://uploads.test/${id}.png` } })
+      actor = 'new'
+      const map = await (await starMap.GET(new Request('https://test.invalid/api/star-map?mode=discover'))).json()
+      assert.equal(map.selfPlanet.avatarUrl, 'https://uploads.test/new.png')
+      assert.equal(map.nodes.find(n => n.userId === 'other').avatarUrl, 'https://uploads.test/other.png')
+      await db.user.update({ where: { id: 'other' }, data: { planetCustomTexture: null } })
+      const fallback = await (await starMap.GET(new Request('https://test.invalid/api/star-map?mode=discover'))).json()
+      assert.equal(fallback.nodes.find(n => n.userId === 'other').avatarUrl, 'https://google.test/other.png')
+    })
+    await t.test('email identity is private, verified status is fresh, resend is owner-only and rate limited', async () => {
+      actor = null; assert.equal((await emailVerification.GET()).status,401)
+      actor = 'new'
+      const identity = await (await emailVerification.GET()).json()
+      assert.equal(identity.email,'new@test.invalid'); assert.equal(identity.available,false)
+      assert.equal((await emailVerification.POST(request({}))).status,503)
+      deliveryConfigured = true
+      assert.equal((await emailVerification.POST(request({},'https://evil.invalid'))).status,403)
+      assert.equal((await emailVerification.POST(request({ email: 'other@test.invalid' }))).status,400)
+      for (let i=0;i<3;i++) assert.equal((await emailVerification.POST(request({}))).status,200)
+      assert.equal((await emailVerification.POST(request({}))).status,429)
+      assert.equal(verificationCalls.length,3)
+      assert.ok(verificationCalls.every(call => call.email === 'new@test.invalid' && call.callbackURL === '/settings/account'))
+      await db.user.update({ where: { id: 'new' }, data: { emailVerified: true } })
+      assert.equal((await (await emailVerification.GET()).json()).verified,true)
+      assert.deepEqual(await (await emailVerification.POST(request({}))).json(),{ verified: true })
+      assert.equal(verificationCalls.length,3)
+      actor = 'date'; await db.user.update({ where: { id: actor }, data: { deletedAt: new Date() } })
+      assert.equal((await emailVerification.GET()).status,401); assert.equal((await emailVerification.POST(request({}))).status,401)
+      await db.user.update({ where: { id: actor }, data: { deletedAt: null } })
+    })
+    await t.test('city search authenticates, bounds queries, strips precise coordinates and caches provider results', async () => {
+      actor = null; assert.equal((await regions.GET(new Request('https://test.invalid/api/regions?q=Paris'))).status,401)
+      actor = 'new'; const originalFetch = globalThis.fetch; let calls = 0
+      globalThis.fetch = async url => {
+        calls++; assert.equal(url.hostname,'photon.komoot.io'); assert.equal(url.searchParams.get('lang'),'en')
+        return Response.json({ features: [{ properties: { name: 'Paris', countrycode: 'FR', state: 'Île-de-France' }, geometry: { coordinates: [2.3,48.8] } }] })
+      }
+      try {
+        assert.deepEqual(await (await regions.GET(new Request('https://test.invalid/api/regions?q=P'))).json(),{ suggestions: [] })
+        const response = await (await regions.GET(new Request('https://test.invalid/api/regions?q=Paris'))).json()
+        assert.deepEqual(response,{ suggestions: [{ value: 'Paris, FR', label: 'Paris, FR · Île-de-France' }] })
+        await regions.GET(new Request('https://test.invalid/api/regions?q=paris')); assert.equal(calls,1)
+        actor = 'date'; await db.user.update({ where: { id: actor }, data: { deletedAt: new Date() } })
+        assert.equal((await regions.GET(new Request('https://test.invalid/api/regions?q=Paris'))).status,401)
+        await db.user.update({ where: { id: actor }, data: { deletedAt: null } })
+      } finally { globalThis.fetch = originalFetch }
     })
     await t.test('deleted owner cannot recreate private preferences and physical deletion cascades', async () => {
       actor = 'date'; await db.user.update({ where: { id: actor }, data: { deletedAt: new Date() } })

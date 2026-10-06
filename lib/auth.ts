@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "./prisma";
-import { sendPasswordResetEmail } from "./email";
+import { sendPasswordResetEmail, sendVerificationEmail, verificationEmailConfigured } from "./email";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
@@ -20,6 +20,19 @@ export const auth = betterAuth({
     // sets it to '/reset-password') with `?token=...` appended.
     sendResetPassword: async ({ user, url }) => {
       await sendPasswordResetEmail(user.email, url)
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: verificationEmailConfigured(),
+    expiresIn: 3600,
+    sendVerificationEmail: async ({ user, url }, request) => {
+      try { await sendVerificationEmail(user.email, url) }
+      catch (error) {
+        // Account creation already happened. Delivery failure must not strand
+        // a new account without a session; its private settings offer resend.
+        const path = request ? new URL(request.url).pathname : ''
+        if (!path.endsWith('/sign-up/email') && !path.includes('/callback/')) throw error
+      }
     },
   },
   // Better Auth's default rate limits (a strict 3 req/10s special rule on

@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       await grantXP(userId, 'PROFILE_COMPLETED').catch(() => null)
     }
 
-    return NextResponse.json({ planet: { id: created.id, name: created.name } })
+    return NextResponse.json({ planet: { id: created.id, name: created.name }, firstPlanet: isFirstPlanet })
 
   } catch (error) {
     return safeApiError(error)

@@ -1,4 +1,5 @@
 'use client'
+import { sameRegion } from '@/lib/preference-matching'
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
 import DiscoveryScore from '@/components/discovery/DiscoveryScore'
@@ -127,7 +128,7 @@ function GalaxiesInner() {
         g.tagline?.toLowerCase().includes(q)
       const matchesMood = moodFilter === 'all' || g.mood === moodFilter
       const matchesScope = scope === 'all' || (scope === 'joined' ? g.joined : g.isAdmin)
-      const metadataMatch = (!filters.region || g.region?.toLowerCase().includes(filters.region.toLowerCase())) &&
+      const metadataMatch = (!filters.region || (g.region && sameRegion(g.region, filters.region))) &&
         (!filters.language || g.languages?.includes(filters.language)) && (!filters.interest || g.interestTags?.includes(filters.interest)) &&
         (!filters.goal || g.connectionGoals?.includes(filters.goal)) && (!filters.gathering || g.gatheringPreferences?.includes(filters.gathering))
       return matchesQuery && matchesMood && matchesScope && metadataMatch

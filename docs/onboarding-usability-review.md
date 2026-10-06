@@ -1,0 +1,15 @@
+# Registration and discovery usability follow-up
+
+- Birthday: shared year/month/day select controls on mobile and desktop. Partial or invalid dates cannot pass the adult gate; date is still discarded rather than persisted. Self-declaration remains available.
+- Region: shared city search in registration, basics settings, discovery filters, galaxy creation and event creation. Photon/OpenStreetMap is queried through a signed-in server endpoint with a timeout, persistent rate limiting, bounded results, debounce and cache. Suggestions use stable English city names and country codes; coordinates are discarded. Network failure retains manual input as a fallback. Event venue addresses can still be entered. No geolocation permission or precise-position lookup is used.
+- City matching: a selected city/country continues to match legacy event location strings that contain just the city. Galaxy filters use the same region comparison as recommendations.
+- Tags: grouped opt-in chips with selection marks, a live public preview and the existing 12-tag cap. No new fields become public by default.
+- Settings: basics is a separate peer entry under settings, rather than duplicated inside account/data. Basics returns to the settings page.
+- Account identity: name, private email and fresh verification status on account/data; compact email status on first-planet personalization. Resend accepts no recipient fields, checks the session owner, rejects deleted accounts/cross-origin writes, and limits sends to three per hour. Already-verified Google accounts need no redundant verification.
+- Email: Better Auth issues expiring verification links and sends automatically on new account creation when `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are configured. The sending domain must be verified in Resend. Missing configuration is shown as unavailable, never as a successful send. Verification is supported without retroactively locking existing accounts out of sign-in. A signup mail-delivery failure does not strand an already-created account; settings provide resend. No schema migration or new secret is required.
+- First planet: after the first successful calibration save, an optional personalization step uses the existing customizer/upload/save APIs before Planet Live. Subsequent recalibrations retain the direct reveal. Photo changes are saved explicitly and publish the existing refresh event.
+- Maps: custom planet photos take priority over OAuth pictures for the owner and peers. Global atlas restores a centered rotating starfield; distant planets are stars until zoomed/selected. Real saved/follow/mutual links use the existing relationship colors and legend; decorative stars are not counted or clickable.
+
+Validation: registration/region/avatar/email route checks on real migrations, existing galaxy/map/report regressions, localized desktop/mobile registration and discovery journeys, and new first-planet/account verification browser cases. Email delivery itself requires a configured sending provider; automated tests never send real email.
+
+Deploy with the existing `npm run build:deploy`. Install locked dependencies with `npm ci` after pulling.

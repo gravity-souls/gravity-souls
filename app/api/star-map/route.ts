@@ -174,7 +174,7 @@ export async function GET(request: Request) {
     const scores = sourcePlanet ? new Map(buildOrbitMatches(planetProfileFromApi(sourcePlanet), candidates, candidates.length).map(match => [match.planetId, match.score])) : new Map<string,number>()
     const nodes = rows.map((p) => ({
       ...(scores.has(p.id) ? { score: scores.get(p.id) } : {}),
-      avatarUrl: p.user.image || p.user.planetCustomTexture,
+      avatarUrl: p.user.planetCustomTexture || p.user.image,
       displayName: p.user.name,
       publicTags: publicPlanetTags(p.user.registrationBasics),
       id: p.id,

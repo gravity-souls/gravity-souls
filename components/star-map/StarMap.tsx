@@ -274,6 +274,16 @@ export default function StarMap({
       const hub = project(0, 0, 0)
       const cos = Math.cos(spin.current)
       const sin = Math.sin(spin.current)
+      // Global atlas atmosphere is centered on the viewer, independent of
+      // climate groups. Decorative stars never enter counts or hit targets.
+      if (mode === 'discover') for (let i = 0; i < 440; i++) {
+        const r = 30+Math.sqrt(stableUnit(`atlas-star:${i}:r`))*330
+        const angle = i*2.3999632297+r*.016+(reduced ? 0 : spin.current*.12)
+        const p = project(Math.cos(angle)*r,Math.sin(angle)*r*.72,(stableUnit(`atlas-star:${i}:z`)-.5)*45)
+        ctx.fillStyle = i%7 === 0 ? '#c4b5fd99' : '#cddaff55'
+        const size = i%13 === 0 ? 1.8 : .8
+        ctx.fillRect(p.x,p.y,size,size)
+      }
       for (let i = 0; mode !== 'discover' && i < dots.length; i++) {
         const dot = dots[i]
         if (focused && dot.groupId !== focus) continue
@@ -306,13 +316,31 @@ export default function StarMap({
           const point = atlasPosition(node.id,node.score,node.level)
           const p = project(point.x,point.y,point.z), radius = planetGravity(node.level).radius * Math.min(1.25,p.p)
           const color = MAP_COLORS[node.groupId] || '#b89afa'
+          const dx = p.x-hub.x, dy = p.y-hub.y, distance = Math.hypot(dx,dy)
+          if (data.selfPlanet && !loading && !error && distance > 50) {
+            const relations = personalNodeRelations(node)
+            relations.forEach((relation,index) => {
+              const style = RELATION_STYLES[relation], offset = (index-(relations.length-1)/2)*4
+              const nx = -dy/distance*offset, ny = dx/distance*offset
+              ctx.strokeStyle = style.color+'75'; ctx.lineWidth = node.id === selected?.id ? 2 : 1
+              ctx.setLineDash([...style.dash]); ctx.beginPath()
+              ctx.moveTo(hub.x+dx/distance*25+nx,hub.y+dy/distance*25+ny)
+              ctx.lineTo(p.x-dx/distance*radius+nx,p.y-dy/distance*radius+ny); ctx.stroke(); ctx.setLineDash([])
+              if (!reduced) {
+                const travel = (time/6000+stableUnit(node.id))%1
+                ctx.fillStyle = style.color; ctx.beginPath(); ctx.arc(hub.x+dx*travel+nx,hub.y+dy*travel+ny,1.5,0,Math.PI*2); ctx.fill()
+              }
+            })
+          }
           const glow = ctx.createRadialGradient(p.x,p.y,radius,p.x,p.y,radius*2.8)
           glow.addColorStop(0,color+'55'); glow.addColorStop(1,color+'00'); ctx.fillStyle=glow; ctx.fillRect(p.x-radius*3,p.y-radius*3,radius*6,radius*6)
           const portrait=portraits.get(node.id)
-          ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,radius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=color+'88'; ctx.fill()
-          if (portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
+          const showPortrait = node.id === selected?.id || view.current.zoom >= 1.3 || (node.score ?? 50) >= 60 || data.nodes.length <= 12
+          const visibleRadius = showPortrait ? radius : 3.5
+          ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,visibleRadius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=showPortrait ? color+'88' : '#eee6ff'; ctx.fill()
+          if (showPortrait && portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
           ctx.restore(); ctx.font='11px system-ui'; ctx.fillStyle='#d6deed'; ctx.textAlign='center'
-          if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText(node.name.slice(0,12),p.x,p.y+radius+13)
+          if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+visibleRadius+13)
           ctx.textAlign='start'; hits.current.push({...p,groupId:node.groupId,node})
         }
       } else if (!focused && mode === 'personal') {
@@ -548,7 +576,7 @@ export default function StarMap({
           {t(browseLabel)}
         </button>}
       </div>
-      {mode === 'personal' && <PersonalRelationLegend layer={layer} />}
+      {(mode === 'personal' || mode === 'discover') && <PersonalRelationLegend layer={mode === 'discover' ? 'planets' : layer} />}
       {mode === 'personal' && layer === 'constellations' && <div className={styles.relationLegend}>
         <p>{t('constellationLifecycle')}</p>
         <Link href="/activities?status=pending">{t('constellationRequests')}</Link>

@@ -11,6 +11,7 @@ import LightCone from '@/components/fx/LightCone'
 import OrbitCard from '@/components/ui/OrbitCard'
 import GlowButton from '@/components/ui/GlowButton'
 import { authClient } from '@/lib/auth-client'
+import AccountIdentity from '@/components/auth/AccountIdentity'
 
 const DELETE_PHRASE = 'DELETE'
 
@@ -175,7 +176,6 @@ function DeleteSection() {
 
 export default function AccountSettingsPage() {
   const t = useTranslations('accountSettings')
-  const basics = useTranslations('registrationBasics')
 
   return (
     <AppShell>
@@ -206,7 +206,7 @@ export default function AccountSettingsPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <OrbitCard className="p-6"><h2 className="font-semibold">{basics('editTitle')}</h2><p className="my-3 text-sm opacity-70">{basics('editHint')}</p><Link href="/settings/basics" className="underline">{basics('editTitle')}</Link></OrbitCard>
+          <AccountIdentity />
           <PushSettings />
           <ExportSection />
           <DeleteSection />

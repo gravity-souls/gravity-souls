@@ -121,7 +121,8 @@ function AccountDataSection() {
   const basics = useTranslations('registrationBasics')
 
   return (
-    <SectionCard title={t('title')} description={t('subtitle')} color="#f87171">
+    <div className="grid gap-6"><SectionCard title={basics('editTitle')} description={basics('editHint')} color="#a78bfa"><Link href="/settings/basics" className="block min-h-11 py-3 text-sm text-violet-200 underline">{basics('editTitle')} →</Link></SectionCard>
+    <SectionCard title={t('title')} description={t('subtitle')} color="#60a5fa">
       <Link
         href="/settings/account"
         className="text-sm font-medium w-fit"
@@ -129,8 +130,7 @@ function AccountDataSection() {
       >
         {t('linkFromPlanetSettings')} →
       </Link>
-      <Link href="/settings/basics" className="mt-4 block text-sm underline">{basics('editTitle')} →</Link>
-    </SectionCard>
+    </SectionCard></div>
   )
 }
 

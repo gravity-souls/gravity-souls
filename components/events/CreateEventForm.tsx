@@ -1,4 +1,5 @@
 'use client'
+import RegionSearch from '@/components/registration/RegionSearch'
 
 import AudienceFields, { type AudienceValues } from '@/components/discovery/AudienceFields'
 import { useMemo, useState } from 'react'
@@ -297,10 +298,7 @@ export default function CreateEventForm({ galaxyId, onCreated, initialEvent }: C
               </select>
             </div>
           </label>
-          <label className="grid gap-2 text-xs font-medium" style={{ color: 'var(--ghost)' }}>
-            {t('locationLabel')}
-            <input value={location} onChange={(event) => setLocation(event.target.value)} className="rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
-          </label>
+          <RegionSearch label={t('locationLabel')} value={location} onChange={setLocation} />
           {category === 'ONLINE' && (
             <label className="grid gap-2 text-xs font-medium" style={{ color: 'var(--ghost)' }}>
               {t('onlineUrl')}
