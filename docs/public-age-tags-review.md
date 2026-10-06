@@ -2,6 +2,11 @@
 
 Public planets can show a computed age and selected gender only through separate
 explicit opt-ins. Date of birth remains private; clearing it removes the age opt-in.
+When both are public, their shared badge shows a gender icon and age number.
+Female/male use Venus/Mars; nonbinary/other use a neutral icon. Gender-only keeps
+the icon and age-only keeps localized age text. Accessible labels and hover titles
+use the existing en/fr/zh translations. All public views and settings previews
+reuse the same renderer; selection controls remain independent and text-labelled.
 The additive nullable birth-date migration is present but has not been applied.
 
 ## Verification
@@ -35,6 +40,11 @@ The additive nullable birth-date migration is present but has not been applied.
   Local WebKit failed at navigation with an internal engine error, including an
   isolated retry, before reaching the changed assertion; Safari verification
   remains dependent on CI.
+- Icon-badge follow-up: `npm run test:public-tags` passed 11 tests covering
+  female/male/neutral icons, combined and independent opt-ins, previews, and
+  en/fr/zh labels. Targeted ESLint, typecheck, production build, and diff checks
+  passed. The updated public-age-tags Playwright spec passed all six desktop/mobile
+  Chromium cases in en/fr/zh. No new database or policy change was made.
 
 ## Release boundaries
 

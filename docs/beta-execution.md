@@ -11,6 +11,10 @@ The founder approved these defaults during this implementation session:
   and automatically calculate age. No date is inferred or backfilled for existing
   users. Date of birth is available only in self registration/settings/export, never
   public DTOs or matching scores. Clearing it also removes the age opt-in atomically.
+- Public age/gender tags share a compact icon-and-number badge when both are
+  opted in. Women and men use Venus/Mars icons; nonbinary and other use a neutral
+  icon. Gender-only shows just the icon; age-only keeps its localized text label.
+  Localized accessible names and hover titles retain the full meaning.
 - One-way follows; follow edges belong to users, not replaceable planet records.
 - New chats require mutual follow or explicit recipient acceptance of a separate beam
   invitation (ADR 0002); recipient permissions still apply. Neither opening nor accepting sends a message.

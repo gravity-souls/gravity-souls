@@ -61,8 +61,14 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     const publicView = async (age: boolean, gender: boolean) => {
       await page.goto('/planet/peer')
       await expect(page.getByRole('heading', { name: planet.name, exact: true })).toBeVisible()
-      await expect(page.getByText(ageLabel, { exact: true })).toHaveCount(age ? 1 : 0)
-      await expect(page.getByText(t.options.nonbinary, { exact: true })).toHaveCount(gender ? 1 : 0)
+      await expect(page.getByText(ageLabel, { exact: true })).toHaveCount(age && !gender ? 1 : 0)
+      const demographicLabel = age ? `${t.options.nonbinary}, ${ageLabel}` : t.options.nonbinary
+      await expect(page.getByRole('img', { name: demographicLabel, exact: true })).toHaveCount(gender ? 1 : 0)
+      if (gender) {
+        const badge = page.getByRole('img', { name: demographicLabel, exact: true })
+        await expect(badge.locator('svg')).toHaveClass(/lucide-non-binary/)
+        await expect(badge).toHaveText(age ? String(ageFromBirthDate('2000-01-01')) : '')
+      }
       await expect(page.getByText('2000-01-01', { exact: true })).toHaveCount(0)
       await page.goto('/settings/basics')
       await expect(editor).toBeVisible()
