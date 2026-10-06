@@ -6,6 +6,7 @@ import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 // 2-axis plot: abstract vs concrete (X), introspective vs outward (Y)
 
 export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations('planetPage')
   const { abstract, introspective } = planet.cognitiveAxes
   // Dot position: abstract=0→left, abstract=100→right; introspective=0→bottom, introspective=100→top
   const dotX = (abstract / 100) * 88 + 6   // 6%–94% of container width
@@ -17,9 +18,10 @@ export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Cognitive signature
+        {t('cognitiveTitle')}
       </span>
 
+      <p className="text-xs leading-relaxed text-slate-400">{t('cognitiveDescription')}</p>
       {/* 2-axis field */}
       <div
         className="relative rounded-xl overflow-hidden"
@@ -42,10 +44,10 @@ export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
         <div className="absolute" style={{ top: '50%', left: 0, right: 0, height: 1, background: 'rgba(167,139,250,0.12)' }} />
 
         {/* Axis labels */}
-        <span className="absolute text-[9px] uppercase tracking-widest" style={{ left: 6, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', opacity: 0.5 }}>concrete</span>
-        <span className="absolute text-[9px] uppercase tracking-widest" style={{ right: 6, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', opacity: 0.5 }}>abstract</span>
-        <span className="absolute text-[9px] uppercase tracking-widest" style={{ bottom: 4, left: '50%', transform: 'translateX(-50%)', color: 'var(--muted)', opacity: 0.5 }}>outward</span>
-        <span className="absolute text-[9px] uppercase tracking-widest" style={{ top: 4, left: '50%', transform: 'translateX(-50%)', color: 'var(--muted)', opacity: 0.5 }}>inward</span>
+        <span className="absolute text-[9px] uppercase tracking-widest" style={{ left: 6, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', opacity: 0.5 }}>{t('concrete')}</span>
+        <span className="absolute text-[9px] uppercase tracking-widest" style={{ right: 6, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', opacity: 0.5 }}>{t('abstract')}</span>
+        <span className="absolute text-[9px] uppercase tracking-widest" style={{ bottom: 4, left: '50%', transform: 'translateX(-50%)', color: 'var(--muted)', opacity: 0.5 }}>{t('outward')}</span>
+        <span className="absolute text-[9px] uppercase tracking-widest" style={{ top: 4, left: '50%', transform: 'translateX(-50%)', color: 'var(--muted)', opacity: 0.5 }}>{t('inward')}</span>
 
         {/* Dot */}
         <div
@@ -77,8 +79,8 @@ export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
       </div>
 
       <div className="flex justify-between text-xs" style={{ color: 'var(--muted)', opacity: 0.6 }}>
-        <span>Abstract {abstract}%</span>
-        <span>Introspective {introspective}%</span>
+        <span>{t('abstract')} {abstract}%</span>
+        <span>{t('introspective')} {introspective}%</span>
       </div>
     </div>
   )
@@ -88,13 +90,14 @@ export function CognitiveStyleModule({ planet }: { planet: PlanetProfile }) {
 // Vertical spectrum bars for each emotional dimension
 
 export function EmotionalFrequencyModule({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations("planetPage")
   return (
     <div className="flex flex-col gap-3">
       <span
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Emotional frequency
+        {t('emotionalTitle')}
       </span>
 
       <div className="flex gap-3 items-end" style={{ height: 100 }}>
@@ -133,15 +136,17 @@ export function EmotionalFrequencyModule({ planet }: { planet: PlanetProfile }) 
 // Short text fragments arranged in a list with a subtle left-beam accent
 
 export function ContentOrbit({ planet }: { planet: PlanetProfile }) {
+  const t = useTranslations("planetPage")
   return (
     <div className="flex flex-col gap-3">
       <span
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Thought fragments
+        {t('thoughtFragments')}
       </span>
 
+      <p className="text-xs leading-relaxed text-slate-400">{t("thoughtDescription")}</p>
       <div className="flex flex-col gap-2">
         {planet.contentFragments.map((fragment, i) => (
           <div
@@ -169,14 +174,16 @@ export function ContentOrbit({ planet }: { planet: PlanetProfile }) {
 
 export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
   const t = useTranslations('creationSteps')
+  const tp = useTranslations('planetPage')
   return (
     <div className="flex flex-col gap-3">
       <span
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Core themes
+        {tp('themesTitle')}
       </span>
+      <p className="text-xs leading-relaxed text-slate-400">{tp("themesDescription")}</p>
       <div className="flex flex-wrap gap-2">
         {planet.coreThemes.map((theme) => (
           <span
@@ -199,7 +206,7 @@ export function ThemeCloud({ planet }: { planet: PlanetProfile }) {
             color: 'var(--star)',
           }}
         >
-          {moodLabel(t, planet.mood)}
+          {moodLabel(t, planet.mood, planet.visual.climateKey)}
         </span>
         <span
           className="px-3 py-1 rounded-full text-xs font-medium tracking-wide capitalize"

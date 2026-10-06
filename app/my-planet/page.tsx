@@ -1,5 +1,6 @@
 'use client'
 
+import { ExplorationReturnFromQuery } from '@/components/social/ExplorationReturnLink'
 import PlanetMeaning from '@/components/planet/PlanetMeaning'
 import { localizedPlanetTagline } from '@/lib/planet-meaning'
 import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
@@ -563,6 +564,7 @@ export default function MyPlanetPage() {
 
   return (
     <AppShell>
+      <ExplorationReturnFromQuery />
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-7xl mx-auto">

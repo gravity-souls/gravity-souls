@@ -230,7 +230,9 @@
     "note_culture-travel": "Your cultural and travel interests meet.",
     "note_art-books-music": "You connect through art, books or music.",
     "note_worldview-complement": "Your worldviews offer complementary perspectives.",
-    "fullReport": "Open full match report"
+    "fullReport": "Open full match report",
+    "loadError": "Could not load your resonance orbit. Please try again.",
+    "retry": "Try again"
   },
   "stream": {
     "searchPlaceholder": "Search signals...",
@@ -425,7 +427,19 @@
     "statusQuiet": "Quiet",
     "myPlanetCrumb": "My planet",
     "galaxiesCrumb": "Galaxies",
-    "save": "Save"
+    "save": "Save",
+    "cognitiveTitle": "Cognitive signature",
+    "cognitiveDescription": "These axes describe choices made during calibration: abstract ideas or concrete experiences, inward reflection or outward expression. They are not a diagnosis.",
+    "concrete": "Concrete",
+    "abstract": "Abstract",
+    "outward": "Outward",
+    "inward": "Inward",
+    "introspective": "Introspective",
+    "emotionalTitle": "Emotional frequency",
+    "themesTitle": "Core themes",
+    "themesDescription": "Topics and atmosphere selected by this planet’s owner.",
+    "thoughtDescription": "Words this person has chosen to share about themselves.",
+    "tracesDescription": "Planet types this person has recently explored."
   },
   "planetSettings": {
     "updated": "Settings updated",

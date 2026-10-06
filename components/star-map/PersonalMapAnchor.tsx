@@ -10,5 +10,5 @@ export default function PersonalMapAnchor({ planet, origin }: { planet: StarMapS
   const t = useTranslations('starMap')
   if (!planet) return <div className={styles.selfCenter}><Link href="/onboarding">{t('createSelf')}</Link></div>
   const name = planet.displayName || planet.name
-  return <div className={styles.selfCenter}><Link href={withExplorationOrigin(planet.href, origin)} className={styles.selfLink} aria-label={t('openSelf', { name: planet.name })}><PersonAvatar key={planet.avatarUrl} src={planet.avatarUrl} planetConfig={planet.planetConfig} name={name} size={36} /><strong className={styles.selfName}>{name}</strong></Link></div>
+  return <div className={styles.selfCenter}><Link href={withExplorationOrigin("/my-planet", origin)} className={styles.selfLink} aria-label={t('openSelf', { name: planet.name })}><PersonAvatar key={planet.avatarUrl} src={planet.avatarUrl} planetConfig={planet.planetConfig} name={name} size={36} /><strong className={styles.selfName}>{name}</strong></Link></div>
 }

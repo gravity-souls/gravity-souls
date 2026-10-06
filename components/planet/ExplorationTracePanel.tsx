@@ -1,9 +1,10 @@
 import type { ExplorationTrace } from '@/types/planet'
-import { relativeTime } from '@/lib/time'
+import { useFormatter, useTranslations } from 'next-intl'
 
 // --- Single trace row ------------------------------------------------------
 
 function TraceRow({ trace, maxCount }: { trace: ExplorationTrace; maxCount: number }) {
+  const formatter = useFormatter()
   const fillWidth = Math.round((trace.count / maxCount) * 100)
 
   return (
@@ -25,7 +26,7 @@ function TraceRow({ trace, maxCount }: { trace: ExplorationTrace; maxCount: numb
             {trace.label}
           </span>
           <span className="text-[10px] shrink-0" style={{ color: 'var(--ghost)' }}>
-            {relativeTime(trace.recentAt)}
+            {formatter.relativeTime(new Date(trace.recentAt), new Date())}
           </span>
         </div>
 
@@ -77,6 +78,7 @@ interface Props {
  * Wrap in ProfileLayerSection with locked=true for Explorer viewers.
  */
 export default function ExplorationTracePanel({ traces }: Props) {
+  const t = useTranslations('planetPage')
   if (!traces || traces.length === 0) return null
 
   const maxCount = Math.max(...traces.map((t) => t.count))
@@ -88,7 +90,7 @@ export default function ExplorationTracePanel({ traces }: Props) {
         className="text-xs leading-relaxed"
         style={{ color: 'var(--ink)', opacity: 0.5 }}
       >
-        Planet types this orbit has recently passed through:
+        {t('tracesDescription')}
       </p>
 
       {/* Trace rows */}

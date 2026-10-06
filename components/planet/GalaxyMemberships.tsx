@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 
 // --- GalaxyMemberships -------------------------------------------------------
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function GalaxyMemberships({ galaxyIds }: Props) {
+  const t = useTranslations('nav')
   const [rows, setRows] = useState<CommunityRow[]>([])
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function GalaxyMemberships({ galaxyIds }: Props) {
         className="text-xs tracking-widest uppercase"
         style={{ color: 'var(--star)', opacity: 0.55 }}
       >
-        Galaxies
+        {t('galaxies')}
       </span>
 
       <div className="flex flex-col gap-2">

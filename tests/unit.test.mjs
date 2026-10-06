@@ -12,3 +12,4 @@ import './navigation-polish.test.mjs'
 import './my-planet-audit.test.mjs'
 
 import './planet-formation.test.mjs'
+import './notification-copy.test.mjs'

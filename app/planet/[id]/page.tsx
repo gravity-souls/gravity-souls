@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import AppShell from '@/components/layout/AppShell'
@@ -14,7 +14,7 @@ import LockedLayer from '@/components/ui/LockedLayer'
 import PlanetLoading from '@/app/planet/[id]/loading'
 import BeamButton from '@/components/social/BeamButton'
 import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
-import { explorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
+import { explorationOrigin, withExplorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import PlanetHero from '@/components/planet/PlanetHero'
 import MatchReasonPanel from '@/components/planet/MatchReasonPanel'
 import PlanetResonancePanel from '@/components/planet/PlanetResonancePanel'
@@ -225,6 +225,7 @@ function isPlanetConfig(value: unknown): value is PlanetConfig {
 // --- Page inner ---------------------------------------------------------------
 
 function PlanetPageInner() {
+  const router = useRouter()
   const origin = explorationOrigin(useSearchParams().get('from'))
   const t = useTranslations('planetPage')
   const tNav = useTranslations('nav')
@@ -238,7 +239,12 @@ function PlanetPageInner() {
   const [viewerPlanet, setViewerPlanet] = useState<PlanetProfile | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     async function load() {
+      setLoading(true)
+      setViewerRole("explorer")
+      setMyMatch(null)
+      setViewerPlanet(null)
       // Fetch the planet from API
       let p: PlanetProfile | null = null
       try {
@@ -249,10 +255,9 @@ function PlanetPageInner() {
         }
       } catch { /* ignore */ }
 
+      if (cancelled) return
       setPlanet(p)
-      setLoading(false)
-
-      if (!p) return
+      if (!p) { setLoading(false); return }
 
       // Fetch my planet from API for self-detection and resonance calculation
       let myPlanetId: string | null = null
@@ -263,12 +268,14 @@ function PlanetPageInner() {
           const myData = await myRes.json() as Record<string, unknown>
           myPlanetId = myData.id as string
           myViewerPlanet = dbPlanetToProfile(myData)
-          setViewerPlanet(myViewerPlanet)
+          if (!cancelled) setViewerPlanet(myViewerPlanet)
         }
       } catch { /* ignore */ }
 
+      if (cancelled) return
       if (myPlanetId === id) {
-        setViewerRole('self')
+        router.replace(withExplorationOrigin('/my-planet', origin))
+        return
       } else if (myPlanetId) {
         setViewerRole('resonator')
         if (myViewerPlanet) {
@@ -280,10 +287,12 @@ function PlanetPageInner() {
       }
 
 
+      setLoading(false)
     }
 
-    load()
-  }, [id])
+    void load()
+    return () => { cancelled = true }
+  }, [id, origin, router])
 
   if (loading) {
     return <PlanetLoading />
@@ -307,6 +316,7 @@ function PlanetPageInner() {
   const { visual } = planet
   const isResonator = viewerRole === 'resonator'
   const isSelf      = viewerRole === 'self'
+  const hasSidebarContent = Boolean(planet.culturalTags?.length || planet.travelCities?.length || planet.galaxyIds?.length || planet.explorationTraces?.length)
 
   return (
     <AppShell>
@@ -355,10 +365,10 @@ function PlanetPageInner() {
         )}
 
         {/* -- Main content grid ----------------------------------------- */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`mt-8 grid grid-cols-1 gap-6 ${hasSidebarContent ? "lg:grid-cols-3" : ""}`}>
 
           {/* -- Left / main column (2 wide) --------------------------- */}
-          <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className={`${hasSidebarContent ? "lg:col-span-2" : ""} flex flex-col gap-6`}>
 
             {/* Cognitive axes */}
             <OrbitCard glowColor={visual.coreColor} className="p-5">
@@ -376,7 +386,7 @@ function PlanetPageInner() {
             </OrbitCard>
 
             {/* Emotional frequency */}
-            <OrbitCard glowColor={visual.accentColor} className="p-5">
+            {planet.emotionalBars.length > 0 && <OrbitCard glowColor={visual.accentColor} className="p-5">
               {isResonator || isSelf ? (
                 <EmotionalFrequencyModule planet={planet} />
               ) : (
@@ -388,10 +398,10 @@ function PlanetPageInner() {
                   <EmotionalFrequencyModule planet={planet} />
                 </LockedLayer>
               )}
-            </OrbitCard>
+            </OrbitCard>}
 
             {/* Content orbit */}
-            <OrbitCard glowColor={visual.coreColor} className="p-5">
+            {planet.contentFragments.length > 0 && <OrbitCard glowColor={visual.coreColor} className="p-5">
               {isResonator || isSelf ? (
                 <ContentOrbit planet={planet} />
               ) : (
@@ -425,7 +435,7 @@ function PlanetPageInner() {
                   )}
                 </div>
               )}
-            </OrbitCard>
+            </OrbitCard>}
 
             {/* Core themes */}
             <OrbitCard glowColor={visual.accentColor} className="p-5">
@@ -438,7 +448,7 @@ function PlanetPageInner() {
           <div className="flex flex-col gap-6">
 
             {/* Cultural coordinates */}
-            {(planet.culturalTags || planet.travelCities) && (
+            {(Boolean(planet.culturalTags?.length) || Boolean(planet.travelCities?.length)) && (
               <OrbitCard glowColor={visual.accentColor} className="p-5">
                 {isResonator || isSelf ? (
                   <CulturalCoordinates

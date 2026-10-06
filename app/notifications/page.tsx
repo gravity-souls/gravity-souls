@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
+import { notificationCopy } from '@/lib/notification-copy'
 import AppShell from '@/components/layout/AppShell'
 import { notifyInboxChanged } from '@/lib/inbox-client'
 
@@ -19,8 +20,10 @@ interface NotificationItem {
 export default function NotificationsPage() {
   const t = useTranslations('inboxWorkflow')
   const formatter = useFormatter()
+  const locale = useLocale()
   const router = useRouter()
   const [items, setItems] = useState<NotificationItem[]>([])
+  const displayItems = useMemo(() => items.map(item => ({ ...item, ...notificationCopy(item, locale) })), [items, locale])
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -164,7 +167,7 @@ export default function NotificationsPage() {
           </div>
         )}
         <ol className="space-y-3" aria-label={t('notifications')}>
-          {items.map((item) => (
+          {displayItems.map((item) => (
             <li
               key={item.id}
               className={`rounded-xl border p-4 ${item.read ? 'border-white/5 bg-white/2' : 'border-violet-400/25 bg-violet-400/5'}`}

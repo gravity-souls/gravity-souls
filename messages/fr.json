@@ -230,7 +230,9 @@
     "note_culture-travel": "Vos intérêts culturels et vos voyages se rejoignent.",
     "note_art-books-music": "L’art, les livres ou la musique vous rapprochent.",
     "note_worldview-complement": "Vos visions du monde offrent des perspectives complémentaires.",
-    "fullReport": "Ouvrir le rapport complet"
+    "fullReport": "Ouvrir le rapport complet",
+    "loadError": "Impossible de charger votre orbite de résonance. Réessayez.",
+    "retry": "Réessayer"
   },
   "stream": {
     "searchPlaceholder": "Rechercher des signaux...",
@@ -425,7 +427,19 @@
     "statusQuiet": "Silencieuse",
     "myPlanetCrumb": "Ma planète",
     "galaxiesCrumb": "Galaxies",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "cognitiveTitle": "Signature cognitive",
+    "cognitiveDescription": "Ces axes décrivent les choix du calibrage : idées abstraites ou expériences concrètes, réflexion intérieure ou expression tournée vers les autres. Ce n’est pas un diagnostic.",
+    "concrete": "Concret",
+    "abstract": "Abstrait",
+    "outward": "Vers les autres",
+    "inward": "Intérieur",
+    "introspective": "Introspection",
+    "emotionalTitle": "Fréquence émotionnelle",
+    "themesTitle": "Thèmes essentiels",
+    "themesDescription": "Les sujets et l’atmosphère choisis par la personne qui habite cette planète.",
+    "thoughtDescription": "Les mots que cette personne a choisi de partager sur elle-même.",
+    "tracesDescription": "Les types de planètes que cette personne a explorés récemment."
   },
   "planetSettings": {
     "updated": "Paramètres mis à jour",

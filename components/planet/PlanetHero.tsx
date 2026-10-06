@@ -1,5 +1,7 @@
 'use client'
 
+import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
+import { localizedPlanetTagline, planetClimateKey } from '@/lib/planet-meaning'
 import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
@@ -15,7 +17,7 @@ import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { ExplorationOrigin } from '@/lib/exploration-return'
 
-const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false, loading: () => <PlanetLoadingState compact /> })
 
 // --- Language display ---------------------------------------------------------
 
@@ -200,7 +202,7 @@ export default function PlanetHero({ planet, viewerRole, origin }: Props) {
               className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0"
               style={{ color: 'var(--ink)', opacity: 0.70 }}
             >
-              &ldquo;{planet.tagline}&rdquo;
+              &ldquo;{localizedPlanetTagline(planet, tCreation)}&rdquo;
             </p>
           )}
 
@@ -232,7 +234,7 @@ export default function PlanetHero({ planet, viewerRole, origin }: Props) {
                 color: visual.coreColor,
               }}
             >
-              {moodLabel(tCreation, planet.mood)}
+              {moodLabel(tCreation, planet.mood, planetClimateKey(planet) ?? undefined)}
             </span>
             <span
               className="text-xs px-2.5 py-0.5 rounded-full capitalize"
