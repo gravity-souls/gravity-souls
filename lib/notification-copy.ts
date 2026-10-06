@@ -7,6 +7,26 @@ const catalogs: Record<string, Record<string, string>> = {
   en: en.notifications, fr: fr.notifications, zh: zh.notifications,
 }
 
+// Exact historical templates from the releases before recipient-language copy.
+// Keep these readable without rewriting existing database rows.
+const legacy: Record<string, string> = {
+  resonanceReceivedTitle: 'A planet has entered your orbit',
+  resonanceReceivedBody: '{name} sent you a resonance signal',
+  resonanceAcceptedTitle: 'Your signal was received',
+  resonanceAcceptedBody: '{name} responded to your resonance',
+  eventReminderTitle: 'Event starting soon',
+  eventReminderBody: '{event} is happening in 24 hours',
+  newMatchTitle: 'New planets in your orbit',
+  newMatchBody: 'Your daily resonance matches are ready',
+  commentReceivedTitle: 'Someone resonated with your signal',
+  commentReceivedBody: '{name} left a comment',
+  commentReplyTitle: 'Someone replied to your comment',
+  commentReplyBody: '{name} replied to you',
+  newFollowerTitle: 'A new planet is following yours',
+  newFollowerBody: '{name} started following you',
+}
+const legacyLevelNames = ['Drifting Rock', 'Young Planet', 'Orbiting Star', 'Gravity Field', 'Singularity']
+
 function parameters(template: string, value: string): Record<string, string> | null {
   if (template === value) return {}
   const names: string[] = []
@@ -34,7 +54,11 @@ function interpolate(template: string, values: Record<string, string>) {
  * Existing notifications need no migration and follow the current UI language immediately. */
 export function notificationCopy(notice: { title: string; body: string }, locale: string) {
   const target = catalogs[resolveLocale(locale)]
-  for (const source of Object.values(catalogs)) {
+  if (notice.title === 'You have evolved') {
+    const level = legacyLevelNames.findIndex(name => notice.body === `You are now ${name}`) + 1
+    if (level) return { title: target.levelUpTitle, body: interpolate(target.levelUpBody, { level: String(level) }) }
+  }
+  for (const source of [...Object.values(catalogs), legacy]) {
     for (const key of Object.keys(source).filter(key => key.endsWith('Title'))) {
       const titleValues = parameters(source[key], notice.title)
       if (!titleValues) continue
@@ -42,7 +66,8 @@ export function notificationCopy(notice: { title: string; body: string }, locale
       // Event announcements store the author's event name as their body.
       if (!source[bodyKey]) {
         if (key !== 'eventNewTitle' && key !== 'eventProposalUpdateTitle') continue
-        return { title: interpolate(target[key], titleValues), body: notice.body }
+        const body = source.eventProposalRejectedBody === notice.body ? target.eventProposalRejectedBody : notice.body
+        return { title: interpolate(target[key], titleValues), body }
       }
       const bodyValues = parameters(source[bodyKey], notice.body)
       if (!bodyValues) continue

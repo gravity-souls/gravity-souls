@@ -72,7 +72,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(page.getByText(copy.planetPage.cognitiveDescription, { exact: true })).toBeVisible()
     await expect(page.getByText(copy.planetPage.themesDescription, { exact: true })).toBeVisible()
     for (const absent of [copy.planetPage.emotionalTitle, copy.planetPage.thoughtFragments, copy.planetPage.culturalCoordinates]) await expect(page.getByText(absent, { exact: true })).toHaveCount(0)
-    await page.route('**/api/notifications', route => route.fulfill({ json: { notifications: [{ id: 'notice', type: 'NEW_FOLLOWER', title: en.notifications.newFollowerTitle, body: en.notifications.newFollowerBody.replace('{name}', 'Étoile 星球'), read: true, actionUrl: null, createdAt: new Date().toISOString() }], unreadCount: 0, unreadMessagesCount: 0, nextCursor: null } }))
+    await page.route('**/api/notifications', route => route.fulfill({ json: { notifications: [{ id: 'notice', type: 'NEW_FOLLOWER', title: 'A new planet is following yours', body: 'Étoile 星球 started following you', read: true, actionUrl: null, createdAt: new Date().toISOString() }], unreadCount: 0, unreadMessagesCount: 0, nextCursor: null } }))
     await page.goto('/notifications')
     const list = page.getByRole('list', { name: copy.inboxWorkflow.notifications, exact: true })
     await expect(list).toContainText(copy.notifications.newFollowerTitle)

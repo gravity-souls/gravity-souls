@@ -26,3 +26,18 @@ test('event names and unrecognized personal writing are preserved exactly', () =
   const incomplete={title:catalogs.en.newMatchTitle,body:'Someone wrote this themselves'}
   assert.deepEqual(notificationCopy(incomplete,'zh'),incomplete)
 })
+test('historical pre-localization notifications remain readable after deployment', () => {
+  const fixtures = [
+    ['resonanceReceived','A planet has entered your orbit','Étoile 星球 .* [A] {x} sent you a resonance signal'],
+    ['resonanceAccepted','Your signal was received','Étoile 星球 .* [A] {x} responded to your resonance'],
+    ['eventReminder','Event starting soon','活动 “Moon” is happening in 24 hours'],
+    ['newMatch','New planets in your orbit','Your daily resonance matches are ready'],
+    ['commentReceived','Someone resonated with your signal','Étoile 星球 .* [A] {x} left a comment'],
+    ['commentReply','Someone replied to your comment','Étoile 星球 .* [A] {x} replied to you'],
+    ['newFollower','A new planet is following yours','Étoile 星球 .* [A] {x} started following you'],
+    ['levelUp','You have evolved','You are now Young Planet'],
+  ]
+  for(const [key,title,body] of fixtures) for(const [locale,target] of Object.entries(catalogs)) {
+    assert.deepEqual(notificationCopy({title,body},locale),{title:fill(target[key+'Title']),body:fill(target[key+'Body'])})
+  }
+})
