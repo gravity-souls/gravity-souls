@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { safeApiError } from "@/lib/api-input";
+import { serializeRegistrationBasics } from "@/lib/registration-basics";
 
 // GET /api/me/export - instant self-serve data export (approved: on-demand
 // generation, no manual fulfillment step). Returns everything about the
@@ -147,7 +148,7 @@ export async function GET() {
       sessions,
       linkedAccounts: accounts,
       profile,
-      registrationBasics,
+      registrationBasics: registrationBasics && serializeRegistrationBasics(registrationBasics),
       planets,
       questionnaireResults,
       savedPlanets,

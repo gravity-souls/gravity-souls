@@ -5,6 +5,12 @@
 The founder approved these defaults during this implementation session:
 
 - Beta minimum age: 18+.
+- Exact age (for example, `26岁`) and gender may be shared independently through
+  explicit public-tag opt-ins; both remain hidden by default. The founder approved
+  privately saving a voluntarily supplied date of birth solely to confirm adulthood
+  and automatically calculate age. No date is inferred or backfilled for existing
+  users. Date of birth is available only in self registration/settings/export, never
+  public DTOs or matching scores. Clearing it also removes the age opt-in atomically.
 - One-way follows; follow edges belong to users, not replaceable planet records.
 - New chats require mutual follow or explicit recipient acceptance of a separate beam
   invitation (ADR 0002); recipient permissions still apply. Neither opening nor accepting sends a message.
@@ -19,6 +25,24 @@ These approvals do not establish legal compliance or authorize inventing retenti
 Legal entity/address, support/privacy contacts, retention, moderation staffing, processor
 details, and production release sign-off remain pending. The implementation below does
 not yet enforce the approved future product defaults.
+
+### Private birth date / public age implementation
+
+- `RegistrationBasics.birthDate` is a nullable PostgreSQL `DATE`, with canonical
+  UTC-midnight Prisma values and `YYYY-MM-DD` self API/export values. Public tags
+  contain only the computed numeric age when `publicTags` includes `age` and the
+  date is valid and adult. Birthdays use UTC calendar arithmetic; February 29
+  advances on March 1 in non-leap years.
+- Supplied malformed, future or under-18 dates are rejected even with adult
+  confirmation. `null` explicitly clears a date; omitted dates are retained on
+  ordinary updates. Adult declaration evidence remains unchanged on later edits.
+- Additive SQL artifact: `prisma/migrations/20261006190000_add_private_birth_date/migration.sql`.
+  Reviewed as one nullable column, no default, backfill, index or destructive SQL.
+  **Schema target remains unselected** until the founder authorizes a loopback or
+  staging database. No database-writing command or deployment is authorized here.
+- This approval covers only the described data use, not legal compliance.
+  Privacy-policy wording and DOB retention require founder/legal review before
+  release; no retention period or new policy claim is established.
 
 ## Tranche 1: database tooling, truthful content, join authorization, validation
 

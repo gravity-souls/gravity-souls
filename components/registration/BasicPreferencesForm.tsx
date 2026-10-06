@@ -2,6 +2,7 @@
 
 import { requestSocialRefresh } from '@/lib/social-refresh'
 import PublicTagPicker from '@/components/registration/PublicTagPicker'
+import { normalizedPublicTags } from '@/lib/public-planet-tags'
 import BirthDatePicker from '@/components/registration/BirthDatePicker'
 import RegionSearch from '@/components/registration/RegionSearch'
 import { Check, Plus } from 'lucide-react'
@@ -17,8 +18,7 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [values, setValues] = useState<BasicPreferences>(initial)
   const [step, setStep] = useState(adultAlreadyConfirmed ? 1 : 0)
-  // The date stays in component memory only; never saved in browser storage.
-  const [birthDate, setBirthDate] = useState('')
+  const [birthDate, setBirthDate] = useState(initial.birthDate ?? '')
   const [adultConfirmed, setAdultConfirmed] = useState(false)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
@@ -37,16 +37,15 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
   }
   async function save(skipTags = false) {
     setSaving(true); setError('')
-    const final = skipTags ? { ...values, publicTags: [] } : values
+    const final = { ...values, birthDate: birthDate || null, publicTags: skipTags ? [] : normalizedPublicTags({ ...values, birthDate: birthDate || null }) }
     try {
-      const res = await fetch('/api/registration', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...final, ...(birthDate ? { birthDate } : { adultConfirmed }) }) })
+      const res = await fetch('/api/registration', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...final, adultConfirmed }) })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(t(data.error === 'ADULT_REQUIRED' ? 'adultError' : 'saveError'))
         if (data.error === 'ADULT_REQUIRED') setStep(0)
         return
       }
-      setBirthDate('')
       requestSocialRefresh()
       onSaved(final)
     } catch { setError(t('saveError')) } finally { setSaving(false) }
@@ -64,7 +63,8 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
     <p className="text-sm leading-relaxed opacity-70">{t(field === 'adult' ? 'adultPrivacy' : 'optionalPrivacy')}</p>
     {field === 'adult' && <div className="flex flex-col gap-5">
       <fieldset className="grid gap-2"><legend className="mb-2">{t('birthday')}</legend><BirthDatePicker value={birthDate} onChange={date => { setBirthDate(date); setAdultConfirmed(false) }} /></fieldset>
-      <label className="flex items-start gap-3"><input type="checkbox" checked={adultConfirmed} onChange={e => { setAdultConfirmed(e.target.checked); if (e.target.checked) setBirthDate('') }} className="mt-1 h-5 w-5" />{t('adultDeclaration')}</label>
+      {birthDate && <button type="button" onClick={() => setBirthDate('')} className="min-h-11 text-left text-sm text-violet-200 underline">{t('clearBirthDate')}</button>}
+      <label className="flex items-start gap-3"><input type="checkbox" checked={adultConfirmed} onChange={e => setAdultConfirmed(e.target.checked)} className="mt-1 h-5 w-5" />{t('adultDeclaration')}</label>
     </div>}
     {field === 'region' && <RegionSearch label={t('regionLabel')} value={values.region} onChange={region => setValues(v => ({ ...v, region }))} />}
     {field === 'interests' && <input type="search" aria-label={t('search')} placeholder={t('search')} value={search} onChange={e => setSearch(e.target.value)} className={inputClass} />}
@@ -80,7 +80,7 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
         })
       }} className={`inline-flex min-h-12 items-center gap-3 rounded-2xl border px-5 py-3 text-left transition ${selected ? 'border-violet-300 bg-gradient-to-br from-violet-400/25 to-cyan-400/10 shadow-[0_0_16px_#a78bfa18]' : 'border-white/15 bg-white/5 hover:border-violet-300/50'}`}>{selected ? <Check size={16} aria-hidden="true" className="text-violet-200" /> : <Plus size={16} aria-hidden="true" className="opacity-40" />}{t(`options.${option}`)}</button>
     })}</div>
-    {field === 'publicTags' && <PublicTagPicker value={values} onChange={tokens => setValues(v => ({ ...v, publicTags: tokens }))} />}
+    {field === 'publicTags' && <PublicTagPicker value={{ ...values, birthDate: birthDate || null }} onChange={tokens => setValues(v => ({ ...v, publicTags: tokens }))} />}
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
     <button type="button" disabled={saving || (field === 'adult' && !birthDate && !adultConfirmed)} onClick={() => field === 'publicTags' ? void save() : advance()} className="mt-4 min-h-12 rounded-2xl bg-violet-400 px-6 py-4 font-semibold text-slate-950 disabled:opacity-40">{saving ? t('saving') : field === 'publicTags' ? t(editing ? 'save' : 'startCalibration') : t('continue')}</button>
     <p className="text-xs opacity-50">{t('editHint')}</p>

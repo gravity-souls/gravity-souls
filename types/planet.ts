@@ -126,7 +126,7 @@ export interface PlanetProfile {
   }[]
 
   // Resonance connections (populated after matching)
-  publicTags?: { key: string; value: string }[]
+  publicTags?: import('@/lib/public-planet-tags').PublicPlanetTag[]
   resonances?: ResonancePlanet[]
   /** Viewer-specific aggregate only; contains no other user’s private answers. */
   preferenceFit?: { score: number; coverage: number; sourcePlanetId?: string } | null

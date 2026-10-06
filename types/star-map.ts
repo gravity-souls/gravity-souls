@@ -12,7 +12,7 @@ export interface StarMapGroup {
 export interface StarMapNode {
   avatarUrl?: string | null
   displayName?: string
-  publicTags?: { key: string; value: string }[]
+  publicTags?: import('@/lib/public-planet-tags').PublicPlanetTag[]
   id: string
   kind?: 'planet' | 'galaxy' | 'activity'
   date?: string
