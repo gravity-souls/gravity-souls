@@ -223,6 +223,7 @@ export async function members(id: string, actor: Actor | null) {
           !hidden.has(m.userId)
             ? {
                 ...m.user.planets[0],
+                displayName: m.user.name,
                 userLevel: m.user.userLevel,
                 planetConfig: planetConfigFromUser(m.user),
                 role: 'resonator',

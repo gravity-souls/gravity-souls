@@ -5,6 +5,7 @@ import { useHintDismissed } from '@/lib/hooks/useHintDismissed'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 const HINT_KEY = 'resonance-first-match-viewed'
 
@@ -19,7 +20,7 @@ export default function FirstMatchCTA({ topMatch, planet, onReveal }: Props) {
   if (dismissed) return null
 
   const color = orbitColorHex(topMatch.orbitColor)
-  const displayName   = planet?.name ?? null
+  const displayName   = planet ? planetDisplayName(planet) : null
   const symbolColor   = planet?.planetConfig?.tintColor ?? planet?.visual.coreColor ?? color
 
   return (

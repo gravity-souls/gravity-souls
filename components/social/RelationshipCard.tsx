@@ -4,6 +4,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import { useLocale, useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetConfig } from '@/types/planet'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 interface PlanetSummary {
   id: string
@@ -26,6 +27,7 @@ interface Props {
 
 export default function RelationshipCard({ status, since, planet, onUnfollow, onFollowBack, busy }: Props) {
   const t = useTranslations('planetActions'), locale = useLocale()
+  const tMyPlanet = useTranslations('myPlanet')
   const visual = (planet.visual ?? {}) as { coreColor?: string; accentColor?: string }
   const coreColor = planet.planetConfig?.tintColor ?? visual.coreColor ?? '#a78bfa'
 
@@ -52,10 +54,15 @@ export default function RelationshipCard({ status, since, planet, onUnfollow, on
             className="text-sm font-semibold hover:opacity-80 transition-opacity"
             style={{ color: 'var(--foreground)', textDecoration: 'none' }}
           >
-            {planet.name}
+            {planetDisplayName(planet)}
           </Link>
           <RelationshipStateBadge status={status} compact />
         </div>
+        {hasDistinctPlanetName(planet) && (
+          <p className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+            {tMyPlanet('planetName')}: {planet.name.trim()}
+          </p>
+        )}
 
         {planet.tagline && (
           <p className="text-[11px] truncate" style={{ color: 'var(--ghost)', opacity: 0.65, fontStyle: 'italic' }}>

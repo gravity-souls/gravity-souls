@@ -5,6 +5,7 @@ import type { PlanetConfig, PlanetProfile, PlanetVisualConfig } from '@/types/pl
 export interface UniversePlanet {
   id: string
   name: string
+  displayName?: string
   avatarSymbol: string
   tagline: string | null
   mood: string
@@ -62,6 +63,7 @@ export function universePlanetToProfile(p: UniversePlanet): PlanetProfile {
   const profile: PlanetProfile = {
     id: p.id,
     name: p.name,
+    displayName: p.displayName,
     avatarSymbol: p.avatarSymbol,
     tagline: p.tagline ?? undefined,
     role: 'explorer' as const,

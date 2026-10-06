@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetProfile } from '@/types/planet'
 
 interface MatchEntry {
@@ -82,7 +83,7 @@ export default function ResonantMatchesCarousel({ matches, className = '' }: Pro
                 {/* Name + symbol */}
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)', maxWidth: 100 }}>
-                    {planet.name}
+                    {planetDisplayName(planet)}
                   </span>
                   <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>{planet.avatarSymbol}</span>
                 </div>

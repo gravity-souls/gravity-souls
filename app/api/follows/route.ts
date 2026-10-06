@@ -31,7 +31,7 @@ async function planetSummaries(userIds: string[]) {
             mood: true,
             lifestyle: true,
             coreThemes: true,
-            user: { select: USER_PLANET_CONFIG_SELECT },
+            user: { select: { name: true, ...USER_PLANET_CONFIG_SELECT } },
           },
         })
   return new Map(
@@ -40,6 +40,7 @@ async function planetSummaries(userIds: string[]) {
       {
         id: r.id,
         name: r.name,
+        displayName: r.user.name,
         avatarSymbol: r.avatarSymbol,
         tagline: r.tagline,
         visual: r.visual,

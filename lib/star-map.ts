@@ -20,6 +20,7 @@ export const MAP_COLORS: Record<string, string> = {
 export function mapProfile(p: {
   id: string
   name: string
+  displayName?: string
   mood: string
   style: string
   lifestyle: string
@@ -31,6 +32,7 @@ export function mapProfile(p: {
   return {
     id: p.id,
     name: p.name,
+    displayName: p.displayName,
     avatarSymbol: '',
     role: 'resonator',
     mood: p.mood as PlanetProfile['mood'],

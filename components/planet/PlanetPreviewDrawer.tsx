@@ -12,6 +12,7 @@ import LockedLayer from '@/components/ui/LockedLayer'
 import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false, loading: () => <PlanetLoadingState compact /> })
@@ -81,7 +82,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={planet ? `${t('planetLabel')} ${planet.name}` : t('planetPreview')}
+        aria-label={planet ? `${t('planetLabel')} ${planetDisplayName(planet)}` : t('planetPreview')}
         className="fixed z-50 flex flex-col"
         style={{
           // Desktop: right-side panel
@@ -126,6 +127,7 @@ function DrawerContent({
   savedPlanetIds?: Set<string> | null
 }) {
   const t = useTranslations('planetPage')
+  const tMyPlanet = useTranslations('myPlanet')
   const tCreation = useTranslations('creationSteps')
   const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
   const fragment = planet.contentFragments[0]
@@ -193,8 +195,13 @@ function DrawerContent({
             className="text-lg font-semibold leading-tight mb-1"
             style={{ color: 'var(--foreground)' }}
           >
-            {planet.name}
+            {planetDisplayName(planet)}
           </h2>
+          {hasDistinctPlanetName(planet) && (
+            <p className="text-xs" style={{ color: 'var(--ghost)' }}>
+              {tMyPlanet('planetName')}: {planet.name.trim()}
+            </p>
+          )}
           {planet.tagline && (
             <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', opacity: 0.7 }}>
               {planet.tagline}

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import type { OrbitMatch } from '@/types/match'
 import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import ResonancePlanetNode from '@/components/resonance/ResonancePlanetNode'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 
@@ -140,7 +141,7 @@ export default function ResonanceOrbitSystem({
           outline: 'none',
         }}
         onClick={() => onSelect(null)}
-        aria-label={`${sourcePlanet.name} - ${tHome('yourPlanet')}`}
+        aria-label={`${planetDisplayName(sourcePlanet)} - ${tHome('yourPlanet')}`}
       >
         <PlanetAvatar planetConfig={sourcePlanet.planetConfig} size={hubR * 2 - 4} glowColor={sourcePlanet.visual.coreColor} />
       </button>

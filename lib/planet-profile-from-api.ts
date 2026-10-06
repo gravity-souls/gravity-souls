@@ -8,6 +8,11 @@ export function planetProfileFromApi(data: Record<string, unknown>): PlanetProfi
     publicTags: data.publicTags as PlanetProfile['publicTags'],
     preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     name: (data.name as string) || '',
+    displayName: typeof data.displayName === 'string'
+      ? data.displayName
+      : typeof data.user === 'object' && data.user !== null && 'name' in data.user && typeof data.user.name === 'string'
+        ? data.user.name
+        : undefined,
     avatarSymbol: (data.avatarSymbol as string) || '?',
     tagline: (data.tagline as string) ?? undefined,
     role: (data.role as PlanetProfile['role']) ?? 'resonator',

@@ -25,6 +25,7 @@ import { CognitiveStyleModule, EmotionalFrequencyModule, ContentOrbit, ThemeClou
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import type { PlanetConfig, PlanetProfile, ResonancePlanet } from '@/types/planet'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
@@ -179,6 +180,11 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     id: data.id as string,
     name: (data.name as string) || 'Unknown',
+    displayName: typeof data.displayName === 'string'
+      ? data.displayName
+      : typeof data.user === 'object' && data.user !== null && 'name' in data.user && typeof data.user.name === 'string'
+        ? data.user.name
+        : undefined,
     avatarSymbol: (data.avatarSymbol as string) || '?',
     tagline: (data.tagline as string) ?? undefined,
     role: 'resonator',
@@ -332,7 +338,7 @@ function PlanetPageInner() {
             {tNav('stream')}
           </Link>
           <span style={{ opacity: 0.4 }}>/</span>
-          <span style={{ color: visual.coreColor }}>{planet.name}</span>
+          <span style={{ color: visual.coreColor }}>{planetDisplayName(planet)}</span>
           {isSelf && (
             <>
               <span style={{ opacity: 0.4 }}>·</span>
@@ -430,7 +436,7 @@ function PlanetPageInner() {
                   {planet.contentFragments.length > 1 && (
                     <FogVeil
                       title={t('orbitSealed')}
-                      message={t('moreFragments', { count: planet.contentFragments.length - 1, name: planet.name })}
+                      message={t('moreFragments', { count: planet.contentFragments.length - 1, name: planetDisplayName(planet) })}
                     />
                   )}
                 </div>

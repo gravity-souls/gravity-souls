@@ -18,7 +18,7 @@ export async function GET() {
 
     const planet = await prisma.planet.findFirst({
       where: { userId: session.user.id, active: true },
-      include: { user: { select: { ...USER_PLANET_CONFIG_SELECT, registrationBasics: true } } },
+      include: { user: { select: { name: true, ...USER_PLANET_CONFIG_SELECT, registrationBasics: true } } },
     });
 
     if (!planet) {
@@ -26,7 +26,7 @@ export async function GET() {
     }
 
     const { user, ...planetData } = planet;
-    return NextResponse.json({ ...planetData, publicTags: publicPlanetTags(user.registrationBasics), planetConfig: resolveUserPlanetConfig(user, planet) });
+    return NextResponse.json({ ...planetData, displayName: user.name, publicTags: publicPlanetTags(user.registrationBasics), planetConfig: resolveUserPlanetConfig(user, planet) });
 
   } catch (error) {
     return safeApiError(error)

@@ -12,6 +12,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import MatchDimensionBars from '@/components/resonance/MatchDimensionBars'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 // --- Relationship type labels -------------------------------------------------
 
@@ -200,6 +201,7 @@ export function ResonanceDetails({
 }) {
   const t = useTranslations('resonance')
   const tA11y = useTranslations('a11y')
+  const tMyPlanet = useTranslations('myPlanet')
   return (
     <>
       {/* Close button */}
@@ -238,8 +240,13 @@ export function ResonanceDetails({
                 className="text-lg font-bold leading-tight"
                 style={{ color: 'var(--foreground)' }}
               >
-                {planet.name}
+                {planetDisplayName(planet)}
               </h2>
+              {hasDistinctPlanetName(planet) && (
+                <p className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+                  {tMyPlanet('planetName')}: {planet.name.trim()}
+                </p>
+              )}
               {planet.tagline && (
                 <p
                   className="text-xs italic leading-snug"

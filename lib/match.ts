@@ -1,5 +1,6 @@
 import { adjustedPreferenceScore, selectWithExploration } from '@/lib/preference-matching'
 import type { PlanetProfile, ResonancePlanet, ResonanceType, BeamColor } from '@/types/planet'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import type {
   OrbitMatch, OrbitReasonKey, OrbitColor, MatchDimensions,
   RelationshipType, ResonanceSession,
@@ -93,7 +94,7 @@ export function getResonanceMatches(
     .slice(0, limit)
     .map(({ planet, score, resType }) => ({
       id:            planet.id,
-      name:          planet.name,
+      name:          planetDisplayName(planet),
       avatarSymbol:  planet.avatarSymbol,
       coreColor:     planet.visual.coreColor,
       resonanceType: resType,
@@ -176,12 +177,12 @@ function deriveDimensions(
 }
 
 const RESONANCE_NOTES = {
-  'shared-interest':      (a, b) => `${a.name} and ${b.name} orbit the same interior territory.`,
+  'shared-interest':      (a, b) => `${planetDisplayName(a)} and ${planetDisplayName(b)} orbit the same interior territory.`,
   'emotional-theme':      () => `Their emotional frequencies hum at the same register.`,
   'expression-style':     () => `How they speak is almost the same. What they say diverges beautifully.`,
   'culture-travel':       () => `They have stood in the same cities and wondered the same things.`,
   'art-books-music':      () => `The art that moves them is the same art. That is rarely coincidence.`,
-  'worldview-complement': (a, b) => `Where ${a.name} ends, ${b.name} begins. A productive gravity.`,
+  'worldview-complement': (a, b) => `Where ${planetDisplayName(a)} ends, ${planetDisplayName(b)} begins. A productive gravity.`,
 } satisfies Record<OrbitReasonKey, (...planets: PlanetProfile[]) => string>
 
 function deriveSimilarities(source: PlanetProfile, target: PlanetProfile): string[] {

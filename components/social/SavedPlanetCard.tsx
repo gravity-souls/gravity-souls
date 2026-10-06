@@ -9,6 +9,7 @@ import type { SavedPlanet } from '@/types/social'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import GlowButton from '@/components/ui/GlowButton'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 // --- SavedPlanetCard ----------------------------------------------------------
 
@@ -21,6 +22,7 @@ interface Props {
 
 export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }: Props) {
   const t = useTranslations('creationSteps')
+  const tMyPlanet = useTranslations('myPlanet')
   const ta = useTranslations('planetActions'), locale = useLocale()
   const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
 
@@ -43,8 +45,13 @@ export default function SavedPlanetCard({ saved, planet, isResonator, onUnsave }
 
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-            {planet.name}
+            {planetDisplayName(planet)}
           </span>
+          {hasDistinctPlanetName(planet) && (
+            <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+              {tMyPlanet('planetName')}: {planet.name.trim()}
+            </span>
+          )}
           {planet.tagline && (
             <span
               className="text-[11px] truncate italic"

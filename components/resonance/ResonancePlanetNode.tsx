@@ -4,6 +4,7 @@ import type { PlanetProfile } from '@/types/planet'
 import { orbitColorHex } from '@/lib/match'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 // --- ResonancePlanetNode ------------------------------------------------------
 // A single orbiting planet node in the ResonanceOrbitSystem.
@@ -26,7 +27,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
   return (
     <button
       onClick={onClick}
-      title={planet.name}
+      title={planetDisplayName(planet)}
       className="absolute flex flex-col items-center gap-1.5 group rounded-xl focus-visible:outline-2 focus-visible:outline-violet-200"
       style={{
         ...style,
@@ -38,7 +39,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
         padding: 0,
       }}
       aria-pressed={isActive}
-      aria-label={`${planet.name} · ${t('signalScore')} ${match.score}`}
+      aria-label={`${planetDisplayName(planet)} · ${t('signalScore')} ${match.score}`}
     >
       {/* Planet orb — texture-based avatar */}
       <div
@@ -82,7 +83,7 @@ export default function ResonancePlanetNode({ match, planet, isActive, onClick, 
           textOverflow: 'ellipsis',
         }}
       >
-        {planet.name}
+        {planetDisplayName(planet)}
       </span>
     </button>
   )

@@ -103,10 +103,17 @@ export async function GET(request: Request) {
     const base = mode === 'personal'
       ? await personalMapPlanetWhere(user.id, collection ?? 'all')
       : await discoveryPlanetWhere(user.id)
-    if (search) base.name = { contains: search, mode: 'insensitive' }
     const where = {
-      ...base,
-      ...(group ? { mood: group === 'other' ? { notIn: MOODS } : group } : {}),
+      AND: [
+        base,
+        ...(search ? [{
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { user: { name: { contains: search, mode: 'insensitive' as const } } },
+          ],
+        }] : []),
+        ...(group ? [{ mood: group === 'other' ? { notIn: MOODS } : group }] : []),
+      ],
     }
     const [rows, total, counts] = await Promise.all([
       prisma.planet.findMany({

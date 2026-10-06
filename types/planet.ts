@@ -94,6 +94,8 @@ export interface ResonancePlanet {
 export interface PlanetProfile {
   id:          string
   name:        string
+  /** Public pseudonym from User.name; Planet.name remains the separate planet name. */
+  displayName?: string
   avatarSymbol: string
   tagline?:    string
 

@@ -173,6 +173,7 @@ export default function ResonancePage() {
         const p: PlanetProfile = {
           id: data.id as string,
           name: (data.name as string) || 'Unknown',
+          displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
           avatarSymbol: (data.avatarSymbol as string) || '?',
           tagline: (data.tagline as string) ?? undefined,
           role: 'resonator',
@@ -216,6 +217,7 @@ export default function ResonancePage() {
                     publicTags: d.publicTags as PlanetProfile['publicTags'],
                     preferenceFit: d.preferenceFit as PlanetProfile['preferenceFit'],
                     name: (d.name as string) || 'Unknown',
+                    displayName: typeof d.displayName === 'string' ? d.displayName : undefined,
                     avatarSymbol: (d.avatarSymbol as string) || '?',
                     tagline: (d.tagline as string) ?? undefined,
                     role: 'resonator' as const,

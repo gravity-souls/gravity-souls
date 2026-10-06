@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import ScrollRegion from '@/components/exploration/ScrollRegion'
 import PersonalMapAnchor from '@/components/star-map/PersonalMapAnchor'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 import { PersonalRelationLegend, PersonalNodeRelations } from '@/components/star-map/PersonalMapRelations'
 import { atlasPosition, galaxyMagnitude, planetGravity } from '@/lib/atlas-layout'
 import { personalNodeOffset, personalNodeRelations, RELATION_STYLES } from '@/lib/personal-map-relations'
@@ -47,7 +48,7 @@ export default function StarMap({
   listOnly?: boolean
   layer?: PersonalMapLayer
 }) {
-  const t = useTranslations('starMap'), locale = useLocale()
+  const t = useTranslations('starMap'), tMyPlanet = useTranslations('myPlanet'), locale = useLocale()
   const contextLayer = mode === 'personal' && layer !== 'planets'
   const totalLabel = contextLayer ? layer === 'galaxies' ? 'myGalaxyTotal' : 'myActivityTotal' : mode === 'galaxies' ? 'galaxyTotal' : mode === 'personal' ? 'personalTotal' : 'visibleTotal'
   const browseLabel = contextLayer ? layer === 'galaxies' ? 'browseGalaxies' : 'browseActivities' : mode === 'galaxies' ? 'browseGalaxies' : 'browseObjects'
@@ -374,7 +375,7 @@ export default function StarMap({
           ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,visibleRadius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=color+'88'; ctx.fill()
           if (portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
           ctx.restore(); ctx.font='11px system-ui'; ctx.fillStyle='#d6deed'; ctx.textAlign='center'
-          if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+visibleRadius+13)
+          if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText(planetDisplayName(node).slice(0,12),p.x,p.y+visibleRadius+13)
           ctx.textAlign='start'; hits.current.push({...p,radius,groupId:node.groupId,node})
         }
       } else if (!focused && mode === 'personal') {
@@ -441,7 +442,7 @@ export default function StarMap({
               }
             }
             ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'; ctx.textAlign = 'center'
-            ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+size+14)
+            ctx.fillText(planetDisplayName(node).slice(0,12),p.x,p.y+size+14)
             ctx.textAlign = 'start'; ctx.globalCompositeOperation = 'lighter'
             hits.current.push({ ...p, radius: size, groupId: group.id, node })
           })
@@ -484,7 +485,7 @@ export default function StarMap({
           ctx.font = '11px system-ui'
           ctx.fillStyle = '#d6deed'
           if (node.id === selected?.id || nodes.length <= 6)
-            ctx.fillText(node.name.slice(0, 18), p.x + 8, p.y + 3)
+            ctx.fillText(planetDisplayName(node).slice(0, 18), p.x + 8, p.y + 3)
           ctx.globalCompositeOperation = 'lighter'
           hits.current.push({ ...p, radius: size, groupId: focus!, node })
         })
@@ -504,7 +505,7 @@ export default function StarMap({
       if (hoverTip.current) hoverTip.current.hidden = !target
       if (target && hoverTip.current) {
         const tip = hoverTip.current
-        tip.textContent = target.node?.displayName || target.node?.name || groupLabel(target.groupId, clusters.find(group => group.id === target.groupId)?.name)
+        tip.textContent = target.node ? planetDisplayName(target.node) : groupLabel(target.groupId, clusters.find(group => group.id === target.groupId)?.name)
         const margin = 8
         const halfWidth = tip.offsetWidth / 2
         tip.style.left = `${Math.max(halfWidth + margin, Math.min(width - halfWidth - margin, target.x))}px`
@@ -841,14 +842,17 @@ export default function StarMap({
                           aria-pressed={selected?.id === node.id}
                           onClick={event => { event.currentTarget.focus({ preventScroll: true }); setSelectedId(node.id) }}
                         >
-                          {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} planetConfig={node.planetConfig} name={node.displayName || node.name} size={28} /> : node.planetConfig && (
+                          {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} planetConfig={node.planetConfig} name={planetDisplayName(node)} size={28} /> : node.planetConfig && (
                             <PlanetAvatar
                               planetConfig={node.planetConfig}
                               size={28}
                             />
                           )}
                           <span className={styles.nodeIdentity}>
-                            <span>{mode === 'personal' ? node.displayName || node.name : node.name}</span>
+                            <span>{planetDisplayName(node)}</span>
+                            {(!node.kind || node.kind === 'planet') && hasDistinctPlanetName(node) && (
+                              <span className={styles.clusterCaption}>{tMyPlanet('planetName')}: {node.name.trim()}</span>
+                            )}
                             <PlanetRelationshipStatus relationship={node.relationship} />
                             {mode === 'personal' && <PersonalNodeRelations node={node} />}
                             {node.kind && node.kind !== 'planet' && <span>{t(`kind_${node.kind}`)}</span>}
@@ -882,13 +886,13 @@ export default function StarMap({
             )}
           </ScrollRegion>
         </aside>
-          {selected && <MapObjectDialog label={selected.displayName || selected.name} kind={selected.kind ?? (mode === 'galaxies' ? 'galaxy' : 'planet')} onClose={() => setSelectedId(null)}>
+          {selected && <MapObjectDialog label={planetDisplayName(selected)} kind={selected.kind ?? (mode === 'galaxies' ? 'galaxy' : 'planet')} onClose={() => setSelectedId(null)}>
             <div
               className={`${styles.card} ${styles.liveCard}`}
               aria-live="polite"
             >
               <div className={styles.nodeHeading}>
-                {mode === 'personal' && (!selected.kind || selected.kind === 'planet') ? <PersonAvatar key={selected.avatarUrl} src={selected.avatarUrl} planetConfig={selected.planetConfig} name={selected.displayName || selected.name} size={36} /> : selected.planetConfig && (
+                {mode === 'personal' && (!selected.kind || selected.kind === 'planet') ? <PersonAvatar key={selected.avatarUrl} src={selected.avatarUrl} planetConfig={selected.planetConfig} name={planetDisplayName(selected)} size={36} /> : selected.planetConfig && (
                   <PlanetAvatar
                     planetConfig={selected.planetConfig}
                     size={48}
@@ -899,8 +903,11 @@ export default function StarMap({
                     level={selected.level}
                   />
                 )}
-                <h2>{mode === 'personal' ? selected.displayName || selected.name : selected.name}</h2>
+                <h2>{planetDisplayName(selected)}</h2>
               </div>
+              {(!selected.kind || selected.kind === 'planet') && hasDistinctPlanetName(selected) && (
+                <p>{tMyPlanet('planetName')}: {selected.name.trim()}</p>
+              )}
               <p>{selected.tagline}</p>
               <PublicPlanetTags tags={selected.publicTags} />
               <PlanetRelationshipStatus relationship={selected.relationship} />

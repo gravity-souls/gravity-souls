@@ -15,6 +15,7 @@ import type { PlanetConfig } from '@/types/planet'
 interface PlanetSummary {
   id: string
   name: string
+  displayName?: string
   avatarSymbol: string
   tagline: string | null
   visual: unknown

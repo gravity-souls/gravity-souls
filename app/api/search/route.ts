@@ -30,11 +30,14 @@ export async function GET(request: Request) {
       where: {
         active: true,
         userId: { notIn: Array.from(excludedUserIds) },
-        name: { contains: q, mode: "insensitive" },
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { user: { name: { contains: q, mode: "insensitive" } } },
+        ],
         // Same MEMBERS-default rule as /api/planets: a missing Profile row
         // is not everyone who creates a planet has one yet, so only an
         // explicit PRIVATE profile should be excluded.
-        user: { OR: [{ profile: null }, { profile: { is: { visibility: { not: "PRIVATE" } } } }] },
+        user: { deletedAt: null, OR: [{ profile: null }, { profile: { is: { visibility: { not: "PRIVATE" } } } }] },
       },
       select: {
         id: true,
@@ -48,7 +51,7 @@ export async function GET(request: Request) {
         visual: true,
         abstractAxis: true,
         introspectiveAxis: true,
-        user: { select: USER_PLANET_CONFIG_SELECT },
+        user: { select: { name: true, ...USER_PLANET_CONFIG_SELECT } },
       },
       orderBy: { createdAt: "desc" },
       take: RESULT_LIMIT,
@@ -93,7 +96,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     planets: planets.map((p) => ({
-      ...universePlanetToProfile({ ...p, visual: (p.visual ?? {}) as Record<string, unknown> }),
+      ...universePlanetToProfile({ ...p, displayName: p.user.name, visual: (p.visual ?? {}) as Record<string, unknown> }),
       planetConfig: resolveUserPlanetConfig(p.user, p),
     })),
     galaxies,

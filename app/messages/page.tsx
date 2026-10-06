@@ -14,6 +14,7 @@ import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import BeamInvitations from '@/components/social/BeamInvitations'
 import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
 import { explorationOrigin } from '@/lib/exploration-return'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types for API response ---
 
@@ -98,7 +99,10 @@ function ConversationCard({ conv }: { conv: ConversationItem }) {
               className="text-sm font-semibold truncate"
               style={{ color: 'var(--foreground)' }}
             >
-              {planet?.name ?? conv.otherUser.name}
+              {planetDisplayName({
+                displayName: conv.otherUser.name,
+                name: planet?.name,
+              }) || t('unknown')}
             </h3>
             {conv.unreadCount > 0 && (
               <span
