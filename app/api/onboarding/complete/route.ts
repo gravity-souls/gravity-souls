@@ -33,8 +33,9 @@ export async function POST(req: NextRequest) {
     // Merge with INITIAL_DRAFT so buildPlanetFromDraft receives a complete PlanetDraft
     const draft: PlanetDraft = { ...INITIAL_DRAFT, ...(rawDraft as Partial<PlanetDraft>) }
 
-    // First-planet heuristic: grant XP only on initial calibration, not re-calibration.
-    // grantXP('PROFILE_COMPLETED') already has its own internal idempotency guard,
+    // Record the formation milestone only on initial calibration, not re-calibration.
+    // This milestone awards 0 XP; new planets begin at level 1.
+    // grantXP('PROFILE_COMPLETED') has its own internal idempotency guard,
     // but this count check is the primary gate to avoid the extra DB read on re-calibration.
     const existingCount = await prisma.planet.count({ where: { userId } })
     const isFirstPlanet = existingCount === 0
@@ -42,6 +43,15 @@ export async function POST(req: NextRequest) {
     const builtPlanet = buildPlanetFromDraft(draft, userId)
 
     const created = await prisma.$transaction(async (tx) => {
+      if (isFirstPlanet) await tx.user.update({
+        where: { id: userId },
+        data: {
+          planetTexture: builtPlanet.visual.textureFile,
+          planetTint: builtPlanet.visual.coreColor,
+          planetAtmoColor: builtPlanet.visual.accentColor,
+        },
+      })
+
       await tx.profile.upsert({
         where:  { userId },
         update: {

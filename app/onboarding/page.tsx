@@ -9,6 +9,7 @@ import { buildPlanetFromDraft } from '@/lib/planet-builder'
 import { useOnboardingState } from '@/lib/hooks/useOnboardingState'
 import OnboardingShell from '@/components/onboarding/OnboardingShell'
 import CreationProgress from '@/components/creation/CreationProgress'
+import PlanetMeaning from '@/components/planet/PlanetMeaning'
 import LivePlanetPreview from '@/components/creation/LivePlanetPreview'
 import Step1EmotionalTone from '@/components/creation/steps/Step1EmotionalTone'
 import Step2InterestEcology from '@/components/creation/steps/Step2InterestEcology'
@@ -200,6 +201,7 @@ function CalibrationPage() {
           </div>
 
           <LivePlanetPreview planet={previewPlanet} size={180} />
+          <PlanetMeaning planet={previewPlanet} draft={draft} expanded />
 
           <div className="w-full flex flex-col gap-3 max-w-sm">
             {revealError && (
@@ -250,9 +252,10 @@ function CalibrationPage() {
 
   // -- Calibration steps 1–4 ----------------------------------------------------
   return (
-    <OnboardingShell previewSlot={<LivePlanetPreview planet={previewPlanet} size={140} />}>
+    <OnboardingShell previewSlot={<div className="space-y-5"><LivePlanetPreview planet={previewPlanet} size={140} /><PlanetMeaning planet={previewPlanet} draft={draft} /></div>}>
       <div className="flex flex-col gap-6">
         <CreationProgress step={step} total={TOTAL_STEPS} />
+        <div className="lg:hidden"><PlanetMeaning planet={previewPlanet} draft={draft} /></div>
 
         <button
           type="button"

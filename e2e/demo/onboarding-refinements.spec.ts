@@ -1,9 +1,11 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test'
 import en from '../../messages/en.json'
+import fr from '../../messages/fr.json'
+import zh from '../../messages/zh.json'
 
 const config = { baseTexture: 'jupiter.jpg', tintColor: '#7c4dbf', atmosphereColor: '#b39ddb', atmosphereDensity: .12, rotationSpeed: .018, cloudOpacity: 0, hasRing: false, ringColor: '' }
-async function fixture(page: Page, context: BrowserContext, baseURL: string) {
-  await context.addCookies([{ name: 'locale', value: 'en', url: baseURL }, { name: 'better-auth.session_token', value: 'refinements-fixture', url: baseURL }])
+async function fixture(page: Page, context: BrowserContext, baseURL: string, locale = 'en') {
+  await context.addCookies([{ name: 'locale', value: locale, url: baseURL }, { name: 'better-auth.session_token', value: 'refinements-fixture', url: baseURL }])
   await page.route('**/api/auth/get-session**', route => route.fulfill({ json: { user: { id: 'owner', name: 'Owner', email: 'owner@test.invalid', emailVerified: false }, session: { id: 'session', userId: 'owner', token: 'refinements-fixture', expiresAt: '2099-01-01T00:00:00Z' } } }))
   await page.route('**/api/me', route => route.fulfill({ json: { user: { name: 'Owner', userLevel: 5, planetConfig: config }, planet: { id: 'own', name: 'My planet' }, profile: { visibility: 'MEMBERS' } } }))
   await page.route('**/api/my-planet', route => route.fulfill({ json: { id: 'own', name: 'My planet', mood: 'calm', coreThemes: [], planetConfig: config } }))
@@ -38,8 +40,8 @@ test('settings have one basics entry and private email identity handles resend f
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('first planet offers optional photo customization before Planet Live and saves through the existing endpoint', async ({ page, context, baseURL }) => {
-  await fixture(page,context,baseURL!)
+for (const [locale, copy] of Object.entries({ en, fr, zh })) test(`first planet personalization and Planet Live use the chosen language in ${locale}`, async ({ page, context, baseURL }) => {
+  await fixture(page,context,baseURL!,locale)
   await page.route('**/api/registration', route => route.fulfill({ json: { required: false, basics: {} } }))
   await page.route('**/api/user/email-verification', route => route.fulfill({ json: { name: 'Owner', email: 'owner@test.invalid', verified: true, available: true } }))
   await page.route('**/api/onboarding/complete', route => route.fulfill({ json: { planet: { id: 'own', name: 'My planet' }, firstPlanet: true } }))
@@ -51,15 +53,24 @@ test('first planet offers optional photo customization before Planet Live and sa
     sessionStorage.setItem('gs_onboarding_draft',JSON.stringify({ climateKey: 'calm', selectedThemes: ['art'], lifestyle: 'solitary', communicationStyle: 'analytical', abstractAxis: 50, introspectiveAxis: 50 }))
   })
   await page.goto('/onboarding')
-  await page.getByRole('button',{ name: en.createPlanet.saveMyPlanet, exact: true }).click()
+  await expect(page.getByTestId('preview-name')).toBeVisible()
+  expect(await page.getByTestId('preview-name').evaluate(el => getComputedStyle(el).webkitTextFillColor)).not.toBe('transparent')
+  await page.getByRole('button',{ name: copy.createPlanet.saveMyPlanet, exact: true }).click()
   const stage = page.getByTestId('planet-personalization')
-  await expect(stage.getByRole('heading',{ name: en.onboardingRefinements.personalizeTitle })).toBeVisible()
-  await expect(page.getByRole('link',{ name: /open my planet/i })).toHaveCount(0)
+  await expect(stage.getByRole('heading',{ name: copy.onboardingRefinements.personalizeTitle })).toBeVisible()
+  await expect(page.getByRole('link',{ name: copy.planetAwakening.openPlanet, exact: true })).toHaveCount(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  const stageWidth = await stage.evaluate(el => el.getBoundingClientRect().width)
+  if (page.viewportSize()!.width >= 1000) expect(stageWidth).toBeGreaterThan(800)
   await stage.locator('input[type="file"]').setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5koAAAAASUVORK5CYII=','base64') })
-  await expect(stage.getByRole('button',{ name: /^Save Planet/ })).toBeEnabled()
-  await stage.getByRole('button',{ name: /^Save Planet/ }).click()
-  await expect(stage.getByRole('status')).toContainText(en.onboardingRefinements.appearanceSaved)
+  await expect(stage.getByRole('button',{ name: new RegExp(`^${copy.planetCustomizer.savePlanet}`) })).toBeEnabled()
+  await stage.getByRole('button',{ name: new RegExp(`^${copy.planetCustomizer.savePlanet}`) }).click()
+  await expect(stage.getByRole('status')).toContainText(copy.onboardingRefinements.appearanceSaved)
   expect(saved?.customTextureUrl).toBe('/uploads/planet-textures/refinements-photo.png')
-  await stage.getByRole('button',{ name: en.onboardingRefinements.enterUniverse, exact: true }).click()
-  await expect(page.getByRole('link',{ name: /open my planet/i })).toBeVisible()
+  await stage.getByRole('button',{ name: copy.onboardingRefinements.enterUniverse, exact: true }).click()
+  await expect(page.getByRole('link',{ name: copy.planetAwakening.openPlanet, exact: true })).toBeVisible()
+  await expect(page.getByText(copy.planetAwakening.live, { exact: true })).toBeVisible()
+  await expect(page.getByText(copy.creationSteps.climateOptions.calm.description, { exact: false })).toBeVisible()
+  await page.getByTestId('planet-meaning').locator('summary').click()
+  await expect(page.getByText(copy.planetMeaning.nameExplanation, { exact: true })).toBeVisible()
 })

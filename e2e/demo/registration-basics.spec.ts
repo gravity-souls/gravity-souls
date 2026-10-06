@@ -30,6 +30,14 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(wizard.getByRole('combobox', { name: copy.onboardingRefinements.year, exact: true })).toHaveValue('')
     await wizard.getByRole('button', { name: t.continue, exact: true }).click()
     for (let i = 1; i < 7; i++) await wizard.getByRole('button', { name: t.skip, exact: true }).click()
+    await expect(wizard.getByRole('heading', { name: t.titles.gatheringPreferences, exact: true })).toBeVisible()
+    await expect(wizard.getByRole('checkbox')).toHaveCount(0)
+    await wizard.getByRole('button', { name: t.options.smallGroups, exact: true }).click()
+    await wizard.getByRole('button', { name: t.continue, exact: true }).click()
+    await expect(wizard.getByRole('heading', { name: t.titles.publicTags, exact: true })).toBeVisible()
+    await wizard.getByRole('button', { name: t.back, exact: true }).click()
+    await expect(wizard.getByRole('button', { name: t.options.smallGroups, exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await wizard.getByRole('button', { name: t.continue, exact: true }).click()
     failSave = true
     await wizard.getByRole('button', { name: t.startCalibration, exact: true }).click()
     await expect(wizard.locator('[role="alert"]')).toContainText(t.saveError)
@@ -37,6 +45,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
     await expect(page.getByRole('heading', { name: copy.createPlanet.introTitle, exact: true })).toBeVisible()
     expect(writes.at(-1)?.adultConfirmed).toBe(true)
     expect(writes.at(-1)?.gender).toBe('undisclosed')
+    expect(writes.at(-1)?.gatheringPreferences).toEqual(['smallGroups'])
     expect(writes.at(-1)?.birthDate).toBeUndefined()
 
     await page.goto('/settings/basics')

@@ -15,7 +15,6 @@ const previous = Module._load
 Module._load = function(id, parent, main) {
   if (id === '@/lib/prisma') return { prisma: db }
   if (id === '@/lib/session') return { requireUser: async () => { if (!actor) throw Response.json({}, { status: 401 }); return { user: await db.user.findUniqueOrThrow({ where: { id: actor } }) } } }
-  if (id === '@/lib/grantXP') return { grantXP: async () => {} }
   if (id === '@/lib/email') return { verificationEmailConfigured: () => deliveryConfigured }
   if (id === '@/lib/auth') return { auth: { api: { sendVerificationEmail: async input => { verificationCalls.push(input.body); return { status: true } } } } }
   return previous.call(this, id, parent, main)
@@ -79,6 +78,18 @@ test('private basics registration and edit lifecycle on real migrations and rout
       assert.equal(result.required, false); assert.equal(result.basics.gender, 'undisclosed'); assert.deepEqual(result.basics.languages, [])
       assert.equal(result.basics.ageMethod, 'adult-self-declaration')
       assert.equal((await savePlanet()).status, 200)
+      const formed = await db.planet.findFirstOrThrow({ where: { userId: 'new', active: true } })
+      const owner = await db.user.findUniqueOrThrow({ where: { id: 'new' } })
+      assert.equal(owner.userLevel, 1); assert.equal(owner.xp, 0)
+      assert.equal(owner.planetTexture, formed.visual.textureFile)
+      assert.equal(owner.planetTint, formed.visual.coreColor)
+      assert.equal(owner.planetAtmoColor, formed.visual.accentColor)
+      const formation = await db.xPEvent.findFirstOrThrow({ where: { userId: 'new', type: 'PROFILE_COMPLETED' } })
+      assert.equal(formation.xpGranted, 0)
+      await db.user.update({ where: { id: 'new' }, data: { planetTexture: 'mars.jpg', planetTint: '#112233' } })
+      assert.equal((await savePlanet()).status, 200)
+      assert.equal(await db.xPEvent.count({ where: { userId: 'new', type: 'PROFILE_COMPLETED' } }), 1)
+      assert.equal((await db.user.findUniqueOrThrow({ where: { id: 'new' } })).planetTint, '#112233')
     })
     await t.test('edits reload exactly, preserve adult evidence and stay outside public profile', async () => {
       const before = await db.registrationBasics.findUniqueOrThrow({ where: { userId: 'new' } })

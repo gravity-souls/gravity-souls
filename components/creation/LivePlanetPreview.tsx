@@ -22,7 +22,7 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
   const textureFile = resolvePlanetTexture(planet)
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4" data-testid="live-planet-preview">
 
       {/* Glowing container */}
       <div
@@ -49,15 +49,13 @@ export default function LivePlanetPreview({ planet, size = 140, showMeta = true 
       </div>
 
       {/* Planet name */}
-      <div className="text-center flex flex-col gap-2">
+      <div className="relative z-10 w-full text-center flex flex-col gap-2">
         <p
+          data-testid="preview-name"
           className="text-base font-semibold"
           style={{
-            background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            color: 'transparent',
-            backgroundClip: 'text',
+            color: 'var(--foreground)',
+            overflowWrap: 'anywhere',
           }}
         >
           {planet.name}

@@ -108,7 +108,7 @@ export const MOOD_TO_CLIMATE: Record<Mood, string> = {
  */
 export function planetProfileToDraft(planet: PlanetProfile): PlanetDraft {
   return {
-    climateKey:         MOOD_TO_CLIMATE[planet.mood] ?? 'calm',
+    climateKey:         planet.visual.climateKey ?? CLIMATE_OPTIONS.find(c => c.description === planet.tagline)?.key ?? MOOD_TO_CLIMATE[planet.mood] ?? 'calm',
     selectedThemes:     planet.coreThemes,
     lifestyle:          planet.lifestyle,
     textureFile:        planet.visual.textureFile,
@@ -164,6 +164,7 @@ export function buildPlanetFromDraft(draft: PlanetDraft, userId: string): Planet
     contentFragments,
 
     visual: {
+      climateKey,
       coreColor,
       accentColor,
       textureFile,

@@ -20,7 +20,7 @@ export default function PlanetPersonalization({ planet, onContinue }: { planet: 
     }).catch(() => { if (!controller.signal.aborted) setFailed(true) })
     return () => controller.abort()
   },[attempt])
-  return <OnboardingShell><section className="space-y-6 pb-12" data-testid="planet-personalization">
+  return <OnboardingShell wide><section className="space-y-6 pb-12" data-testid="planet-personalization">
     <h1 className="text-3xl font-semibold">{t('personalizeTitle')}</h1><p className="text-sm leading-relaxed opacity-70">{t('personalizeHint')}</p>
     {identity ? <PlanetCustomizer initialConfig={identity.config} planetName={planet.name} userLevel={identity.level} onSaved={config => { setIdentity({ ...identity, config }); setSaved(true); requestSocialRefresh() }} /> : failed ? <div><p role="alert">{t('personalizeError')}</p><button type="button" className="min-h-11 underline" onClick={() => { setFailed(false); setAttempt(i => i+1) }}>{t('retry')}</button></div> : <p>{t('loadingIdentity')}</p>}
     {saved && <p role="status" className="text-emerald-300">{t('appearanceSaved')}</p>}

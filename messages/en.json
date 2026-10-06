@@ -740,7 +740,7 @@
     "firstDmHintTitle": "Your first beam is sent",
     "firstDmHintBody": "Replies land right here. Check Messages any time to keep the conversation going.",
     "levelNames": {
-      "1": "Drifting Rock",
+      "1": "New Planet",
       "2": "Young Planet",
       "3": "Orbiting Star",
       "4": "Gravity Field",
@@ -1518,7 +1518,8 @@
         "4": "Rotation and clouds",
         "5": "Your own planet texture"
       },
-      "earlyAccess": "During early access, customization controls may be available before you reach their listed level. Your XP and level still grow. You can see your progress on My Planet."
+      "earlyAccess": "During early access, customization controls may be available before you reach their listed level. Your XP and level still grow. You can see your progress on My Planet.",
+      "startAtOne": "Your new planet starts at level 1. Calibration creates your identity without awarding XP. Explore galaxies, share signals and join activities to reach level 2 at 100 XP."
     },
     "steps": {
       "0": "Take the soul scan, or skip it — calibration is optional, never required.",
@@ -2140,7 +2141,8 @@
       "interests": "What interests you?",
       "connectionGoals": "What brings you here?",
       "peoplePreferences": "Who would you like to meet?",
-      "gatheringPreferences": "How do you like to connect?"
+      "gatheringPreferences": "How do you like to connect?",
+      "publicTags": "Choose your public planet tags"
     },
     "options": {
       "undisclosed": "Prefer not to say",
@@ -2255,5 +2257,29 @@
     "doneEditing": "Done",
     "directEditHint": "Edit any item below directly. Choose which of your answers appear as public planet tags, then save your changes.",
     "noFieldValues": "No selection yet. Use Edit to choose."
+  },
+  "planetAwakening": {
+    "live": "Planet live",
+    "resonator": "Your planet is ready — explore at your own pace",
+    "saveAccount": "Save my planet — create account",
+    "openPlanet": "Open my planet",
+    "resonances": "See my resonances",
+    "localWarning": "Your planet is stored locally. Create an account to keep it across devices and browsers.",
+    "stream": "Explore the stream →"
+  },
+  "planetMeaning": {
+    "title": "Understand my planet",
+    "intro": "A snapshot of the choices you made, with room to change. These symbols describe your current preferences; they are not a personality diagnosis.",
+    "nameTitle": "Your planet name",
+    "nameExplanation": "The initial name and symbol are generated identifiers. They do not encode a personality type or a score. You can rename your planet to make it yours.",
+    "climateTitle": "Inner climate",
+    "habitatTitle": "Life rhythm",
+    "communicationTitle": "Way of communicating",
+    "themesTitle": "What draws you in",
+    "axesTitle": "Your centres of gravity",
+    "axesExplanation": "A higher abstract value favours ideas over concrete detail. A higher introspective value favours inward reflection over outward expression. These are self-selected tendencies used in matching, not measured abilities.",
+    "appearanceTitle": "Why it looks this way",
+    "appearanceExplanation": "Climate sets the initial glow, surface style and default texture. Life rhythm and themes describe your preferences and help shape resonance matching. Changing your photo, texture or color changes your appearance while keeping these preferences.",
+    "editHint": "You can revisit calibration in planet settings and change your appearance through Customize."
   }
 }

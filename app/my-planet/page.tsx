@@ -1,5 +1,7 @@
 'use client'
 
+import PlanetMeaning from '@/components/planet/PlanetMeaning'
+import { localizedPlanetTagline } from '@/lib/planet-meaning'
 import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
 import { Settings, Palette, Users, Sparkles } from 'lucide-react'
@@ -742,9 +744,10 @@ export default function MyPlanetPage() {
                   </div>
 
                   <PublicPlanetTags tags={planet.publicTags} />
+                  <PlanetMeaning planet={planet} />
                   {planet.tagline && (
                     <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
-                      {planet.tagline}
+                      {localizedPlanetTagline(planet,tCreation)}
                     </p>
                   )}
                 </>

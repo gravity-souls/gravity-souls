@@ -8,7 +8,6 @@ export const metadata = { title: 'How Gravity Souls works — Gravity Souls' }
 const SECTION_KEYS = ['planet', 'galaxies', 'signals', 'resonance', 'follows'] as const
 const STEP_KEYS = ['0', '1', '2', '3', '4'] as const
 const XP_ACTIONS = [
-  { key: 'profile', event: 'PROFILE_COMPLETED' },
   { key: 'daily', event: 'DAILY_LOGIN' },
   { key: 'post', event: 'POST_CREATED' },
   { key: 'galaxy', event: 'GALAXY_JOINED' },
@@ -84,6 +83,7 @@ export default async function GuidePage() {
       <section id="levels" className="scroll-mt-24 rounded-2xl px-6 py-8 mb-8" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-soft)' }}>
         <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>{t('levels.title')}</h2>
         <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--ink)', opacity: 0.82 }}>{t('levels.intro')}</p>
+        <p className="mb-6 rounded-xl border border-violet-300/15 bg-violet-300/5 p-4 text-sm leading-relaxed">{t('levels.startAtOne')}</p>
 
         <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--foreground)' }}>{t('levels.earnTitle')}</h3>
         <ul className="grid gap-2 sm:grid-cols-2 mb-6">

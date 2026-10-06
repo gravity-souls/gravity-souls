@@ -77,7 +77,7 @@ test.describe('Journey 1 — new user sign-up', () => {
     await expect(wizard).toBeVisible()
     await wizard.getByRole('checkbox', { name: en.registrationBasics.adultDeclaration }).check()
     await wizard.getByRole('button', { name: en.registrationBasics.continue, exact: true }).click()
-    for (let i = 1; i < 7; i++) await wizard.getByRole('button', { name: en.registrationBasics.skip, exact: true }).click()
+    for (let i = 1; i < 8; i++) await wizard.getByRole('button', { name: en.registrationBasics.skip, exact: true }).click()
     await wizard.getByRole('button', { name: en.registrationBasics.startCalibration, exact: true }).click()
     await expect(wizard).toHaveCount(0)
     await page.getByRole('button', { name: en.createPlanet.saveMyPlanet, exact: true }).click()

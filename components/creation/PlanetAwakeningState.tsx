@@ -2,6 +2,9 @@
 
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { localizedPlanetTagline } from '@/lib/planet-meaning'
+import PlanetMeaning from '@/components/planet/PlanetMeaning'
 import type { PlanetProfile } from '@/types/planet'
 import CosmicGlobe, { type GlobeStatus } from '@/components/fx/CosmicGlobe'
 import GlowButton from '@/components/ui/GlowButton'
@@ -68,6 +71,7 @@ function NovaBurst({ coreColor }: { coreColor: string }) {
 }
 
 export default function PlanetAwakeningState({ planet }: Props) {
+  const t = useTranslations('planetAwakening'), choices = useTranslations('creationSteps')
   const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0)
   const [globeStatus, setGlobeStatus] = useState<GlobeStatus>('loading')
   const reducedMotion = useReducedMotionPreference()
@@ -195,18 +199,15 @@ export default function PlanetAwakeningState({ planet }: Props) {
           className="text-[10px] uppercase tracking-[0.35em] font-medium"
           style={{ color: visual.coreColor, opacity: 0.75 }}
         >
-          Planet live
+          {t('live')}
         </p>
 
         {/* Name */}
         <h1
           className="text-4xl sm:text-5xl font-bold"
           style={{
-            background: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 60%, ${visual.accentColor} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            color: 'transparent',
-            backgroundClip: 'text',
+            color: 'var(--foreground)',
+            overflowWrap: 'anywhere',
           }}
         >
           {planet.name}
@@ -218,7 +219,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
             className="text-sm italic leading-relaxed max-w-xs"
             style={{ color: 'var(--ink)', opacity: 0.65 }}
           >
-            &ldquo;{planet.tagline}&rdquo;
+            &ldquo;{localizedPlanetTagline(planet,choices)}&rdquo;
           </p>
         )}
 
@@ -235,22 +236,24 @@ export default function PlanetAwakeningState({ planet }: Props) {
             style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }}
           />
           <span className="text-xs" style={{ color: '#34d399' }}>
-            You are now a Resonator  -  the deeper layers are open
+            {t('resonator')}
           </span>
         </div>
+
+        <div className="w-full max-w-xl"><PlanetMeaning planet={planet} /></div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
           {!isAuthenticated && (
             <GlowButton href="/sign-up" variant="primary" className="px-8 py-3.5 text-sm">
-              Save my planet  -  create account
+              {t('saveAccount')}
             </GlowButton>
           )}
           <GlowButton href="/my-planet" variant={isAuthenticated ? 'primary' : 'secondary'} className="px-8 py-3.5 text-sm">
-            Open my planet
+            {t('openPlanet')}
           </GlowButton>
           <GlowButton href="/resonance" variant="secondary" className="px-8 py-3.5 text-sm">
-            See my resonances
+            {t('resonances')}
           </GlowButton>
         </div>
 
@@ -260,7 +263,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
             className="text-xs text-center max-w-xs leading-relaxed mt-1"
             style={{ color: '#f59e0b', opacity: 0.85 }}
           >
-            Your planet is stored locally. Create an account to keep it across devices and browsers.
+            {t('localWarning')}
           </p>
         )}
 
@@ -270,7 +273,7 @@ export default function PlanetAwakeningState({ planet }: Props) {
           className="text-xs transition-opacity hover:opacity-80"
           style={{ color: 'var(--ghost)', textDecoration: 'none', marginTop: 4 }}
         >
-          Or explore the stream →
+          {t('stream')}
         </Link>
       </div>
 

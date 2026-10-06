@@ -7,7 +7,8 @@ export const XP_EVENTS = {
   EVENT_APPROVED: 30,
   EVENT_RSVP: 25,
   DAILY_LOGIN: 5,
-  PROFILE_COMPLETED: 100,
+  // Forming an identity starts the journey; participation earns progression.
+  PROFILE_COMPLETED: 0,
 } as const
 
 export type XPEventType = keyof typeof XP_EVENTS
@@ -21,7 +22,7 @@ export const LEVEL_THRESHOLDS = {
 } as const
 
 export const LEVEL_NAMES = {
-  1: 'Drifting Rock',
+  1: 'New Planet',
   2: 'Young Planet',
   3: 'Orbiting Star',
   4: 'Gravity Field',

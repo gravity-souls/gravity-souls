@@ -740,7 +740,7 @@
     "firstDmHintTitle": "Votre premier faisceau est envoyé",
     "firstDmHintBody": "Les réponses arrivent ici. Consultez Messages à tout moment pour continuer la conversation.",
     "levelNames": {
-      "1": "Roche à la dérive",
+      "1": "Nouvelle planète",
       "2": "Jeune planète",
       "3": "Étoile en orbite",
       "4": "Champ gravitationnel",
@@ -1518,7 +1518,8 @@
         "4": "Rotation et nuages",
         "5": "Votre propre texture de planète"
       },
-      "earlyAccess": "Pendant l’accès anticipé, les options de personnalisation peuvent être disponibles avant le niveau indiqué. Votre XP et votre niveau continuent de progresser. Suivez-les sur Ma planète."
+      "earlyAccess": "Pendant l’accès anticipé, les options de personnalisation peuvent être disponibles avant le niveau indiqué. Votre XP et votre niveau continuent de progresser. Suivez-les sur Ma planète.",
+      "startAtOne": "Votre nouvelle planète commence au niveau 1. Le calibrage crée votre identité sans attribuer de XP. Explorez les galaxies, partagez des signaux et participez aux activités pour atteindre le niveau 2 à 100 XP."
     },
     "steps": {
       "0": "Faites le scan d'âme, ou passez-le — la calibration est facultative, jamais obligatoire.",
@@ -2140,7 +2141,8 @@
       "interests": "Quels sont vos centres d’intérêt ?",
       "connectionGoals": "Que recherchez-vous ici ?",
       "peoplePreferences": "Qui souhaitez-vous rencontrer ?",
-      "gatheringPreferences": "Comment aimez-vous vous retrouver ?"
+      "gatheringPreferences": "Comment aimez-vous vous retrouver ?",
+      "publicTags": "Choisissez vos étiquettes publiques"
     },
     "options": {
       "undisclosed": "Je préfère ne pas répondre",
@@ -2255,5 +2257,29 @@
     "doneEditing": "Terminé",
     "directEditHint": "Modifiez directement chaque rubrique ci-dessous. Choisissez les réponses à afficher comme étiquettes publiques, puis enregistrez.",
     "noFieldValues": "Aucune sélection. Utilisez Modifier pour choisir."
+  },
+  "planetAwakening": {
+    "live": "Votre planète prend vie",
+    "resonator": "Votre planète est prête — explorez à votre rythme",
+    "saveAccount": "Enregistrer ma planète — créer un compte",
+    "openPlanet": "Ouvrir ma planète",
+    "resonances": "Voir mes résonances",
+    "localWarning": "Votre planète est enregistrée localement. Créez un compte pour la conserver sur vos appareils et navigateurs.",
+    "stream": "Explorer le flux →"
+  },
+  "planetMeaning": {
+    "title": "Comprendre ma planète",
+    "intro": "Un aperçu de vos choix, que vous pouvez faire évoluer. Ces symboles décrivent vos préférences actuelles, sans poser de diagnostic de personnalité.",
+    "nameTitle": "Le nom de votre planète",
+    "nameExplanation": "Le nom initial et le symbole sont des identifiants générés. Ils ne codent ni un type de personnalité ni un score. Vous pouvez renommer votre planète.",
+    "climateTitle": "Climat intérieur",
+    "habitatTitle": "Rythme de vie",
+    "communicationTitle": "Façon de communiquer",
+    "themesTitle": "Ce qui vous attire",
+    "axesTitle": "Vos centres de gravité",
+    "axesExplanation": "Une valeur abstraite élevée privilégie les idées aux détails concrets. Une valeur introspective élevée privilégie la réflexion intérieure à l’expression extérieure. Ces tendances choisies servent aux affinités ; elles ne mesurent pas vos capacités.",
+    "appearanceTitle": "Pourquoi cette apparence",
+    "appearanceExplanation": "Le climat définit la lueur, le style de surface et la texture par défaut. Le rythme de vie et les thèmes décrivent vos préférences et contribuent aux affinités. Changer la photo, la texture ou la couleur modifie l’apparence en conservant vos préférences.",
+    "editHint": "Vous pouvez reprendre le calibrage dans les paramètres de la planète et modifier son apparence avec Personnaliser."
   }
 }
