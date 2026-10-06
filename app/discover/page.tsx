@@ -15,6 +15,7 @@ import type { PlanetProfile } from '@/types/planet'
 import { getResonanceMatches } from '@/lib/match'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel } from '@/lib/planet-labels'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 // --- Helper: convert DB planet to PlanetProfile for matching engine ----------
 
@@ -24,6 +25,7 @@ function dbPlanetToProfile(data: Record<string, unknown>): PlanetProfile {
     preferenceFit: data.preferenceFit as PlanetProfile['preferenceFit'],
     publicTags: data.publicTags as PlanetProfile['publicTags'],
     name: (data.name as string) || 'Unknown',
+    displayName: typeof data.displayName === 'string' ? data.displayName : undefined,
     avatarSymbol: (data.avatarSymbol as string) || '?',
     tagline: (data.tagline as string) ?? undefined,
     role: 'resonator',
@@ -83,6 +85,7 @@ function ResonanceBar({ score, color }: { score: number; color: string }) {
 
 function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: number }) {
   const tCreation = useTranslations('creationSteps')
+  const tMyPlanet = useTranslations('myPlanet')
   const color = planet.planetConfig?.tintColor ?? planet.visual?.coreColor ?? '#a78bfa'
 
   return (
@@ -101,8 +104,13 @@ function DiscoverPlanetCard({ planet, score }: { planet: PlanetProfile; score: n
           />
           <div className="flex flex-col gap-1 min-w-0">
             <h3 className="text-base font-bold leading-tight" style={{ color: 'var(--foreground)' }}>
-              {planet.name}
+              {planetDisplayName(planet)}
             </h3>
+            {hasDistinctPlanetName(planet) && (
+              <p className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+                {tMyPlanet('planetName')}: {planet.name.trim()}
+              </p>
+            )}
             {planet.tagline && (
               <p className="text-xs italic leading-snug truncate" style={{ color: 'var(--ink)', opacity: 0.65 }}>
                 &ldquo;{planet.tagline}&rdquo;

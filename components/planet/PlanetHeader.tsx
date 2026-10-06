@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetProfile, ActiveStatus } from '@/types/planet'
 
 // --- Status badge ---------------------------------------------------------
@@ -84,7 +85,7 @@ interface Props {
   /** 'explorer' = viewer has no planet, 'resonator' = has a planet, 'self' = own planet */
   viewerRole: 'explorer' | 'resonator' | 'self'
   /** Breadcrumb context  -  planet they came from, if any */
-  fromPlanet?: { id: string; name: string; coreColor: string }
+  fromPlanet?: { id: string; name: string; displayName?: string; coreColor: string }
 }
 
 /**
@@ -95,7 +96,9 @@ interface Props {
  */
 export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) {
   const t = useTranslations('planetPage')
-  const { visual, name, tagline, location, languages, activeStatus, communicationStyle } = planet
+  const tMyPlanet = useTranslations('myPlanet')
+  const { visual, tagline, location, languages, activeStatus, communicationStyle } = planet
+  const name = planetDisplayName(planet)
 
   return (
     <header className="flex flex-col gap-4">
@@ -114,7 +117,7 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
                   className="hover:opacity-80 transition-opacity"
                   style={{ color: fromPlanet.coreColor, opacity: 0.75 }}
                 >
-                  {fromPlanet.name}
+                  {planetDisplayName(fromPlanet)}
                 </Link>
               </>
             )}
@@ -147,6 +150,11 @@ export default function PlanetHeader({ planet, viewerRole, fromPlanet }: Props) 
         >
           {name}
         </h1>
+        {hasDistinctPlanetName(planet) && (
+          <p className="text-sm" style={{ color: 'var(--ghost)' }}>
+            {tMyPlanet('planetName')}: {planet.name.trim()}
+          </p>
+        )}
 
         {/* Tagline */}
         {tagline && (

@@ -59,6 +59,7 @@ export async function GET(request: Request) {
         createdAt: true,
         user: {
           select: {
+            name: true,
             registrationBasics: true,
             userLevel: true,
             ...USER_PLANET_CONFIG_SELECT,
@@ -92,6 +93,7 @@ export async function GET(request: Request) {
       })(),
       userId: p.userId,
       name: p.name,
+      displayName: p.user.name,
       avatarSymbol: p.avatarSymbol,
       tagline: p.tagline,
       role: p.role,

@@ -12,6 +12,7 @@ import type { PlanetProfile } from '@/types/planet'
 import type { ResonanceSession, OrbitMatch } from '@/types/match'
 import { ResonanceDetails } from './ResonanceDrawer'
 import styles from './resonance-experience.module.css'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 function Field({
   source,
@@ -115,7 +116,7 @@ function Field({
           rotationDuration={24}
         />
         <span>
-          {source.name} · {t('yourPlanet')}
+          {planetDisplayName(source)} · {t('yourPlanet')}
         </span>
       </div>
       {session.matches.map((match, i) => {
@@ -132,10 +133,10 @@ function Field({
             style={{ left: `${xy.x}%`, top: `${xy.y}%` }}
             aria-pressed={activeId === p.id}
             onClick={() => onSelect(p.id)}
-            aria-label={`${p.name} · ${t('signalScore')} ${match.score}`}
+            aria-label={`${planetDisplayName(p)} · ${t('signalScore')} ${match.score}`}
           >
             <PlanetAvatar planetConfig={p.planetConfig} size={42} rotating={!reduced && !p.planetConfig?.customTextureUrl} rotationDuration={16} />
-            <span>{p.name}</span>
+            <span>{planetDisplayName(p)}</span>
             <strong>{match.score}</strong>
           </button>
         )
@@ -175,7 +176,7 @@ export default function ResonanceExperience({
             onClick={() => onSelect(p.id)}
           >
             <PlanetAvatar planetConfig={p.planetConfig} size={36} />
-            <span>{p.name}</span>
+            <span>{planetDisplayName(p)}</span>
             <strong>{m.score}</strong>
           </button>
         ) : null

@@ -15,6 +15,7 @@ import LevelBadge from '@/components/planet/LevelBadge'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 import type { ExplorationOrigin } from '@/lib/exploration-return'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false, loading: () => <PlanetLoadingState compact /> })
@@ -118,6 +119,7 @@ interface Props {
 
 export default function PlanetHero({ planet, viewerRole, origin }: Props) {
   const t = useTranslations('planetPage')
+  const tMyPlanet = useTranslations('myPlanet')
   const tCreation = useTranslations('creationSteps')
   const { visual } = planet
   const isDesktop = useIsDesktop()
@@ -192,8 +194,13 @@ export default function PlanetHero({ planet, viewerRole, origin }: Props) {
               backgroundClip: 'text',
             }}
           >
-            {planet.name}
+            {planetDisplayName(planet)}
           </h1>
+          {hasDistinctPlanetName(planet) && (
+            <p className="text-sm" style={{ color: 'var(--ghost)' }}>
+              {tMyPlanet('planetName')}: {planet.name.trim()}
+            </p>
+          )}
 
           <PublicPlanetTags tags={planet.publicTags} />
           {/* Tagline */}

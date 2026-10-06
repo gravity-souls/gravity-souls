@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!recipient) return Response.json({ error: 'unavailable' }, { status: 404 })
     const { kind, search, cursor } = input.data
     const args = { select: { id: true }, take: 21, orderBy: [{ createdAt: 'desc' as const }, { id: 'asc' as const }], skip: cursor ?? 0 }
-    const rows = kind === 'planet' ? await prisma.planet.findMany({ ...args, where: { active: true, name: { contains: search, mode: 'insensitive' }, user: { deletedAt: null } } }) : kind === 'galaxy' ? await prisma.community.findMany({ ...args, where: { name: { contains: search, mode: 'insensitive' } } }) : await prisma.event.findMany({ ...args, where: { title: { contains: search, mode: 'insensitive' }, proposer: { deletedAt: null } } })
+    const rows = kind === 'planet' ? await prisma.planet.findMany({ ...args, where: { active: true, OR: [{ name: { contains: search, mode: 'insensitive' } }, { user: { name: { contains: search, mode: 'insensitive' } } }], user: { deletedAt: null } } }) : kind === 'galaxy' ? await prisma.community.findMany({ ...args, where: { name: { contains: search, mode: 'insensitive' } } }) : await prisma.event.findMany({ ...args, where: { title: { contains: search, mode: 'insensitive' }, proposer: { deletedAt: null } } })
     const more = rows.length > 20
     if (more) rows.pop()
     const options = []

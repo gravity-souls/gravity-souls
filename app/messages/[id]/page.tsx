@@ -22,6 +22,7 @@ import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import ExplorationReturnLink from '@/components/social/ExplorationReturnLink'
 import { explorationOrigin, type ExplorationOrigin } from '@/lib/exploration-return'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetConfig } from '@/types/planet'
 // --- Types ---
 
@@ -140,7 +141,10 @@ function ConvHeader({
           className="text-sm font-semibold"
           style={{ color: 'var(--foreground)' }}
         >
-          {planet?.name ?? fallbackName ?? t('unknown')}
+          {planetDisplayName({
+            displayName: fallbackName,
+            name: planet?.name,
+          }) || t('unknown')}
         </span>
       </div>
       {planet && (
@@ -597,7 +601,10 @@ function ConversationPageInner({ params }: Props) {
         disabled={composerDisabled}
         accentColor={accentColor}
         placeholder={t('transmitTo', {
-          name: otherPlanet?.name ?? otherUserName ?? t('unknown'),
+          name: planetDisplayName({
+            displayName: otherUserName,
+            name: otherPlanet?.name,
+          }) || t('unknown'),
         })}
       /></div>
       {originalId && !loadError && <OriginalMessageDialog key={originalId} id={originalId} conversationId={id} origin={origin} viewerId={myUserId} onClose={()=>setOriginalId(null)}/>}

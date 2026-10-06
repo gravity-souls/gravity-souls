@@ -4,6 +4,8 @@ import type { CSSProperties } from 'react'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   planet: PlanetProfile
@@ -36,6 +38,8 @@ export default function PlanetCard({
   style,
   className = '',
 }: Props) {
+  const tMyPlanet = useTranslations('myPlanet')
+  const displayName = planetDisplayName(planet)
   const coreColor = planet.planetConfig?.tintColor ?? planet.visual.coreColor
 
   return (
@@ -43,7 +47,7 @@ export default function PlanetCard({
       onClick={onClick}
       className={`group relative flex flex-col items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 ${className}`}
       style={style}
-      aria-label={`${planet.name}${planet.tagline ? `  -  ${planet.tagline}` : ''}`}
+      aria-label={`${displayName}${planet.tagline ? `  -  ${planet.tagline}` : ''}`}
     >
       {/* Hover halo  -  expands behind the orb on hover */}
       <div
@@ -87,20 +91,27 @@ export default function PlanetCard({
 
       {/* Name label */}
       {showLabel && (
-        <span
-          className="text-center leading-none select-none transition-opacity duration-300 opacity-40 group-hover:opacity-80"
-          style={{
-            fontSize:    9,
-            color:       'var(--ink)',
-            letterSpacing: '0.1em',
-            maxWidth:    size * 2,
-            overflow:    'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace:  'nowrap',
-          }}
-        >
-          {planet.name}
-        </span>
+        <>
+          <span
+            className="text-center leading-none select-none transition-opacity duration-300 opacity-40 group-hover:opacity-80"
+            style={{
+              fontSize:    9,
+              color:       'var(--ink)',
+              letterSpacing: '0.1em',
+              maxWidth:    size * 2,
+              overflow:    'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace:  'nowrap',
+            }}
+          >
+            {displayName}
+          </span>
+          {hasDistinctPlanetName(planet) && (
+            <span className="text-center leading-none" style={{ fontSize: 8, color: 'var(--ghost)' }}>
+              {tMyPlanet('planetName')}: {planet.name.trim()}
+            </span>
+          )}
+        </>
       )}
     </button>
   )

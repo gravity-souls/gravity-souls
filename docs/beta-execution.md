@@ -11,6 +11,9 @@ The founder approved these defaults during this implementation session:
 - Member-visible profiles and posts by default; community content follows community access.
 - Matching/calibration is optional.
 - A galaxy is the presentation of a community for beta, not a separate entity.
+- `User.name` is the public pseudonym and primary identity beside avatars and social
+  interactions. `Planet.name` remains the distinct planet name and is labelled as such
+  when shown on a profile; existing names and the database schema remain unchanged.
 
 These approvals do not establish legal compliance or authorize inventing retention rules.
 Legal entity/address, support/privacy contacts, retention, moderation staffing, processor

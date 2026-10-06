@@ -170,7 +170,8 @@ async function serializePlanet(user: UniverseUser, ownCommunityIds: Set<string>)
   return {
     id: planet.id,
     userId: user.id,
-    name: planet.name || user.name,
+    name: planet.name,
+    displayName: user.name,
     avatarSymbol: planet.avatarSymbol,
     tagline: planet.tagline,
     role: 'resonator' as const,

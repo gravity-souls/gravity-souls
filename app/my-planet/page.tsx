@@ -41,6 +41,7 @@ import { buildPlanetFromDraft, planetProfileToDraft } from '@/lib/planet-builder
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { getResonanceMatches } from '@/lib/match'
 import { themeLabel, moodLabel, lifestyleLabel, commStyleLabel } from '@/lib/planet-labels'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetDraft } from '@/types/creation'
 import { INITIAL_DRAFT } from '@/types/creation'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
@@ -209,6 +210,7 @@ export default function MyPlanetPage() {
             publicTags: data.publicTags,
             id: data.id,
             name: data.name,
+            displayName: data.displayName,
             avatarSymbol: data.avatarSymbol,
             tagline: data.tagline ?? undefined,
             role: data.role ?? 'explorer',
@@ -709,19 +711,24 @@ export default function MyPlanetPage() {
                 </div>
               ) : (
                 <>
+                  <h1
+                    className="text-4xl sm:text-5xl font-bold leading-tight"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      color: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    {planetDisplayName(planet)}
+                  </h1>
                   <div className="flex items-center gap-1 justify-center md:justify-start">
-                    <h1
-                      className="text-4xl sm:text-5xl font-bold leading-tight"
-                      style={{
-                        backgroundImage: `linear-gradient(135deg, #e8e0ff 0%, ${visual.coreColor} 55%, ${visual.accentColor} 100%)`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        color: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      {planet.name}
-                    </h1>
+                    {hasDistinctPlanetName(planet) && (
+                      <p className="text-sm" style={{ color: 'var(--ghost)' }}>
+                        {tMyPlanet('planetName')}: {planet.name.trim()}
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={handleRenameEnter}
@@ -1029,8 +1036,13 @@ export default function MyPlanetPage() {
           />
           <div className="flex flex-col">
             <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-              {planet.name}
+              {planetDisplayName(planet)}
             </span>
+            {hasDistinctPlanetName(planet) && (
+              <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>
+                {tMyPlanet('planetName')}: {planet.name.trim()}
+              </span>
+            )}
             <span className="text-[10px] capitalize" style={{ color: 'var(--ghost)' }}>
               {tMyPlanet(`roles.${planet.role}`)}
             </span>

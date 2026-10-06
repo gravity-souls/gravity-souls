@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       const other = direction === 'received' ? row.sender : row.recipient
       const planet = other.planets[0]
       const conversation = row.status === 'ACCEPTED' ? await prisma.conversationThread.findUnique({ where: { userAId_userBId: canonicalPair(row.senderId, row.recipientId) }, select: { id: true } }) : null
-      invitations.push({ id: row.id, status: row.status, createdAt: row.createdAt, otherUser: { id: other.id, name: other.name }, planet: planet ? { id: planet.id, name: planet.name, planetConfig: resolveUserPlanetConfig(other, planet) } : null, conversationId: conversation?.id ?? null })
+      invitations.push({ id: row.id, status: row.status, createdAt: row.createdAt, otherUser: { id: other.id, name: other.name }, planet: planet ? { id: planet.id, name: planet.name, displayName: other.name, planetConfig: resolveUserPlanetConfig(other, planet) } : null, conversationId: conversation?.id ?? null })
     }
     return Response.json({ invitations, nextCursor: more ? rows.at(-1)!.id : null }, { headers: invitationHeaders })
   } catch (error) { return safeApiError(error) }

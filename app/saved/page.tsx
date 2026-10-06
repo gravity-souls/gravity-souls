@@ -23,6 +23,7 @@ interface ApiSavedPlanetRow {
     id: string
     userId: string
     name: string
+    displayName?: string
     avatarSymbol: string
     tagline: string | null
     mood: string
@@ -40,6 +41,7 @@ function savedPlanetToProfile(data: ApiSavedPlanetRow['planet']): PlanetProfile 
   return {
     id: data.id,
     name: data.name,
+    displayName: data.displayName,
     avatarSymbol: data.avatarSymbol,
     tagline: data.tagline ?? undefined,
     role: 'resonator',

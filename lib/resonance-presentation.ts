@@ -6,6 +6,7 @@ import {
   themeLabel,
   commStyleLabel,
 } from '@/lib/planet-labels'
+import { planetDisplayName } from '@/lib/planet-display-name'
 type T = {
   (key: string, values?: Record<string, string | number>): string
   has(key: string): boolean
@@ -77,8 +78,8 @@ export function localizeResonanceMatch(
   return {
     ...match,
     resonanceNote: t(`note_${match.primaryReason}`, {
-      source: source.name,
-      target: target.name,
+      source: planetDisplayName(source),
+      target: planetDisplayName(target),
     }),
     similarities: similarities.slice(0, 4),
     differences: differences.slice(0, 3),

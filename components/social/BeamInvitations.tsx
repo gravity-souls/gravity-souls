@@ -10,13 +10,17 @@ import { withExplorationOrigin, type ExplorationOrigin } from '@/lib/exploration
 
 import { subscribeSocialRefresh } from '@/lib/social-refresh'
 import { announcePlanetAction } from '@/lib/planet-actions'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 type Direction = 'received' | 'sent'
-type Row = { id: string; status: string; createdAt: string; otherUser: { id: string; name: string }; planet: { id: string; name: string; planetConfig?: PlanetConfig | null } | null; conversationId: string | null }
+type Row = { id: string; status: string; createdAt: string; otherUser: { id: string; name: string }; planet: { id: string; name: string; displayName?: string; planetConfig?: PlanetConfig | null } | null; conversationId: string | null }
 export function BeamInvitationCard({ row, direction, busy = null, selected = false, onAction, origin }: { row: Row; direction: Direction; busy?: string | null; selected?: boolean; onAction: (id: string, action: string) => void; origin?: ExplorationOrigin | null }) {
   const t = useTranslations('beamInvitations'), locale = useLocale()
-  return <article aria-label={row.planet?.name ?? row.otherUser.name} className={`grid gap-2 rounded-xl p-3 ${selected ? 'bg-violet-400/10' : 'bg-white/5'}`}>
-      <div className="flex items-center gap-3">{row.planet ? <PlanetAvatar planetConfig={row.planet.planetConfig ?? undefined} size={32} /> : <span className="text-white/50" aria-hidden="true">?</span>}<span>{row.planet?.name ?? row.otherUser.name}</span></div>
+  const tMyPlanet = useTranslations('myPlanet')
+  const displayName = row.planet ? planetDisplayName(row.planet) : row.otherUser.name.trim()
+  return <article aria-label={displayName} className={`grid gap-2 rounded-xl p-3 ${selected ? 'bg-violet-400/10' : 'bg-white/5'}`}>
+      <div className="flex items-center gap-3">{row.planet ? <PlanetAvatar planetConfig={row.planet.planetConfig ?? undefined} size={32} /> : <span className="text-white/50" aria-hidden="true">?</span>}<span>{displayName}</span></div>
+      {row.planet && hasDistinctPlanetName(row.planet) && <p className="text-[10px] text-white/50">{tMyPlanet('planetName')}: {row.planet.name.trim()}</p>}
       <p className="text-xs text-white/60">{t.has(row.status) ? t(row.status) : t('unavailable')} · {new Date(row.createdAt).toLocaleDateString(locale)}</p>
       <div className="flex flex-wrap gap-3">
         {row.planet && <Link href={withExplorationOrigin(`/planet/${row.planet.id}`, origin)} className="text-xs text-violet-200 underline">{t('viewPlanet')}</Link>}

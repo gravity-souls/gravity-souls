@@ -10,6 +10,7 @@ import PlanetVisual from '@/components/planet/PlanetVisual'
 import GlassPanel from '@/components/ui/GlassPanel'
 import GlowButton from '@/components/ui/GlowButton'
 import { galaxyMoodLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
+import { planetDisplayName } from '@/lib/planet-display-name'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
 type DeckMode = 'planets' | 'galaxies'
@@ -325,7 +326,7 @@ function PlanetChip({
       <div className="flex items-center gap-3">
         <PlanetAvatar planetConfig={planet.planetConfig} size={32} glowColor={planet.visual.coreColor} rotating />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{planet.name}</div>
+          <div className="truncate text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{planetDisplayName(planet)}</div>
           <div className="truncate text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ghost)' }}>
             {moodLabel(tCreation, planet.mood)} · {lifestyleLabel(tCreation, planet.lifestyle)}
           </div>
@@ -412,7 +413,7 @@ function PlanetOrbitNode({
         {planet.avatarSymbol}
       </div>
       <div className="max-w-28 text-[11px] font-medium uppercase tracking-[0.18em]" style={{ color: 'var(--ink)' }}>
-        {planet.name}
+        {planetDisplayName(planet)}
       </div>
     </button>
   )

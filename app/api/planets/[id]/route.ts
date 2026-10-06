@@ -92,6 +92,7 @@ export async function GET(
       id: planet.id,
       userId: planet.userId,
       name: planet.name,
+      displayName: planet.user.name,
       avatarSymbol: planet.avatarSymbol,
       tagline: planet.tagline,
       role: planet.role,

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { PlanetProfile } from '@/types/planet'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 interface Props {
   onPlanetSelect?: (planet: PlanetProfile) => void
@@ -41,6 +42,7 @@ const QUICK_CHIPS = [
 export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
   const t = useTranslations('universeSearch')
   const tCommon = useTranslations('common')
+  const tMyPlanet = useTranslations('myPlanet')
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -259,7 +261,12 @@ export default function UniverseSearch({ onPlanetSelect, placeholder }: Props) {
                   >
                     <PlanetAvatar planetConfig={p.planetConfig} size={28} glowColor={p.visual.coreColor} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{p.name}</p>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>{planetDisplayName(p)}</p>
+                      {hasDistinctPlanetName(p) && (
+                        <p className="text-[10px] truncate" style={{ color: 'var(--ghost)' }}>
+                          {tMyPlanet('planetName')}: {p.name.trim()}
+                        </p>
+                      )}
                       <p className="text-xs truncate" style={{ color: 'var(--ghost)' }}>{p.tagline}</p>
                     </div>
                     <span className="text-xs shrink-0" style={{ color: 'var(--dim)' }}>{t('preview')}</span>

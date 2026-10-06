@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { INBOX_CHANGED } from '@/lib/inbox-client'
 import { MessageCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 interface ConversationPreview {
   id: string
@@ -95,9 +96,10 @@ export default function InboxPreview() {
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-white/90">
-                  {conversation.otherPlanet?.name ??
-                    conversation.otherUser.name ??
-                    t('unknown')}
+                  {planetDisplayName({
+                    displayName: conversation.otherUser.name,
+                    name: conversation.otherPlanet?.name,
+                  }) || t('unknown')}
                 </p>
                 <p className="mt-1 truncate text-xs text-white/50">
                   {conversation.lastMessage?.content ?? t('noMessagesYet')}

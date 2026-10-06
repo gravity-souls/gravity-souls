@@ -9,6 +9,7 @@ import OrbitCard from '@/components/ui/OrbitCard'
 import EmptyState from '@/components/ui/EmptyState'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import type { PlanetProfile } from '@/types/planet'
+import { hasDistinctPlanetName, planetDisplayName } from '@/lib/planet-display-name'
 
 interface GalaxyResult {
   id: string
@@ -44,6 +45,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function SearchResultsPage() {
   const t = useTranslations('search')
+  const tMyPlanet = useTranslations('myPlanet')
   const searchParams = useSearchParams()
   const query = (searchParams.get('q') ?? '').trim()
 
@@ -110,7 +112,12 @@ function SearchResultsPage() {
                     <div className="flex items-center gap-4">
                       <PlanetAvatar planetConfig={planet.planetConfig} textureFile={planet.visual?.textureFile ?? 'jupiter.jpg'} size={44} />
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{planet.name}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{planetDisplayName(planet)}</p>
+                        {hasDistinctPlanetName(planet) && (
+                          <p className="text-[10px] truncate" style={{ color: 'var(--ghost)' }}>
+                            {tMyPlanet('planetName')}: {planet.name.trim()}
+                          </p>
+                        )}
                         {planet.tagline && (
                           <p className="text-xs truncate" style={{ color: 'var(--ghost)' }}>{planet.tagline}</p>
                         )}

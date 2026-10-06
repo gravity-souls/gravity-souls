@@ -7,12 +7,13 @@ import { assertEventProposerVisible } from '@/lib/event-visibility'
 import { USER_PLANET_CONFIG_SELECT, resolveUserPlanetConfig } from '@/lib/user-planet-config'
 import { isShareKind, type SharedCard, type ShareKind } from '@/lib/chat-share-types'
 import { serializeMessage } from '@/lib/inbox'
+import { planetDisplayName } from '@/lib/planet-display-name'
 
 export async function resolveSharedCard(kind: ShareKind, targetId: string, viewer: Actor, db: Prisma.TransactionClient = prisma): Promise<SharedCard> {
   if (kind === 'planet') {
-    const planet = await db.planet.findUnique({ where: { id: targetId }, include: { user: { select: { deletedAt: true, ...USER_PLANET_CONFIG_SELECT } } } })
+    const planet = await db.planet.findUnique({ where: { id: targetId }, include: { user: { select: { name: true, deletedAt: true, ...USER_PLANET_CONFIG_SELECT } } } })
     if (!planet?.active || planet.user.deletedAt || !await canViewProfile(viewer.id, planet.userId, db)) return { available: false }
-    return { available: true, kind, id: planet.id, title: planet.name, href: `/planet/${encodeURIComponent(planet.id)}`, planetConfig: resolveUserPlanetConfig(planet.user, planet) }
+    return { available: true, kind, id: planet.id, title: planetDisplayName({ displayName: planet.user.name, name: planet.name }), href: `/planet/${encodeURIComponent(planet.id)}`, planetConfig: resolveUserPlanetConfig(planet.user, planet) }
   }
   if (kind === 'galaxy') {
     const galaxy = await db.community.findUnique({ where: { id: targetId }, select: { id: true, name: true, slug: true } })

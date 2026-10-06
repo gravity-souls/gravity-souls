@@ -32,7 +32,7 @@ export async function GET() {
           lifestyle: true,
           coreThemes: true,
           visual: true,
-          user: { select: USER_PLANET_CONFIG_SELECT },
+          user: { select: { name: true, ...USER_PLANET_CONFIG_SELECT } },
         },
       },
     },
@@ -52,6 +52,7 @@ export async function GET() {
           ...saved,
           planet: {
             ...planetData,
+            displayName: user.name,
             planetConfig: resolveUserPlanetConfig(user, planet),
           },
         }
