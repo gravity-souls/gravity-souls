@@ -7,6 +7,7 @@ async function fixture(page: Page, context: BrowserContext, baseURL: string) {
   await page.route('**/api/auth/get-session**', route => route.fulfill({ json: { user: { id: 'owner', name: 'Owner', email: 'owner@test.invalid', emailVerified: false }, session: { id: 'session', userId: 'owner', token: 'refinements-fixture', expiresAt: '2099-01-01T00:00:00Z' } } }))
   await page.route('**/api/me', route => route.fulfill({ json: { user: { name: 'Owner', userLevel: 5, planetConfig: config }, planet: { id: 'own', name: 'My planet' }, profile: { visibility: 'MEMBERS' } } }))
   await page.route('**/api/my-planet', route => route.fulfill({ json: { id: 'own', name: 'My planet', mood: 'calm', coreThemes: [], planetConfig: config } }))
+  await page.route('**/api/push/subscriptions', route => route.fulfill({ json: { configured: false, subscriptions: [] } }))
 }
 
 test('settings have one basics entry and private email identity handles resend failure and verification refresh', async ({ page, context, baseURL }) => {
@@ -26,9 +27,9 @@ test('settings have one basics entry and private email identity handles resend f
   await expect(page.locator('a[href="/settings/basics"]')).toHaveCount(0)
   const resend = page.getByRole('button',{ name: en.onboardingRefinements.sendVerification, exact: true })
   await resend.click()
-  await expect(page.getByRole('alert')).toContainText(en.onboardingRefinements.verificationError)
+  await expect(page.getByRole('alert').filter({ hasText: en.onboardingRefinements.verificationError })).toBeVisible()
   await resend.click()
-  await expect(page.getByRole('status')).toContainText(en.onboardingRefinements.verificationSent)
+  await expect(page.getByRole('status').filter({ hasText: en.onboardingRefinements.verificationSent })).toBeVisible()
   await expect(resend).toBeDisabled()
   verified = true
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))

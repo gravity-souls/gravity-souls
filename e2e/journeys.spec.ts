@@ -24,7 +24,7 @@ import { E2E, JOURNEY, AUTH_WP, AUTH_SO } from './test-ids'
 test.describe('Journey 1 — new user sign-up', () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
-  test('sign-up → adult basics → calibration save → /resonance → reload → /my-planet', async ({ page }, testInfo) => {
+  test('sign-up → adult basics → calibration save → optional personalization → /resonance → reload → /my-planet', async ({ page }, testInfo) => {
     testInfo.setTimeout(60_000)
     // Capture API response statuses for diagnostic output on failure
     const apiLog: Record<string, number> = {}
@@ -82,6 +82,9 @@ test.describe('Journey 1 — new user sign-up', () => {
     await expect(wizard).toHaveCount(0)
     await page.getByRole('button', { name: en.createPlanet.saveMyPlanet, exact: true }).click()
     await expect.poll(() => apiLog['onboarding/complete']).toBe(200)
+    const personalization = page.getByTestId('planet-personalization')
+    await expect(personalization.getByRole('heading', { name: en.onboardingRefinements.personalizeTitle, exact: true })).toBeVisible()
+    await personalization.getByRole('button', { name: en.onboardingRefinements.personalizeLater, exact: true }).click()
     await page.getByRole('link', { name: 'See my resonances', exact: true }).click()
     await page.waitForURL('**/resonance')
 
