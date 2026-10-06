@@ -237,7 +237,7 @@ function GalaxiesInner() {
               className="mt-12"
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="galaxy-masonry">
               {filtered.map((galaxy) => (
                 <div key={galaxy.id}><GalaxyCard galaxy={galaxy} variant="full" /><DiscoveryScore recommendation={galaxy.recommendation} /></div>
               ))}

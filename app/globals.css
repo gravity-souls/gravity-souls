@@ -228,15 +228,36 @@ body {
   margin-bottom: 12px;
 }
 
+.galaxy-masonry {
+  columns: 3 280px;
+  column-gap: 20px;
+}
+
+.galaxy-masonry > * {
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  margin-bottom: 20px;
+  vertical-align: top;
+}
+
 @media (max-width: 1024px) {
   .stream-masonry {
     columns: 3 220px;
+  }
+
+  .galaxy-masonry {
+    columns: 2 260px;
   }
 }
 
 @media (max-width: 640px) {
   .stream-masonry {
     columns: 2 150px;
+  }
+
+  .galaxy-masonry {
+    columns: 1;
   }
 }
 
