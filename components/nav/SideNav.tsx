@@ -162,6 +162,7 @@ function SubLink({ href, label, active, Icon }: { href: string; label: string; a
 export default function SideNav({ collapsed, onToggle, personalMapActive = false }: Props) {
   const pathname = usePathname()
   const tNav = useTranslations('nav')
+  const tMap = useTranslations('starMap')
   const tA11y = useTranslations('a11y')
   const { data: session } = authClient.useSession()
   const hydrated = useHydrated()
@@ -324,7 +325,7 @@ export default function SideNav({ collapsed, onToggle, personalMapActive = false
                   />
                 )}
               </span>
-              <span className="max-w-full truncate">{tNav(item.labelKey)}</span>
+              <span className="max-w-full truncate">{item.labelKey === 'starMap' ? tMap('mapView') : tNav(item.labelKey)}</span>
             </Link>
           )
         })}

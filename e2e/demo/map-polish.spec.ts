@@ -33,10 +33,11 @@ for (const mode of ['discover','personal']) test(`${mode} zoom retains portrait 
   await page.route('**/api/star-map?**', route => { reads++; return route.fulfill({ json: { groups: [{ id: 'calm', count: nodes.length, color: '#a78bfa' }], nodes, total: nodes.length, scope: mode === 'personal' ? 'personal' : 'allVisible', nextCursor: null, selfPlanet: { id: 'own', name: 'Owner', href: '/my-planet', avatarUrl: photo, level: 5 } } }) })
   await page.goto(`/star-map?mode=${mode}`)
   const canvas = page.locator('canvas[aria-label]')
+  await canvas.scrollIntoViewIfNeeded()
   const stats = () => canvas.evaluate(el => (el as HTMLCanvasElement & { mapStats: Stats }).mapStats)
   await expect.poll(async () => (await stats())?.portraits).toBe(16)
   expect((await stats()).beams).toBeGreaterThanOrEqual(16)
-  if (mode === 'discover') expect((await stats()).corners.every(count => count >= 10)).toBe(true)
+  if (mode === 'discover') await expect.poll(async () => (await stats()).corners.every(count => count >= 10)).toBe(true)
   for (const deltaY of [-1200,1200,-1200]) { await canvas.dispatchEvent('wheel',{ deltaY }); await expect.poll(async () => (await stats()).portraits).toBe(16); expect((await stats()).beams).toBeGreaterThanOrEqual(16) }
   expect(reads).toBe(1)
   await expect(page.getByRole('button',{ name: /Back to overview/ })).toHaveCount(0)
