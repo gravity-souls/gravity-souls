@@ -4,6 +4,7 @@
 
 import PostContextCard from '@/components/stream/PostContextCard'
 import PostEditor from '@/components/stream/PostEditor'
+import PostDetailSkeleton from '@/components/stream/PostDetailSkeleton'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -13,6 +14,7 @@ import { useTranslations } from 'next-intl'
 import LevelBadge from '@/components/planet/LevelBadge'
 import { LEVEL_NAMES, clampLevel } from '@/lib/xp'
 import type { StreamComment, StreamPost } from '@/types/stream'
+import { streamPostSchema } from '@/lib/stream-workflow'
 
 const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
 
@@ -25,19 +27,22 @@ interface PostDetailProps {
   onTagClick?: (tag: string) => void
   onPostUpdated?: (post: StreamPost) => void
   returnHref?: string | null
+  origin?: string | null
 }
 
 function countCommentTree(comments: StreamComment[] = []) {
   return comments.reduce((total, comment) => total + 1 + (comment.replies?.length ?? 0), 0)
 }
 
-export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated, returnHref }: PostDetailProps) {
+export default function PostDetail({ post, open, currentUserId, onClose, onDeleted, onTagClick, onPostUpdated, returnHref, origin }: PostDetailProps) {
   const t = useTranslations('stream')
   const router = useRouter()
   const tc = useTranslations('postContext')
   const [readError, setReadError] = useState(false), [unavailable, setUnavailable] = useState(false), [revision, setRevision] = useState(0)
   const tCommon = useTranslations('common')
   const [detail, setDetail] = useState<StreamPost | null>(null)
+  const detailRef = useRef(detail)
+  useEffect(() => { detailRef.current = detail }, [detail])
   const [commentText, setCommentText] = useState('')
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null)
   const [commentCursor, setCommentCursor] = useState<string | null>(null)
@@ -46,6 +51,10 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   const [shared, setShared] = useState(false)
   const [expandedReplyThreads, setExpandedReplyThreads] = useState<Record<string, boolean>>({})
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
+  const [savedPostId, setSavedPostId] = useState<string | null>(null)
+  function close() { if (!savingRef.current) onClose() }
 
   const onPostUpdatedRef = useRef(onPostUpdated)
   useEffect(() => { onPostUpdatedRef.current = onPostUpdated }, [onPostUpdated])
@@ -75,16 +84,17 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
         }
         if (!response.ok) throw new Error('failed')
         const data = await response.json()
-        if (!data.post || data.post.id !== postId) throw new Error('failed')
+        const verifiedPost = streamPostSchema.parse(data.post)
+        if (verifiedPost.id !== postId) throw new Error('failed')
         if (request !== requestGeneration.current) return
-        setDetail(data.post); setVerifiedScope(scope); onPostUpdatedRef.current?.(data.post)
-        const comments = data.post.comments ?? []
+        setDetail(verifiedPost); setVerifiedScope(scope); onPostUpdatedRef.current?.(verifiedPost)
+        const comments = verifiedPost.comments ?? []
         setCommentCursor(comments.length === 20 ? comments.at(-1)?.id ?? null : null)
       } catch {
         if (request === requestGeneration.current) { setDetail(null); setVerifiedScope(scope); setReadError(true); setCommentCursor(null); setReplyTarget(null) }
       }
     }
-    const foreground = () => { if (document.visibilityState !== 'hidden') void refresh() }
+    const foreground = () => { if (document.visibilityState !== 'hidden' && !savingRef.current) void refresh() }
     Promise.resolve().then(() => { if (controller?.signal.aborted) return; setReplyTarget(null); setExpandedReplyThreads({}) })
     void refresh()
     window.addEventListener('focus', foreground)
@@ -94,11 +104,23 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
   }, [open, postId, currentUserId, scope, revision])
 
   if (!open) return null
+  if (verifiedScope !== scope || (!detail && !readError && !unavailable)) return (
+    <div className="fixed inset-0 z-80 flex items-end justify-center bg-black/72 px-0 backdrop-blur-md sm:items-center sm:px-6" role="dialog" aria-modal="true" aria-label={t('postDetail')}>
+      <button type="button" className="absolute inset-0 cursor-default" onClick={close} aria-label={t('closePost')} />
+      <div className="relative max-h-[94vh] w-full overflow-y-auto rounded-t-2xl border border-white/10 bg-[#080a1c] sm:max-w-5xl sm:rounded-2xl">
+        <button type="button" onClick={close} className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-black/45 text-white" aria-label={t('close')}>
+          <X size={16} />
+        </button>
+        <PostDetailSkeleton />
+        {returnHref && <Link href={returnHref} className="mb-5 ml-5 inline-block text-sm text-violet-200 underline">← {tc(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
+      </div>
+    </div>
+  )
   if (verifiedScope !== scope || !detail || unavailable) return <div role="dialog" aria-modal="true" aria-label={t('postDetail')} className="fixed inset-0 z-80 grid place-items-center bg-black/80 p-6"><div className="rounded-xl bg-[#11152a] p-6 text-white/70">
     <p role={readError ? 'alert' : 'status'}>{tc(verifiedScope !== scope ? 'loading' : unavailable ? 'unavailable' : readError ? 'readFailed' : 'loading')}</p>
     {verifiedScope === scope && (readError || unavailable) && <button type="button" onClick={() => setRevision(v => v + 1)} className="mt-3 mr-4 underline">{tc('retry')}</button>}
     {returnHref && <Link href={returnHref} className="mt-3 mr-4 inline-block underline">← {tc(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
-    <button type="button" onClick={onClose} className="mt-3 underline">{tc('close')}</button>
+    <button type="button" disabled={saving} onClick={close} className="mt-3 underline">{tc('close')}</button>
   </div></div>
 
   const ownPost = currentUserId === detail.authorId
@@ -323,18 +345,14 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
 
   return (
     <div className="fixed inset-0 z-80 flex items-end justify-center bg-black/72 px-0 backdrop-blur-md sm:items-center sm:px-6" role="dialog" aria-modal="true" aria-label={t('postDetail')}>
-      <button type="button" className="absolute inset-0 cursor-default" onClick={onClose} aria-label={t('closePost')} />
-      <article className="relative grid max-h-[94vh] w-full overflow-y-auto rounded-t-2xl sm:max-w-5xl sm:grid-cols-[minmax(0,1.1fr)_420px] sm:rounded-2xl" style={{ background: 'rgba(8,10,28,0.98)', border: '1px solid var(--border-soft)', boxShadow: '0 28px 80px rgba(0,0,0,0.45)' }}>
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full" style={{ background: 'rgba(0,0,0,0.45)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }} aria-label={t('close')}>
+      <button type="button" disabled={saving} className="absolute inset-0 cursor-default" onClick={close} aria-label={t('closePost')} />
+      <article className={`relative grid max-h-[94vh] w-full overflow-y-auto rounded-t-2xl sm:rounded-2xl ${detail.mediaUrls.length ? 'sm:max-w-5xl sm:grid-cols-[minmax(0,1.1fr)_420px]' : 'sm:max-w-2xl'}`} style={{ background: 'rgba(8,10,28,0.98)', border: '1px solid var(--border-soft)', boxShadow: '0 28px 80px rgba(0,0,0,0.45)' }}>
+        <button type="button" disabled={saving} onClick={close} className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full" style={{ background: 'rgba(0,0,0,0.45)', color: '#fff', border: '1px solid rgba(255,255,255,0.10)' }} aria-label={t('close')}>
           <X size={16} />
         </button>
 
-        <div className="min-h-80 bg-black/20 p-3 sm:p-5">
-          {detail.mediaUrls.length === 0 ? (
-            <div className="flex min-h-96 items-center rounded-2xl p-8" style={{ background: `linear-gradient(145deg, ${accent}38, rgba(8,10,28,0.96))` }}>
-              <p className="text-xl font-semibold leading-relaxed" style={{ color: 'var(--foreground)' }}>{detail.content}</p>
-            </div>
-          ) : detail.mediaUrls.length === 1 ? (
+        {detail.mediaUrls.length > 0 && <div className="min-h-80 bg-black/20 p-3 sm:p-5">
+          {detail.mediaUrls.length === 1 ? (
             detail.mediaTypes[0] === 'image'
               ? <img src={detail.mediaUrls[0]} alt="" className="max-h-[78vh] w-full rounded-2xl object-contain" />
               : <video src={detail.mediaUrls[0]} controls className="max-h-[78vh] w-full rounded-2xl" />
@@ -345,10 +363,12 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
                 : <video key={url} src={url} controls className="aspect-square w-full rounded-xl object-cover" />)}
             </div>
           )}
-        </div>
+        </div>}
 
-        <div className="flex min-h-0 flex-col p-5">
-          <div className="flex items-center gap-3">
+        <fieldset disabled={saving} className="flex min-h-0 min-w-0 flex-col p-5" onClickCapture={event => {
+          if (savingRef.current && event.target instanceof Element && event.target.closest('a')) { event.preventDefault(); event.stopPropagation() }
+        }}>
+          <div className="flex items-center gap-3 pr-9">
             <div className="relative -ml-2 grid h-18 w-18 place-items-center overflow-hidden">
               {detail.author.planetConfig ? <PlanetGlobe planetConfig={detail.author.planetConfig} size={72} framing="avatar" /> : <span aria-hidden="true">✦</span>}
             </div>
@@ -360,9 +380,16 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
           </div>
 
           {returnHref && <Link href={returnHref} className="mt-3 text-sm text-violet-200 underline">← {tc(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
-          <PostContextCard post={detail} />
-          {ownPost && <PostEditor key={detail.updatedAt} post={detail} onUpdated={() => setRevision(v => v + 1)} />}
-          <p className="mt-5 whitespace-pre-wrap text-sm leading-7" style={{ color: 'var(--ink)' }}>{detail.content}</p>
+          {savedPostId === detail.id && <p role="status" className="my-3 text-xs text-violet-200">{t('postSaved')}</p>}
+          {ownPost && <PostEditor key={`${detail.id}:${detail.updatedAt}`} post={detail} onPendingChange={pending => { if (pending) ++requestGeneration.current; savingRef.current = pending; setSaving(pending) }} onUpdated={updated => {
+            ++requestGeneration.current
+            const merged = { ...updated, comments: detailRef.current?.comments ?? detail.comments }
+            setDetail(merged)
+            setSavedPostId(updated.id)
+            onPostUpdatedRef.current?.(merged)
+          }} />}
+          <p className="mt-5 whitespace-pre-wrap break-words text-base leading-8" style={{ color: 'var(--ink)' }}>{detail.content}</p>
+          <div className="-mx-4 mt-2"><PostContextCard post={detail} origin={origin} disabled={saving} /></div>
           {detail.tags.length > 0 && <div className="mt-4 flex flex-wrap gap-1.5">{detail.tags.map((tag) => <button key={tag} type="button" onClick={() => onTagClick?.(tag)} className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `${accent}14`, border: `1px solid ${accent}28`, color: accent }}>#{tag}</button>)}</div>}
 
           <div className="mt-5 flex items-center justify-between border-y border-white/8 py-3">
@@ -445,7 +472,7 @@ export default function PostDetail({ post, open, currentUserId, onClose, onDelet
               {t('signInToSignal')}
             </Link>
           )}
-        </div>
+        </fieldset>
       </article>
     </div>
   )

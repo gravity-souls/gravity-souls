@@ -29,6 +29,8 @@ import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { PlanetProfile } from '@/types/planet'
 import type { GalaxyPreview } from '@/types/galaxy'
 import type { StreamPost } from '@/types/stream'
+import { streamPageSchema } from '@/lib/stream-workflow'
+import { useStreamReturn } from '@/lib/hooks/useStreamReturn'
 
 // --- Page --------------------------------------------------------------------
 
@@ -47,6 +49,12 @@ export default function HomeDashboard() {
   const upcomingEvent = upcomingEvents[0] ?? null
   const [sharedPosts, setSharedPosts] = useState<StreamPost[]>([])
   const [selectedStreamPost, setSelectedStreamPost] = useState<StreamPost | null>(null)
+  const [postsError, setPostsError] = useState(false)
+  const [postsLoading, setPostsLoading] = useState(true)
+  const [postsRevision, setPostsRevision] = useState(0)
+  const tStream = useTranslations('stream'), tContext = useTranslations('postContext')
+  useStreamReturn('/')
+  useEffect(() => { if (!postsLoading && !postsError) window.dispatchEvent(new Event('stream-ready')) }, [postsLoading, postsError, sharedPosts])
 
   // Check if logged-in user has an active planet via API
   useEffect(() => {
@@ -101,15 +109,15 @@ export default function HomeDashboard() {
   useEffect(() => {
     let cancelled = false
     fetch('/api/posts?limit=6')
-      .then((res) => res.ok ? res.json() : { posts: [] })
-      .then((data: { posts?: StreamPost[] }) => {
-        if (!cancelled) setSharedPosts(data.posts ?? [])
+      .then(async res => { if (!res.ok) throw new Error('Post list failed'); return streamPageSchema.parse(await res.json()) })
+      .then(data => {
+        if (!cancelled) { setSharedPosts(data.posts); setPostsError(false); setPostsLoading(false) }
       })
       .catch(() => {
-        if (!cancelled) setSharedPosts([])
+        if (!cancelled) { setPostsError(true); setPostsLoading(false) }
       })
     return () => { cancelled = true }
-  }, [])
+  }, [postsRevision])
 
   // --- Community / galaxy state -----------------------------------------------
   interface CommunityRow {
@@ -490,15 +498,17 @@ export default function HomeDashboard() {
                 {tHome('viewAllPosts')} →
               </Link>
             </div>
+            {postsError && <div role="alert" className="mb-4 text-sm text-red-200">{tStream('listError')} <button type="button" className="underline" onClick={() => setPostsRevision(value => value + 1)}>{tContext('retry')}</button></div>}
+            {postsLoading && <p role="status" className="mb-4 text-sm text-white/40">{tContext('loading')}</p>}
             {sharedPosts.length > 0 ? (
               <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}>
                 {sharedPosts.map((post) => (
                   <div key={post.id} className="w-64 flex-none sm:w-72">
-                    <PostCard post={post} onOpen={setSelectedStreamPost} />
+                    <PostCard post={post} onOpen={setSelectedStreamPost} origin="/" />
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : !postsError && !postsLoading && (
               <div className="rounded-2xl px-5 py-8 text-sm" style={{ color: 'var(--ghost)', background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border-soft)' }}>
                 {tHome('signalsGathering')}
               </div>
@@ -617,10 +627,12 @@ export default function HomeDashboard() {
       />
       <PostDetail
         post={selectedStreamPost}
+        origin="/"
         open={!!selectedStreamPost}
         currentUserId={session?.user.id}
         onClose={() => setSelectedStreamPost(null)}
-        onPostUpdated={(post) => setSelectedStreamPost(post)}
+        onPostUpdated={(post) => { setSelectedStreamPost(post); setSharedPosts(posts => posts.map(item => item.id === post.id ? post : item)) }}
+        onDeleted={id => { setSelectedStreamPost(null); setSharedPosts(posts => posts.filter(post => post.id !== id)) }}
       />
     </AppShell>
   )

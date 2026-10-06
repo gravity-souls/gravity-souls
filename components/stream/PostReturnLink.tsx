@@ -10,7 +10,7 @@ function ReturnLink({ eventId }: { eventId?: string }) {
   const id = params.get('returnPost')
   const event = eventId ?? params.get('event')
   const origin = postContextReturnHref(`${pathname}${event ? `?${new URLSearchParams({ event })}#events` : ''}`)
-  return id && origin && postReturnHref(id) ? <div className="px-6 py-3"><Link href={withPostOrigin(id, origin)} className="text-sm text-violet-200 underline">← {t('backPost')}</Link></div> : null
+  return id && origin && postReturnHref(id) ? <div className="px-6 py-3"><Link href={withPostOrigin(id, origin, params.get('fromStream'))} className="text-sm text-violet-200 underline">← {t('backPost')}</Link></div> : null
 }
 
 export default function PostReturnLink({ eventId }: { eventId?: string }) { return <Suspense><ReturnLink eventId={eventId} /></Suspense> }
