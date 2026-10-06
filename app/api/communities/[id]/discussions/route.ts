@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { communityReplyInclude, serializeCommunityReply as serializeReply } from '@/lib/community-author'
 import { blockedUserIds } from '@/lib/visibility'
 import { checkRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/rate-limit'
+import { communityCursor, communityPageBoundary, DISCUSSION_REPLY_PREVIEW, readCommunityPage } from '@/lib/community-pagination'
 
 async function serializeDiscussion(discussion: {
   id: string;
@@ -21,15 +22,18 @@ async function serializeDiscussion(discussion: {
     heat: discussion.heat,
     replies: discussion._count.replies,
     replyItems: await Promise.all(discussion.replies.map(reply => serializeReply(reply, viewerId))),
+    nextReplyCursor: discussion._count.replies > discussion.replies.length && discussion.replies.length
+      ? communityCursor(discussion.replies[discussion.replies.length - 1]) : null,
   };
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const { limit, cursor } = readCommunityPage(request)
     const session = await getOptionalUserSession();
     const access = session ? await galaxyAccess(prisma, id, session.user) : null;
     const viewerId = session?.user.id ?? null
@@ -46,19 +50,25 @@ export async function GET(
     }
 
     const discussions = await prisma.communityDiscussion.findMany({
-      where: { communityId: id, ...visibleAuthor },
-      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      where: { communityId: id, AND: [visibleAuthor, ...(cursor ? [communityPageBoundary(cursor, 'desc')] : [])] },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
       include: {
         replies: {
           where: visibleAuthor,
-          orderBy: { createdAt: "asc" },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: DISCUSSION_REPLY_PREVIEW,
           include: communityReplyInclude(viewerId),
         },
         _count: { select: { replies: { where: visibleAuthor } } },
       },
     });
 
-    return NextResponse.json({ discussions: await Promise.all(discussions.map(async d => ({ ...await serializeDiscussion(d, viewerId), canDelete: d.authorId === viewerId || !!access?.isAdmin }))) });
+    const page = discussions.slice(0, limit)
+    return NextResponse.json({
+      discussions: await Promise.all(page.map(async d => ({ ...await serializeDiscussion(d, viewerId), canDelete: d.authorId === viewerId || !!access?.isAdmin }))),
+      nextCursor: discussions.length > limit ? communityCursor(page[page.length - 1]) : null,
+    });
 
   } catch (error) {
     return safeApiError(error)

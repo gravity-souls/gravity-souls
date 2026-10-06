@@ -2788,6 +2788,122 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       await db.community.delete({ where: { id: g.id } })
       await db.community.delete({ where: { id: otherGalaxy.id } })
     })
+    await t.test('bounded discussion and reply keysets preserve every visible row, ties, deleted cursors and public text', async () => {
+      const ids = ['page-viewer', 'page-author', 'page-blocked-out', 'page-blocked-in']
+      for (const id of ids) {
+        await db.user.create({ data: { id, name: id, email: `${id}@example.test` } })
+        await db.planet.create({ data: { userId: id, name: `${id} private planet` } })
+      }
+      await db.profile.create({ data: { userId: 'page-author', visibility: 'PRIVATE' } })
+      const g = await db.community.create({ data: { ...galaxyData, slug: 'pagination', creatorId: 'page-author' } })
+      const other = await db.community.create({ data: { ...galaxyData, slug: 'pagination-other' } })
+      const when = new Date('2026-01-01T00:00:00Z')
+      const rows = Array.from({ length: 55 }, (_, i) => ({
+        id: `page-topic-${String(i).padStart(3, '0')}`, communityId: g.id,
+        title: `Topic ${i}`, authorId: 'page-author', createdAt: when,
+      }))
+      await db.communityDiscussion.createMany({ data: rows })
+      await db.communityDiscussion.createMany({ data: [
+        { id: 'page-hidden-out', communityId: g.id, title: 'Hidden outgoing', authorId: 'page-blocked-out', createdAt: when },
+        { id: 'page-hidden-in', communityId: g.id, title: 'Hidden incoming', authorId: 'page-blocked-in', createdAt: when },
+        { id: 'page-other', communityId: other.id, title: 'Other scope', authorId: 'page-author', createdAt: when },
+      ] })
+      const target = rows[54].id
+      const replyRows = Array.from({ length: 61 }, (_, i) => ({
+        id: `page-reply-${String(i).padStart(3, '0')}`, discussionId: target,
+        content: `Reply ${i}`, authorName: 'Historical snapshot', authorId: i === 0 ? null : 'page-author', createdAt: when,
+      }))
+      await db.communityDiscussionReply.createMany({ data: [...replyRows,
+        { id: 'page-reply-blocked-out', discussionId: target, content: 'Blocked outgoing', authorName: '', authorId: 'page-blocked-out', createdAt: when },
+        { id: 'page-reply-blocked-in', discussionId: target, content: 'Blocked incoming', authorName: '', authorId: 'page-blocked-in', createdAt: when },
+      ] })
+      await db.block.createMany({ data: [
+        { blockerId: 'page-viewer', blockedId: 'page-blocked-out' },
+        { blockerId: 'page-blocked-in', blockedId: 'page-viewer' },
+      ] })
+      await db.communityDiscussionReplyLike.create({ data: { replyId: replyRows[1].id, userId: 'page-viewer' } })
+      const read = (route, query = '', discussionId = target, communityId = g.id) =>
+        route.GET(new Request(`https://example.test/api${query}`), { params: Promise.resolve({ id: communityId, discussionId }) })
+      as('page-viewer')
+      const initial = await (await read(discussion)).json()
+      assert.equal(initial.discussions.length, 20)
+      assert.equal(initial.discussions[0].id, target)
+      assert.equal(initial.discussions[0].replies, 61)
+      assert.equal(initial.discussions[0].replyItems.length, 3)
+      assert.ok(initial.discussions[0].nextReplyCursor)
+      assert.equal(initial.discussions[0].replyItems[0].author.name, 'Historical snapshot')
+      assert.equal(initial.discussions[0].replyItems[1].author.name, 'page-author')
+      assert.equal(initial.discussions[0].replyItems[1].author.planet, null)
+      assert.equal(initial.discussions[0].replyItems[1].likedByMe, true)
+      assert.equal(initial.discussions[0].replyItems[1].likes, 1)
+      const blockedReplyPage = await (await read(discussionReplies, '?limit=50')).json()
+      assert.equal(blockedReplyPage.total, 61)
+      assert.equal(blockedReplyPage.replies.length, 50)
+      assert.ok(blockedReplyPage.replies.every(row => !row.id.includes('blocked')))
+      await db.follow.create({ data: { followerId: 'page-viewer', followingId: 'page-author' } })
+      const connectedReplyPage = await (await read(discussionReplies, '?limit=2')).json()
+      assert.equal(connectedReplyPage.replies[1].author.planet.name, 'page-author private planet')
+      await db.follow.deleteMany({ where: { followerId: 'page-viewer', followingId: 'page-author' } })
+      as(null)
+      const publicDefaultReplies = await (await read(discussionReplies)).json()
+      assert.equal(publicDefaultReplies.total, 63)
+      assert.equal(publicDefaultReplies.replies.length, 20)
+      assert.ok(publicDefaultReplies.nextCursor)
+      as('page-viewer')
+      assert.equal((await (await read(discussion, '?limit=50')).json()).discussions.length, 50)
+      // Editing activity cannot move an older topic across the creation-time boundary.
+      await db.communityDiscussion.update({ where: { id: rows[0].id }, data: { updatedAt: new Date('2030-01-01') } })
+      let cursor = null, seen = []
+      do {
+        const data = await (await read(discussion, `?limit=7${cursor ? `&cursor=${cursor}` : ''}`)).json()
+        assert.ok(data.discussions.length <= 7)
+        for (const topic of data.discussions) assert.ok(topic.replyItems.length <= 3)
+        seen.push(...data.discussions.map(row => row.id))
+        cursor = data.nextCursor
+      } while (cursor)
+      assert.deepEqual(seen, rows.map(row => row.id).reverse())
+      const first = await (await read(discussion, '?limit=1')).json()
+      // Cursor tuples survive deleting the boundary row; no DB cursor lookup is required.
+      await db.communityDiscussion.delete({ where: { id: target } })
+      const afterDelete = await (await read(discussion, `?limit=50&cursor=${first.nextCursor}`)).json()
+      assert.equal(afterDelete.discussions[0].id, rows[53].id)
+      // Recreate the thread for reply traversal and preview continuation checks.
+      await db.communityDiscussion.create({ data: rows[54] })
+      await db.communityDiscussionReply.createMany({ data: replyRows })
+      const preview = (await (await read(discussion, '?limit=1')).json()).discussions[0]
+      cursor = preview.nextReplyCursor
+      seen = preview.replyItems.map(row => row.id)
+      do {
+        const data = await (await read(discussionReplies, `?limit=8&cursor=${cursor}`)).json()
+        assert.equal(data.total, 61)
+        assert.ok(data.replies.length <= 8)
+        assert.ok(data.replies.every(row => row.author.planet === null))
+        seen.push(...data.replies.map(row => row.id))
+        cursor = data.nextCursor
+      } while (cursor)
+      assert.deepEqual(seen, replyRows.map(row => row.id))
+      const replyFirst = await (await read(discussionReplies, '?limit=1')).json()
+      await db.communityDiscussionReply.delete({ where: { id: replyRows[0].id } })
+      const replyNext = await (await read(discussionReplies, `?limit=1&cursor=${replyFirst.nextCursor}`)).json()
+      assert.equal(replyNext.replies[0].id, replyRows[1].id)
+      assert.equal(replyNext.total, 60)
+      for (const query of ['?limit=0', '?limit=51', '?limit=1.5', '?limit=-1', '?limit=abc', '?limit=', '?limit=2&limit=3', '?cursor=', '?cursor=!!!', '?cursor=e30', '?unknown=1', '?cursor=' + 'a'.repeat(513)]) {
+        for (const route of [discussion, discussionReplies]) assert.equal((await read(route, query)).status, 400, query)
+      }
+      assert.equal((await read(discussionReplies, '', target, other.id)).status, 404)
+      for (const hidden of ['page-hidden-out', 'page-hidden-in', 'missing']) assert.equal((await read(discussionReplies, '', hidden)).status, 404)
+      assert.equal((await discussionReplies.POST(request({ content: 'Nonmember write' }), { params: Promise.resolve({ id: g.id, discussionId: target }) })).status, 403)
+      as(null)
+      const publicTopics = await (await read(discussion, '?limit=50')).json()
+      const publicTail = await (await read(discussion, `?limit=50&cursor=${publicTopics.nextCursor}`)).json()
+      assert.ok(publicTail.discussions.some(row => row.id === 'page-hidden-out'))
+      assert.ok(publicTail.discussions.some(row => row.id === 'page-hidden-in'))
+      const publicReplies = await (await read(discussionReplies, '?limit=50')).json()
+      assert.equal(publicReplies.total, 60)
+      assert.ok(publicReplies.replies.every(row => row.author.planet === null && !row.likedByMe))
+      await db.community.deleteMany({ where: { id: { in: [g.id, other.id] } } })
+      await db.user.deleteMany({ where: { id: { in: ids } } })
+    })
     await t.test('community publishing and replies keep pseudonyms, validation, privacy and deletion consistent', async () => {
       const g = await db.community.create({ data: { ...galaxyData, slug: 'content-integrity', creatorId: 'owner', joinPolicy: 'OPEN' } })
       await db.communityMembership.createMany({ data: ['owner', 'applicant'].map(userId => ({ communityId: g.id, userId })) })

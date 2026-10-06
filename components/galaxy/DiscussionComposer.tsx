@@ -2,13 +2,14 @@
 import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { galaxyRequest } from '@/lib/galaxy-client'
+import type { ApiCommunityDiscussion } from '@/types/community-discussion'
 export default function DiscussionComposer({
   galaxyId,
   onCreated,
   disabled = false,
 }: {
   galaxyId: string
-  onCreated: () => void
+  onCreated: (discussion: ApiCommunityDiscussion) => void
   disabled?: boolean
 }) {
   const t = useTranslations('galaxyWorkflow'),
@@ -39,16 +40,16 @@ export default function DiscussionComposer({
             setBusy(true)
             setError('')
             try {
-              const result = await galaxyRequest<{ discussion: { id: string } }>(
+              const result = await galaxyRequest<{ discussion: ApiCommunityDiscussion }>(
                 `/api/communities/${galaxyId}/discussions`,
                 'POST',
                 { title, content },
               )
               if (typeof result.discussion?.id !== 'string' || !result.discussion.id) throw new Error('failed')
+              onCreated(result.discussion)
               setTitle('')
               setContent('')
               setOpen(false)
-              onCreated()
             } catch (err) {
               const key = err instanceof Error ? err.message : 'failed'
               setError(t.has(key) ? t(key) : t('failed'))

@@ -22,6 +22,7 @@ import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import { galaxyMoodLabel } from '@/lib/planet-labels'
 import type { PlanetProfile } from '@/types/planet'
 import type { Galaxy, GalaxyPreview } from '@/types/galaxy'
+import type { ApiCommunityReply, ApiCommunityDiscussion } from '@/types/community-discussion'
 
 // Shape returned by GET /api/communities — a galaxy resolves a real
 // Community row by its unique slug (see docs/adr/0001-galaxy-content-model.md).
@@ -102,20 +103,6 @@ interface CommunityReply {
   createdAt: string
 }
 
-interface ApiCommunityReply {
-  likes: number
-  likedByMe: boolean
-  canDelete?: boolean
-  id: string | null
-  content: string
-  createdAt: string
-  author: {
-    id: string
-    name: string
-    planet: { id: string; name: string } | null
-  }
-}
-
 interface ApiCommunityPost {
   canDelete?: boolean
   id: string
@@ -133,6 +120,7 @@ interface ApiCommunityPost {
 }
 
 interface DiscussionTopic {
+  nextReplyCursor?: string | null
   canDelete?: boolean
   id: string
   title: string
@@ -149,15 +137,6 @@ interface DiscussionReply {
   authorName: string
   content: string
   createdAt: string
-}
-
-interface ApiCommunityDiscussion {
-  canDelete?: boolean
-  id: string
-  title: string
-  heat: number
-  replies: number
-  replyItems?: ApiCommunityReply[]
 }
 
 function apiReplyToCommunityReply(reply: ApiCommunityReply): CommunityReply {
@@ -194,6 +173,7 @@ function apiPostToCommunityPost(post: ApiCommunityPost): CommunityPost {
 function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTopic {
   if (!discussion || typeof discussion.id !== 'string' || typeof discussion.title !== 'string' || !Number.isInteger(discussion.replies) || discussion.replies < 0) throw new Error('Invalid community discussion')
   return {
+    nextReplyCursor: discussion.nextReplyCursor === undefined ? undefined : pageCursor(discussion.nextReplyCursor),
     id: discussion.id,
     title: discussion.title,
     canDelete: discussion.canDelete,
@@ -201,6 +181,18 @@ function apiDiscussionToTopic(discussion: ApiCommunityDiscussion): DiscussionTop
     replies: discussion.replies,
     replyItems: (discussion.replyItems ?? []).map(apiReplyToCommunityReply),
   }
+}
+
+function mergeReplies<T extends { id: string; createdAt: string }>(existing: T[], incoming: T[]): T[] {
+  const rows = new Map(incoming.map(reply => [reply.id, reply]))
+  for (const reply of existing) rows.set(reply.id, reply)
+  return [...rows.values()].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.id.localeCompare(b.id))
+}
+
+function pageCursor(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'string' || !value || value.length > 512) throw new Error('Invalid page cursor')
+  return value
 }
 
 // --- Page --------------------------------------------------------------------
@@ -239,6 +231,13 @@ export default function GalaxyPage({ params }: Props) {
   const [postsError, setPostsError] = useState('')
   const [discussionsError, setDiscussionsError] = useState('')
   const [discussionsLoading, setDiscussionsLoading] = useState(true)
+  const [nextDiscussionCursor, setNextDiscussionCursor] = useState<string | null>(null)
+  const [moreDiscussionsLoading, setMoreDiscussionsLoading] = useState(false)
+  const [moreDiscussionsError, setMoreDiscussionsError] = useState('')
+  const [replyPageLoading, setReplyPageLoading] = useState<Record<string, boolean>>({})
+  const [replyPageErrors, setReplyPageErrors] = useState<Record<string, string>>({})
+  const pageReads = useRef(new Set<string>())
+  const pageScope = useRef(slug)
   const [reload, setReload] = useState(0)
   const [postsReload, setPostsReload] = useState(0)
   const [discussionsReload, setDiscussionsReload] = useState(0)
@@ -283,10 +282,14 @@ export default function GalaxyPage({ params }: Props) {
   }
 
   useEffect(() => {
+    pageScope.current = slug
+    pageReads.current.clear()
     Promise.resolve().then(() => {
       setCommunityPosts([]); setDiscussionTopics([]); setSelectedTopic(null)
       setReplyDrafts({}); setDiscussionReplyDrafts({}); setExpandedReplies({})
       setPostDraft(''); setPostError(''); setContentStatus('')
+      setNextDiscussionCursor(null); setMoreDiscussionsError(''); setMoreDiscussionsLoading(false)
+      setReplyPageErrors({}); setReplyPageLoading({})
     })
   }, [slug])
 
@@ -385,19 +388,70 @@ export default function GalaxyPage({ params }: Props) {
     fetch(`/api/communities/${communityId}/discussions`)
       .then(async (res) => {
         if (!res.ok) throw new Error('unavailable')
-        return res.json() as Promise<{ discussions: ApiCommunityDiscussion[] }>
+        return res.json() as Promise<{ discussions: ApiCommunityDiscussion[]; nextCursor?: string | null }>
       })
       .then((data) => {
         if (cancelled) return
         if (revision !== contentRevision.current) { setDiscussionsReload(v => v + 1); return }
         const topics = data.discussions.map(apiDiscussionToTopic)
-        setDiscussionTopics(topics)
-        setSelectedTopic(current => current ? topics.find(topic => topic.id === current.id) ?? null : null)
+        const cursor = pageCursor(data.nextCursor)
+        setDiscussionTopics(current => [...topics.filter(topic => !current.some(row => row.id === topic.id)), ...current])
+        setNextDiscussionCursor(current => current ?? cursor)
       })
       .catch(() => { if (!cancelled) setDiscussionsError(t('discussionsUnavailable')) })
       .finally(() => { if (!cancelled) setDiscussionsLoading(false) })
     return () => { cancelled = true }
   }, [communityId, discussionsReload, t])
+
+  async function loadMoreDiscussions() {
+    if (!community || !nextDiscussionCursor || pageReads.current.has('discussions')) return
+    const scope = pageScope.current, revision = contentRevision.current
+    pageReads.current.add('discussions')
+    setMoreDiscussionsLoading(true); setMoreDiscussionsError('')
+    try {
+      const data = await galaxyRequest<{ discussions: ApiCommunityDiscussion[]; nextCursor: string | null }>(
+        `/api/communities/${community.id}/discussions?cursor=${encodeURIComponent(nextDiscussionCursor)}`)
+      const topics = data.discussions.map(apiDiscussionToTopic)
+      const cursor = pageCursor(data.nextCursor)
+      if (scope !== pageScope.current) return
+      if (revision !== contentRevision.current || pending.current.size) throw new Error('stale')
+      setDiscussionTopics(current => [...current, ...topics.filter(topic => !current.some(row => row.id === topic.id))])
+      setNextDiscussionCursor(cursor)
+    } catch { if (scope === pageScope.current) setMoreDiscussionsError(t('discussionsUnavailable')) }
+    finally {
+      if (scope === pageScope.current) { pageReads.current.delete('discussions'); setMoreDiscussionsLoading(false) }
+    }
+  }
+
+  async function loadDiscussionReplies(topic: DiscussionTopic) {
+    const readKey = `discussion:${topic.id}`
+    if (!community || pageReads.current.has(readKey)) return
+    const scope = pageScope.current, revision = contentRevision.current
+    pageReads.current.add(readKey)
+    setReplyPageLoading(current => ({ ...current, [topic.id]: true }))
+    setReplyPageErrors(current => ({ ...current, [topic.id]: '' }))
+    try {
+      const cursorQuery = topic.nextReplyCursor ? `?cursor=${encodeURIComponent(topic.nextReplyCursor)}` : ''
+      const data = await galaxyRequest<{ replies: ApiCommunityReply[]; total: number; nextCursor: string | null }>(
+        `/api/communities/${community.id}/discussions/${topic.id}/replies${cursorQuery}`)
+      const replies = data.replies.map(apiReplyToCommunityReply)
+      const cursor = pageCursor(data.nextCursor)
+      if (!Number.isInteger(data.total) || data.total < 0) throw new Error('Invalid reply total')
+      if (scope !== pageScope.current) return
+      if (revision !== contentRevision.current || pending.current.size) throw new Error('stale')
+      const update = (current: DiscussionTopic) => current.id === topic.id ? {
+        ...current, replies: data.total, replyItems: mergeReplies(current.replyItems ?? [], replies), nextReplyCursor: cursor,
+      } : current
+      setDiscussionTopics(current => current.map(update))
+      setSelectedTopic(current => current ? update(current) : current)
+    } catch { if (scope === pageScope.current) setReplyPageErrors(current => ({ ...current, [topic.id]: t('discussionRepliesUnavailable') })) }
+    finally {
+      if (scope === pageScope.current) {
+        pageReads.current.delete(readKey)
+        setReplyPageLoading(current => ({ ...current, [topic.id]: false }))
+      }
+    }
+  }
 
   // Approved-event notifications link here with #events. The browser's native
   // scroll-to-hash fires on initial load, before this page (gated on
@@ -742,7 +796,7 @@ export default function GalaxyPage({ params }: Props) {
         const data = await res.json() as { reply: ApiCommunityReply; replies: number }
         if (!Number.isInteger(data.replies) || data.replies < 0) throw new Error('Invalid reply count')
         const reply = apiReplyToCommunityReply(data.reply)
-        const append = (topic: DiscussionTopic) => topic.id === key ? { ...topic, replies: data.replies, replyItems: [...topic.replyItems ?? [], reply] } : topic
+        const append = (topic: DiscussionTopic) => topic.id === key ? { ...topic, replies: data.replies, replyItems: mergeReplies(topic.replyItems ?? [], [reply]) } : topic
         setDiscussionTopics(prev => prev.map(append))
         setSelectedTopic(current => current ? append(current) : current)
         setDiscussionReplyDraft('')
@@ -1057,7 +1111,12 @@ export default function GalaxyPage({ params }: Props) {
                   <EventsTab galaxyId={community?.id ?? null} isAdmin={isGalaxyAdmin} canPropose={communityJoined || isGalaxyAdmin} />
                 </section>
 
-                {communityJoined && <DiscussionComposer galaxyId={community.id} disabled={discussionsLoading || !!deletingId} onCreated={() => { contentRevision.current += 1; setContentStatus(t('discussionPublished')); setDiscussionsReload(v => v + 1) }} />}
+                {communityJoined && <DiscussionComposer galaxyId={community.id} disabled={discussionsLoading || !!deletingId} onCreated={discussion => {
+                  const topic = apiDiscussionToTopic(discussion)
+                  contentRevision.current += 1
+                  setDiscussionTopics(current => [topic, ...current.filter(row => row.id !== topic.id)])
+                  setContentStatus(t('discussionPublished'))
+                }} />}
                 {/* Discussions */}
                 {(communityLoading || discussionsLoading || discussionsError || discussions.length === 0) && (
                   <section aria-label={t('recentDiscussions')}>
@@ -1138,6 +1197,14 @@ export default function GalaxyPage({ params }: Props) {
                       </LockedLayer>
                     )}
                   </section>
+                )}
+                {nextDiscussionCursor && (
+                  <div>
+                    {moreDiscussionsError && <p role="alert" className="text-sm text-red-200">{moreDiscussionsError}</p>}
+                    <button type="button" onClick={loadMoreDiscussions} disabled={moreDiscussionsLoading} className="py-2 text-sm text-violet-200 disabled:opacity-40">
+                      {moreDiscussionsLoading ? t('loadingDiscussions') : moreDiscussionsError ? t('retryLoad') : t('loadMoreDiscussions')}
+                    </button>
+                  </div>
                 )}
 
                 <section aria-label={t('communityPosts')}>
@@ -1552,7 +1619,7 @@ export default function GalaxyPage({ params }: Props) {
                     {t('recentReplies')}
                   </p>
                   <span className="text-[10px]" style={{ color: 'var(--ghost)' }}>
-                    {t('showingAll', { count: selectedDiscussionReplies.length })}
+                    {t('showingReplies', { count: selectedDiscussionReplies.length, total: selectedTopic.replies })}
                   </span>
                 </div>
 
@@ -1595,6 +1662,12 @@ export default function GalaxyPage({ params }: Props) {
                     />
                   </div>
                 ))}
+                {replyPageErrors[selectedTopic.id] && <p role="alert" className="text-sm text-red-200">{replyPageErrors[selectedTopic.id]}</p>}
+                {(selectedTopic.nextReplyCursor || selectedDiscussionReplies.length < selectedTopic.replies) && (
+                  <button type="button" onClick={() => loadDiscussionReplies(selectedTopic)} disabled={replyPageLoading[selectedTopic.id]} className="py-2 text-sm text-violet-200 disabled:opacity-40">
+                    {replyPageLoading[selectedTopic.id] ? t('loadingReplies') : replyPageErrors[selectedTopic.id] ? t('retryLoad') : t('loadMoreReplies')}
+                  </button>
+                )}
               </div>
               {postError && <p role="alert" className="text-sm text-red-200">{postError}</p>}
               {contentStatus && <p role="status" className="text-sm text-violet-200">{contentStatus}</p>}

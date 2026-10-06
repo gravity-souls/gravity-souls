@@ -1,12 +1,44 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { requireUser, getOptionalUserSession } from "@/lib/session";
 import { communityReplyInclude, serializeCommunityReply as serializeReply } from '@/lib/community-author'
 import { blockedUserIds, isBlocked } from '@/lib/visibility'
 import { readJson, safeApiError } from '@/lib/api-input'
 import { communityReplySchema } from '@/lib/input-schemas'
 import { checkRateLimit, RATE_LIMITS, rateLimitKey } from '@/lib/rate-limit'
 import { deny, galaxyAccess } from '@/lib/galaxy-workflow'
+import { communityCursor, communityPageBoundary, readCommunityPage } from '@/lib/community-pagination'
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string; discussionId: string }> }) {
+  try {
+    const { id, discussionId } = await params
+    const { limit, cursor } = readCommunityPage(request)
+    const session = await getOptionalUserSession()
+    const viewerId = session?.user.id ?? null
+    const excluded = viewerId ? [...await blockedUserIds(viewerId)] : []
+    const visibleAuthor = { OR: [{ authorId: null }, { authorId: { notIn: excluded } }] }
+    const discussion = await prisma.communityDiscussion.findFirst({
+      where: { id: discussionId, communityId: id, ...visibleAuthor }, select: { id: true },
+    })
+    if (!discussion) deny('notFound', 404)
+    const where = { discussionId, ...visibleAuthor }
+    const [rows, total] = await prisma.$transaction([
+      prisma.communityDiscussionReply.findMany({
+        where: { AND: [where, ...(cursor ? [communityPageBoundary(cursor, 'asc')] : [])] },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: limit + 1,
+        include: communityReplyInclude(viewerId),
+      }),
+      prisma.communityDiscussionReply.count({ where }),
+    ])
+    const page = rows.slice(0, limit)
+    return NextResponse.json({
+      replies: await Promise.all(page.map(reply => serializeReply(reply, viewerId))),
+      total,
+      nextCursor: rows.length > limit ? communityCursor(page[page.length - 1]) : null,
+    })
+  } catch (error) { return safeApiError(error) }
+}
 
 export async function POST(
   request: Request,

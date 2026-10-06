@@ -33,6 +33,166 @@ async function setup(page: Page, context: BrowserContext, baseURL: string, local
 }
 
 for (const [locale, m] of Object.entries({ en, fr, zh })) {
+  test(`discussion reply pagination locks are scoped across thread switching in ${locale}`, async ({ page, context, baseURL }) => {
+    await setup(page, context, baseURL!, locale)
+    const first = { ...topic, replies: 2, nextReplyCursor: 'first-cursor' }
+    const second = { ...first, id: 'second-thread', title: 'Another paginated thread', nextReplyCursor: 'second-cursor' }
+    const gates = [gate(), gate()]
+    const reads = [0, 0]
+    await page.route(`**${root}/discussions`, route => route.fulfill({ json: { discussions: [first, second], nextCursor: null } }))
+    for (const [index, thread] of [first, second].entries()) {
+      await page.route(`**${root}/discussions/${thread.id}/replies?*`, async route => {
+        reads[index]++
+        expect(new URL(route.request().url()).searchParams.get('cursor')).toBe(thread.nextReplyCursor)
+        await gates[index].promise
+        return route.fulfill({ json: { replies: [{ ...reply, id: `${thread.id}-more`, content: `More from ${thread.id}` }], total: 2, nextCursor: null } })
+      })
+    }
+    try {
+      await page.goto(`/galaxy/${galaxy.slug}`)
+      await page.getByRole('button').filter({ hasText: first.title }).click()
+      let dialog = page.getByRole('dialog', { name: first.title })
+      await dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true }).click()
+      await expect(dialog.getByRole('button', { name: m.galaxyPage.loadingReplies, exact: true })).toBeDisabled()
+      await dialog.getByRole('button', { name: m.galaxyPage.closeThread, exact: true }).click()
+      await page.getByRole('button').filter({ hasText: second.title }).click()
+      dialog = page.getByRole('dialog', { name: second.title })
+      await dialog.getByRole('textbox').fill('Independent second-thread draft')
+      await dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true }).click()
+      const loading = dialog.getByRole('button', { name: m.galaxyPage.loadingReplies, exact: true })
+      await expect(loading).toBeDisabled()
+      gates[0].release()
+      // Observe completion in the hidden first thread before checking the second lock.
+      await dialog.getByRole('button', { name: m.galaxyPage.closeThread, exact: true }).click()
+      await page.getByRole('button').filter({ hasText: first.title }).click()
+      const firstDialog = page.getByRole('dialog', { name: first.title })
+      await expect(firstDialog.getByText(`More from ${first.id}`, { exact: true })).toBeVisible()
+      await firstDialog.getByRole('button', { name: m.galaxyPage.closeThread, exact: true }).click()
+      await page.getByRole('button').filter({ hasText: second.title }).click()
+      await expect(loading).toBeDisabled()
+      await loading.dispatchEvent('click')
+      expect(reads).toEqual([1, 1])
+      await expect(dialog.getByRole('textbox')).toHaveValue('Independent second-thread draft')
+      gates[1].release()
+      await expect(dialog.getByText(`More from ${second.id}`, { exact: true })).toBeVisible()
+      await expect(dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true })).toHaveCount(0)
+    } finally { gates.forEach(pending => pending.release()) }
+  })
+
+  test(`discussion pagination keeps older threads and confirmed partial reply writes in ${locale}`, async ({ page, context, baseURL }) => {
+    await setup(page, context, baseURL!, locale)
+    const older = { ...topic, id: 'older', title: 'Older reachable discussion', replies: 5, nextReplyCursor: 'preview-cursor' }
+    const added = { ...reply, id: 'confirmed', content: 'Confirmed while reading', createdAt: '2026-10-02T12:00:00Z' }
+    const second = { ...reply, id: 'second', content: 'Second paged reply' }
+    const third = { ...reply, id: 'third', content: 'Third paged reply' }
+    const pending = gate()
+    const pendingFinal = gate()
+    let olderReads = 0, replyReads = 0, total = 5, created = false, secondLiked = false
+    const cursors: Array<string | null> = []
+    await page.route(`**${root}/discussions*`, route => {
+      const url = new URL(route.request().url())
+      if (url.pathname !== `${root}/discussions`) return route.fallback()
+      if (url.searchParams.has('cursor')) {
+        expect(url.searchParams.get('cursor')).toBe('older-cursor')
+        olderReads++
+        if (olderReads === 1) return route.fulfill({ status: 500, json: {} })
+        if (olderReads === 2) return route.fulfill({ json: { discussions: [{}], nextCursor: null } })
+        return route.fulfill({ json: { discussions: [topic, older], nextCursor: null } })
+      }
+      return route.fulfill({ json: { discussions: [{ ...topic, nextReplyCursor: null }], nextCursor: 'older-cursor' } })
+    })
+    await page.route(`**${root}/discussions/older/replies*`, async route => {
+      const url = new URL(route.request().url())
+      if (url.pathname !== `${root}/discussions/older/replies`) return route.fallback()
+      if (route.request().method() === 'POST') {
+        created = true; total++
+        return route.fulfill({ status: 201, json: { reply: added, replies: total } })
+      }
+      cursors.push(url.searchParams.get('cursor'))
+      replyReads++
+      if (replyReads === 1) return route.fulfill({ status: 500, json: {} })
+      if (replyReads === 2) {
+        const staleTotal = total
+        await pending.promise
+        return route.fulfill({ json: { replies: [second, third], total: staleTotal, nextCursor: 'middle-cursor' } })
+      }
+      if (url.searchParams.get('cursor') === 'preview-cursor')
+        return route.fulfill({ json: { replies: [reply, { ...second, likes: secondLiked ? 1 : 0, likedByMe: secondLiked }, third], total, nextCursor: 'middle-cursor' } })
+      if (replyReads === 4) {
+        const staleTotal = total
+        await pendingFinal.promise
+        return route.fulfill({ json: { replies: [reply, second, added], total: staleTotal, nextCursor: null } })
+      }
+      return route.fulfill({ json: {
+        replies: [{ ...reply, id: 'fourth', content: 'Fourth paged reply' }, { ...reply, id: 'fifth', content: 'Final old reply' }, ...(created ? [added] : [])],
+        total, nextCursor: null,
+      } })
+    })
+    await page.route(`**${root}/discussions/older/replies/second/like`, route => {
+      secondLiked = route.request().postDataJSON().liked
+      return route.fulfill({ json: { liked: secondLiked, likes: secondLiked ? 1 : 0 } })
+    })
+    await page.route(`**${root}/discussions/older/replies/${reply.id}`, route => {
+      total--
+      return route.fulfill({ json: { success: true } })
+    })
+    try {
+      await page.goto(`/galaxy/${galaxy.slug}`)
+      await page.getByRole('button', { name: m.galaxyPage.loadMoreDiscussions, exact: true }).click()
+      await expect(page.getByRole('alert').filter({ hasText: m.galaxyPage.discussionsUnavailable })).toBeVisible()
+      for (let attempt = 0; attempt < 2; attempt++) await page.getByRole('button', { name: m.galaxyPage.retryLoad, exact: true }).click()
+      const olderButton = page.getByRole('button').filter({ hasText: older.title })
+      await expect(olderButton).toHaveCount(1)
+      await expect(page.getByRole('button').filter({ hasText: topic.title })).toHaveCount(1)
+      await olderButton.click()
+      const dialog = page.getByRole('dialog', { name: older.title })
+      const draft = dialog.getByRole('textbox')
+      const showing = (count: number, visibleTotal: number) => m.galaxyPage.showingReplies.replace('{count}', String(count)).replace('{total}', String(visibleTotal))
+      await expect(dialog.getByText(showing(1, 5), { exact: true })).toBeVisible()
+      await draft.fill(added.content)
+      await dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true }).click()
+      await expect(dialog.getByRole('alert')).toHaveText(m.galaxyPage.discussionRepliesUnavailable)
+      await expect(draft).toHaveValue(added.content)
+      await dialog.getByRole('button', { name: m.galaxyPage.retryLoad, exact: true }).click()
+      await expect(dialog.getByRole('button', { name: m.galaxyPage.loadingReplies, exact: true })).toBeDisabled()
+      await dialog.getByRole('button', { name: m.galaxyPage.sendReply, exact: true }).click()
+      await expect(dialog.getByText(added.content, { exact: true })).toHaveCount(1)
+      pending.release()
+      await expect(dialog.getByRole('alert')).toHaveText(m.galaxyPage.discussionRepliesUnavailable)
+      await expect(dialog.getByText(showing(2, 6), { exact: true })).toBeVisible()
+      await dialog.getByRole('button', { name: m.galaxyPage.retryLoad, exact: true }).click()
+      await expect(dialog.getByText(third.content, { exact: true })).toBeVisible()
+      await expect(dialog.getByText(reply.content, { exact: true })).toHaveCount(1)
+      await dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true }).click()
+      await expect(dialog.getByRole('button', { name: m.galaxyPage.loadingReplies, exact: true })).toBeDisabled()
+      const secondCard = dialog.getByText(second.content, { exact: true }).locator('..')
+      await secondCard.getByRole('button', { name: m.galaxyPage.likeReply.replace('{count}', '0'), exact: true }).click()
+      await expect(secondCard.getByRole('button', { name: m.galaxyPage.unlikeReply.replace('{count}', '1'), exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await draft.fill('Draft across pagination and reopening')
+      const firstCard = dialog.getByText(reply.content, { exact: true }).locator('..')
+      page.once('dialog', event => event.accept())
+      await firstCard.getByRole('button', { name: m.galaxyWorkflow.deleteContent, exact: true }).click()
+      await expect(dialog.getByText(reply.content, { exact: true })).toHaveCount(0)
+      await expect(dialog.getByText(showing(3, 5), { exact: true })).toBeVisible()
+      pendingFinal.release()
+      await expect(dialog.getByRole('alert')).toHaveText(m.galaxyPage.discussionRepliesUnavailable)
+      await expect(dialog.getByText(reply.content, { exact: true })).toHaveCount(0)
+      await dialog.getByRole('button', { name: m.galaxyPage.retryLoad, exact: true }).click()
+      await expect(dialog.getByText('Final old reply', { exact: true })).toBeVisible()
+      await expect(dialog.getByText(added.content, { exact: true })).toHaveCount(1)
+      await expect(dialog.getByText(showing(5, 5), { exact: true })).toBeVisible()
+      await expect(dialog.getByRole('button', { name: m.galaxyPage.loadMoreReplies, exact: true })).toHaveCount(0)
+      await expect(secondCard.getByRole('button', { name: m.galaxyPage.unlikeReply.replace('{count}', '1'), exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await dialog.getByRole('button', { name: m.galaxyPage.closeThread, exact: true }).click()
+      await olderButton.click()
+      await expect(draft).toHaveValue('Draft across pagination and reopening')
+      await expect(dialog.getByText(showing(5, 5), { exact: true })).toBeVisible()
+      expect(olderReads).toBe(3)
+      expect(cursors).toEqual(['preview-cursor', 'preview-cursor', 'preview-cursor', 'middle-cursor', 'middle-cursor'])
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    } finally { pending.release(); pendingFinal.release() }
+  })
+
   for (const kind of ['posts', 'discussions'] as const) {
     test(`${kind} reply likes acknowledge state, retain failures/drafts and refresh counts in ${locale}`, async ({ page, context, baseURL }) => {
       await setup(page, context, baseURL!, locale)

@@ -40,6 +40,21 @@ Galaxies use the existing Community table; there is no separate Galaxy entity.
   Discussion creation refreshes only discussions; stale reads cannot overwrite
   confirmed mutations. Reply drafts survive closing/reopening their discussion.
   Partial community reply previews have an explicit load-all/retry action.
+- Discussion reads are bounded without changing access policy or schema.
+  `GET /api/communities/[id]/discussions` accepts `limit` (default 20, 1–50)
+  and an opaque `cursor`, ordered by immutable `createdAt DESC, id DESC`.
+  Each topic returns its visible reply total, the first three replies in
+  `createdAt ASC, id ASC` order, and `nextReplyCursor`.
+  `GET /api/communities/[id]/discussions/[discussionId]/replies` accepts the
+  same bounded parameters and returns `replies`, visible `total`, and
+  `nextCursor` in ascending order. Invalid, duplicate, oversized or unknown
+  query fields return 400. Tuple cursors remain usable after boundary deletion.
+  Public text remains public; blocked parents/replies are excluded server-side
+  for authenticated readers, and private planet links still use `canViewProfile`.
+  The page provides en/fr/zh older-discussion and more-reply/retry controls,
+  displays loaded/visible totals, and merges by ID without replacing confirmed
+  replies/likes. Reads racing a mutation are discarded with a retry action;
+  cursor progress is retained. No older discussion or reply is permanently cut off.
 - Authors can delete their own replies through the existing author-only APIs.
   Deletion requires confirmation and keeps content visible until acknowledged;
   moderators' post/discussion deletion rights are unchanged.
@@ -99,6 +114,14 @@ user/reply/parent cascades. Browser checks in the same no-DB content spec cover
 both kinds in en/fr/zh on desktop/mobile: HTTP/network/malformed failures,
 pending/duplicate controls, preserved editable drafts, pressed state/count,
 unlike failure/success, discussion reopen, and full reload count refresh.
+
+Pagination checks execute actual Prisma queries against isolated PGlite:
+default/max bounds, three-reply previews, complete tied-timestamp traversal,
+deleted cursor boundaries, scoped parent reads, bidirectional blocks, visible
+totals, authorless text, private planet redaction, live likes and invalid queries.
+The content browser spec also covers older-topic retries, multi-page replies,
+partial-load create/delete/like reconciliation, stale reads, deduplication,
+retained drafts and thread reopen across en/fr/zh on desktop/mobile.
 
 Locale rendering tests use the real en/zh/fr NextIntl provider. The no-database
 `e2e/demo/galaxy-content.spec.ts` browser checks exercise both sections on desktop
