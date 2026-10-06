@@ -63,6 +63,14 @@ not yet enforce the approved future product defaults.
   after the destination list is ready; they contain no post content or media drafts.
   See [the stream workflow review](./stream-post-loading-review.md) for verification
   and the explicit delivery/media-lifecycle boundaries.
+- Galaxy and activity related-signal lists now show the first image or a paused,
+  muted inline video preview with a play marker and additional-attachment count.
+  Cards use a manual horizontal strip with touch/keyboard/arrow navigation and
+  next-page loading near its end, so more signals do not expand page height.
+  Text-only signals remain text-only; failed media has an explicit localized state.
+  Clicking the preview retains the existing verified detail/context-return path.
+  No generated thumbnails, storage, or access-policy changes are included.
+  See [the media preview review](./related-signal-media-review.md).
 
 No schema changes, production migrations, credential rotation, existing-data cleanup,
 or production deployment were performed in this tranche. Existing seeded database

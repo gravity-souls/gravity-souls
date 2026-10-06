@@ -114,6 +114,123 @@ for (const [locale, messages] of Object.entries({ en, fr, zh })) {
     await composer.screenshot({ path: testInfo.outputPath('composer-typography.png') })
   })
 }
+for (const [locale, messages] of Object.entries({ en, fr, zh })) {
+  for (const entry of ['galaxy', 'activity']) {
+    test(`related media previews preserve contextual navigation from ${entry} in ${locale}`, async ({ page, context, baseURL }, testInfo) => {
+      await setup(page, context, baseURL!, locale)
+      const imagePost = { ...post, content: 'Image signal fixture', mediaUrls: ['/fixture-preview.svg', '/second-preview.svg'], mediaTypes: ['image', 'image'] }
+      const videoPost = { ...post, id: 'video-post', content: 'Video signal fixture', mediaUrls: ['/fixture-preview.mp4'], mediaTypes: ['video'] }
+      await page.route('**/fixture-preview.svg', route => route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100"><rect width="160" height="100" fill="#7354a5"/></svg>' }))
+      await page.route('**/fixture-preview.mp4', route => route.fulfill({ status: 404 }))
+      await page.route('**/api/posts?**', route => route.fulfill({ json: { posts: [imagePost, videoPost, post], nextCursor: null } }))
+      await page.route('**/api/posts/return-post', route => route.fulfill({ json: { post: imagePost } }))
+      await page.goto(entry === 'activity' ? '/galaxy/return-galaxy?event=return-event#events' : '/galaxy/return-galaxy')
+      const container = entry === 'activity' ? page.getByRole('dialog', { name: messages.eventForms.eventDetail }) : page.locator('main')
+      const related = container.locator('section').filter({ has: page.getByRole('heading', { name: messages.postContext.related, exact: true }) }).last()
+      const imageLink = related.getByRole('link').filter({ hasText: imagePost.content })
+      await expect(imageLink.getByRole('img', { name: messages.postContext.imagePreview })).toBeVisible()
+      await expect(imageLink.locator('[aria-label]').filter({ hasText: '+1' })).toHaveCount(1)
+      const videoLink = related.getByRole('link').filter({ hasText: videoPost.content })
+      await expect(videoLink).toContainText(messages.postContext.mediaPreviewFailed)
+      await expect(related.getByRole('link').filter({ hasText: post.content }).locator('img, video')).toHaveCount(0)
+      expect(await imageLink.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
+      const imageBox = await imageLink.getByRole('img').boundingBox()
+      const cardBox = await imageLink.boundingBox()
+      expect(imageBox!.width).toBeGreaterThan(cardBox!.width * 0.75)
+      const textBox = await imageLink.getByText(imagePost.content, { exact: true }).boundingBox()
+      expect(textBox!.y).toBeGreaterThanOrEqual(imageBox!.y + imageBox!.height)
+      if (testInfo.project.name === 'mobile') {
+        const videoBox = await videoLink.boundingBox()
+        expect(Math.abs(videoBox!.y - cardBox!.y)).toBeLessThan(2)
+        expect(videoBox!.x).toBeGreaterThanOrEqual(cardBox!.x + cardBox!.width)
+      }
+      await related.screenshot({ path: testInfo.outputPath('related-card-layout.png') })
+      await imageLink.getByRole('img').click()
+      await expect(page).toHaveURL(/\/stream\/return-post\?fromContext=/)
+      const detail = page.getByRole('dialog', { name: messages.stream.postDetail })
+      await expect(detail).toContainText(imagePost.content)
+      await detail.getByRole('button', { name: messages.stream.close, exact: true }).click()
+      await expect(page).toHaveURL(entry === 'activity' ? /\/galaxy\/return-galaxy\?event=return-event#events/ : /\/galaxy\/return-galaxy$/)
+    })
+  }
+}
+test('related carousel loads more at the end without growing vertically or duplicating requests', async ({ page, context, baseURL }) => {
+  await setup(page, context, baseURL!, 'zh')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  let pages = 0, release!: () => void
+  const pending = new Promise<void>(resolve => { release = resolve })
+  await page.route('**/api/posts?**', async route => {
+    const cursor = new URL(route.request().url()).searchParams.get('cursor')
+    if (cursor) {
+      pages++
+      await pending
+      return route.fulfill({ json: { posts: [post, { ...post, id: 'fourth', content: 'Fourth signal' }], nextCursor: null } })
+    }
+    return route.fulfill({ json: { posts: [post, { ...post, id: 'second', content: 'Second signal' }, { ...post, id: 'third', content: 'Third signal' }], nextCursor: 'third' } })
+  })
+  try {
+    await page.goto('/galaxy/return-galaxy')
+    const strip = page.getByRole('region', { name: zh.postContext.related, exact: true })
+    const section = page.locator('section').filter({ has: strip })
+    await expect(strip.getByRole('link')).toHaveCount(3)
+    const height = (await strip.boundingBox())!.height
+    await page.waitForTimeout(200)
+    expect(pages).toBe(0)
+    await section.getByRole('button', { name: zh.postContext.nextSignals }).click()
+    await expect.poll(() => strip.evaluate(element => element.scrollLeft)).toBeGreaterThan(0)
+    await strip.evaluate(element => { element.scrollLeft = element.scrollWidth })
+    await expect.poll(() => pages).toBe(1)
+    await strip.evaluate(element => { element.scrollLeft = element.scrollWidth })
+    expect(pages).toBe(1)
+    release()
+    await expect(strip.getByRole('link')).toHaveCount(4)
+    await expect(strip).toContainText('Fourth signal')
+    expect(Math.abs((await strip.boundingBox())!.height - height)).toBeLessThan(2)
+    await expect(section.getByRole('button', { name: zh.postContext.more, exact: true })).toHaveCount(0)
+    const before = await strip.evaluate(element => element.scrollLeft)
+    await strip.focus()
+    await strip.press('ArrowLeft')
+    await expect.poll(() => strip.evaluate(element => element.scrollLeft)).toBeLessThan(before)
+  } finally {
+    release()
+  }
+})
+test('related video preview loads real media without autoplay or nested controls', async ({ page, context, baseURL }) => {
+  await setup(page, context, baseURL!, 'en')
+  await page.goto('/stream')
+  const bytes = await page.evaluate(async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 160; canvas.height = 100
+    const drawing = canvas.getContext('2d')!
+    drawing.fillStyle = '#7354a5'; drawing.fillRect(0, 0, 160, 100)
+    const stream = canvas.captureStream(10)
+    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' })
+    const chunks: Blob[] = []
+    recorder.ondataavailable = event => chunks.push(event.data)
+    const stopped = new Promise<void>(resolve => { recorder.onstop = () => resolve() })
+    recorder.start()
+    await new Promise(resolve => setTimeout(resolve, 250))
+    recorder.stop()
+    await stopped
+    stream.getTracks().forEach(track => track.stop())
+    return Array.from(new Uint8Array(await new Blob(chunks, { type: 'video/webm' }).arrayBuffer()))
+  })
+  const videoPost = { ...post, content: 'Actual video preview fixture', mediaUrls: ['/fixture.webm'], mediaTypes: ['video'] }
+  await page.route('**/fixture.webm', route => route.fulfill({ contentType: 'video/webm', body: Buffer.from(bytes) }))
+  await page.route('**/api/posts?**', route => route.fulfill({ json: { posts: [videoPost], nextCursor: null } }))
+  await page.goto('/galaxy/return-galaxy')
+  const link = page.getByRole('link').filter({ hasText: videoPost.content })
+  const video = link.locator('video')
+  await expect(video).toBeVisible()
+  await expect.poll(() => video.evaluate(element => {
+    if (!(element instanceof HTMLVideoElement)) throw new Error('Expected video preview')
+    return element.readyState
+  })).toBeGreaterThanOrEqual(1)
+  expect(await video.evaluate(element => {
+    if (!(element instanceof HTMLVideoElement)) throw new Error('Expected video preview')
+    return { paused: element.paused, muted: element.muted, autoplay: element.autoplay, controls: element.controls, inline: element.playsInline }
+  })).toEqual({ paused: true, muted: true, autoplay: false, controls: false, inline: true })
+})
 test('a pending post overlay can close without waiting for its read', async ({ page, context, baseURL }) => {
   await setup(page, context, baseURL!, 'en')
   let release!: () => void
