@@ -66,6 +66,7 @@ for (const [locale, copy] of Object.entries({ en, fr, zh })) {
       await expect(page.getByRole('img', { name: demographicLabel, exact: true })).toHaveCount(gender ? 1 : 0)
       if (gender) {
         const badge = page.getByRole('img', { name: demographicLabel, exact: true })
+        await expect(badge).toHaveClass(/text-violet-200/)
         await expect(badge.locator('svg')).toHaveClass(/lucide-non-binary/)
         await expect(badge).toHaveText(age ? String(ageFromBirthDate('2000-01-01')) : '')
       }

@@ -76,14 +76,16 @@ for (const locale of ['en', 'fr', 'zh']) {
     assert.ok(tags.includes(`aria-label="${escape(copy.options.nonbinary)}, ${escape(label)}"`))
     assert.ok(tags.includes('lucide-non-binary'))
     assert.ok(tags.includes('aria-hidden="true" class="tabular-nums">26</span>'))
-    for (const [gender, icon] of [['woman', 'venus'], ['man', 'mars'], ['other', 'non-binary']]) {
+    for (const [gender, icon, color] of [['woman', 'venus', 'pink'], ['man', 'mars', 'sky'], ['nonbinary', 'non-binary', 'violet'], ['other', 'non-binary', 'violet']]) {
       const combined = render(React.createElement(Tags, { tags: [{ key: 'gender', value: gender }, { key: 'age', value: 26 }, { key: 'region', value: 'Paris' }] }))
       assert.ok(combined.includes(`lucide-${icon}`))
+      for (const style of [`border-${color}-300/25`, `bg-${color}-400/10`, `text-${color}-200`]) assert.ok(combined.includes(style))
       assert.ok(combined.includes(`aria-label="${escape(copy.options[gender])}, ${escape(label)}"`))
       assert.ok(combined.includes('>Paris</span>'))
       assert.equal((combined.match(/role="img"/g) ?? []).length, 1)
       const genderOnly = render(React.createElement(Tags, { tags: [{ key: 'gender', value: gender }] }))
       assert.ok(genderOnly.includes(`aria-label="${escape(copy.options[gender])}"`))
+      assert.ok(genderOnly.includes(`text-${color}-200`))
       assert.ok(!genderOnly.includes('26'))
       assert.ok(!genderOnly.includes('tabular-nums'))
     }
@@ -100,6 +102,7 @@ for (const locale of ['en', 'fr', 'zh']) {
     assert.ok(!picker.includes('2000-01-01'))
     const preview = render(React.createElement(Picker, { value: { ...EMPTY_BASICS, birthDate: '2000-01-01', gender: 'woman', publicTags: ['age', 'gender:woman'] }, onChange: () => {} }))
     assert.ok(preview.includes('lucide-venus'))
+    assert.ok(preview.includes('text-pink-200'))
     const editor = render(React.createElement(Editor, { initial: EMPTY_BASICS, confirmed: true, onSaved: () => {} }))
     assert.ok(editor.includes(escape(copy.titles.birthDate)))
     assert.ok(!editor.includes('registrationBasics.'))

@@ -15,6 +15,8 @@ The founder approved these defaults during this implementation session:
   opted in. Women and men use Venus/Mars icons; nonbinary and other use a neutral
   icon. Gender-only shows just the icon; age-only keeps its localized text label.
   Localized accessible names and hover titles retain the full meaning.
+  Gender badges use soft pink for women, light blue for men and lavender for
+  nonbinary/other, retaining distinct icons rather than relying on color alone.
 - One-way follows; follow edges belong to users, not replaceable planet records.
 - New chats require mutual follow or explicit recipient acceptance of a separate beam
   invitation (ADR 0002); recipient permissions still apply. Neither opening nor accepting sends a message.

@@ -7,6 +7,9 @@ Female/male use Venus/Mars; nonbinary/other use a neutral icon. Gender-only keep
 the icon and age-only keeps localized age text. Accessible labels and hover titles
 use the existing en/fr/zh translations. All public views and settings previews
 reuse the same renderer; selection controls remain independent and text-labelled.
+Badges use soft pink for women, light blue for men, and lavender for
+nonbinary/other, with tinted backgrounds and borders. Icons and accessible labels
+remain distinct, so color is not the only indicator.
 The additive nullable birth-date migration is present but has not been applied.
 
 ## Verification
@@ -45,6 +48,9 @@ The additive nullable birth-date migration is present but has not been applied.
   en/fr/zh labels. Targeted ESLint, typecheck, production build, and diff checks
   passed. The updated public-age-tags Playwright spec passed all six desktop/mobile
   Chromium cases in en/fr/zh. No new database or policy change was made.
+- Color follow-up: the same 11 public-tag tests passed with explicit foreground,
+  background and border assertions for all four gender values. Targeted ESLint,
+  typecheck, build and six desktop/mobile locale browser cases passed again.
 
 ## Release boundaries
 
