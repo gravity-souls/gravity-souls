@@ -15,6 +15,7 @@ import FirstTimeHint from '@/components/hints/FirstTimeHint'
 import { authClient } from '@/lib/auth-client'
 import { dismissHint } from '@/lib/hints-preferences'
 import type { StreamPost } from '@/types/stream'
+import { useStreamReturn } from '@/lib/hooks/useStreamReturn'
 
 export default function StreamPage() {
   const router = useRouter()
@@ -29,6 +30,10 @@ export default function StreamPage() {
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
   const [resultCount, setResultCount] = useState<number | undefined>()
   const [refreshKey, setRefreshKey] = useState(0)
+  const [updatedPost, setUpdatedPost] = useState<StreamPost | null>(null)
+  const [deletedPostId, setDeletedPostId] = useState<string | null>(null)
+  const [published, setPublished] = useState(false)
+  useStreamReturn('/stream', { category, search, tag }, state => { setCategory(state.category); setSearch(state.search); setTag(state.tag) })
 
   function openCreate() {
     if (!session?.user) {
@@ -57,7 +62,7 @@ export default function StreamPage() {
           <div className="mx-auto flex max-w-5xl flex-col gap-3">
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
-                <StreamSearchBar value={search} resultCount={resultCount} onChange={clearSearch} />
+                <StreamSearchBar key={search} value={search} resultCount={resultCount} onChange={clearSearch} />
               </div>
               <button type="button" onClick={openCreate} className="hidden rounded-2xl px-4 py-3 text-sm font-semibold sm:inline-flex" style={{ color: '#fff', background: 'rgba(124,58,237,0.78)', border: '1px solid rgba(167,139,250,0.42)' }}>
                 {t('createPost')}
@@ -68,6 +73,7 @@ export default function StreamPage() {
         </div>
 
         <main className="pt-5">
+          {published && <p role="status" className="mb-4 text-sm text-violet-200">{t('signalSent')}</p>}
           {session?.user && (
             <FirstTimeHint
               hintKey="stream-first-post"
@@ -77,11 +83,14 @@ export default function StreamPage() {
             />
           )}
           <PostGrid
+            origin="/stream"
             category={category}
             search={search && !tag ? search : undefined}
             tag={tag}
             refreshKey={refreshKey}
             prependPost={createdPost}
+            updatedPost={updatedPost}
+            deletedPostId={deletedPostId}
             onPostOpen={setSelectedPost}
             onPostsChange={(posts) => setResultCount(posts.length)}
           />
@@ -97,18 +106,22 @@ export default function StreamPage() {
         onClose={() => setCreateOpen(false)}
         onCreated={(post) => {
           setCreatedPost(post)
+          setPublished(true)
           setRefreshKey((key) => key + 1)
           dismissHint('stream-first-post')
         }}
       />
       <PostDetail
         post={selectedPost}
+        origin="/stream"
         open={!!selectedPost}
         currentUserId={session?.user.id}
         onClose={() => setSelectedPost(null)}
         onTagClick={handleTagClick}
-        onPostUpdated={(post) => setSelectedPost(post)}
-        onDeleted={() => {
+        onPostUpdated={(post) => { setSelectedPost(post); setUpdatedPost(post) }}
+        onDeleted={(id) => {
+          setDeletedPostId(id)
+          setCreatedPost(post => post?.id === id ? null : post)
           setSelectedPost(null)
           setRefreshKey((key) => key + 1)
         }}

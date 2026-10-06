@@ -7,14 +7,18 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import LightCone from '@/components/fx/LightCone'
 import PostDetail from '@/components/stream/PostDetail'
+import PostDetailSkeleton from '@/components/stream/PostDetailSkeleton'
 import { authClient } from '@/lib/auth-client'
-import { postContextReturnHref } from '@/lib/post-return'
+import { postContextReturnHref, streamOriginHref, withPostReturn } from '@/lib/post-return'
 import type { StreamPost } from '@/types/stream'
+import { streamPostSchema } from '@/lib/stream-workflow'
 
 function StreamPostContent() {
-  const t = useTranslations('postContext'), router = useRouter()
+  const t = useTranslations('postContext'), ts = useTranslations('stream'), router = useRouter()
   const params = useParams<{ id: string }>(), search = useSearchParams()
-  const returnHref = postContextReturnHref(search.get('fromContext'))
+  const contextHref = postContextReturnHref(search.get('fromContext'))
+  const origin = streamOriginHref(search.get('fromStream'))
+  const returnHref = contextHref && origin ? withPostReturn(contextHref, params.id, origin) : contextHref
   const { data: session } = authClient.useSession()
   const [result, setResult] = useState<{ id: string; post: StreamPost | null; state: 'loading' | 'unavailable' | 'failed' | 'ready' }>({ id: params.id, post: null, state: 'loading' })
   const [revision, setRevision] = useState(0)
@@ -27,8 +31,9 @@ function StreamPostContent() {
         if ([401, 403, 404].includes(res.status)) return null
         if (!res.ok) throw new Error('failed')
         const data = await res.json()
-        if (!data.post) throw new Error('failed')
-        return data.post as StreamPost
+        const post = streamPostSchema.parse(data.post)
+        if (post.id !== params.id) throw new Error('failed')
+        return post
       })
       .then(post => { if (!cancelled) setResult({ id: params.id, post, state: post ? 'ready' : 'unavailable' }) })
       .catch(() => { if (!cancelled) setResult({ id: params.id, post: null, state: 'failed' }) })
@@ -39,14 +44,16 @@ function StreamPostContent() {
   return <AppShell>
     <LightCone origin="top-center" color="rgba(167,139,250,1)" opacity={0.07} double={false} />
     <div className="relative z-10 grid min-h-[calc(100vh-var(--nav-h))] place-content-center gap-4 px-6 py-20">
-      {!post && <p role={state === 'failed' ? 'alert' : 'status'} className="text-sm" style={{ color: 'var(--ghost)' }}>{t(state === 'failed' ? 'readFailed' : state === 'unavailable' ? 'unavailable' : 'loading')}</p>}
+      {!post && state === 'loading' && <div className="w-[calc(100vw-3rem)] max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-[#080a1c]"><PostDetailSkeleton /></div>}
+      {!post && state !== 'loading' && <p role={state === 'failed' ? 'alert' : 'status'} className="text-sm" style={{ color: 'var(--ghost)' }}>{t(state === 'failed' ? 'readFailed' : 'unavailable')}</p>}
       {!post && state !== 'loading' && <button className="text-sm text-violet-200 underline" onClick={() => setRevision(v => v + 1)}>{t('retry')}</button>}
       {returnHref && <Link href={returnHref} className="text-sm text-violet-200 underline">← {t(returnHref.includes('?event=') ? 'backEvent' : 'backGalaxy')}</Link>}
+      {origin && <Link href={origin} className="text-sm text-violet-200 underline">← {ts('backOrigin')}</Link>}
     </div>
-    <PostDetail key={`${params.id}:${session?.user.id ?? 'guest'}`} post={post} open={!!post} currentUserId={session?.user.id} returnHref={returnHref}
-      onClose={() => router.push(returnHref ?? '/stream')}
+    <PostDetail key={`${params.id}:${session?.user.id ?? 'guest'}`} post={post} open={!!post} currentUserId={session?.user.id} returnHref={returnHref} origin={origin}
+      onClose={() => router.push(origin ?? returnHref ?? '/stream')}
       onPostUpdated={updated => setResult({ id: params.id, post: updated, state: 'ready' })}
-      onDeleted={() => router.push(returnHref ?? '/stream')} />
+      onDeleted={() => router.push(origin ?? returnHref ?? '/stream')} />
   </AppShell>
 }
-export default function StreamPostPage() { return <Suspense><StreamPostContent /></Suspense> }
+export default function StreamPostPage() { return <Suspense fallback={<PostDetailSkeleton />}><StreamPostContent /></Suspense> }

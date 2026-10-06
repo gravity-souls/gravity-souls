@@ -12,13 +12,14 @@ interface PostCardProps {
   post: StreamPost
   compact?: boolean
   onOpen?: (post: StreamPost) => void
+  origin?: string
 }
 
 function firstLine(content: string) {
   return content.split('\n').find((line) => line.trim())?.trim() ?? content
 }
 
-export default function PostCard({ post, compact = false, onOpen }: PostCardProps) {
+export default function PostCard({ post, compact = false, onOpen, origin }: PostCardProps) {
   const firstMedia = post.mediaUrls[0]
   const firstMediaType = post.mediaTypes[0]
   const accent = post.author.tintColor || '#a78bfa'
@@ -35,12 +36,7 @@ export default function PostCard({ post, compact = false, onOpen }: PostCardProp
       className="group mb-3 inline-block w-full cursor-pointer overflow-hidden rounded-2xl transition-all duration-200 hover:scale-[1.02]"
       style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${accent}22`, boxShadow: '0 10px 34px rgba(0,0,0,0.28)' }}
     >
-      {/* Media renders at its own natural aspect ratio (no forced crop) so a
-          wide landscape photo isn't squeezed into a tall narrow sliver — the
-          masonry grid's varied card heights come from real photo shapes
-          instead of a fake randomized one. Text-only posts have no intrinsic
-          shape, so they keep a fixed box. */}
-      <div className="relative overflow-hidden" style={!firstMedia ? { aspectRatio: `1 / ${compact ? 0.82 : 1.12}` } : undefined}>
+      <div className="relative overflow-hidden">
         {firstMedia && firstMediaType === 'image' && (
           <img src={firstMedia} alt="" className="block h-auto w-full" loading="lazy" />
         )}
@@ -48,20 +44,20 @@ export default function PostCard({ post, compact = false, onOpen }: PostCardProp
           <video src={firstMedia} className="block h-auto w-full" muted loop playsInline autoPlay={!compact} controls={false} />
         )}
         {!firstMedia && (
-          <div className="flex h-full w-full items-center p-4" style={{ background: `linear-gradient(145deg, ${accent}3f, rgba(8,10,28,0.94))` }}>
-            <p className={`${compact ? 'text-sm' : 'text-base'} line-clamp-5 font-semibold leading-relaxed`} style={{ color: 'var(--foreground)' }}>
-              {firstLine(post.content)}
+          <div className={`flex ${compact ? 'min-h-32 p-4' : 'min-h-40 p-5'} items-center`} style={{ background: `radial-gradient(ellipse at top left, ${accent}16, transparent 80%)` }}>
+            <p className={`${compact ? 'text-sm' : 'text-base'} line-clamp-6 whitespace-pre-wrap break-words font-normal leading-7`} style={{ color: 'var(--foreground)' }}>
+              {post.content}
             </p>
           </div>
         )}
         {firstMedia && (
           <div className="absolute inset-x-0 bottom-0 p-3" style={{ background: 'linear-gradient(180deg, transparent, rgba(3,3,15,0.86))' }}>
-            <p className="line-clamp-2 text-sm font-semibold leading-snug" style={{ color: 'var(--foreground)' }}>{firstLine(post.content)}</p>
+            <p className="line-clamp-2 break-words text-sm font-normal leading-relaxed" style={{ color: 'var(--foreground)' }}>{firstLine(post.content)}</p>
           </div>
         )}
       </div>
 
-      <PostContextCard post={post} />
+      <PostContextCard post={post} origin={origin} />
       <div className="flex items-center justify-between gap-3 p-3">
         <div className="flex min-w-0 items-center gap-2">
           <PlanetAvatar planetConfig={post.author.planetConfig ?? undefined} size={28} glowColor={accent} />

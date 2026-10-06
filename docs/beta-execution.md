@@ -42,6 +42,27 @@ not yet enforce the approved future product defaults.
 - Message composition shares the server's 2,000-character limit. Unconfirmed sends
   retain the draft and show an error instead of a successful-looking message. IME
   composition Enter does not send. Delivery retry idempotency remains future work.
+- Stream list, route, paging, and post-detail reads reuse the shared PlanetLoadingState
+  visual while awaiting verification, including overlays and direct links. Loading states reveal no
+  unverified content, respect reduced motion, and retain the overlay close control;
+  failed or unavailable reads keep their explicit error/retry states.
+- Stream/my-planet publishing uses an indeterminate, localized pending state. Duplicate
+  clicks, draft changes, and local close controls are locked until the request settles;
+  failures retain the draft and selected media. Confirmed success closes immediately,
+  resets every creation field, and leaves a persistent parent-owned status message.
+- Stream post edits validate the returned post before applying it immediately to the
+  detail and originating stream/my-planet/home list. Loaded comments are retained when
+  PATCH omits them; saved feedback lives outside the keyed editor. Pending edits lock
+  local close/navigation and editing controls.
+- Feed requests use abort/generation guards, deduplication, explicit errors/retry, and
+  callback refs rather than callback-driven refetching. Local changes respect category,
+  tag, search, and author filters; deleted local posts cannot be re-prepended. Refreshes
+  retain loaded cards and paging/scroll state instead of replacing them with skeletons.
+- Galaxy/activity round trips retain an allowlisted stream, my-planet, or home origin.
+  Local overlay closes do not navigate. Session-local filter/scroll snapshots restore
+  after the destination list is ready; they contain no post content or media drafts.
+  See [the stream workflow review](./stream-post-loading-review.md) for verification
+  and the explicit delivery/media-lifecycle boundaries.
 
 No schema changes, production migrations, credential rotation, existing-data cleanup,
 or production deployment were performed in this tranche. Existing seeded database

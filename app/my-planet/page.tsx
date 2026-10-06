@@ -49,6 +49,7 @@ import type { GalaxyPreview } from '@/types/galaxy'
 import type { GalaxyEventDetail, GalaxyEventSummary } from '@/types/event'
 import type { ActivityEvent } from '@/components/planet/UpcomingActivityCard'
 import type { StreamPost } from '@/types/stream'
+import { useStreamReturn } from '@/lib/hooks/useStreamReturn'
 
 interface XPSummary {
   xp: number
@@ -173,6 +174,10 @@ export default function MyPlanetPage() {
   const [selectedPost, setSelectedPost] = useState<StreamPost | null>(null)
   const [createdPost, setCreatedPost] = useState<StreamPost | null>(null)
   const [postRefreshKey, setPostRefreshKey] = useState(0)
+  const [updatedPost, setUpdatedPost] = useState<StreamPost | null>(null)
+  const [deletedPostId, setDeletedPostId] = useState<string | null>(null)
+  const [published, setPublished] = useState(false)
+  useStreamReturn('/my-planet')
   const [customizerOpen, setCustomizerOpen] = useState(false)
   const [tuneOpen, setTuneOpen] = useState(false)
   const [draft, setDraft] = useState<PlanetDraft>(INITIAL_DRAFT)
@@ -1008,10 +1013,14 @@ export default function MyPlanetPage() {
               {tStream('createPost')}
             </button>
           </div>
+          {published && <p role="status" className="mb-4 text-sm text-violet-200">{tStream('signalSent')}</p>}
           <PostGrid
+            origin="/my-planet"
             authorId={planet.userId}
             refreshKey={postRefreshKey}
             prependPost={createdPost}
+            updatedPost={updatedPost}
+            deletedPostId={deletedPostId}
             emptyMessage={tMyPlanet('noPostsYet')}
             onPostOpen={setSelectedPost}
           />
@@ -1070,16 +1079,20 @@ export default function MyPlanetPage() {
         onClose={() => setCreatePostOpen(false)}
         onCreated={(post) => {
           setCreatedPost(post)
+          setPublished(true)
           setPostRefreshKey((key) => key + 1)
         }}
       />
       <PostDetail
         post={selectedPost}
+        origin="/my-planet"
         open={!!selectedPost}
         currentUserId={planet.userId}
         onClose={() => setSelectedPost(null)}
-        onPostUpdated={(post) => setSelectedPost(post)}
-        onDeleted={() => {
+        onPostUpdated={(post) => { setSelectedPost(post); setUpdatedPost(post) }}
+        onDeleted={(id) => {
+          setDeletedPostId(id)
+          setCreatedPost(post => post?.id === id ? null : post)
           setSelectedPost(null)
           setPostRefreshKey((key) => key + 1)
         }}

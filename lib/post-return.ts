@@ -20,18 +20,28 @@ export function postContextReturnHref(value: string | null | undefined): string 
   } catch { return null }
 }
 
-export function withPostOrigin(id: string, contextHref?: string | null): string {
+export function streamOriginHref(value: string | null | undefined): string | null {
+  return value && ['/stream', '/my-planet', '/'].includes(value) ? value : null
+}
+
+export function withPostOrigin(id: string, contextHref?: string | null, streamOrigin?: string | null): string {
   const post = postReturnHref(id)
   if (!post) return '/stream'
   const origin = postContextReturnHref(contextHref)
-  return origin ? `${post}?${new URLSearchParams({ fromContext: origin })}` : post
+  const query = new URLSearchParams()
+  if (origin) query.set('fromContext', origin)
+  const stream = streamOriginHref(streamOrigin)
+  if (stream) query.set('fromStream', stream)
+  return query.size ? `${post}?${query}` : post
 }
 
-export function withPostReturn(contextHref: string, postId: string): string {
+export function withPostReturn(contextHref: string, postId: string, streamOrigin?: string | null): string {
   const context = postContextReturnHref(contextHref)
   if (!context) return '/stream'
   if (!postReturnHref(postId)) return context
   const url = new URL(context, 'https://local.invalid')
   url.searchParams.set('returnPost', postId)
+  const stream = streamOriginHref(streamOrigin)
+  if (stream) url.searchParams.set('fromStream', stream)
   return url.pathname + url.search + url.hash
 }
