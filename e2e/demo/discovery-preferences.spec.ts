@@ -8,13 +8,16 @@ test('activity filters reach the server, preference order is explicit and cleari
     query = new URL(route.request().url()).searchParams
     return route.fulfill({ json: { events: [], total: 0, page: 1, pageSize: 20 } })
   })
+  await page.route('**/api/regions?*', route => route.fulfill({ json: { suggestions: [{ value: 'Paris, FR', label: 'Paris, FR · Île-de-France' }] } }))
   await page.goto('/activities')
   const t = en.discoveryPreferences
+  await page.getByText(en.onboardingRefinements.filters, { exact: true }).click()
   await page.getByLabel(t.region, { exact: true }).fill('Paris')
+  await page.getByRole('button', { name: 'Paris, FR · Île-de-France' }).click()
   await page.getByRole('combobox', { name: t.language, exact: true }).selectOption('fr')
   await page.getByRole('combobox', { name: t.interest, exact: true }).selectOption('art')
   await page.getByRole('combobox', { name: t.sort, exact: true }).selectOption('recommended')
-  await expect.poll(() => Object.fromEntries(query)).toMatchObject({ region: 'Paris', language: 'fr', interest: 'art', sort: 'recommended', page: '1' })
+  await expect.poll(() => Object.fromEntries(query)).toMatchObject({ region: 'Paris, FR', language: 'fr', interest: 'art', sort: 'recommended', page: '1' })
   await expect(page.getByText(t.batchHint, { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: t.reset, exact: true }).click()

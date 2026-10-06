@@ -2,6 +2,9 @@
 
 import { requestSocialRefresh } from '@/lib/social-refresh'
 import PublicTagPicker from '@/components/registration/PublicTagPicker'
+import BirthDatePicker from '@/components/registration/BirthDatePicker'
+import RegionSearch from '@/components/registration/RegionSearch'
+import { Check, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASIC_OPTIONS, EMPTY_BASICS, isAdultBirthDate, type BasicPreferences } from '@/lib/registration-basics'
@@ -55,10 +58,10 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
     <h1 id="basics-title" className="text-3xl font-semibold leading-tight">{t(`titles.${field}`)}</h1>
     <p className="text-sm leading-relaxed opacity-70">{t(field === 'adult' ? 'adultPrivacy' : 'optionalPrivacy')}</p>
     {field === 'adult' && <div className="flex flex-col gap-5">
-      <label className="flex flex-col gap-2">{t('birthday')}<input type="date" value={birthDate} onChange={e => { setBirthDate(e.target.value); setAdultConfirmed(false) }} className={inputClass} /></label>
+      <fieldset className="grid gap-2"><legend className="mb-2">{t('birthday')}</legend><BirthDatePicker value={birthDate} onChange={date => { setBirthDate(date); setAdultConfirmed(false) }} /></fieldset>
       <label className="flex items-start gap-3"><input type="checkbox" checked={adultConfirmed} onChange={e => { setAdultConfirmed(e.target.checked); if (e.target.checked) setBirthDate('') }} className="mt-1 h-5 w-5" />{t('adultDeclaration')}</label>
     </div>}
-    {field === 'region' && <label className="flex flex-col gap-2">{t('regionLabel')}<input autoComplete="address-level2" value={values.region} maxLength={120} placeholder={t('regionPlaceholder')} onChange={e => setValues(v => ({ ...v, region: e.target.value }))} className={inputClass} /></label>}
+    {field === 'region' && <RegionSearch label={t('regionLabel')} value={values.region} onChange={region => setValues(v => ({ ...v, region }))} />}
     {field === 'interests' && <input type="search" aria-label={t('search')} placeholder={t('search')} value={search} onChange={e => setSearch(e.target.value)} className={inputClass} />}
     <div className="flex flex-wrap gap-3">{options.filter(o => t(`options.${o}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(option => {
       const selected = field === 'gender' ? values.gender === option : field !== 'adult' && field !== 'region' && values[field].includes(option as never)
@@ -70,7 +73,7 @@ export default function BasicPreferencesForm({ initial = EMPTY_BASICS, adultAlre
           const next = current.includes(option) ? current.filter(o => o !== option) : option === 'noPreference' ? ['noPreference'] : [...current.filter(o => o !== 'noPreference'), option]
           return { ...v, [field]: next }
         })
-      }} className={`min-h-12 rounded-2xl border px-5 py-3 text-left ${selected ? 'border-violet-300 bg-violet-400/20' : 'border-white/15 bg-white/5'}`}>{t(`options.${option}`)}</button>
+      }} className={`inline-flex min-h-12 items-center gap-3 rounded-2xl border px-5 py-3 text-left transition ${selected ? 'border-violet-300 bg-gradient-to-br from-violet-400/25 to-cyan-400/10 shadow-[0_0_16px_#a78bfa18]' : 'border-white/15 bg-white/5 hover:border-violet-300/50'}`}>{selected ? <Check size={16} aria-hidden="true" className="text-violet-200" /> : <Plus size={16} aria-hidden="true" className="opacity-40" />}{t(`options.${option}`)}</button>
     })}</div>
     {step === 7 && <PublicTagPicker value={values} onChange={tokens => setValues(v => ({ ...v, publicTags: tokens }))} />}
     {error && <p role="alert" className="text-sm text-red-300">{error}</p>}

@@ -17,6 +17,7 @@ import GlowButton from '@/components/ui/GlowButton'
 import PlanetAwakeningState from '@/components/creation/PlanetAwakeningState'
 import type { PlanetProfile, Lifestyle, CommunicationStyle } from '@/types/planet'
 import RegistrationGate from '@/components/registration/RegistrationGate'
+import PlanetPersonalization from '@/components/registration/PlanetPersonalization'
 import type { ResonanceAnswers } from '@/types/creation'
 
 // Step indices: 0 = intro, 1–3 = creation steps, 4 = resonance questions, 5 = reveal
@@ -42,6 +43,7 @@ function CalibrationPage() {
   const [saving, setSaving] = useState(false)
   const [revealError, setRevealError] = useState('')
   const [awakeningPlanet, setAwakeningPlanet] = useState<PlanetProfile | null>(null)
+  const [personalizingPlanet, setPersonalizingPlanet] = useState<PlanetProfile | null>(null)
 
   // Seeded from the real signed-in user's id when available so the preview
   // (and the awakening reveal below, which reuses this same object as the
@@ -96,9 +98,11 @@ function CalibrationPage() {
           body: JSON.stringify({ draft }),
         })
         if (res.ok) {
+          const result = await res.json()
           const savedPlanet = previewPlanet // capture before draft clears
           clear()
-          setAwakeningPlanet(savedPlanet)
+          if (result.firstPlanet) setPersonalizingPlanet(savedPlanet)
+          else setAwakeningPlanet(savedPlanet)
         } else {
           setRevealError(t('genericSaveError'))
         }
@@ -118,6 +122,7 @@ function CalibrationPage() {
   }
 
   // -- Awakening reveal (after authenticated save) ------------------------------
+  if (personalizingPlanet) return <PlanetPersonalization planet={personalizingPlanet} onContinue={() => { setAwakeningPlanet(personalizingPlanet); setPersonalizingPlanet(null) }} />
   if (awakeningPlanet) {
     return <PlanetAwakeningState planet={awakeningPlanet} />
   }

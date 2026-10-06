@@ -5,6 +5,7 @@
 import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import { Check, Lock, RotateCcw, Save, Upload, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { requestSocialRefresh } from '@/lib/social-refresh'
 import Link from 'next/link'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
 import PlanetGlobe from '@/components/planet/PlanetGlobe'
@@ -262,6 +263,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
 
       setSavedConfig(localConfig)
       window.dispatchEvent(new CustomEvent('planet-config:updated', { detail: localConfig }))
+      requestSocialRefresh()
       onSaved?.(localConfig)
       setMessage(t('saved'))
       onClose?.()

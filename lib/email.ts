@@ -12,6 +12,16 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 // production. Set RESEND_FROM_EMAIL once a real sending domain exists.
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'Gravity Souls <onboarding@resend.dev>'
 
+export function verificationEmailConfigured() { return !!process.env.RESEND_API_KEY && !!process.env.RESEND_FROM_EMAIL }
+export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<void> {
+  if (!resend || !verificationEmailConfigured()) throw new Error('Verification email delivery is not configured')
+  const { error } = await resend.emails.send({
+    from: FROM, to, subject: 'Verify your Gravity Souls email',
+    text: `Confirm your email address for Gravity Souls: ${verificationUrl}\nThis link expires in one hour. If you did not create this account, ignore this message.`,
+  })
+  if (error) { console.error('[email] Verification delivery failed', { code: error.name }); throw new Error('Verification email delivery failed') }
+}
+
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
   if (!resend) {
     console.warn('[email] RESEND_API_KEY not configured — password reset email not sent.', { to, resetUrl })

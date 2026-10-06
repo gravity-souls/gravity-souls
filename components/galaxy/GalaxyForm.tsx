@@ -1,5 +1,6 @@
 'use client'
 import AudienceFields, { type AudienceValues } from '@/components/discovery/AudienceFields'
+import RegionSearch from '@/components/registration/RegionSearch'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -127,7 +128,7 @@ export default function GalaxyForm({
       {field('symbol', 12)}
       {field('tagline', 160)}
       {field('description', 2000, true)}
-      <label className="grid gap-2">{td('region')}<input value={region} maxLength={120} onChange={e => setRegion(e.target.value)} className={inputClass} /></label>
+      <RegionSearch label={td('region')} value={region} onChange={setRegion} />
       <AudienceFields value={audience} onChange={setAudience} />
       <label className="grid gap-2">
         {t('keywords')}
