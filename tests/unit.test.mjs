@@ -10,3 +10,5 @@ import './resonance-layout.test.mjs'
 import './planet-rings-removed.test.mjs'
 import './navigation-polish.test.mjs'
 import './my-planet-audit.test.mjs'
+
+import './planet-formation.test.mjs'

@@ -3,7 +3,7 @@ import en from '../../messages/en.json'
 
 const photo = '/textures/earth_day.jpg'
 const config = { baseTexture: 'mars.jpg', customTextureUrl: photo, tintColor: '#a78bfa', atmosphereColor: '#c4b5fd', atmosphereDensity: .12, rotationSpeed: 0, cloudOpacity: 0, hasRing: false, ringColor: '' }
-type Stats = { portraits: number; beams: number; corners: number[] }
+type Stats = { portraits: number; beams: number; corners: number[]; sources: string[]; dustedBeams: number }
 
 test.beforeEach(async ({ page, context, baseURL }) => {
   await context.addCookies([{ name: 'locale', value: 'en', url: baseURL! }, { name: 'better-auth.session_token', value: 'map-polish-fixture', url: baseURL! }])
@@ -17,12 +17,12 @@ test.beforeEach(async ({ page, context, baseURL }) => {
   })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.addInitScript(() => {
-    type Tracked = HTMLCanvasElement & { mapStats?: { portraits: number; beams: number; corners: number[] } }
+    type Tracked = HTMLCanvasElement & { mapStats?: { portraits: number; beams: number; corners: number[]; sources: string[]; dustedBeams: number } }
     const proto = CanvasRenderingContext2D.prototype
     const clear = proto.clearRect, image = proto.drawImage, stroke = proto.stroke, fill = proto.fillRect
-    proto.clearRect = function(...args) { if (this.canvas.hasAttribute('aria-label')) (this.canvas as Tracked).mapStats = { portraits: 0, beams: 0, corners: [0,0,0,0] }; return clear.apply(this,args) }
-    proto.drawImage = function(...args: unknown[]) { const stats = (this.canvas as Tracked).mapStats; if (stats) stats.portraits++; return Reflect.apply(image,this,args) }
-    proto.stroke = function(...args: unknown[]) { const stats = (this.canvas as Tracked).mapStats; if (stats) stats.beams++; return Reflect.apply(stroke,this,args) }
+    proto.clearRect = function(...args) { if (this.canvas.hasAttribute('aria-label')) (this.canvas as Tracked).mapStats = { portraits: 0, beams: 0, corners: [0,0,0,0], sources: [], dustedBeams: 0 }; return clear.apply(this,args) }
+    proto.drawImage = function(...args: unknown[]) { const stats = (this.canvas as Tracked).mapStats; if (stats) { stats.portraits++; if (args[0] instanceof HTMLImageElement) stats.sources.push(new URL(args[0].src).pathname) }; return Reflect.apply(image,this,args) }
+    proto.stroke = function(...args: unknown[]) { const stats = (this.canvas as Tracked).mapStats; if (stats) { stats.beams++; if (this.getLineDash().join(',') === '1,8') stats.dustedBeams++ }; return Reflect.apply(stroke,this,args) }
     proto.fillRect = function(x,y,w,h) { const stats = (this.canvas as Tracked).mapStats, rect = this.canvas.getBoundingClientRect(); if (stats && w < 4 && h < 4) { if (x < rect.width*.2 && y < rect.height*.2) stats.corners[0]++; if (x > rect.width*.8 && y < rect.height*.2) stats.corners[1]++; if (x < rect.width*.2 && y > rect.height*.8) stats.corners[2]++; if (x > rect.width*.8 && y > rect.height*.8) stats.corners[3]++ }; return fill.call(this,x,y,w,h) }
   })
 })
@@ -48,6 +48,7 @@ test('every galaxy gets an overview beam, including empty and single-member comm
   await page.route('**/api/star-map?**', route => route.fulfill({ json: { groups, nodes: groups.map(g => ({ id: g.id, groupId: g.id, name: g.name, kind: 'galaxy', href: '/galaxy/sample' })), total: 3, nextCursor: null, scope: 'batch' } }))
   await page.goto('/star-map?mode=galaxies')
   await expect.poll(() => page.locator('canvas[aria-label]').evaluate(el => (el as HTMLCanvasElement & { mapStats: Stats }).mapStats?.beams)).toBe(3)
+  await expect.poll(() => page.locator('canvas[aria-label]').evaluate(el => (el as HTMLCanvasElement & { mapStats: Stats }).mapStats?.dustedBeams)).toBe(3)
 })
 
 test('selected planet opens a complete viewport dialog with a labelled score and returns focus on close', async ({ page }) => {
@@ -82,4 +83,20 @@ test('my planet has a breathing loading globe and grouped settings/customize/map
   await expect(toolbar.getByRole('button',{ name: en.myPlanet.customizeYourPlanet, exact: true })).toBeVisible()
   await expect(toolbar.getByRole('link',{ name: en.nav.personalStarMap, exact: true })).toBeVisible()
   await expect(toolbar.getByRole('link',{ name: en.nav.relationships, exact: true })).toBeVisible()
+})
+
+
+test('email-registered owner and saved peers retain planet presets without provider portraits', async ({ page }) => {
+  const preset = { ...config, customTextureUrl: undefined }
+  await page.route('**/api/star-map?**', route => route.fulfill({ json: {
+    groups: [{ id: 'calm', count: 1, color: '#a78bfa' }],
+    nodes: [{ id: 'email-peer', name: 'Email planet', displayName: 'Email person', groupId: 'calm', href: '/planet/email-peer', avatarUrl: null, planetConfig: preset, relationship: { saved: true, following: false, followedBy: false, conversationId: null } }],
+    selfPlanet: { id: 'email-owner', name: 'My planet', displayName: 'Owner', href: '/planet/email-owner', avatarUrl: null, planetConfig: preset, level: 1 },
+    scope: 'personal', total: 1, nextCursor: null,
+  } }))
+  await page.goto('/star-map?mode=personal')
+  const canvas = page.locator('canvas[aria-label]')
+  await canvas.scrollIntoViewIfNeeded()
+  await expect.poll(() => canvas.evaluate(el => (el as HTMLCanvasElement & { mapStats: Stats }).mapStats?.sources)).toContain('/textures/mars.jpg')
+  await expect(page.locator('a[href*="/planet/email-owner"] img')).toHaveAttribute('src', '/textures/mars.jpg')
 })

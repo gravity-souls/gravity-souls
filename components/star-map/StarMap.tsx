@@ -8,6 +8,7 @@ import PersonalMapAnchor from '@/components/star-map/PersonalMapAnchor'
 import { PersonalRelationLegend, PersonalNodeRelations } from '@/components/star-map/PersonalMapRelations'
 import { atlasPosition, galaxyMagnitude, planetGravity } from '@/lib/atlas-layout'
 import { personalNodeOffset, personalNodeRelations, RELATION_STYLES } from '@/lib/personal-map-relations'
+import { planetAvatarSource } from '@/lib/planet-avatar-source'
 import PersonAvatar from '@/components/planet/PersonAvatar'
 import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
 import PlanetAvatar from '@/components/planet/PlanetAvatar'
@@ -233,7 +234,7 @@ export default function StarMap({
     if (mode !== 'galaxies') for (const node of data.nodes) if (node.avatarUrl || node.planetConfig) {
       const image = new Image(); portraits.set(node.id, image)
       image.onload = () => { if (!disposed) redraw() }
-      image.src = mode === 'personal' ? node.avatarUrl || '' : node.planetConfig?.customTextureUrl || (node.planetConfig?.baseTexture ? `/textures/${node.planetConfig.baseTexture}` : node.avatarUrl || '')
+      image.src = planetAvatarSource(node.planetConfig, node.avatarUrl)
     }
     let width = 0
     let height = 0
@@ -261,6 +262,19 @@ export default function StarMap({
       // and relationship endpoints when the user zooms or rotates.
       const halfX = Math.max(1,width/2-32), halfY = Math.max(1,height*.44-45)
       return { x: width / 2 + Math.tanh(rx*fit*p/halfX)*halfX, y: height * 0.44 + Math.tanh(ry*fit*p/halfY)*halfY, p }
+    }
+    function galaxyStarlight(from: { x: number; y: number }, to: { x: number; y: number }, color: string, time: number, seed: string) {
+      if (!ctx) return
+      ctx.save()
+      const light = ctx.createLinearGradient(from.x,from.y,to.x,to.y)
+      light.addColorStop(0,color+'00'); light.addColorStop(.25,color+'18'); light.addColorStop(.75,color+'38'); light.addColorStop(1,color+'00')
+      ctx.strokeStyle=light; ctx.lineWidth=.7; ctx.setLineDash([1,8]); ctx.shadowColor=color; ctx.shadowBlur=6
+      ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(to.x,to.y); ctx.stroke()
+      for (let i=1;i<10;i++) {
+        const u=i/10, shimmer=reduced ? .55 : .35+.25*Math.sin(time/1800+i+stableUnit(seed)*6)
+        ctx.globalAlpha=shimmer; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(from.x+(to.x-from.x)*u,from.y+(to.y-from.y)*u,.7,0,Math.PI*2); ctx.fill()
+      }
+      ctx.restore()
     }
     function render(time: number) {
       frame = 0
@@ -296,9 +310,7 @@ export default function StarMap({
       // guides, distinct from the viewer's real personal relationship edges.
       if (mode === 'galaxies' && !focused) for (const group of clusters) {
         const p = project(...group.center)
-        ctx.strokeStyle = group.color+'85'; ctx.lineWidth = 1
-        ctx.beginPath(); ctx.moveTo(hub.x,hub.y); ctx.lineTo(p.x,p.y); ctx.stroke()
-        if (!reduced) { const travel=(time/6500+stableUnit(group.id))%1; ctx.fillStyle=group.color; ctx.beginPath(); ctx.arc(hub.x+(p.x-hub.x)*travel,hub.y+(p.y-hub.y)*travel,1.6,0,Math.PI*2); ctx.fill() }
+        galaxyStarlight(hub,p,group.color,time,group.id)
       }
       for (let i = 0; mode !== 'discover' && i < dots.length; i++) {
         const dot = dots[i]
@@ -408,7 +420,9 @@ export default function StarMap({
                 const crop = Math.min(portrait.naturalWidth,portrait.naturalHeight)
                 ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-size,p.y-size,size*2,size*2); ctx.restore()
               } else {
-                ctx.font = '13px system-ui'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.fillText((node.displayName || node.name).slice(0,1),p.x,p.y+4); ctx.textAlign = 'start'
+                const fallback = ctx.createRadialGradient(p.x-size*.3,p.y-size*.3,1,p.x,p.y,size)
+                fallback.addColorStop(0,'#e8e0ff'); fallback.addColorStop(1,group.color+'66')
+                ctx.fillStyle=fallback; ctx.beginPath(); ctx.arc(p.x,p.y,size,0,Math.PI*2); ctx.fill()
               }
             }
             ctx.font = '11px system-ui'; ctx.fillStyle = '#d6deed'; ctx.textAlign = 'center'
@@ -442,12 +456,7 @@ export default function StarMap({
             focused.center[2],
           )
           if (mode !== 'personal') {
-            ctx.strokeStyle = focused.color + '40'
-            ctx.lineWidth = 0.65
-            ctx.beginPath()
-            ctx.moveTo(width / 2, height * 0.44)
-            ctx.lineTo(p.x, p.y)
-            ctx.stroke()
+            galaxyStarlight({ x: width/2, y: height*.44 },p,focused.color,time,node.id)
           }
           ctx.fillStyle = focused.color
           ctx.beginPath()
@@ -770,7 +779,7 @@ export default function StarMap({
                           aria-pressed={selected?.id === node.id}
                           onClick={event => { event.currentTarget.focus({ preventScroll: true }); setSelectedId(node.id) }}
                         >
-                          {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} name={node.displayName || node.name} size={28} /> : node.planetConfig && (
+                          {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} planetConfig={node.planetConfig} name={node.displayName || node.name} size={28} /> : node.planetConfig && (
                             <PlanetAvatar
                               planetConfig={node.planetConfig}
                               size={28}
@@ -817,7 +826,7 @@ export default function StarMap({
               aria-live="polite"
             >
               <div className={styles.nodeHeading}>
-                {mode === 'personal' && (!selected.kind || selected.kind === 'planet') ? <PersonAvatar key={selected.avatarUrl} src={selected.avatarUrl} name={selected.displayName || selected.name} size={36} /> : selected.planetConfig && (
+                {mode === 'personal' && (!selected.kind || selected.kind === 'planet') ? <PersonAvatar key={selected.avatarUrl} src={selected.avatarUrl} planetConfig={selected.planetConfig} name={selected.displayName || selected.name} size={36} /> : selected.planetConfig && (
                   <PlanetAvatar
                     planetConfig={selected.planetConfig}
                     size={48}

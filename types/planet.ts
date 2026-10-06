@@ -58,6 +58,8 @@ export const PRESET_PLANETS: PlanetConfig[] = [
 ]
 
 export interface PlanetVisualConfig {
+  /** Original calibration choice; preserves climates that share a stored mood. */
+  climateKey?: string
   /** Primary colour for the planet surface glow */
   coreColor:    string
   /** Secondary accent colour */

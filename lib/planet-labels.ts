@@ -23,8 +23,8 @@ function titleCase(value: string): string {
 // Planet.mood is NOT the same key space as the onboarding step's
 // CLIMATE_OPTIONS: it's a separate, smaller Mood enum (calm/melancholic/
 // intense/cold/mixed) that planet-builder.ts derives via a lossy 6→5 mapping.
-export function moodLabel(t: SafeT, mood: Mood): string {
-  const key = `climateOptions.${MOOD_TO_CLIMATE[mood] ?? mood}.label`
+export function moodLabel(t: SafeT, mood: Mood, climateKey?: string): string {
+  const key = `climateOptions.${climateKey ?? MOOD_TO_CLIMATE[mood] ?? mood}.label`
   return t.has(key) ? t(key) : titleCase(mood)
 }
 

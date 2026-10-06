@@ -320,9 +320,9 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
   }
 
   return (
-    <div className="grid min-h-full gap-5 md:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid min-h-full min-w-0 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
 
-      <aside className="rounded-lg border border-white/10 p-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <aside className="min-w-0 rounded-2xl border border-white/10 p-4 sm:p-6 lg:sticky lg:top-24" style={{ background: 'rgba(255,255,255,0.03)' }}>
       <Link href="/settings/basics" className="mb-4 inline-flex min-h-11 items-center text-sm underline">{td('publicTags')}</Link>
 
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -350,11 +350,11 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
         </div>
 
         <div className="flex justify-center py-3">
-          <PlanetGlobe planetConfig={localConfig} size={250} />
+          <PlanetGlobe planetConfig={localConfig} size={220} />
         </div>
       </aside>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-5">
         {EARLY_ACCESS && (
           <div className="rounded-lg border border-amber-300/20 px-4 py-3 text-sm" style={{ background: 'rgba(245,158,11,0.08)', color: '#fbbf24' }}>
             {t('earlyAccess')}
@@ -362,7 +362,7 @@ export default function PlanetCustomizer({ initialConfig, planetName, userLevel,
         )}
 
         <ControlSection title={t('base')} level={1} userLevel={effectiveUserLevel} earlyAccess={EARLY_ACCESS}>
-          <div className="grid grid-cols-4 gap-3 sm:grid-cols-8 md:grid-cols-4 xl:grid-cols-8">
+          <div className="grid grid-cols-3 gap-3 min-[400px]:grid-cols-4 sm:grid-cols-8 lg:grid-cols-4 xl:grid-cols-8">
             {PRESET_PLANETS.map((planet) => {
               const selected = planet.baseTexture === localConfig.baseTexture && !localConfig.customTextureUrl
               return (

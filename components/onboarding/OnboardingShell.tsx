@@ -4,9 +4,10 @@ interface Props {
   children: ReactNode
   /** Optional right-column preview (steps 1–4 desktop sidebar). Hidden on mobile. */
   previewSlot?: ReactNode
+  wide?: boolean
 }
 
-export default function OnboardingShell({ children, previewSlot }: Props) {
+export default function OnboardingShell({ children, previewSlot, wide = false }: Props) {
   return (
     <div
       className="relative flex flex-col items-center px-6 pb-16"
@@ -18,7 +19,7 @@ export default function OnboardingShell({ children, previewSlot }: Props) {
           <div className="hidden lg:block sticky top-24">{previewSlot}</div>
         </div>
       ) : (
-        <div className="w-full max-w-lg">{children}</div>
+        <div className={`w-full ${wide ? 'max-w-6xl' : 'max-w-lg'}`}>{children}</div>
       )}
     </div>
   )

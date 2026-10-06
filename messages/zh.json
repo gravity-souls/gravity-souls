@@ -740,7 +740,7 @@
     "firstDmHintTitle": "你的第一束信号已发送",
     "firstDmHintBody": "回复会出现在这里。随时前往消息页面继续对话。",
     "levelNames": {
-      "1": "漂流岩石",
+      "1": "初生星球",
       "2": "年轻星球",
       "3": "轨道之星",
       "4": "引力场",
@@ -1518,7 +1518,8 @@
         "4": "自转与云层",
         "5": "上传自己的星球纹理"
       },
-      "earlyAccess": "抢先体验期间，部分自定义选项可能在达到对应等级前就已开放。你的经验值和等级仍会增长。你可以在“我的星球”查看进度。"
+      "earlyAccess": "抢先体验期间，部分自定义选项可能在达到对应等级前就已开放。你的经验值和等级仍会增长。你可以在“我的星球”查看进度。",
+      "startAtOne": "新星球从 1 级开始。侧写用于建立你的星球身份，不奖励经验值。探索星系、分享动态和参与活动来积累 XP，达到 100 XP 后升至 2 级。"
     },
     "steps": {
       "0": "做灵魂扫描,或直接跳过——校准是可选项,从不是必须的。",
@@ -2140,7 +2141,8 @@
       "interests": "你对什么感兴趣？",
       "connectionGoals": "你更想建立怎样的连接？",
       "peoplePreferences": "你希望遇见怎样的人？",
-      "gatheringPreferences": "你喜欢怎样的相聚方式？"
+      "gatheringPreferences": "你喜欢怎样的相聚方式？",
+      "publicTags": "选择公开星球标签"
     },
     "options": {
       "undisclosed": "不愿透露",
@@ -2255,5 +2257,31 @@
     "doneEditing": "完成修改",
     "directEditHint": "直接在对应项目中修改资料，再选择哪些答案作为公开星球标签展示，最后保存。",
     "noFieldValues": "暂未选择，点击“修改”添加。"
+  },
+  "planetAwakening": {
+    "live": "星球已点亮",
+    "resonator": "你的星球已准备好，按自己的节奏探索吧",
+    "saveAccount": "保存我的星球 · 创建账户",
+    "openPlanet": "打开我的星球",
+    "resonances": "查看我的共鸣",
+    "localWarning": "你的星球暂存在当前浏览器。创建账户后，便可在不同设备和浏览器中保留它。",
+    "stream": "探索动态 →"
+  },
+  "planetMeaning": {
+    "title": "读懂我的星球",
+    "intro": "这是你当前选择的一幅侧写，随时可以调整。星球的象征描述你的偏好，不是人格诊断或固定分类。",
+    "nameTitle": "星球名称",
+    "nameExplanation": "初始名称与符号是自动生成的身份标识，不暗藏人格类型或评分。你可以为星球改名，让它更属于你。",
+    "climateTitle": "内在气候",
+    "habitatTitle": "生活节奏",
+    "communicationTitle": "表达方式",
+    "themesTitle": "吸引你的主题",
+    "axesTitle": "你的重心",
+    "axesExplanation": "抽象值越高，越偏向概念与想象；越低，越偏向具体细节。内省值越高，越偏向向内思考；越低，越偏向对外表达。这些是你自选的倾向，会参与共鸣匹配，不是能力测评。",
+    "appearanceTitle": "为什么呈现这样的外观",
+    "appearanceExplanation": "气候决定初始光晕、表面风格和默认纹理。生活节奏与主题描述你的偏好，并参与共鸣匹配。之后更换照片、纹理或颜色只改变外观，不会改写这些偏好。",
+    "editHint": "可在星球设置中重新侧写，也可通过「定制」修改外观。",
+    "summary": "你的星球呈现「{climate}」的内在气候，以「{lifestyle}」为生活节奏，偏向「{communication}」的表达，并被{themes}吸引。",
+    "separator": "、"
   }
 }
