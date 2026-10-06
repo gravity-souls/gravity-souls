@@ -1,12 +1,35 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 
 const require = createRequire(import.meta.url)
+const { NextIntlClientProvider } = require('next-intl')
+const RelatedSignalMedia = require('../components/stream/RelatedSignalMedia.tsx').default
 const { matchesPost, postErrorKey, streamPostSchema, streamPageSchema } = require('../lib/stream-workflow.ts')
 const { streamOriginHref, withPostOrigin, withPostReturn } = require('../lib/post-return.ts')
 const author = { id: 'owner', name: 'Owner', planetId: null, planetTexture: null, planetConfig: null, tintColor: '#a78bfa', userLevel: 1 }
 const post = { id: 'post', authorId: 'owner', content: 'Night Sky', category: 'NIGHT', tags: ['Stars'], mediaUrls: [], mediaTypes: [], likeCount: 0, commentCount: 0, createdAt: '2026-10-06T00:00:00Z', updatedAt: '2026-10-06T00:00:00Z', author, userHasLiked: false }
+
+for (const locale of ['en', 'fr', 'zh']) {
+  test(`related media preview is localized, lazy and never auto-plays in ${locale}`, () => {
+    const messages = require(`../messages/${locale}.json`)
+    const render = props => renderToStaticMarkup(React.createElement(NextIntlClientProvider, { locale, messages, timeZone: 'Europe/Paris' }, React.createElement(RelatedSignalMedia, props)))
+    const image = render({ url: '/fixture.jpg', type: 'image', count: 3 })
+    assert.ok(image.includes('loading="lazy"'))
+    assert.ok(image.includes(messages.postContext.imagePreview))
+    assert.ok(image.includes('+2'))
+    const video = render({ url: '/fixture.mp4', type: 'video', count: 1 })
+    assert.ok(video.includes(messages.postContext.videoPreview))
+    assert.ok(video.includes('preload="metadata"'))
+    assert.ok(video.includes('playsInline=""'))
+    assert.ok(video.includes('muted=""'))
+    assert.ok(!video.includes('autoPlay'))
+    assert.ok(!video.includes('controls='))
+    assert.ok(!video.includes('+0'))
+  })
+}
 
 test('stream filters match server category, author, case-sensitive tag and case-insensitive content/search OR', () => {
   assert.equal(matchesPost(post, { category: 'ALL', authorId: 'owner', tag: '#Stars', search: 'sky' }), true)
