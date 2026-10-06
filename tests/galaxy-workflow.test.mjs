@@ -715,7 +715,7 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
           let read = await (await messages.GET(new Request('https://example.test/api'), ctx)).json()
           assert.deepEqual(read.messages[0].share, { available: false }); assert.ok(!JSON.stringify(read.messages).includes(planet.id)); assert.ok(!JSON.stringify(read.messages).includes(planet.name))
           await db.follow.create({ data: { followerId: target, followingId: recipient } })
-          read = await (await messages.GET(new Request('https://example.test/api'), ctx)).json(); assert.equal(read.messages[0].share.title, planet.name)
+          read = await (await messages.GET(new Request('https://example.test/api'), ctx)).json(); assert.equal(read.messages[0].share.title, target)
           await db.user.update({ where: { id: target }, data: { planetCustomTexture: 'https://example.test/new-diy.png' } })
           const fresh = await (await shareRefresh.POST(request({ ids: [planetMessage.id, 'foreign-id'] }), ctx)).json()
           assert.equal(fresh.messages.length, 1); assert.equal(fresh.messages[0].share.planetConfig.customTextureUrl, 'https://example.test/new-diy.png')
@@ -1414,7 +1414,8 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
             new Request('https://example.com/api?mode=discover&search=member'),
           )
         ).json()
-        assert.equal(search.total, 1)
+        assert.equal(search.total, data.total)
+        assert.deepEqual(search.groups, data.groups)
         assert.equal(search.nodes.length, 1)
         assert.equal(
           (
@@ -1465,11 +1466,12 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       as(other)
       assert.notEqual((await state()).conversationId, conversationId)
       as(viewer)
+      const visibleTotal = (await (await map()).json()).total
       for (const [blockerId, blockedId] of [[viewer, target], [target, viewer]]) {
         const block = await db.block.create({ data: { blockerId, blockedId } })
         const hidden = await (await map()).json()
         assert.equal(hidden.nodes.length, 0)
-        assert.equal(hidden.total, 0)
+        assert.equal(hidden.total, visibleTotal - 1)
         assert.ok(!JSON.stringify(hidden).includes(conversationId))
         await db.block.delete({ where: { id: block.id } })
       }
@@ -1587,7 +1589,10 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
             const all = [...first.nodes,...second.nodes].map(n => n.id)
             assert.equal(all.length,first.total)
             assert.equal(new Set(all).size,first.total)
-            assert.equal((await data('saved','&search=zzzz-not-found')).total,0)
+            const emptySearch = await data('saved','&search=zzzz-not-found')
+            assert.equal(emptySearch.nodes.length,0)
+            assert.equal(emptySearch.total,first.total)
+            assert.deepEqual(emptySearch.groups,first.groups)
           } finally { await db.user.deleteMany({ where: { id: { in: moreIds } } }) }
         })
       } finally { await db.user.deleteMany({ where: { id: { in: ids } } }); as('owner') }
@@ -1831,6 +1836,7 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
       'star map bounded pages have no missing or duplicate planet nodes',
       async () => {
         as('owner')
+        const visibleTotal = (await (await starMap.GET(new Request('https://example.com/api?mode=discover'))).json()).total
         for (let i = 0; i < 40; i++) {
           await db.user.create({
             data: {
@@ -1854,7 +1860,7 @@ test('complete galaxy workflow on isolated PostgreSQL, including real migrations
             ),
           )
         ).json()
-        assert.equal(first.total, 40)
+        assert.equal(first.total, visibleTotal + 40)
         assert.equal(first.nodes.length, 36)
         assert.ok(first.nextCursor)
         const second = await (

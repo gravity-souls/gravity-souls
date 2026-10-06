@@ -104,16 +104,28 @@ test('private basics registration and edit lifecycle on real migrations and rout
       actor = 'new'; assert.equal((await registration.PUT(request({}))).status, 200)
       assert.equal((await (await registration.GET()).json()).basics.region, '')
     })
-    await t.test('birth date only produces declaration evidence and never stored or returned', async () => {
+    await t.test('birth date is private, date-only in self/export, retained on omission and cleared explicitly', async () => {
       actor = 'date'; assert.equal((await registration.PUT(request({ birthDate: '1996-01-01', interests: ['music'] }))).status, 200)
       const result = await (await registration.GET()).json()
-      assert.equal(result.basics.ageMethod, 'birth-date-declaration'); assert.ok(!JSON.stringify(result).includes('1996-01-01')); assert.equal(result.basics.birthDate, undefined)
+      assert.equal(result.basics.ageMethod, 'birth-date-declaration'); assert.equal(result.basics.birthDate, '1996-01-01'); assert.deepEqual(result.basics.publicTags, [])
+      assert.equal((await db.registrationBasics.findUniqueOrThrow({ where: { userId: actor } })).birthDate.toISOString(), '1996-01-01T00:00:00.000Z')
       const exported = await (await exportData.GET()).json()
-      assert.equal(exported.registrationBasics.ageMethod, 'birth-date-declaration'); assert.ok(!JSON.stringify(exported).includes('1996-01-01'))
+      assert.equal(exported.registrationBasics.ageMethod, 'birth-date-declaration'); assert.equal(exported.registrationBasics.birthDate, '1996-01-01')
+      assert.equal((await registration.PUT(request({ interests: ['art'], publicTags: ['age'] }))).status, 200)
+      assert.equal((await (await registration.GET()).json()).basics.birthDate, '1996-01-01')
+      for (const birthDate of ['', '2020-01-01', '2000-02-30']) {
+        assert.equal((await registration.PUT(request({ birthDate, adultConfirmed: true }))).status, 400)
+        assert.equal((await (await registration.GET()).json()).basics.birthDate, '1996-01-01')
+      }
+      assert.equal((await registration.PUT(request({ birthDate: null, gender: 'woman', publicTags: ['age', 'gender:woman'] }))).status, 200)
+      const cleared = (await (await registration.GET()).json()).basics
+      assert.equal(cleared.birthDate, null); assert.deepEqual(cleared.publicTags, ['gender:woman'])
+      assert.equal(cleared.adultConfirmedAt, result.basics.adultConfirmedAt)
+      assert.equal(cleared.ageMethod, result.basics.ageMethod)
     })
     await t.test('public tags require individual consent, private fields stay server-side, revocation is immediate', async () => {
       actor = 'other'
-      const values = { adultConfirmed: true, gender: 'nonbinary', region: 'Hidden city', languages: ['fr'], interests: ['art'], connectionGoals: ['friendship'], publicTags: ['interests:art', 'birthDate', 'gender:male', 'region:forged'] }
+      const values = { adultConfirmed: true, birthDate: '2000-01-01', gender: 'nonbinary', region: 'Hidden city', languages: ['fr'], interests: ['art'], connectionGoals: ['friendship'], publicTags: ['interests:art', 'birthDate', 'gender:male', 'region:forged'] }
       assert.equal((await registration.PUT(request(values))).status, 200)
       assert.equal((await savePlanet()).status, 200)
       const peer = await db.planet.findFirstOrThrow({ where: { userId: actor, active: true } })
@@ -125,10 +137,26 @@ test('private basics registration and edit lifecycle on real migrations and rout
       assert.ok(candidate.preferenceFit.coverage > 0)
       const own = await db.planet.findFirstOrThrow({ where: { userId: 'new', active: true } })
       assert.equal(candidate.preferenceFit.sourcePlanetId, own.id)
-      for (const text of ['Hidden city', 'nonbinary', 'adultConfirmedAt', 'registrationBasics']) assert.ok(!JSON.stringify(result).includes(text), text)
+      for (const text of ['Hidden city', 'nonbinary', 'adultConfirmedAt', 'registrationBasics', 'birthDate', '2000-01-01']) assert.ok(!JSON.stringify(result).includes(text), text)
       const detail = await (await planetDetail.GET(new Request('https://test.invalid'), { params: Promise.resolve({ id: peer.id }) })).json()
       assert.deepEqual(detail.publicTags, candidate.publicTags)
       assert.deepEqual(detail.preferenceFit, candidate.preferenceFit)
+      actor = 'other'; await registration.PUT(request({ ...values, publicTags: ['age', 'gender:nonbinary'] }))
+      actor = 'new'
+      const age = new Date().getUTCFullYear() - 2000
+      const selected = [{ key: 'age', value: age }, { key: 'gender', value: 'nonbinary' }]
+      const visible = await read()
+      assert.deepEqual(visible.planets.find(p => p.id === peer.id).publicTags, selected)
+      const taggedDetail = await (await planetDetail.GET(new Request('https://test.invalid'), { params: Promise.resolve({ id: peer.id }) })).json()
+      assert.deepEqual(taggedDetail.publicTags, selected)
+      assert.deepEqual(taggedDetail.preferenceFit, detail.preferenceFit)
+      const taggedMap = await (await starMap.GET(new Request('https://test.invalid/api/star-map?mode=discover'))).json()
+      assert.deepEqual(taggedMap.nodes.find(p => p.id === peer.id).publicTags, selected)
+      for (const payload of [visible, taggedDetail, taggedMap]) {
+        assert.ok(!JSON.stringify(payload).includes('birthDate'))
+        assert.ok(!JSON.stringify(payload).includes('2000-01-01'))
+        assert.ok(!JSON.stringify(payload).includes('registrationBasics'))
+      }
       actor = 'other'; await registration.PUT(request({ ...values, publicTags: [] }))
       actor = 'new'; candidate = (await read()).planets.find(p => p.id === peer.id)
       assert.deepEqual(candidate.publicTags, [])

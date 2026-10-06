@@ -4,8 +4,9 @@ import { useTranslations } from 'next-intl'
 import { Check, Plus } from 'lucide-react'
 import PublicTagPicker, { type EditableBasicField } from './PublicTagPicker'
 import RegionSearch from './RegionSearch'
-import { BASIC_OPTIONS, type BasicPreferences } from '@/lib/registration-basics'
-import { availablePublicTags } from '@/lib/public-planet-tags'
+import BirthDatePicker from './BirthDatePicker'
+import { BASIC_OPTIONS, isAdultBirthDate, type BasicPreferences } from '@/lib/registration-basics'
+import { normalizedPublicTags } from '@/lib/public-planet-tags'
 import { requestSocialRefresh } from '@/lib/social-refresh'
 
 export default function BasicPreferencesEditor({ initial, confirmed, onSaved }: { initial: BasicPreferences; confirmed: boolean; onSaved: (values: BasicPreferences) => void }) {
@@ -14,10 +15,10 @@ export default function BasicPreferencesEditor({ initial, confirmed, onSaved }: 
   const [saving, setSaving] = useState(false), [error, setError] = useState(''), [saved, setSaved] = useState(false), [adult, setAdult] = useState(false)
   const [search, setSearch] = useState('')
   function update(next: BasicPreferences) {
-    const allowed = new Set(availablePublicTags(next).map(item => item.token))
-    setValues({ ...next, publicTags: next.publicTags.filter(token => allowed.has(token)) }); setSaved(false)
+    setValues({ ...next, publicTags: normalizedPublicTags(next) }); setSaved(false)
   }
   async function save() {
+    if (typeof values.birthDate === 'string' && !isAdultBirthDate(values.birthDate)) { setError(t('birthDateError')); return }
     setSaving(true); setError(''); setSaved(false)
     try {
       const res = await fetch('/api/registration', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, ...(!confirmed ? { adultConfirmed: adult } : {}) }) })
@@ -26,7 +27,12 @@ export default function BasicPreferencesEditor({ initial, confirmed, onSaved }: 
     } catch { setError(t('saveError')) } finally { setSaving(false) }
   }
   const editor = field && <div className="mb-4 space-y-3 rounded-xl bg-white/5 p-3" data-testid={`edit-${field}`}>
-    {field === 'region' ? <RegionSearch label={t('regionLabel')} value={values.region} onChange={region => update({ ...values, region })} /> : <>
+    {field === 'birthDate' ? <fieldset className="space-y-3">
+      <legend>{t('birthday')}</legend>
+      <p className="text-sm text-slate-400">{t('birthDatePrivacy')}</p>
+      <BirthDatePicker value={values.birthDate ?? ''} onChange={birthDate => update({ ...values, birthDate })} />
+      <button type="button" onClick={() => update({ ...values, birthDate: null })} className="min-h-11 text-sm text-violet-200 underline">{t('clearBirthDate')}</button>
+    </fieldset> : field === 'region' ? <RegionSearch label={t('regionLabel')} value={values.region} onChange={region => update({ ...values, region })} /> : <>
       {field === 'interests' && <input type="search" aria-label={t('search')} value={search} onChange={e => setSearch(e.target.value)} className="min-h-11 w-full rounded-xl border border-white/15 bg-slate-950 px-3" />}
       <div className="flex flex-wrap gap-2">{BASIC_OPTIONS[field].filter(option => t(`options.${option}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(option => {
         const selected = field === 'gender' ? values.gender === option : values[field].includes(option as never)
@@ -43,6 +49,6 @@ export default function BasicPreferencesEditor({ initial, confirmed, onSaved }: 
     {!confirmed && <label className="mt-4 flex items-center gap-3"><input type="checkbox" checked={adult} onChange={e => setAdult(e.target.checked)} />{t('adultDeclaration')}</label>}
     <fieldset disabled={saving} className="min-w-0"><PublicTagPicker value={values} onChange={publicTags => update({ ...values, publicTags })} onEdit={next => { setField(field === next ? null : next); setSearch('') }} activeField={field} editor={editor} /></fieldset>
     {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}{saved && <p role="status" className="mt-4 text-sm text-emerald-300">{t('saved')}</p>}
-    <button type="button" disabled={saving || (!confirmed && !adult)} onClick={() => void save()} className="mt-5 min-h-12 w-full rounded-2xl bg-violet-400 px-6 py-3 font-semibold text-slate-950 disabled:opacity-40">{t(saving ? 'saving' : 'save')}</button>
+    <button type="button" disabled={saving || (!confirmed && !adult && !isAdultBirthDate(values.birthDate))} onClick={() => void save()} className="mt-5 min-h-12 w-full rounded-2xl bg-violet-400 px-6 py-3 font-semibold text-slate-950 disabled:opacity-40">{t(saving ? 'saving' : 'save')}</button>
   </section>
 }

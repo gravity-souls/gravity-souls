@@ -905,6 +905,7 @@ model PushDelivery {
 
 // Private registration data; never included in public profile DTOs.
 model RegistrationBasics {
+  birthDate DateTime? @db.Date
   publicTags String[] @default([])
   userId String @id
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
