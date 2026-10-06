@@ -1,6 +1,8 @@
 'use client'
 
 import PublicPlanetTags from '@/components/planet/PublicPlanetTags'
+import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
+import { Settings, Palette, Users, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -54,7 +56,7 @@ interface UniverseSummary {
   linkedPlanets: number
 }
 
-const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false, loading: () => <PlanetLoadingState compact /> })
 
 const DEFAULT_VISUAL: PlanetProfile['visual'] = {
   coreColor: '#a78bfa',
@@ -427,7 +429,7 @@ export default function MyPlanetPage() {
     }
   }
 
-  if (!hydrated || loading) return null
+  if (!hydrated || loading) return <AppShell><PlanetLoadingState /></AppShell>
 
   // -- Explorer state  -  no planet formed yet ----------------------------------
   if (!planet) {
@@ -562,6 +564,39 @@ export default function MyPlanetPage() {
       <LightCone origin="top-left" color={visual.coreColor} opacity={0.07} double={false} />
 
       <div className="relative z-10 px-4 sm:px-6 pt-6 pb-20 max-w-7xl mx-auto">
+        <nav aria-label={tMyPlanet('yourPlanet')} className="mb-5 flex flex-wrap items-center gap-2">
+          <Link href="/settings/planet" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-violet-300/40 bg-violet-400/15 px-4 text-sm font-semibold text-violet-100"><Settings size={17} aria-hidden="true" />{tNav('settings')}</Link>
+          <button type="button" aria-expanded={customizerOpen} onClick={() => { setCustomizerOpen(open => !open); if (!customizerOpen) requestAnimationFrame(() => document.getElementById('customize')?.scrollIntoView({ behavior: 'smooth', block: 'start' })) }} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-sm text-violet-200"><Palette size={17} aria-hidden="true" />{tMyPlanet('customizeYourPlanet')}</button>
+          <Link href="/star-map?mode=personal" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm text-violet-200"><Sparkles size={17} aria-hidden="true" />{tNav('personalStarMap')}</Link>
+          <Link href="/relationships" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm text-violet-200"><Users size={17} aria-hidden="true" />{tNav('relationships')}</Link>
+        </nav>
+        <div id="customize" className="scroll-mt-24" />
+
+        {customizerOpen && isDesktop && (
+          <section className="mt-4 rounded-2xl border border-white/10 bg-[rgba(5,4,18,0.76)] p-4 backdrop-blur">
+            <PlanetCustomizer
+              initialConfig={currentUser.planetConfig}
+              planetName={planet.name}
+              userLevel={currentUser.userLevel}
+              onClose={() => setCustomizerOpen(false)}
+              onSaved={handleCustomizerSaved}
+            />
+          </section>
+        )}
+
+        {customizerOpen && !isDesktop && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(3,3,15,0.96)] p-4 backdrop-blur-xl">
+            <PlanetCustomizer
+              initialConfig={currentUser.planetConfig}
+              planetName={planet.name}
+              userLevel={currentUser.userLevel}
+              onClose={() => setCustomizerOpen(false)}
+              onSaved={handleCustomizerSaved}
+            />
+          </div>
+        )}
+
+
 
         {/* ================================================================
             HERO SECTION — 3D planet + identity info
@@ -707,7 +742,6 @@ export default function MyPlanetPage() {
                   </div>
 
                   <PublicPlanetTags tags={planet.publicTags} />
-                  <Link href="/settings/basics" className="text-xs underline">{tNav('settings')}</Link>
                   {planet.tagline && (
                     <p className="text-base italic leading-relaxed max-w-md mx-auto md:mx-0" style={{ color: 'var(--ink)', opacity: 0.70 }}>
                       {planet.tagline}
@@ -873,47 +907,6 @@ export default function MyPlanetPage() {
           </section>
         )}
 
-        <div id="customize" className="mt-5 scroll-mt-24">
-          <button
-            type="button"
-            onClick={() => setCustomizerOpen((open) => !open)}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold transition"
-            style={{ color: 'var(--foreground)', background: 'rgba(255,255,255,0.04)' }}
-            aria-expanded={customizerOpen}
-          >
-            ✦ {tMyPlanet('customizeYourPlanet')}
-            {customizerOpen && <span className="text-xs" style={{ color: 'var(--ghost)' }}>{tHome('open')}</span>}
-          </button>
-        </div>
-
-        {customizerOpen && isDesktop && (
-          <section className="mt-4 rounded-2xl border border-white/10 bg-[rgba(5,4,18,0.76)] p-4 backdrop-blur">
-            <PlanetCustomizer
-              initialConfig={currentUser.planetConfig}
-              planetName={planet.name}
-              userLevel={currentUser.userLevel}
-              onClose={() => setCustomizerOpen(false)}
-              onSaved={handleCustomizerSaved}
-            />
-          </section>
-        )}
-
-        {customizerOpen && !isDesktop && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(3,3,15,0.96)] p-4 backdrop-blur-xl">
-            <PlanetCustomizer
-              initialConfig={currentUser.planetConfig}
-              planetName={planet.name}
-              userLevel={currentUser.userLevel}
-              onClose={() => setCustomizerOpen(false)}
-              onSaved={handleCustomizerSaved}
-            />
-          </div>
-        )}
-
-        <div className="mb-4 flex flex-wrap gap-3">
-          <Link href="/star-map?mode=personal" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('personalStarMap')}</Link>
-          <Link href="/relationships" className="rounded-xl border border-white/10 px-4 py-3 text-sm text-violet-200">{tNav('relationships')}</Link>
-        </div>
         <InboxPreview />
 
         {/* ================================================================

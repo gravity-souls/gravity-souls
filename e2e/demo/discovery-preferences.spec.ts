@@ -11,7 +11,7 @@ test('activity filters reach the server, preference order is explicit and cleari
   await page.route('**/api/regions?*', route => route.fulfill({ json: { suggestions: [{ value: 'Paris, FR', label: 'Paris, FR · Île-de-France' }] } }))
   await page.goto('/activities')
   const t = en.discoveryPreferences
-  await page.getByText(en.onboardingRefinements.filters, { exact: true }).click()
+  await page.locator('summary').filter({ has: page.locator('[aria-hidden]') }).click()
   await page.getByLabel(t.region, { exact: true }).fill('Paris')
   await page.getByRole('button', { name: 'Paris, FR · Île-de-France' }).click()
   await page.getByRole('combobox', { name: t.language, exact: true }).selectOption('fr')

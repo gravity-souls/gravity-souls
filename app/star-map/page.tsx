@@ -30,7 +30,7 @@ function StarMapPageContent() {
         <h1 className="text-3xl font-semibold text-white">{t('title')}</h1>
         <p className="mt-3 text-sm text-slate-400">{t(mode === 'personal' ? 'personalSubtitle' : 'subtitle')}</p>
         <nav className="mt-5 flex flex-wrap gap-3" aria-label={t('modes')}>
-          {(['discover', 'personal', 'galaxies'] as const).map((value) => (
+          {(['discover', 'galaxies', 'personal'] as const).map((value) => (
             <Link
               key={value}
               href={`/star-map?mode=${value}`}

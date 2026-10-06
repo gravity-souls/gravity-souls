@@ -274,9 +274,9 @@ function EventsTabContent({
               </button>
             ))}
           </div>
-          <DiscoveryFilters value={filters} onChange={value => { setFilters(value); setPage(1) }} recommended={false} />
+          <div className="flex items-start gap-2">
           <input
-            className="rounded-xl border border-white/15 bg-white/5 p-3 text-sm"
+            className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/5 p-3 text-sm"
             aria-label={te('searchPlaceholder')}
             placeholder={te('searchPlaceholder')}
             value={search}
@@ -285,6 +285,8 @@ function EventsTabContent({
               setPage(1)
             }}
           />
+          <DiscoveryFilters value={filters} onChange={value => { setFilters(value); setPage(1) }} recommended={false} />
+          </div>
           {loading ? (
             <p>{t('loading')}</p>
           ) : events.length ? (

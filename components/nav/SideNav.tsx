@@ -64,14 +64,13 @@ const MAIN_ITEMS: NavItem[] = [
   { href: '/star-map', labelKey: 'starMap', Icon: Sparkles, gated: true },
 ]
 
-const GALAXIES_ITEM: NavItem = { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 }
 const MY_PLANET_ITEM: NavItem = { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true, gated: true }
 
 const MOBILE_TABS: NavItem[] = [
   { href: '/', labelKey: 'home', Icon: Home },
   { href: '/stream', labelKey: 'stream', Icon: Waves, gated: true },
   { href: '/resonance', labelKey: 'resonance', Icon: CircleDot, gated: true },
-  { href: '/galaxies', labelKey: 'galaxies', Icon: Globe2 },
+  { href: '/star-map', labelKey: 'starMap', Icon: Sparkles, gated: true },
   { href: '/my-planet', labelKey: 'myPlanet', Icon: Orbit, badge: true, gated: true },
 ]
 
@@ -163,6 +162,7 @@ function SubLink({ href, label, active, Icon }: { href: string; label: string; a
 export default function SideNav({ collapsed, onToggle, personalMapActive = false }: Props) {
   const pathname = usePathname()
   const tNav = useTranslations('nav')
+  const tMap = useTranslations('starMap')
   const tA11y = useTranslations('a11y')
   const { data: session } = authClient.useSession()
   const hydrated = useHydrated()
@@ -174,7 +174,6 @@ export default function SideNav({ collapsed, onToggle, personalMapActive = false
   const levelDotColor = LEVEL_DOT_COLORS[currentUserLevel]
   const lockLabel = tNav('signInRequired')
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
-  const galaxiesActive = isRouteActive(pathname, '/galaxies')
   const myPlanetActive = isRouteActive(pathname, '/my-planet')
   const mySpaceActive = personalMapActive || myPlanetActive || pathname === '/saved' || pathname === '/relationships'
   const showMyPlanetSubItems = !collapsed && mySpaceActive
@@ -239,7 +238,6 @@ export default function SideNav({ collapsed, onToggle, personalMapActive = false
               />
             ))}
 
-            <NavLink item={GALAXIES_ITEM} label={tNav('galaxies')} active={galaxiesActive} collapsed={collapsed} level={currentUserLevel} showLock={false} lockLabel={lockLabel} />
           </div>
 
           <SectionLabel collapsed={collapsed}>{tNav('mySpace')}</SectionLabel>
@@ -327,7 +325,7 @@ export default function SideNav({ collapsed, onToggle, personalMapActive = false
                   />
                 )}
               </span>
-              <span className="max-w-full truncate">{tNav(item.labelKey)}</span>
+              <span className="max-w-full truncate">{item.labelKey === 'starMap' ? tMap('mapView') : tNav(item.labelKey)}</span>
             </Link>
           )
         })}

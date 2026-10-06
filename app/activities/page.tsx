@@ -182,8 +182,10 @@ export default function GalaxyEventsPage() {
               </button>
             ))}
           </div>
+          <div className="flex items-start gap-2">
+          <input aria-label={t('searchPlaceholder')} maxLength={80} value={search} onChange={(event) => {setSearch(event.target.value);setPage(1)}} placeholder={t('searchPlaceholder')} className="min-w-0 flex-1 rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
           <DiscoveryFilters value={filters} onChange={value => { setFilters(value); setPage(1) }} recommended={tab === 'upcoming'} />
-          <input aria-label={t('searchPlaceholder')} maxLength={80} value={search} onChange={(event) => {setSearch(event.target.value);setPage(1)}} placeholder={t('searchPlaceholder')} className="w-full rounded-xl px-4 py-3 text-sm outline-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--foreground)' }} />
+          </div>
         </div>
 
         {(error || detailError) && <p role="alert" className="mt-4 text-sm text-red-300">{error || detailError}<button className="ml-3 underline" onClick={()=>{setDetailError('');setRevision(v=>v+1)}}>{tw('retry')}</button></p>}

@@ -1,0 +1,8 @@
+.state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65vh; gap: 18px; }
+.compact { min-height: 0; height: 100%; }
+.globe { max-width: 100%; filter: drop-shadow(0 0 22px #a78bfa35); }
+.breath { transform-origin: 120px 120px; animation: breathe 3s ease-in-out infinite; }
+.orbit { transform-origin: 120px 120px; animation: orbit 18s linear infinite; }
+@keyframes breathe { 50% { transform: scale(1.05); opacity: .7; } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .breath, .orbit { animation: none; } }

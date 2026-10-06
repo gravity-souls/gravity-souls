@@ -4,15 +4,17 @@ import SavePlanetButton from '@/components/social/SavePlanetButton'
 import BeamButton from '@/components/social/BeamButton'
 import FollowButton from '@/components/social/FollowButton'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import LockedLayer from '@/components/ui/LockedLayer'
+import PlanetLoadingState from '@/components/planet/PlanetLoadingState'
 import { resolvePlanetTexture } from '@/lib/planet-textures'
 import { themeLabel, moodLabel, lifestyleLabel } from '@/lib/planet-labels'
 import type { PlanetConfig, PlanetProfile } from '@/types/planet'
 
-const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false })
+const PlanetGlobe = dynamic(() => import('@/components/planet/PlanetGlobe'), { ssr: false, loading: () => <PlanetLoadingState compact /> })
 
 interface Props {
   planet:   PlanetProfile | null
@@ -52,11 +54,14 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (!open) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previous }
   }, [open])
 
-  return (
+  if (!open || typeof document === 'undefined') return null
+  return createPortal(
     <>
       {/* -- Backdrop ------------------------------------------------------- */}
       <div
@@ -90,7 +95,8 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
           boxShadow:  'var(--shadow-panel)',
           transform:  open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 380ms cubic-bezier(0.16,1,0.3,1)',
-          overflowY:  'auto',
+          overflow: 'hidden',
+          height: 'calc(100dvh - var(--nav-h))',
         }}
       >
         {planet && (
@@ -102,7 +108,7 @@ export default function PlanetPreviewDrawer({ planet, open, onClose, userRole = 
           />
         )}
       </div>
-    </>
+    </>, document.body
   )
 }
 
@@ -179,7 +185,7 @@ function DrawerContent({
       />
 
       {/* Scrollable info content */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-5">
 
         {/* Name + tagline */}
         <div>

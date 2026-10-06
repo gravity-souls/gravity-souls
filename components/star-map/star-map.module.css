@@ -517,3 +517,16 @@
 .selfCenter { width: 100px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
 .selfLink { gap: 5px; }
 .selfName { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
+
+.matchScore { display: block; grid-column: 2; color: #c4b5fd; font-size: 10px; }
+.nodeList button { flex-wrap: wrap; }
+.objectDialog { position: fixed; inset: 0; margin: auto; width: min(460px, calc(100vw - 28px)); max-width: none; max-height: min(760px, calc(100dvh - 28px)); padding: 0; color: #e9edf1; border: 1px solid #c4b5fd40; border-radius: 22px; background: #090c1cf5; box-shadow: 0 24px 100px #000a; overflow: hidden; }
+.objectDialog::backdrop { background: #02030bbe; backdrop-filter: blur(6px); }
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 18px; border-bottom: 1px solid #ffffff16; font-size: 12px; color: #c4b5fd; }
+.dialogHeader button { min-width: 44px; min-height: 44px; border-radius: 50%; font-size: 24px; background: #ffffff08; }
+.dialogBody { max-height: min(680px, calc(100dvh - 108px)); overflow-y: auto; overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom); }
+.objectDialog .card { position: static; margin: 0; width: auto; max-height: none; padding: 22px; border: 0; background: none; box-shadow: none; backdrop-filter: none; }
+.objectDialog .card h2 { overflow-wrap: anywhere; }
+.objectDialog .card p { display: block; overflow: visible; }
+.objectDialog .planetActions button { min-height: 44px; }
+.objectDialog a:focus-visible, .objectDialog button:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }

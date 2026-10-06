@@ -24,6 +24,7 @@ export default async function AssetCreditsPage() {
         </a>
       </p>
       <p className="mt-3">{t('textureAdaptations')}</p>
+      <p className="mt-8">{t('regionData')}: © <a className="underline" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></p>
     </main>
   )
 }

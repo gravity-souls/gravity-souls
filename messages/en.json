@@ -749,7 +749,8 @@
     "saving": "Saving…",
     "planetTexturesBy": "Planet textures by",
     "assetCredits": "Asset credits",
-    "textureAdaptations": "Planet textures may be cropped, tinted and animated for display."
+    "textureAdaptations": "Planet textures may be cropped, tinted and animated for display.",
+    "regionData": "Region data"
   },
   "communities": {
     "eyebrow": "Communities",
@@ -1733,7 +1734,7 @@
     "mode_resonance": "Resonance",
     "search": "Search names",
     "searchAction": "Search",
-    "meaning_discover": "All visible planets share one atlas. Match strength affects distance; level affects visual size. Distant planets appear as stars; zoom or select to reveal their images. Lines show your saved and following relationships, not a match promise.",
+    "meaning_discover": "All visible planets share one atlas. Match strength affects distance; level affects visual size. Images stay visible while zooming. Lines show your saved and following relationships.",
     "meaning_galaxies": "Each star cluster is a real galaxy. Its extent and density reflect its current living member count, with size compression so small communities remain visible.",
     "meaning_resonance": "Constellations group suggestions by their strongest resonance dimension.",
     "group_calm": "Calm",
@@ -1758,7 +1759,7 @@
     "requiresPlanet": "Create your planet first to explore resonance.",
     "createPlanet": "Create my planet",
     "empty": "No visible objects match this search.",
-    "score": "Resonance estimate: {score}%",
+    "score": "Match score: {score}%",
     "members": "{count} members",
     "planets": "{count} planets",
     "openGalaxy": "Open galaxy →",
@@ -1800,7 +1801,7 @@
     "returnPersonalMap": "← Return to my star map",
     "browseGalaxies": "Browse galaxies",
     "chooseGalaxy": "Choose a galaxy",
-    "galaxyDecoration": "Particles illustrate each community; one selectable node opens that galaxy. They do not reveal its member planets.",
+    "galaxyDecoration": "Galaxy size reflects member count. Beams connect every galaxy to the map origin as layout guides; they do not imply membership or a match.",
     "galaxyScope": "This view loads up to 24 galaxies per batch. Open a galaxy to see its permitted member planets and activities.",
     "galaxyTotal": "{count} galaxies in this search",
     "personalLayers": "Personal map layers",
@@ -2249,6 +2250,10 @@
     "personalizeError": "Could not load your planet appearance.",
     "appearanceSaved": "Your planet appearance is saved.",
     "enterUniverse": "Enter my universe",
-    "personalizeLater": "Continue — customize later"
+    "personalizeLater": "Continue — customize later",
+    "editField": "Edit",
+    "doneEditing": "Done",
+    "directEditHint": "Edit any item below directly. Choose which of your answers appear as public planet tags, then save your changes.",
+    "noFieldValues": "No selection yet. Use Edit to choose."
   }
 }

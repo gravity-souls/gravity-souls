@@ -1,0 +1,14 @@
+# Settings and map usability follow-up
+
+- Existing basics use one direct editor inside the public-tag panel. Each field can be opened independently; the registration wizard is unchanged. Removing an answer also removes its public token. Public tags remain opt-in, capped at 12, and never expose birthday/adult evidence. People preferences may be published only by individual consent.
+- Tag controls show custom plus/check marks without native white boxes, retaining native keyboard/screen-reader checkbox behavior.
+- City search accepts Chinese input (including one-character Chinese prefixes). Common simplified/traditional city aliases return the same canonical city/country values as English selections. Other searches retain the existing upstream native-name search and graceful fallback. No claim of complete worldwide Chinese translation coverage. Provider wording is removed from search controls; data attribution is in asset credits.
+- My planet groups prominent Settings, Customize, My map and Relationships controls at the top. Personalization opens nearby; loading and route fallbacks show a lightweight breathing globe and respect reduced motion.
+- Main navigation has one global-map entry, with galaxies before personal map inside it. Galaxy list/creation remain available through the map list view.
+- Filters open from a small icon beside search in activity/galaxy views, rather than occupying their own row. Active filters remain indicated and Escape closes the panel.
+- Maps use a full-viewport star field with independently distributed horizontal/vertical positions. Galaxy size still reflects actual member count; each visible galaxy has one layout beam, including empty communities. The legend distinguishes these from personal relationship edges.
+- Zoom/rotation preserve the current dataset, selection and relationship edges, rather than automatically changing groups. Edge projection compresses positions within the viewport, leaving space for images and labels. Portraits stay visible at every zoom level. Explicit group selection still filters.
+- Selected objects use a native modal dialog portaled to the document, with focus handling, Escape/close, scrolling content and viewport bounds. Private relationship controls remain inside the preview; revoked access closes stale selections. Legacy preview drawers also portal outside page containers and constrain their scrolling body.
+- Match percentages explicitly say Match score / 匹配分 in both lists and previews.
+
+Validation: registration/permission/avatar/email/Chinese-search route checks, map/galaxy regression tests, localized direct-edit browser journeys, and browser checks for map rendering across zoom, full star coverage, every-galaxy beams, modal bounds/focus and loading controls. CI runs desktop, mobile Chromium, real WebKit and authenticated database journeys. No schema migration or new environment key is required. Deploy after pulling main with npm ci and npm run build:deploy.
