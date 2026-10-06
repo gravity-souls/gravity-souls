@@ -87,3 +87,15 @@ received-only first-send hint and localized unavailable Post-page copy; TypeScri
 changed-file ESLint and production build pass after these changes. No mobile/Safari
 claim, no full avatar/localization claim, and no claimed live verification of an
 un-deployed fix. Test-only activity has no current attendees after Miro left.
+
+## MR30 deployed recheck — 2026-10-05 (Europe/Paris)
+
+Confirmed MR30 merged at 94e995ee059e20311c56e26cfe39da8da6ce1a56. Reloaded the live site and tested as Oren Brooks.
+
+- On /activities, opened QA Activity Acceptance, RSVP'd and cancelled. Attendee count changed 0 → 1 → 0. The attendee planet avatar and Oren's approved management row appeared on joining and disappeared on cancelling, without reopening the detail. DOM heading counts stayed at one Related signals section and one Event management section.
+- Repeated RSVP/cancel through the galaxy event deep link. The card, detail count, attendee avatar and management row updated together. One event management section remained. The whole galaxy page has two related-signals sections by design (galaxy context plus event detail); neither multiplied on RSVP. Finished with zero attendees; saved interest remains.
+- Opened intentionally missing /stream/qa-acceptance-missing-20261005. French, Chinese and English each showed their localized unavailable message after switching language. No assertion about every other page's localization.
+- Existing Oren/Miro thread still has both QA messages and Oren's read receipt. The own-send hint appears, as expected because Oren has sent. The received-only negative case is NOT live-verified: both users have already sent in this thread. Source condition now requires an own message, but this is not a substitute for a fresh incoming-only conversation test.
+- Additional localization issue observed in the French galaxy view: community-post empty state remains English ("No posts yet. Join and start the first signal."). Record for the full localization acceptance; not corrected in this documentation change.
+
+Result: deployed duplicate-section and attendee-refresh failures are closed for both desktop entry points; unavailable Post-page localization is closed for the three tested languages. Received-only hint, Miro's post-approval access recheck, physical mobile/Safari, complete localization/avatar consistency, capacity and attendance-approval cases remain open. No browser regression spec execution, production DB mutation, new message, deployment or destructive cleanup was performed during this recheck. Locale ends French.
