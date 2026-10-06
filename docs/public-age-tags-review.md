@@ -27,6 +27,14 @@ The additive nullable birth-date migration is present but has not been applied.
 - Full `npm run test:e2e` and database browser verification were not run.
   `npm run test:e2e:db`, migrations, and other database-writing commands were
   intentionally not run.
+- Follow-up CI fixes align older shared-card assertions with public pseudonyms,
+  preserve the star map's unfiltered eligible totals while checking filtered nodes,
+  and read the failed-post error from the current Chinese translation.
+  `npm run test:galaxy` passed all 171 embedded tests; targeted ESLint and
+  typecheck passed. The post-context spec passed on desktop/mobile Chromium.
+  Local WebKit failed at navigation with an internal engine error, including an
+  isolated retry, before reaching the changed assertion; Safari verification
+  remains dependent on CI.
 
 ## Release boundaries
 

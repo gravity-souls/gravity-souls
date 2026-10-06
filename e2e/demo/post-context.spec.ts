@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import zh from '../../messages/zh.json'
 
 test('context picker submits consistent galaxy/activity fields and retains failed draft', async ({ page, context, baseURL }) => {
   await context.addCookies([{ name: 'better-auth.session_token', value: 'ui-fixture', url: baseURL! }, { name: 'locale', value: 'zh', url: baseURL! }])
@@ -20,5 +21,5 @@ test('context picker submits consistent galaxy/activity fields and retains faile
   await expect(dialog.locator('textarea')).toHaveValue('关联测试草稿')
   expect(submissions[0]).toContain('galaxy-fixture')
   expect(submissions[0]).toContain('event-fixture')
-  await expect(dialog.getByText('关联内容已不可用，或你已失去查看权限。')).toBeVisible()
+  await expect(dialog.getByRole('alert')).toHaveText(zh.stream.contextError)
 })
