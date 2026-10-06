@@ -21,6 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata')
   return {
     manifest: '/manifest.webmanifest',
+    icons: {
+      icon: [{ url: '/gravity-souls-icon-96.png', type: 'image/png', sizes: '96x96' }],
+      apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
+    },
     title: t('title'),
     description: t('description'),
   }
