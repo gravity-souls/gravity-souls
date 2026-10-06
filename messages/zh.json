@@ -749,7 +749,8 @@
     "saving": "保存中…",
     "planetTexturesBy": "星球纹理来源",
     "assetCredits": "素材署名",
-    "textureAdaptations": "行星纹理可能经过裁切、调色及动画处理后展示。"
+    "textureAdaptations": "行星纹理可能经过裁切、调色及动画处理后展示。",
+    "regionData": "地区数据"
   },
   "communities": {
     "eyebrow": "社区",
@@ -1733,7 +1734,7 @@
     "mode_resonance": "共鸣",
     "search": "搜索名称",
     "searchAction": "搜索",
-    "meaning_discover": "全域展示可见星球：匹配度影响距离，等级影响视觉大小。远处以星光展示，放大或选中后显示头像。连线表示已保存、关注或互关的真实关系，不代表匹配承诺。",
+    "meaning_discover": "全域展示可见星球：匹配分影响距离，等级影响视觉大小，缩放时保留头像。连线表示已保存、关注或互关的真实关系。",
     "meaning_galaxies": "每个星团代表一个真实星系，范围和密度依据仍在账号中的成员数变化，并压缩尺度，让小星系也清晰可见。",
     "meaning_resonance": "星群按推荐最主要的共鸣维度分组。",
     "group_calm": "平静",
@@ -1758,7 +1759,7 @@
     "requiresPlanet": "请先创建自己的星球，再探索共鸣。",
     "createPlanet": "创建我的星球",
     "empty": "没有符合搜索条件的可见对象。",
-    "score": "共鸣估算：{score}%",
+    "score": "匹配分：{score}%",
     "members": "{count} 位成员",
     "planets": "{count} 个星球",
     "openGalaxy": "进入星系 →",
@@ -1800,7 +1801,7 @@
     "returnPersonalMap": "← 返回我的星图",
     "browseGalaxies": "浏览星系",
     "chooseGalaxy": "选择星系",
-    "galaxyDecoration": "粒子用于描绘社区氛围，每个可选节点进入对应星系；粒子不会展示成员的真实星球。",
+    "galaxyDecoration": "星系大小随成员数量变化；每个星系与星图中心的光束是布局引导，不代表加入关系或匹配分。",
     "galaxyScope": "每批最多展示 24 个星系。进入星系后，按权限查看成员星球、动态和活动。",
     "galaxyTotal": "此搜索中有 {count} 个星系",
     "personalLayers": "个人星图图层",
@@ -2249,6 +2250,10 @@
     "personalizeError": "星球外观加载失败。",
     "appearanceSaved": "星球外观已保存。",
     "enterUniverse": "进入我的宇宙",
-    "personalizeLater": "继续，稍后再定制"
+    "personalizeLater": "继续，稍后再定制",
+    "editField": "修改",
+    "doneEditing": "完成修改",
+    "directEditHint": "直接在对应项目中修改资料，再选择哪些答案作为公开星球标签展示，最后保存。",
+    "noFieldValues": "暂未选择，点击“修改”添加。"
   }
 }

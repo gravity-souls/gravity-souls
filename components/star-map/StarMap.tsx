@@ -21,6 +21,7 @@ import { useReducedMotionPreference } from '@/lib/hooks/useBrowserPreferences'
 import { MAP_COLORS, mapCenter, stableUnit } from '@/lib/star-map'
 import type { StarMapData, StarMapMode, StarMapNode, PersonalMapCollection, PersonalMapLayer } from '@/types/star-map'
 import styles from './star-map.module.css'
+import MapObjectDialog from './MapObjectDialog'
 
 type Dot = { x: number; y: number; z: number; color: string; groupId: string }
 type Hit = { x: number; y: number; groupId: string; node?: StarMapNode }
@@ -194,7 +195,7 @@ export default function StarMap({
         .filter((group) => group.count > 0 || mode === 'galaxies')
         .map((group, index, all) => ({
           ...group,
-          center: mapCenter(index, all.length, mode === 'personal'),
+          center: mapCenter(index, mode === 'galaxies' ? Math.max(2,all.length) : all.length, mode === 'personal'),
         })),
     [data.groups, mode],
   )
@@ -256,7 +257,10 @@ export default function StarMap({
       const depth = y * Math.sin(pitch) + rz * Math.cos(pitch)
       const p = 730 / Math.max(350, 730 + depth)
       const fit = Math.min(width / 700, height / 540) * zoom
-      return { x: width / 2 + rx * fit * p, y: height * 0.44 + ry * fit * p, p }
+      // Compress the edge of the view rather than clipping real identities
+      // and relationship endpoints when the user zooms or rotates.
+      const halfX = Math.max(1,width/2-32), halfY = Math.max(1,height*.44-45)
+      return { x: width / 2 + Math.tanh(rx*fit*p/halfX)*halfX, y: height * 0.44 + Math.tanh(ry*fit*p/halfY)*halfY, p }
     }
     function render(time: number) {
       frame = 0
@@ -276,13 +280,25 @@ export default function StarMap({
       const sin = Math.sin(spin.current)
       // Global atlas atmosphere is centered on the viewer, independent of
       // climate groups. Decorative stars never enter counts or hit targets.
-      if (mode === 'discover') for (let i = 0; i < 440; i++) {
-        const r = 30+Math.sqrt(stableUnit(`atlas-star:${i}:r`))*330
-        const angle = i*2.3999632297+r*.016+(reduced ? 0 : spin.current*.12)
-        const p = project(Math.cos(angle)*r,Math.sin(angle)*r*.72,(stableUnit(`atlas-star:${i}:z`)-.5)*45)
-        ctx.fillStyle = i%7 === 0 ? '#c4b5fd99' : '#cddaff55'
-        const size = i%13 === 0 ? 1.8 : .8
-        ctx.fillRect(p.x,p.y,size,size)
+      for (let i = 0; i < 520; i++) {
+        const depth = .2+stableUnit(`atlas-star:${i}:z`)*.8
+        const wrap = (v: number) => ((v%1)+1)%1
+        const x = wrap(stableUnit(`horizontal-space:${i}:star`)+view.current.yaw*depth*.08)*width
+        const y = wrap(stableUnit(`vertical-field:${i*17}:spark`)+view.current.pitch*depth*.08)*height
+        const alpha = reduced ? .6 : .45+.2*Math.sin(time/2400+i)
+        ctx.globalAlpha = alpha
+        ctx.fillStyle = i%7 === 0 ? '#c4b5fd' : '#cddaff'
+        const size = (i%13 === 0 ? 1.8 : .8)*depth+.4
+        ctx.fillRect(x,y,size,size)
+      }
+      ctx.globalAlpha = 1
+      // Every visible galaxy has its own layout beam. These are navigation
+      // guides, distinct from the viewer's real personal relationship edges.
+      if (mode === 'galaxies' && !focused) for (const group of clusters) {
+        const p = project(...group.center)
+        ctx.strokeStyle = group.color+'85'; ctx.lineWidth = 1
+        ctx.beginPath(); ctx.moveTo(hub.x,hub.y); ctx.lineTo(p.x,p.y); ctx.stroke()
+        if (!reduced) { const travel=(time/6500+stableUnit(group.id))%1; ctx.fillStyle=group.color; ctx.beginPath(); ctx.arc(hub.x+(p.x-hub.x)*travel,hub.y+(p.y-hub.y)*travel,1.6,0,Math.PI*2); ctx.fill() }
       }
       for (let i = 0; mode !== 'discover' && i < dots.length; i++) {
         const dot = dots[i]
@@ -297,17 +313,6 @@ export default function StarMap({
         )
         ctx.fillStyle = dot.color + 'a0'
         ctx.fillRect(p.x, p.y, Math.max(0.6, p.p), Math.max(0.6, p.p))
-        if (mode !== 'personal' && !focused && i % 40 === 0) {
-          const gradient = ctx.createLinearGradient(hub.x, hub.y, p.x, p.y)
-          gradient.addColorStop(0, '#ffffff30')
-          gradient.addColorStop(1, dot.color + '08')
-          ctx.strokeStyle = gradient
-          ctx.lineWidth = 0.6
-          ctx.beginPath()
-          ctx.moveTo(hub.x, hub.y)
-          ctx.lineTo(p.x, p.y)
-          ctx.stroke()
-        }
       }
       hits.current = []
       if (mode === 'discover') {
@@ -316,7 +321,10 @@ export default function StarMap({
           const point = atlasPosition(node.id,node.score,node.level)
           const p = project(point.x,point.y,point.z), radius = planetGravity(node.level).radius * Math.min(1.25,p.p)
           const color = MAP_COLORS[node.groupId] || '#b89afa'
-          const dx = p.x-hub.x, dy = p.y-hub.y, distance = Math.hypot(dx,dy)
+          let dx = p.x-hub.x, dy = p.y-hub.y
+          const clearance = Math.min(80,Math.max(55,width/2-34))
+          if (Math.hypot(dx,dy) < clearance) { const angle = Math.atan2(dy,dx); p.x=hub.x+Math.cos(angle)*clearance; p.y=hub.y+Math.sin(angle)*clearance; dx=p.x-hub.x; dy=p.y-hub.y }
+          const distance = Math.hypot(dx,dy)
           if (data.selfPlanet && !loading && !error && distance > 50) {
             const relations = personalNodeRelations(node)
             relations.forEach((relation,index) => {
@@ -335,10 +343,9 @@ export default function StarMap({
           const glow = ctx.createRadialGradient(p.x,p.y,radius,p.x,p.y,radius*2.8)
           glow.addColorStop(0,color+'55'); glow.addColorStop(1,color+'00'); ctx.fillStyle=glow; ctx.fillRect(p.x-radius*3,p.y-radius*3,radius*6,radius*6)
           const portrait=portraits.get(node.id)
-          const showPortrait = node.id === selected?.id || view.current.zoom >= 1.3 || (node.score ?? 50) >= 60 || data.nodes.length <= 12
-          const visibleRadius = showPortrait ? radius : 3.5
-          ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,visibleRadius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=showPortrait ? color+'88' : '#eee6ff'; ctx.fill()
-          if (showPortrait && portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
+          const visibleRadius = radius
+          ctx.save(); ctx.beginPath(); ctx.arc(p.x,p.y,visibleRadius,0,Math.PI*2); ctx.clip(); ctx.fillStyle=color+'88'; ctx.fill()
+          if (portrait?.complete && portrait.naturalWidth) { const crop=Math.min(portrait.naturalWidth,portrait.naturalHeight); ctx.drawImage(portrait,(portrait.naturalWidth-crop)/2,(portrait.naturalHeight-crop)/2,crop,crop,p.x-radius,p.y-radius,radius*2,radius*2) }
           ctx.restore(); ctx.font='11px system-ui'; ctx.fillStyle='#d6deed'; ctx.textAlign='center'
           if (node.id===selected?.id || data.nodes.length<=50) ctx.fillText((node.displayName || node.name).slice(0,12),p.x,p.y+visibleRadius+13)
           ctx.textAlign='start'; hits.current.push({...p,groupId:node.groupId,node})
@@ -355,10 +362,11 @@ export default function StarMap({
             // camera rotates. Keep real targets clear of its label/hit area.
             let dx = p.x - hub.x, dy = p.y - hub.y
             const distance = Math.hypot(dx, dy)
-            if (distance < 120) {
+            const clearance = Math.min(120,Math.max(60,width/2-34))
+            if (distance < clearance) {
               const angle = distance < 1 ? index * 2.3999632297 : Math.atan2(dy, dx)
-              p.x = hub.x + Math.cos(angle) * 120
-              p.y = hub.y + Math.sin(angle) * 120
+              p.x = hub.x + Math.cos(angle) * clearance
+              p.y = hub.y + Math.sin(angle) * clearance
             }
             dx = p.x - hub.x; dy = p.y - hub.y
             const length = Math.hypot(dx, dy)
@@ -479,25 +487,6 @@ export default function StarMap({
         0.65,
         Math.min(4, view.current.zoom * Math.exp(-event.deltaY * 0.0015)),
       )
-      if (mode !== 'discover' && !focus && view.current.zoom >= 1.8) {
-        const rect = canvas.getBoundingClientRect()
-        const x = event.clientX - rect.left
-        const y = event.clientY - rect.top
-        const nearest = [...hits.current].sort(
-          (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-        )[0]
-        if (nearest) {
-          setFocus(nearest.groupId)
-          setSelectedId(null)
-          setCursor(null)
-          view.current.zoom = mode !== 'galaxies' ? 1 : 2.4
-        }
-      } else if (focus && view.current.zoom <= 1.2) {
-        setFocus(null)
-        setSelectedId(null)
-        setCursor(null)
-        view.current.zoom = 1
-      }
       redraw()
     }
     const visibility = () => {
@@ -674,25 +663,6 @@ export default function StarMap({
                 )
               }
               pointers.current.set(event.pointerId, next)
-              if (pointers.current.size === 2) {
-                if (mode !== 'discover' && !focus && view.current.zoom >= 1.8) {
-                  const rect = event.currentTarget.getBoundingClientRect()
-                  const pair = [...pointers.current.values()]
-                  const x = (pair[0].x + pair[1].x) / 2 - rect.left
-                  const y = (pair[0].y + pair[1].y) / 2 - rect.top
-                  const nearest = [...hits.current].sort(
-                    (a, b) =>
-                      Math.hypot(a.x - x, a.y - y) -
-                      Math.hypot(b.x - x, b.y - y),
-                  )[0]
-                  if (nearest) enter(nearest.groupId)
-                } else if (focus && view.current.zoom <= 1.2) {
-                  setFocus(null)
-                  setSelectedId(null)
-                  setCursor(null)
-                  view.current.zoom = 1
-                }
-              }
             }}
             onPointerUp={(event) => {
               if (!moved.current && pointers.current.size === 1) {
@@ -798,7 +768,7 @@ export default function StarMap({
                         <button
                           key={node.id}
                           aria-pressed={selected?.id === node.id}
-                          onClick={() => setSelectedId(node.id)}
+                          onClick={event => { event.currentTarget.focus({ preventScroll: true }); setSelectedId(node.id) }}
                         >
                           {mode === 'personal' && (!node.kind || node.kind === 'planet') ? <PersonAvatar key={node.avatarUrl} src={node.avatarUrl} name={node.displayName || node.name} size={28} /> : node.planetConfig && (
                             <PlanetAvatar
@@ -813,7 +783,7 @@ export default function StarMap({
                             {node.kind && node.kind !== 'planet' && <span>{t(`kind_${node.kind}`)}</span>}
                           </span>
                           {node.score !== undefined && (
-                            <span>{node.score}%</span>
+                            <span className={styles.matchScore}>{t('score', { score: node.score })}</span>
                           )}
                         </button>
                       ))}
@@ -840,7 +810,8 @@ export default function StarMap({
               </button>
             )}
           </ScrollRegion>
-          {selected && (
+        </aside>
+          {selected && <MapObjectDialog label={selected.displayName || selected.name} kind={selected.kind ?? (mode === 'galaxies' ? 'galaxy' : 'planet')} onClose={() => setSelectedId(null)}>
             <div
               className={`${styles.card} ${styles.liveCard}`}
               aria-live="polite"
@@ -889,8 +860,7 @@ export default function StarMap({
                 </div>
               )}
             </div>
-          )}
-        </aside>
+          </MapObjectDialog>}
       </div>
       {mode !== 'discover' && <p className={styles.mapNote}>
         {t(mode === 'personal' ? 'personalDecoration' : 'galaxyDecoration')}{' '}

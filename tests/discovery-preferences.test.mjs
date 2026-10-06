@@ -44,4 +44,6 @@ test('atlas distance tracks match strength, level is bounded, galaxy magnitude t
 test('tag consent cannot publish birthday, age, missing answers or forged values', () => {
   assert.deepEqual(publicPlanetTags({ ...source, gender: 'undisclosed', publicTags: ['birthDate', 'ageMethod', 'gender:undisclosed', 'interests:music'] }), [])
   assert.deepEqual(publicPlanetTags({ ...source, publicTags: ['interests:art', 'languages:fr'] }), [{ key: 'languages', value: 'fr' }, { key: 'interests', value: 'art' }])
+  assert.deepEqual(publicPlanetTags({ ...source, publicTags: ['peoplePreferences:localPeople'] }), [{ key: 'peoplePreferences', value: 'localPeople' }])
+  assert.deepEqual(publicPlanetTags({ ...source, peoplePreferences: ['noPreference'], publicTags: ['peoplePreferences:noPreference'] }), [])
 })

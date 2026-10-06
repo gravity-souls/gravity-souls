@@ -749,7 +749,8 @@
     "saving": "Enregistrement…",
     "planetTexturesBy": "Textures planétaires par",
     "assetCredits": "Crédits des ressources",
-    "textureAdaptations": "Les textures peuvent être recadrées, teintées et animées pour leur affichage."
+    "textureAdaptations": "Les textures peuvent être recadrées, teintées et animées pour leur affichage.",
+    "regionData": "Données géographiques"
   },
   "communities": {
     "eyebrow": "Communautés",
@@ -1733,7 +1734,7 @@
     "mode_resonance": "Résonance",
     "search": "Rechercher un nom",
     "searchAction": "Rechercher",
-    "meaning_discover": "Toutes les planètes visibles partagent une carte. La compatibilité influence la distance, le niveau la taille. Les planètes éloignées sont des étoiles ; zoomez ou sélectionnez-les pour voir leur image. Les lignes représentent vos enregistrements et abonnements.",
+    "meaning_discover": "Toutes les planètes visibles partagent une carte. L’affinité influence la distance et le niveau influence la taille. Les images restent visibles lors du zoom. Les lignes indiquent vos relations sauvegardées et vos abonnements.",
     "meaning_galaxies": "Chaque amas représente une galaxie réelle. Son étendue et sa densité reflètent les membres actifs, avec une compression de taille pour préserver les petites communautés.",
     "meaning_resonance": "Les suggestions sont regroupées selon leur dimension de résonance principale.",
     "group_calm": "Calme",
@@ -1758,7 +1759,7 @@
     "requiresPlanet": "Créez votre planète pour explorer la résonance.",
     "createPlanet": "Créer ma planète",
     "empty": "Aucun objet visible ne correspond à la recherche.",
-    "score": "Estimation de résonance : {score}%",
+    "score": "Score d’affinité : {score}%",
     "members": "{count} membres",
     "planets": "{count} planètes",
     "openGalaxy": "Ouvrir la galaxie →",
@@ -1800,7 +1801,7 @@
     "returnPersonalMap": "← Revenir à ma carte stellaire",
     "browseGalaxies": "Parcourir les galaxies",
     "chooseGalaxy": "Choisir une galaxie",
-    "galaxyDecoration": "Les particules illustrent une communauté ; un nœud sélectionnable ouvre sa galaxie. Elles ne révèlent pas les planètes de ses membres.",
+    "galaxyDecoration": "La taille des galaxies reflète le nombre de membres. Les faisceaux relient chaque galaxie au centre comme repères visuels, sans indiquer une adhésion ni une affinité.",
     "galaxyScope": "Cette vue charge jusqu’à 24 galaxies par lot. Ouvrez une galaxie pour voir les planètes et activités autorisées.",
     "galaxyTotal": "{count} galaxies dans cette recherche",
     "personalLayers": "Couches de ma carte",
@@ -2249,6 +2250,10 @@
     "personalizeError": "Impossible de charger votre apparence.",
     "appearanceSaved": "Apparence enregistrée.",
     "enterUniverse": "Entrer dans mon univers",
-    "personalizeLater": "Continuer — personnaliser plus tard"
+    "personalizeLater": "Continuer — personnaliser plus tard",
+    "editField": "Modifier",
+    "doneEditing": "Terminé",
+    "directEditHint": "Modifiez directement chaque rubrique ci-dessous. Choisissez les réponses à afficher comme étiquettes publiques, puis enregistrez.",
+    "noFieldValues": "Aucune sélection. Utilisez Modifier pour choisir."
   }
 }

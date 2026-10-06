@@ -152,12 +152,11 @@ function GalaxiesInner() {
 
         <div className="mt-5 flex flex-wrap gap-3"><Link href="/galaxies/create" className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium">{tw('createGalaxy')}</Link>{(['all','joined','managed'] as const).map(value=><button key={value} type="button" onClick={()=>setScope(value)} className={`rounded-xl border border-white/15 px-4 py-2 text-sm ${scope===value?'bg-white/10':''}`}>{tw(`${value}Galaxies`)}</button>)}</div>
 
-        <DiscoveryFilters value={filters} onChange={setFilters} activityPool={false} />
         {/* -- Search + filters -------------------------------------------- */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
 
           {/* Search input */}
-          <div className="relative flex-1">
+          <div className="flex min-w-0 flex-1 items-start gap-2"><div className="relative min-w-0 flex-1">
             <span
               className="absolute left-4 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
               style={{ color: 'var(--ghost)' }}
@@ -181,6 +180,8 @@ function GalaxiesInner() {
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-accent)' }}
               onBlur={(e)  => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-mid)' }}
             />
+          </div>
+        <DiscoveryFilters value={filters} onChange={setFilters} activityPool={false} />
           </div>
 
           {/* Mood filter */}

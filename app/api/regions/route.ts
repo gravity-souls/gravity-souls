@@ -3,6 +3,7 @@ import { safeApiError } from '@/lib/api-input'
 import { regionSuggestions } from '@/lib/region-search'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { chineseRegionSuggestions, searchableRegionQuery } from '@/lib/region-aliases'
 
 const cache = new Map<string, { expires: number; suggestions: ReturnType<typeof regionSuggestions> }>()
 export async function GET(request: Request) {
@@ -11,7 +12,9 @@ export async function GET(request: Request) {
     const owner = await prisma.user.findUnique({ where: { id: user.id }, select: { deletedAt: true } })
     if (!owner || owner.deletedAt) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     const q = new URL(request.url).searchParams.get('q')?.trim() || ''
-    if (q.length < 2 || q.length > 100) return Response.json({ suggestions: [] })
+    if (!searchableRegionQuery(q) || q.length > 100) return Response.json({ suggestions: [] })
+    const translated = chineseRegionSuggestions(q)
+    if (translated.length) return Response.json({ suggestions: translated })
     const key = q.toLocaleLowerCase(), now = Date.now(), cached = cache.get(key)
     if (cached && cached.expires > now) return Response.json({ suggestions: cached.suggestions })
     if (!await checkRateLimit(`REGION_SEARCH:${user.id}`,60,60_000)) return Response.json({ error: 'tooManyRequests' }, { status: 429 })

@@ -67,9 +67,10 @@ test('real map flow has no playback or zoom buttons, and selects custom-avatar n
     page.getByRole('link', { name: 'View planet →' }),
   ).toHaveAttribute('href', '/planet/fixture-planet?from=star-map')
   await expect(
-    page.locator('aside [aria-live="polite"] img[src="/textures/earth_day.jpg"]'),
+    page.locator('dialog [aria-live="polite"] img[src="/textures/earth_day.jpg"]'),
   ).toBeVisible()
   await expect(page.locator('canvas[aria-label]')).toHaveCSS('touch-action', 'none')
+  await page.getByRole('button', { name: 'Close preview', exact: true }).click()
   await page.getByRole('button', { name: /Back to overview/ }).click()
   await expect(
     page.getByRole('heading', { name: 'Browser fixture planet' }),
